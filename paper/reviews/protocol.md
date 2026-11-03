@@ -1,6 +1,6 @@
 # Simulated red-team review protocol
 
-Each round reviews two artifacts together: the paper (paper/main.pdf built from paper/main.tex) and the code package (the repository at the commit named in the round file). Five reviewers read independently, with fresh context, and never see each other's reviews before writing their own. A round is stored in paper/reviews/round-NN/ as five review files, one summary file, and one response letter.
+Each round reviews two artifacts together: the paper (paper/main.pdf built from paper/main.tex) and the code package (the repository at the commit named in the round file). Six reviewers read independently, with fresh context, and never see each other's reviews before writing their own. A round is stored in paper/reviews/round-NN/ as six review files, one summary file, and one response letter.
 
 ## Reviewers
 
@@ -9,6 +9,7 @@ R2 Experimentation platform engineer. Operational realism, leakage, admission, h
 R3 Machine learning reviewer. Baselines and challengers on matched splits, ablations, learning curves, feature leakage, fairness of the comparison with prior text-based predictors, the ladder claim that each rung is a strict generalization.
 R4 Reproducibility chair. Clean clone, environment, `make data fit backtest`, every table and figure regenerated from a report JSON, checksums, licenses, data norms (the archive splits deliberately not used), writing rules, test suite, wall time within the stated budget.
 R5 Area chair. Significance of the contribution, honesty of the claims against the results, fit to the venue, clarity, related work coverage and credit, limitations, ethics.
+R6 Practitioner and documentation reviewer. A data scientist at a company with an experiment archive who has never seen the project. Follows README and the tutorials from a clean clone with no other context: the five-minute quickstart, the bring-your-own-archive tutorial, the weekly loop and the service. Judges whether a new user understands what the package does and can run it on their own results within an hour, whether the manual answers the questions that come up, and whether the outputs are understandable without reading the paper. A tutorial step that fails or an output a reader cannot interpret is a major finding. Scores clarity and code quality; reports the wall time of the walkthrough.
 
 ## Scores
 
@@ -16,7 +17,7 @@ Each reviewer scores six dimensions from 1 to 5: novelty, technical correctness,
 
 ## Stop condition
 
-The loop stops when, in one round, all five reviewers recommend accept or minor revision, no blocking or major finding remains, R4 reports a clean-clone run that regenerates every number in the paper, and every number in the paper traces to a report JSON path. If any reviewer disagrees, the round's response letter answers every finding (fixed, with the commit; or argued, with the reason), the affected experiments are re-run, and a new round begins. The log of rounds is part of the paper's supplementary material.
+The loop stops when, in one round, all six reviewers recommend accept or minor revision, no blocking or major finding remains, R4 reports a clean-clone run that regenerates every number in the paper, and every number in the paper traces to a report JSON path. If any reviewer disagrees, the round's response letter answers every finding (fixed, with the commit; or argued, with the reason), the affected experiments are re-run, and a new round begins. The log of rounds is part of the paper's supplementary material.
 
 ## Review file format (one per reviewer)
 
