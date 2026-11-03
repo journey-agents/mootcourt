@@ -1,0 +1,160 @@
+# Tutorial 3: reproduce the Upworthy study
+
+**You will:** download the Upworthy Research Archive, build its ledger, fit the forecaster, run the full backtest and compare your tables with the published ones in [Results](../results.md).
+
+**Prerequisites:** a clone of this repository with the package installed (this tutorial uses the scripts in `scripts/`), Python 3.11 or newer and a network connection for the download. About 15 MB of disk for the archives and a few hundred MB for everything that grows from them.
+
+**Time:** about 10 minutes of compute: 5 seconds to build the ledger, 15 seconds to fit, a minute to simulate the gates the first time, and 3 to 4 minutes for the backtest. The download takes as long as your connection needs for 15 MB.
+
+**Why do this.** The reference results of the project are produced by exactly these commands on two public archives. Running them yourself shows that the numbers are not a one-off, and it is the best preparation for running the same commands on your own archive ([tutorial 2](02-your-own-archive.md)). The Upworthy archive is a set of headline and image tests run by one publisher (Matias et al., Scientific Data 8, 195, 2021, CC BY 4.0).
+
+## 0. Choose where the data goes
+
+Everything heavy (the downloads, the ledger, models, reports, cards) goes under one folder, the **data root**. Pick a folder on a volume with a few hundred MB free and export it for this shell. The variable wins over any file setting.
+
+```bash run quiet
+export MOOTCOURT_DATA_ROOT="$HOME/mootcourt-data"
+mkdir -p "$MOOTCOURT_DATA_ROOT"
+```
+
+## 1. Download the archive and verify it
+
+From the clone:
+
+```bash
+python scripts/download_data.py
+```
+
+The script lists the files through the Open Science Framework API at run time, streams each to a `.part` file, renames it only when complete and records the SHA-256 digest and size of every file in `data/CHECKSUMS.json` under the data root. Every later run verifies the files against that record and stops on any mismatch. It downloads about 15 MB. `--verify-only` checks the files on disk without any network access:
+
+```text
+verified  raw/upworthy/upworthy-archive-exploratory-packages-03.12.2020.csv
+verified  raw/asos/Datasheet - ASOS Digital Experiments Dataset.pdf
+verified  raw/asos/asos_digital_experiments_dataset.parquet
+ok: 0 downloaded (0 bytes), 3 verified, 0.0 s
+```
+
+(That is the output of `--verify-only` after a download. The same script also fetches the second public archive, the ASOS Digital Experiments Dataset, CC BY 4.0, which the project uses as a deployment-shaped check. This tutorial uses Upworthy only.)
+
+**What the script refuses.** The Upworthy archive also holds a holdout file, a confirmatory file and an undeployed-packages file. The archive asks researchers to pre-register an analysis before using the first two. This project did not, and the script refuses to download any file whose name contains `holdout`, `confirmatory` or `undeployed`. Only the exploratory file is used. `DATA.md` in the repository root has the full account.
+
+## 2. Build the ledger
+
+```bash run needs=archives
+moot ingest --source upworthy
+```
+
+```text output
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (3.4 s)
+snapshot 20261103-4bfb354b87e3 for upworthy
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 3.8 s
+```
+
+The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
+
+## 3. Fit
+
+```bash run needs=archives
+moot fit --source upworthy
+```
+
+```text output
+fitted model 5f1c07efd730 at snapshot 20261103-4bfb354b87e3 in 13.6 s; it is the champion for upworthy
+no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
+```
+
+The model id should be `5f1c07efd730` on the same data and the same code. Ids are content digests of the fitted parameters and the platform can change their last digits (see [troubleshooting](../troubleshooting.md#ids-differ-between-machines)), so a different id on another operating system is not a failure. The scores below are the check.
+
+## 4. Back-test
+
+```bash run needs=archives slow
+moot backtest --source upworthy
+```
+
+```text output
+~/mootcourt-data/reports/gates.json is missing; running the gate power simulation first (synthetic data, same as `moot simulate power`)
+gates read from ~/mootcourt-data/reports/gates.json: {"by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "n_200": 175, "n_400": 375}
+filled the backtest summary of model 5f1c07efd730
+scored 13247 rows over 9 origins in 182.6 s (report writing 14.4 s)
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261103-4bfb354b87e3.md
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261103-4bfb354b87e3.json
+wrote ~/mootcourt-data/reports/scores-upworthy-20261103-4bfb354b87e3.parquet
+```
+
+The first time, there is no gates file, so the command first runs the gate power simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about 3 and a half minutes). It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
+
+## 5. Compare with the published tables
+
+Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare its tables with the Upworthy tables in [Results](../results.md). With the same data and the same seed (`--seed 0` is the default), the report matches the published one to every printed digit, apart from timing lines. The rows to compare:
+
+| Rung | What it is | Brier skill on all rows (90% interval) |
+|---|---|---|
+| P0 | the cell base rate | -0.1237 (-0.1401 to -0.1073) |
+| P1 | pooled empirical-Bayes shrinkage | 0.0015 (-0.0018 to 0.0048) |
+| P2 | weighted precedents | -0.0078 (-0.0119 to -0.0032) |
+
+**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P1's interval contains zero: pooled shrinkage is no better than the base rate on this archive, and no worse. P2's whole interval is below zero: weighing similar headlines made the forecasts slightly worse than P1's, which the report states in words ("worse than the constant base rate", "the precedent rung scores worse than the prior"). P0 is clearly below zero: a Normal model of the cell's effects forecasts the significant-positive event worse than the event's own base rate.
+
+That is the finding, and it is a modest one: on this archive, the ladder's best rung is not distinguishable from the base rate in Brier skill, and the extra machinery of P2 does not pay. Nothing here says it would be the same for product experiments: the archive is headline and image tests from one publisher. The README's list of what the project does not show applies in full.
+
+The report has more to read: calibration, coverage of the intervals (near 0.80 and 0.90 is calibrated), abstention by trigger, decision value and calibration by precision. [Tutorial 2](02-your-own-archive.md#7-read-the-report-card) explains each section. The tables of [Results](../results.md) include the cautionary first run, which scored a relative lift against a noisy reference arm and found negative skill everywhere, because of a design defect and not a finding about the archive.
+
+## 6. A card as of the end of the archive
+
+The archive ends in 2015, so its reliability report is dated 2015. With today's clock a card abstains because that report is older than 14 days. To see a card issued as of the end of the archive, pass the time of the archive's last day:
+
+```bash run needs=archives slow head=26
+moot card --source upworthy --headline "A simple fact about your mornings" --image-changed false --impressions 20000 --origin 2015-05-07T00:00:00+00:00 --now 2015-05-07T00:00:00+00:00
+```
+
+```text output
+# Moot Court card
+
+- Card id: ec887a71bf244eb4
+- Source: upworthy
+- Cell: headline_only
+- Origin: 2015-05-07T00:00:00+00:00
+- Ledger snapshot: 20261103-4bfb354b87e3
+- Model: 5f1c07efd730
+- Feature hash: 71f093b4dc70
+- Issued at: 2015-05-07T00:00:00+00:00
+- Request: headline "A simple fact about your mornings", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.110 percentage points
+
+## Evidence
+
+- Admitted rows in the cell visible at the origin: 7593
+- Effective number of precedents: 3.0
+- Base rate of significant positive results in the cell (P0): 0.101
+
+## Prediction
+
+- P(significant and positive): 0.274
+- Point estimate: -0.06 percentage points
+- 80 percent interval for the true effect: -0.63 to 0.51 percentage points
+- P(true effect above 0): 0.446
+- Rung: P2, weight on precedents 0.1
+
+```
+
+This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).
+
+## 7. The rest of the study
+
+These commands produce the remaining tables of [Results](../results.md). They are long runs, and they write under the data root.
+
+| Command | Produces |
+|---|---|
+| `make challengers` | the gradient-boosted, local and text-only comparisons (about 6 minutes) |
+| `make ablations` | one-setting-at-a-time changes, including the abstention triggers (the longest run) |
+| `make learning-curve` | skill against the amount of history used |
+| `make replay` | the weekly replay of the archive |
+| `make audit` | a post-hoc leakage audit of a backtest |
+| `make power` | the gate simulation (about a minute) |
+
+The run-time table at the end of [Results](../results.md) has the measured times of the stages.
+
+`make ablations` and `make challengers` write gigabytes: keep the data root on a volume with room. Then `python scripts/render_readme_results.py --write` rewrites the results page from the reports, and `--check` fails if it is stale.
+
+## What you have
+
+The ledger of the archive, a model, the backtest report and a card, and a direct comparison with the published numbers. If your numbers differ, check the snapshot id first (its digest part must match the published one), then the number of admitted rows (13,453), and then open an issue with the report attached.

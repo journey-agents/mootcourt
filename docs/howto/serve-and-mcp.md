@@ -1,5 +1,7 @@
 # Serve the card and use the MCP tool
 
+This is the short form. [Tutorial 5](../tutorials/05-serve-http-and-mcp.md) runs the service and an MCP client and shows their output.
+
 Both interfaces read fitted models and reports from the data root. Fit and back-test first.
 
 ## HTTP service

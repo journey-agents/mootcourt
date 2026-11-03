@@ -25,14 +25,18 @@ def test_first_screen_has_tagline_boundary_and_transfer_caveat(spec_boundary_sen
 
 
 def test_results_block_has_the_required_tables_and_figures():
-    readme = _read("README.md")
+    # The generated block moved from the README to docs/results.md when the README became a reader's entry point (T-053); its figure links
+    # are relative to that page and the figures are copied to docs/figures.
+    readme = _read("docs/results.md")
     assert START in readme and END in readme
+    assert START not in _read("README.md")
     block = readme.split(START, 1)[1].split(END, 1)[0]
     for col in ("n", "log score", "Brier skill", "decidable", "coverage", "abstention rate"):
         assert re.search(col, block, re.I), f"results table lacks column {col}"
     for needle in ("Upworthy", "ASOS", "synthetic", "reliability", "decision value"):
         assert needle.lower() in block.lower(), f"results block lacks {needle}"
-    assert re.search(r"!\[[^\]]*\]\(reports/figures/[^)]+\.png\)", readme)
+    links = re.findall(r"!\[[^\]]*\]\((figures/[^)]+\.png)\)", readme)
+    assert links and all((ROOT / "docs" / link).is_file() for link in links)
 
 
 @pytest.mark.realdata
@@ -42,7 +46,7 @@ def test_results_block_is_regenerated_exactly_from_report_json():
     spec = importlib.util.spec_from_file_location("render_readme_results", script)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    readme = _read("README.md")
+    readme = _read("docs/results.md")
     block = readme.split(START, 1)[1].split(END, 1)[0]
     assert mod.render_block(real_paths().reports).strip() == block.strip()
 

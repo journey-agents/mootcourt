@@ -1,6 +1,6 @@
 # Quickstart: from install to a first card in ten minutes
 
-This takes a fresh folder to a card on a small synthetic ledger. It needs no network after the install and no data of your own. A test runs the commands below in a temporary folder.
+This takes a fresh folder to a card on a small synthetic ledger. It needs no network after the install and no data of your own. A test runs the commands below in a temporary folder. [Tutorial 1](tutorials/01-first-card.md) walks through the same steps with every output shown and explained, and is the better first read.
 
 ## 1. Install
 

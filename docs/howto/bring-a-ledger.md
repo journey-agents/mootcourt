@@ -1,5 +1,7 @@
 # Bring a ledger
 
+This is the short form. [Tutorial 2](../tutorials/02-your-own-archive.md) walks through it with every output shown, a worked mapping file and how to read the report card.
+
 You need one row per variant per metric per experiment, with the effect, its standard error and the number of units per
 arm. You do not need unit-level data.
 

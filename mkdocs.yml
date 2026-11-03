@@ -5,6 +5,8 @@ site_dir: site
 strict: true
 exclude_docs: |
   superpowers/
+hooks:
+  - scripts/mkdocs_hooks.py
 copyright: A precedent forecast is an argument about what to expect, not a replacement for running the experiment.
 
 theme:
@@ -22,7 +24,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.highlight
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 plugins:
   - search
@@ -41,6 +47,13 @@ plugins:
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Tutorials:
+      - 1. Your first card: tutorials/01-first-card.md
+      - 2. Your own archive: tutorials/02-your-own-archive.md
+      - 3. Reproduce the Upworthy study: tutorials/03-reproduce-upworthy.md
+      - 4. The weekly loop: tutorials/04-weekly-loop.md
+      - 5. Serve over HTTP and MCP: tutorials/05-serve-http-and-mcp.md
+      - 6. A simulation agent: tutorials/06-simulation-agent.md
   - Concepts: concepts.md
   - How to:
       - Bring a ledger: howto/bring-a-ledger.md
@@ -50,12 +63,15 @@ nav:
       - Serve the card and use the MCP tool: howto/serve-and-mcp.md
       - Read the scale results: scale.md
   - Reference:
+      - Command guide: commands.md
       - Command line: reference/cli.md
       - Configuration: reference/config.md
       - Python API: reference/api.md
       - Ledger format: ledger-format.md
+  - Results: results.md
   - Method: method.md
   - Landscape: landscape.md
   - Limitations: limitations.md
+  - Troubleshooting: troubleshooting.md
   - FAQ: faq.md
   - Release: release.md

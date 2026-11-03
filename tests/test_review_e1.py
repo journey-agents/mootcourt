@@ -158,7 +158,7 @@ def test_run_log_labels_checksum_verification_and_records_a_clean_download():
     log = ROOT / "scripts" / "run_log.py"
     text = log.read_text(encoding="utf-8")
     assert "checksum verification" in text.lower()
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme = (ROOT / "docs" / "results.md").read_text(encoding="utf-8")        # the generated results block moved here from the README (T-053)
     low = readme.lower()
     assert "Download 5.1 s" not in readme
     # The run time block states what the data stage was: a clean-clone download, or a checksum verification with no download (BUG-007).

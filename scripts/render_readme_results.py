@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
-"""Render the README results block from the backtest report JSON files, so no result number is typed by hand.
+"""Render the results block of docs/results.md from the backtest report JSON files, so no result number is typed by hand.
 
-The block sits between ``<!-- moot-results:start -->`` and ``<!-- moot-results:end -->`` in README.md. Every number in
+The block sits between ``<!-- moot-results:start -->`` and ``<!-- moot-results:end -->`` in docs/results.md (it lived in the
+README until the README became a reader's entry point; the page keeps the name of the script). Every number in
 it is read from ``reports/backtest-<source>-<snapshot>.json`` (and ``reports/gates.json``, plus the optional
 ``reports/challenger-gbm/`` report, ``reports/card-latency.json`` and ``reports/run-log.json``). Use:
 
-    python scripts/render_readme_results.py --write    # rewrite the block in README.md
-    python scripts/render_readme_results.py --check    # exit 1 if README.md differs from the reports
+    python scripts/render_readme_results.py --write    # rewrite the block in docs/results.md and copy the figures to docs/figures
+    python scripts/render_readme_results.py --check    # exit 1 if docs/results.md differs from the reports
 
-``render_block(reports_dir)`` returns the text between the markers.
+The README holds a generated two-line summary between ``<!-- moot-headline:start -->`` and ``<!-- moot-headline:end -->``; ``--write`` and
+``--check`` handle it with the page. ``render_block(reports_dir)`` returns the text between the markers; its figure links are
+relative to docs/results.md.
 """
 from __future__ import annotations
 
@@ -18,9 +21,12 @@ import shutil
 import sys
 from pathlib import Path
 
-from mootcourt.storage import README_FIGURES, storage_paths, visible_glob
+from mootcourt.storage import storage_paths, visible_glob
 
 START, END = "<!-- moot-results:start -->", "<!-- moot-results:end -->"
+HEAD_START, HEAD_END = "<!-- moot-headline:start -->", "<!-- moot-headline:end -->"      # the README's two-line summary
+PAGE = Path("docs") / "results.md"               # the page that holds the block
+FIGURES_DIR = Path("docs") / "figures"           # the figures it links, small and committed
 SHORT = {"decidable at skill 0.20 and 0.10": "yes, both skills", "decidable at skill 0.20 only": "skill 0.20 only",
          "decidable at skill 0.10 only": "skill 0.10 only", "undecidable at this n": "undecidable"}
 SOURCES = (("upworthy", "Upworthy"), ("asos", "ASOS"), ("synthetic", "Synthetic"))
@@ -295,7 +301,7 @@ def learning_curve_lines(reports: Path, source: str | None = None) -> list[str]:
                 "|---|---|---|---|---|---|---|"]
         out += [f"| {r['fraction']} | {r['n_fit_rows']:.0f} | {r['rung']} | {_f(r['skill'])} ({_f(r['skill_lo'])} to {_f(r['skill_hi'])}) | "
                 f"{_f(r['skill_seed_sd'])} | {_f(r['logscore'])} | {_f(r['direction_accuracy'])} |" for r in doc["rows"]]
-        out += ["", f"![learning curve, {doc['source']}](reports/figures/learning_curve-{doc['source']}.png)", ""]
+        out += ["", f"![learning curve, {doc['source']}](figures/learning_curve-{doc['source']}.png)", ""]
     return out
 
 
@@ -351,10 +357,10 @@ def render_block(reports_dir) -> str:
             f"{gates['reps']} replicates, seed {gates['seed']}. Sizes below read the same power curve at two levels.", ""]
     out += power_lines(gates) + [""]
     out += ["### Figures", "",
-            "Reliability diagram of p_sig, Upworthy:", "", "![reliability diagram, Upworthy](reports/figures/reliability-upworthy.png)", "",
-            "Decision value, Upworthy:", "", "![decision value, Upworthy](reports/figures/decision_value-upworthy.png)", "",
+            "Reliability diagram of p_sig, Upworthy:", "", "![reliability diagram, Upworthy](figures/reliability-upworthy.png)", "",
+            "Decision value, Upworthy:", "", "![decision value, Upworthy](figures/decision_value-upworthy.png)", "",
             "Reliability diagram of p_sig, synthetic data with known truth:", "",
-            "![reliability diagram, synthetic](reports/figures/reliability-synthetic.png)", ""]
+            "![reliability diagram, synthetic](figures/reliability-synthetic.png)", ""]
     out += challenger_lines(reports)
     for src, _title in SOURCES:
         out += ablation_lines(reports, src)
@@ -385,7 +391,7 @@ def render_block(reports_dir) -> str:
 
 
 def sync_figures(reports_dir: Path, target: Path) -> int:
-    """Copy the generated figures into the repo-local folder the README links to (they are small and committed)."""
+    """Copy the generated figures into the folder the results page links to (they are small and committed)."""
     src = reports_dir / "figures"
     if not src.is_dir() or src.resolve() == target.resolve():
         return 0
@@ -397,34 +403,71 @@ def sync_figures(reports_dir: Path, target: Path) -> int:
     return n
 
 
+def _verdict(row: dict) -> str:
+    lo, hi = row["brier_skill_lo"], row["brier_skill_hi"]
+    if hi < 0:
+        return "worse than the constant base rate"
+    return "better than the constant base rate" if lo > 0 else "not distinguishable from the constant base rate"
+
+
+def headline_lines(reports_dir) -> list[str]:
+    """The README's two-line summary, one line per archive, read from the report JSON like every other number."""
+    reports = Path(reports_dir)
+    out = []
+    for src, title in SOURCES[:2]:
+        doc = _latest(reports, src)
+        p1, p2 = _row(doc, "ALL", "P1"), _row(doc, "ALL", "P2")
+        cells = [r for r in doc["tables"]["aggregate"] if r["rung"] == "P2" and r["cell"] != "ALL"]
+        undecided = sum(1 for r in cells if r.get("decidable_by_tests") == "undecidable at this n")
+        out.append(f"- {title}, {p1['n']} scored rows: Brier skill against the base rate on all rows is {_ci(p1, 'brier_skill')} for P1 "
+                   f"({_verdict(p1)}) and {_ci(p2, 'brier_skill')} for P2 ({_verdict(p2)}); "
+                   f"{undecided} of {len(cells)} cells are undecidable at this n "
+                   f"at the release gate.")
+    return out
+
+
+def _swap(text: str, start: str, end: str, body: str) -> tuple[str, str] | None:
+    """(the text with the body between the markers replaced, the old body), or None when a marker is missing."""
+    if start not in text or end not in text:
+        return None
+    head, rest = text.split(start, 1)
+    old, tail = rest.split(end, 1)
+    return head + start + "\n" + body + end + tail, old
+
+
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--reports-dir", default=str(storage_paths().reports))
-    ap.add_argument("--readme", default=str(root / "README.md"))
+    ap.add_argument("--page", "--readme", dest="readme", default=str(root / PAGE), help="the page that holds the block (default docs/results.md)")
+    ap.add_argument("--front", default=str(root / "README.md"), help="the file that holds the two-line headline summary (default README.md)")
     mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--check", action="store_true")
     args = ap.parse_args()
-    readme = Path(args.readme)
-    text = readme.read_text(encoding="utf-8")
-    if START not in text or END not in text:
-        print(f"{readme} lacks the {START} and {END} markers", file=sys.stderr)
-        return 2
-    head, rest = text.split(START, 1)
-    old, tail = rest.split(END, 1)
-    block = render_block(args.reports_dir)
-    new = head + START + "\n" + block + END + tail
+    page, front = Path(args.readme), Path(args.front)
+    jobs = [(page, START, END, render_block(args.reports_dir), "results block"),
+            (front, HEAD_START, HEAD_END, "\n".join(headline_lines(args.reports_dir)) + "\n", "headline summary")]
+    stale = 0
+    for path, start, end, body, what in jobs:
+        text = path.read_text(encoding="utf-8")
+        swapped = _swap(text, start, end, body)
+        if swapped is None:
+            print(f"{path} lacks the {start} and {end} markers", file=sys.stderr)
+            return 2
+        new, old = swapped
+        if args.write:
+            if new != text:
+                path.write_text(new, encoding="utf-8")
+            print(f"rewrote the {what} of {path}")
+        elif old.strip() != body.strip():
+            print(f"{path.name} {what} differs from the reports; run with --write", file=sys.stderr)
+            stale += 1
+        else:
+            print(f"{path.name} {what} matches the reports")
     if args.write:
-        readme.write_text(new, encoding="utf-8")
-        sync_figures(Path(args.reports_dir), readme.parent / README_FIGURES)
-        print(f"rewrote the results block of {readme}")
-        return 0
-    if old.strip() != block.strip():
-        print("README.md results block differs from the reports; run with --write", file=sys.stderr)
-        return 1
-    print("README.md results block matches the reports")
-    return 0
+        sync_figures(Path(args.reports_dir), root / FIGURES_DIR)
+    return 1 if stale else 0
 
 
 if __name__ == "__main__":

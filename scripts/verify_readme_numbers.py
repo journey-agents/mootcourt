@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Independent check of the numbers in the README results block.
+"""Independent check of the numbers in the results block of docs/results.md (the block lived in the README until the README became
+a reader's entry point; the script keeps its name).
 
-Standard library plus pandas only; nothing is imported from mootcourt. The script reads the README, finds every
+Standard library plus pandas only; nothing is imported from mootcourt. The script reads the page, finds every
 table in the results block, re-derives numbers from the report JSON files under the data root (and, for the
 backtest tables, from the per-row score tables next to them), and compares each to the printed value at the
 printed precision. It exits 1 when a number disagrees or when a table has fewer than three numbers checked.
 
-Usage: MOOTCOURT_DATA_ROOT=/path/to/root python scripts/verify_readme_numbers.py [--readme README.md] [--reports DIR]
+Usage: MOOTCOURT_DATA_ROOT=/path/to/root python scripts/verify_readme_numbers.py [--page docs/results.md] [--reports DIR]
 """
 from __future__ import annotations
 
@@ -65,7 +66,7 @@ def parse_tables(block: list[str]) -> list[tuple[list[str], list[list[str]]]]:
 def split_sections(text: str) -> dict[str, list[str]]:
     m = re.search(r"<!-- moot-results:start -->(.*)<!-- moot-results:end -->", text, re.S)
     if not m:
-        sys.exit("README has no results block")
+        sys.exit("the page has no results block")
     sections, cur = {}, None
     for ln in m.group(1).splitlines():
         if ln.startswith("### "):
@@ -349,7 +350,7 @@ def verify_learning(sec, lines, reports, source):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     here = Path(__file__).resolve().parents[1]
-    ap.add_argument("--readme", default=str(here / "README.md"))
+    ap.add_argument("--page", "--readme", dest="readme", default=str(here / "docs" / "results.md"), help="the page that holds the results block")
     ap.add_argument("--reports", default=None)
     ap.add_argument("--min-per-table", type=int, default=3)
     args = ap.parse_args()
@@ -375,11 +376,11 @@ def main() -> int:
     skipped = [k for k in sections if k not in handlers and parse_tables(sections[k])]
     for name, fn in handlers.items():
         if name not in sections:
-            RESULTS.append((name, "section missing in README", "", "", False))
+            RESULTS.append((name, "section missing in the page", "", "", False))
             continue
         fn(name, sections[name])
     bad = [r for r in RESULTS if not r[4]]
-    print(f"README: {args.readme}\nreports: {reports}\n")
+    print(f"page: {args.readme}\nreports: {reports}\n")
     print(f"{'section':<52}{'checked':>9}{'mismatch':>10}")
     fail = False
     for name in handlers:
