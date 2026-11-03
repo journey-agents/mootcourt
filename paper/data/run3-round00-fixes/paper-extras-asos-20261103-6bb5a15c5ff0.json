@@ -1,7 +1,7 @@
 {
  "guard_admission_rates": null,
  "header": {
-  "created_at": "2026-11-03T20:25:18.296805+00:00",
+  "created_at": "2026-11-03T22:07:14.218751+00:00",
   "created_by": "scripts/paper_extras.py",
   "differences_from_docs": [
    "guard_admission_rates: the one-off runs behind the documentation left no report file, so the cells are refit here on ledgers regenerated with the same generator, text effect zero, 300 tests of two variants per seed; the seeds and the settings are in inputs",

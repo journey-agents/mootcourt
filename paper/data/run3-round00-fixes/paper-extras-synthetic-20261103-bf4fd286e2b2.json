@@ -65,7 +65,7 @@
   }
  },
  "header": {
-  "created_at": "2026-11-03T20:25:20.427210+00:00",
+  "created_at": "2026-11-03T22:07:15.652338+00:00",
   "created_by": "scripts/paper_extras.py",
   "differences_from_docs": [
    "guard_admission_rates: the one-off runs behind the documentation left no report file, so the cells are refit here on ledgers regenerated with the same generator, text effect zero, 300 tests of two variants per seed; the seeds and the settings are in inputs",
@@ -248,37 +248,59 @@
     "contrasts": 10000,
     "ledger": "generated",
     "ledger_input": "benchmark.make_scale_ledger(10000, seed=20261103)",
+    "mean_range_over_seeds": {
+     "share_p2_weight": [
+      0.13812960228761095,
+      0.15620524112400025
+     ],
+     "share_raw_kernel": [
+      0.13755259903750877,
+      0.15548859246751875
+     ]
+    },
     "n_queries": 60,
+    "n_query_seeds": 6,
     "n_visible_neighbors_mean": 3358.0,
-    "seconds": 9.4,
+    "seconds": 10.7,
     "share_p2_weight": {
-     "mean": 0.13849254086750673,
-     "p10": 0.05207293327771452,
-     "p90": 0.20411732646407588
+     "mean": 0.14575952969875325,
+     "p10": 0.08076789440322654,
+     "p90": 0.20802918196601222
     },
     "share_raw_kernel": {
-     "mean": 0.13773432096246813,
-     "p10": 0.05035779483171824,
-     "p90": 0.2019659731244493
+     "mean": 0.14498146403829779,
+     "p10": 0.08049343611861642,
+     "p90": 0.2073465777487073
     }
    },
    {
     "bundle_rows": 100000,
     "contrasts": 100000,
-    "ledger": "generated",
-    "ledger_input": "benchmark.make_scale_ledger(100000, seed=20261103)",
+    "ledger": "experiments/scale",
+    "ledger_input": "/Volumes/Crucial X10/mootcourt-data/experiments/scale/ledger-100000.parquet",
+    "mean_range_over_seeds": {
+     "share_p2_weight": [
+      0.5019073470720802,
+      0.5401323109633779
+     ],
+     "share_raw_kernel": [
+      0.50178449432817,
+      0.540013360225106
+     ]
+    },
     "n_queries": 60,
+    "n_query_seeds": 6,
     "n_visible_neighbors_mean": 33648.0,
-    "seconds": 94.7,
+    "seconds": 110.1,
     "share_p2_weight": {
-     "mean": 0.5177424880187934,
-     "p10": 0.3294044168593806,
-     "p90": 0.6415046696761418
+     "mean": 0.5185212569564698,
+     "p10": 0.3475709617268045,
+     "p90": 0.6498423055266338
     },
     "share_raw_kernel": {
-     "mean": 0.5175174640040264,
-     "p10": 0.3292045081314681,
-     "p90": 0.6405209178167324
+     "mean": 0.5183764178122031,
+     "p10": 0.3482288111877574,
+     "p90": 0.6501654499384288
     }
    },
    {
@@ -286,18 +308,29 @@
     "contrasts": 300000,
     "ledger": "generated",
     "ledger_input": "benchmark.make_scale_ledger(300000, seed=20261103)",
+    "mean_range_over_seeds": {
+     "share_p2_weight": [
+      0.6340643318437336,
+      0.6761462931366876
+     ],
+     "share_raw_kernel": [
+      0.633575595222698,
+      0.675811189559187
+     ]
+    },
     "n_queries": 60,
+    "n_query_seeds": 6,
     "n_visible_neighbors_mean": 99614.0,
-    "seconds": 319.1,
+    "seconds": 391.0,
     "share_p2_weight": {
-     "mean": 0.6340643318437336,
-     "p10": 0.47251392135910303,
-     "p90": 0.7709236637815948
+     "mean": 0.6535386379196372,
+     "p10": 0.4898997985837552,
+     "p90": 0.7815299341747041
     },
     "share_raw_kernel": {
-     "mean": 0.633575595222698,
-     "p10": 0.47211768088554495,
-     "p90": 0.7714933313418063
+     "mean": 0.653230533570188,
+     "p10": 0.48939239590212275,
+     "p90": 0.7812616224817569
     }
    }
   ],
@@ -306,7 +339,14 @@
    "bundle": "fit_bundle on the whole ledger",
    "origin": "one day after the last usable_after",
    "queries": "random headlines of 3 to 8 words from the benchmark word list, no image change, planned exposure 5000 to 60000",
-   "seed": 0
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
   },
   "top_m": 1000
  },

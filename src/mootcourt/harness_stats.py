@@ -410,7 +410,7 @@ def _bonferroni(est: float, draws: np.ndarray, family: int) -> tuple[float | Non
     return float(est - half), float(est + half)
 
 
-def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, gates: dict, B: int, seed: int, family: int = 1) -> dict:
+def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, gates: dict, B: int, seed: int, family: int = 1) -> dict:
     """One row of the aggregate table for a (cell, rung) group.
 
     ``family`` is the number of intervals the table shows, for the Bonferroni-adjusted bounds (``adjusted_lo``, ``adjusted_hi`` for the
@@ -521,6 +521,16 @@ def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, ga
     legacy = select_gates(gates, LEGACY_BASE_RATE, exact=True)
     row["decidable_by_tests_base_0.3"] = gate_status(ts.n_tests, legacy)["label"] if legacy else None
     return row
+
+
+def _group_table(*args, **kwargs) -> dict:
+    """``_group_table_impl`` with the arithmetic warnings of empty or degenerate bootstrap draws silenced: a cell with no events has a
+    zero base Brier score and a skill that is simply undefined, which the table records as None."""
+    import warnings
+
+    with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return _group_table_impl(*args, **kwargs)
 
 
 def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed: int = 0, family_size: int | None = None) -> pd.DataFrame:
