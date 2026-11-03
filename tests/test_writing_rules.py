@@ -508,8 +508,8 @@ def test_digest_file_present_and_well_formed():
     assert DIGEST_FILE.exists()
     lines = [ln for ln in DIGEST_FILE.read_text().splitlines() if ln.strip()]
     assert lines and all(re.fullmatch(r"[0-9a-f]{64}", ln.strip()) for ln in lines)
-    assert DIGEST_FILE.read_text() == (ROOT / ".claude" / "fleet" / "forbidden-terms.sha256").read_text() \
-        or not (ROOT / ".claude" / "fleet" / "forbidden-terms.sha256").exists()
+    fleet = ROOT / ".claude" / "fleet" / "forbidden-terms.sha256"
+    assert not fleet.exists() or DIGEST_FILE.read_text() == fleet.read_text()
 
 
 def test_restricted_digest_file_is_a_copy_of_the_fleet_file():
