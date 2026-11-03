@@ -100,13 +100,6 @@ def _forecast_logscore(point, interval90, y: float, s: float) -> float | None:
     return float(Predictive.from_normal(grid, point, sd).logscore(y, s))
 
 
-def _model_logscore(card: dict, y: float, s: float) -> float | None:
-    pred = card["prediction"]
-    if card["abstention"]["status"] != "issue":
-        return None
-    return _forecast_logscore(pred.get("point"), pred.get("interval_90"), y, s)
-
-
 def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime, forecast: dict | None = None) -> dict | None:
     """The outcome of one issued card given its ledger row, or None while the row's registered horizon has not passed at ``now``.
 

@@ -160,12 +160,17 @@ def _second_opinion_table(scores: pd.DataFrame, meta: dict, gates: dict, B: int,
 
 def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, snapshot_id: str, model_id: str, feature_hash: str,
                    command: str, seed: int, gates: dict, B: int = hs.DEFAULT_B, second_opinion: dict | None = None,
-                   extra_notes: dict | None = None, variant: dict | None = None, primary_metric: str | None = None) -> dict:
+                   extra_notes: dict | None = None, variant: dict | None = None, primary_metric: str | None = None,
+                   reference_scores: pd.DataFrame | None = None, reference_files: dict | None = None) -> dict:
     """The report as a JSON-ready dict (see the module docstring).
 
     A ledger with several metrics per experiment (``scores`` has a ``metric`` column with two or more values) gets one block per metric
     under ``tables.by_metric``, each scored separately; the decision value uses the primary metric only (``primary_metric``, default
     the metric with the most scored rows). A single-metric source gets exactly the report it always had.
+
+    ``reference_scores`` is the score table of the main run on the same snapshot, given for a trigger-removal run (``--drop-trigger``): the
+    report then also holds ``tables.released_rows``, the scores of the rows the main run abstained on and this run issues. It adds a table
+    and changes no other. ``reference_files`` (``main_report`` and ``main_scores`` file names) is recorded in the header.
     """
     agg = hs.aggregate_scores(scores, gates, B=B, seed=seed)
     agg.insert(2, "kind", agg["rung"].map(rung_kind))
@@ -227,6 +232,12 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
         header["second_opinion"] = second_opinion
         notes["second_opinion"] = CONTAMINATION_SENTENCE
         so_table = _second_opinion_table(scores, second_opinion, gates, B, seed)
+    released = None
+    if reference_scores is not None and primary in set(reference_scores["rung"]):
+        released = hs.released_rows(reference_scores, scores, gates, B=B, seed=seed, rung=primary)
+        header["released_rows_reference"] = dict(reference_files or {})
+        notes["released_rows"] = ("Rows released by the dropped trigger: abstained in the main run and issued in this run. Their scores are "
+                                  "this run's scores, which equal the main run's (abstention does not change a score).")
     notes.update(extra_notes or {})
     return clean({
         "header": header,
@@ -242,6 +253,7 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
             "p2_selection": pd.DataFrame(scores.attrs.get("selections") or []),
             "p2_selection_by_cell": selection_by_cell(scores.attrs.get("selections") or []),
             **({"second_opinion": so_table} if so_table is not None else {}),
+            **({"released_rows": released} if released is not None else {}),
         },
     })
 
@@ -389,6 +401,11 @@ def render_markdown(doc: dict) -> str:
     out += ["## Abstention by trigger", "", "Counts of rows that fired each trigger (a row can fire several).", ""]
     out += _table(t["abstention"], ["cell", "n", "rate", "support", "novelty", "reliability", "instability"])
     out += [notes["abstention_triggers"], ""]
+    if t.get("released_rows"):
+        out += ["## Released rows", "", notes["released_rows"], ""]
+        out += _table(t["released_rows"], ["cell", "rung", "n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier", "brier_skill",
+                                           "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "direction_accuracy_lo",
+                                           "direction_accuracy_hi", "event_rate", "mean_p_sig", "n_abstained_main", "n_abstained_ablation"])
     out += ["## Origins", "", "The first scored origin is the burn-in origin.", ""]
     out += _table(t["origins"], ["origin", "n_scored", "n_tests", "abstention_rate", "logscore", "burn_in"])
     out += ["### Log score by origin with 90 percent intervals", ""]
@@ -548,7 +565,8 @@ def write_reliability(scores: pd.DataFrame, source: str, out_dir, as_of: dt.date
 def write_report(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, snapshot_id: str, model_id: str, feature_hash: str,
                  command: str, seed: int, gates: dict, out_dir, B: int = hs.DEFAULT_B, second_opinion: dict | None = None,
                  extra_notes: dict | None = None, suffix: str = "", main: bool = True, variant: dict | None = None,
-                 primary_metric: str | None = None) -> ReportPaths:
+                 primary_metric: str | None = None, reference_scores: pd.DataFrame | None = None,
+                 reference_files: dict | None = None) -> ReportPaths:
     """Write the JSON, the Markdown, the score table, the figures and the reliability seed; return their paths.
 
     ``suffix`` names a variant (``--setting`` is appended to the file stem). ``main=False`` is for variants and
@@ -558,7 +576,8 @@ def write_report(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, sna
     out_dir.mkdir(parents=True, exist_ok=True)
     doc = build_document(scores, ledger=ledger, source=source, snapshot_id=snapshot_id, model_id=model_id,
                          feature_hash=feature_hash, command=command, seed=seed, gates=gates, B=B, second_opinion=second_opinion,
-                         extra_notes=extra_notes, variant=variant, primary_metric=primary_metric)
+                         extra_notes=extra_notes, variant=variant, primary_metric=primary_metric,
+                         reference_scores=reference_scores, reference_files=reference_files)
     stem = f"backtest-{source}-{snapshot_id}" + (f"--{suffix}" if suffix else "")
     paths = ReportPaths(md=out_dir / f"{stem}.md", json=out_dir / f"{stem}.json",
                         scores=out_dir / f"scores-{source}-{snapshot_id}{'--' + suffix if suffix else ''}.parquet")

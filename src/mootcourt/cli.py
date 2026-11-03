@@ -460,9 +460,20 @@ def backtest(
         typer.echo(f"second opinion {data.provider_id} {data.version}: weight in force {weight}, "
                    f"{so_meta['n_with_opinion']} of {so_meta['n_rows']} rows with an opinion, {so_meta['n_declined']} declined, "
                    f"{so_meta['n_failed']} failed calls, {so_meta['n_missing']} absent from the file")
+    reference, reference_files = None, None
+    if drop_trigger and not main_run:
+        main_scores = reports_dir / f"scores-{source}-{sid}.parquet"
+        if main_scores.exists():
+            import pandas as pd
+
+            reference = pd.read_parquet(main_scores)
+            reference_files = {"main_scores": main_scores.name, "main_report": f"backtest-{source}-{sid}.json"}
+        else:
+            typer.echo(f"no main run's scores at {main_scores}: the report prints no released rows (run `moot backtest --source {source}` first)")
     paths = write_report(scores, ledger=df, source=source, snapshot_id=sid, model_id=model_id, feature_hash=feature_hash,
                          command=command, seed=seed, gates=gates, out_dir=out_dir, B=bootstrap, second_opinion=so_meta,
-                         suffix=suffix, main=main_run, variant=variant or None, primary_metric=primary_metric)
+                         suffix=suffix, main=main_run, variant=variant or None, primary_metric=primary_metric,
+                         reference_scores=reference, reference_files=reference_files)
     if main_run:
         attached = attach_backtest(models_dir, source, sid, json.loads(paths.json.read_text(encoding="utf-8")), paths.json.name)
         if attached:

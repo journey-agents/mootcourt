@@ -448,6 +448,41 @@ def by_year(scores: pd.DataFrame, years, gates: dict, B: int = DEFAULT_B, seed: 
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["year", "cell", "rung", *YEAR_COLUMNS])
 
 
+RELEASED_COLUMNS = ["n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier", "brier_skill", "brier_skill_lo", "brier_skill_hi",
+                    "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi"]
+
+
+def released_rows(main_scores: pd.DataFrame, ablation_scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed: int = 0,
+                  rung: str = "P2") -> list[dict]:
+    """Scores of the rows a trigger-removal run releases: abstained under the full trigger set and issued under the ablation.
+
+    Both tables must hold the same rows of ``rung`` with the same scores (abstention does not change a score, only whether the card
+    is issued); a mismatch raises ValueError. Each row of the result is one cell (plus ``ALL``) with the same columns and the same
+    by-test bootstrap as the aggregate table (n, n_tests, log score, Brier, Brier skill, direction accuracy with 90 percent
+    intervals), plus the event rate and the mean ``p_sig`` of the released rows and how many rows each run abstained on. A run that
+    releases nothing gives an ``ALL`` row with n = 0 and no scores.
+    """
+    m = main_scores[main_scores["rung"] == rung].set_index("row_id").sort_index()
+    a = ablation_scores[ablation_scores["rung"] == rung].set_index("row_id").sort_index()
+    if len(m) == 0 or not m.index.equals(a.index):
+        raise ValueError(f"the main run and the ablation must hold the same rows of rung {rung} (main {len(m)}, ablation {len(a)})")
+    if not np.allclose(m["logscore"].to_numpy(float), a["logscore"].to_numpy(float), rtol=0, atol=1e-9, equal_nan=True):
+        raise ValueError("the main run and the ablation scored differently: they are not the same run apart from the dropped trigger")
+    out_of = m["abstain"].to_numpy(bool) & ~a["abstain"].to_numpy(bool)
+    rel = a[out_of].reset_index()
+    base = {"rung": rung, "n_abstained_main": int(m["abstain"].sum()), "n_abstained_ablation": int(a["abstain"].sum()), "n_rows": int(len(m))}
+    if rel.empty:
+        empty = {k: (0 if k in ("n", "n_tests") else None) for k in RELEASED_COLUMNS}
+        return [{"cell": "ALL", **base, **empty, "event_rate": None, "mean_p_sig": None}]
+    agg = aggregate_scores(rel, gates, B=B, seed=seed)
+    rows = []
+    for _, r in agg.iterrows():
+        g = rel if r["cell"] == "ALL" else rel[rel["cell"] == r["cell"]]
+        rows.append({"cell": r["cell"], **base, **{k: r[k] for k in RELEASED_COLUMNS},
+                     "event_rate": float(g["event"].mean()), "mean_p_sig": float(g["p_sig"].mean())})
+    return rows
+
+
 def by_origin(scores: pd.DataFrame, column: str = "logscore", B: int = BY_ORIGIN_RESAMPLES, seed: int = 0) -> pd.DataFrame:
     """Mean of ``column`` per origin and rung with a by-test 90 percent interval."""
     rows = []

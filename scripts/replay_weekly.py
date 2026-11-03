@@ -22,6 +22,8 @@ visible at each week. Design calls, also stated in the report header:
 * Flagged week. A week is flagged when the report written at its join marks at least one cell drifted: two joins in a row with at
   least ten outcomes in the window and a rolling log score more than 0.10 nats under the baseline (``abstain.py``, ``reliability.py``).
   ``below_cells`` lists the cells below threshold at the join (a first warning); ``drift_onsets`` the weeks a cell newly drifted.
+* Abstentions by trigger. ``weeks[].abstained_by_trigger`` counts the cards of the week that carried each trigger as a reason (a card can
+  carry several, so the counts can add up to more than ``abstained``); ``totals.abstained_by_trigger`` sums the weeks.
 
 Use: ``python scripts/replay_weekly.py --source upworthy``. Nothing is written to the ledger, the cards folder or the models folder.
 """
@@ -38,7 +40,7 @@ import pandas as pd
 
 from mootcourt import card as card_mod
 from mootcourt import loop
-from mootcourt.abstain import AbstainConfig
+from mootcourt.abstain import TRIGGERS, AbstainConfig
 from mootcourt.bundle import fit_bundle
 from mootcourt.config import DRIFT_CONSECUTIVE, DRIFT_LOGSCORE_MARGIN, RELIABILITY_MAX_AGE_DAYS, TRAILING_WEEKS
 from mootcourt.harness import MIN_FIT_ROWS, quarterly_origins
@@ -142,6 +144,7 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
                 print(f"fitted the bundle of origin {q.date()} on {bundles[q].n_rows} rows ({time.perf_counter() - t0:.0f} s)", file=sys.stderr)
         bundle = bundles[q]
         issued = abstained = 0
+        by_trigger = dict.fromkeys(TRIGGERS, 0)
         for row in by_week.get(t, []):
             request = _request(row, source)
             card = card_mod.build_card(bundle, request, reliability=report, now=t.to_pydatetime(), config=cfg)
@@ -156,6 +159,8 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
                 records.append(rec)
             issued += 1
             abstained += int(card.abstention.status != "issue")
+            for reason in card.abstention.reasons:
+                by_trigger[reason] += 1
         n_cards += issued
         win = [o for j, o in joined_issued if t - pd.Timedelta(weeks=TRAILING_WEEKS) < j <= t]
         cover = float(np.mean([o["interval_90"][0] <= o["y"] <= o["interval_90"][1] for o in win])) if win else None
@@ -165,7 +170,8 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
         week_docs.append({
             "week_start": t.isoformat(), "bundle_origin": q.isoformat(),
             "max_fit_cutoff": None if bundle.fit_cutoff is None else bundle.fit_cutoff.isoformat(),
-            "cards_issued": issued, "abstained": abstained, "abstention_rate": (abstained / issued) if issued else None,
+            "cards_issued": issued, "abstained": abstained, "abstained_by_trigger": by_trigger,
+            "abstention_rate": (abstained / issued) if issued else None,
             "outcomes_joined": len(written), "miss_counts": counts, "coverage_90": cover, "coverage_90_n": len(win),
             "below_cells": below, "drifted_cells": drifted, "flagged": bool(drifted), "reliability": _compact(report),
         })
@@ -193,6 +199,7 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
         "totals": {
             "cards_issued": n_cards, "outcomes_joined": n_out, "miss_counts": miss_total, "n_flagged_weeks": len(flagged_weeks),
             "abstained": int(sum(w["abstained"] for w in week_docs)),
+            "abstained_by_trigger": {t: int(sum(w["abstained_by_trigger"][t] for w in week_docs)) for t in TRIGGERS},
             "coverage_90_all": float(np.mean([o["interval_90"][0] <= o["y"] <= o["interval_90"][1] for o in allw])) if allw else None,
             "coverage_90_all_n": len(allw),
         },

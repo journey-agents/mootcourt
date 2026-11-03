@@ -123,16 +123,27 @@ def calibration_table(rep, source, out, rungs=("P1", "P2")):
 
 
 def decision_table(rep, source, out):
+    """Captured fraction and regret per policy and model, as the mean over the per-origin rows of tables.decision_value.
+
+    The pooled row (origin ALL) is a different quantity, the share over every chosen test, so it is left out of the means; the
+    generated comment line says so and counts the origins averaged.
+    """
     t = rep["tables"]["decision_value"]
-    keys = sorted({(r["policy"], r["rung"]) for r in t}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
+    per_origin = [r for r in t if r["origin"] != "ALL"]
+    if not per_origin:
+        raise ValueError(f"{rep['_path']} has no per-origin decision value rows (only the pooled ALL row)")
+    keys = sorted({(r["policy"], r["rung"]) for r in per_origin}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
     lines = [r"\begin{tabular}{llrr}", r"\toprule", r"policy & model & captured fraction (mean over origins) & regret (mean) \\", r"\midrule"]
     for pol, rg in keys:
-        rows = [r for r in t if r["policy"] == pol and r["rung"] == rg]
+        rows = [r for r in per_origin if r["policy"] == pol and r["rung"] == rg]
         cf = statistics.mean(r["captured_fraction"] for r in rows)
         rg_ = statistics.mean(r["regret"] for r in rows)
         lines.append(f"{esc(pol)} & {esc(rg)} & {f3(cf)} & {f3(rg_, 1)} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
-    write(out, f"decision-{source}.tex", rep["_path"], "\n".join(lines) + "\n")
+    n_origins = len({r["origin"] for r in per_origin})
+    note = (f"{rep['_path']} (tables.decision_value; each mean is over the {n_origins} per-origin rows of the policy "
+            "and excludes the pooled origin=ALL row)")
+    write(out, f"decision-{source}.tex", note, "\n".join(lines) + "\n")
 
 
 def abstention_table(rep, source, out):
@@ -196,13 +207,25 @@ def ablation_table(reports_dir, source, out):
 
 
 def trigger_ablation_table(rep, reports_dir, source, out):
-    """Skill on the cards that still issue, with one abstention trigger switched off at a time (the primary rung, all cells)."""
+    """Skill on the cards that still issue, with one abstention trigger switched off at a time (the primary rung, all cells).
+
+    Every trigger run must be on the main report's snapshot: a run from another snapshot would put rows of two ledgers in one table.
+    When the runs carry ``tables.released_rows`` (the rows the full trigger set abstained on and the ablation issued), a second file
+    ``trigger-released-<source>.tex`` prints their scores.
+    """
     names = ("support", "novelty", "reliability", "instability")
+    main_sid = rep["header"]["snapshot_id"]
     runs = [("none (main run)", rep, rep["_path"])]
     for name in names:
         hits = sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*--drop-trigger-{name}.json")))
         if hits:
-            runs.append((f"drop {name}", load(hits[-1]), hits[-1]))
+            doc = load(hits[-1])
+            if doc["header"]["snapshot_id"] != main_sid:
+                raise ValueError(
+                    f"{hits[-1]} is a trigger run on snapshot {doc['header']['snapshot_id']}, "
+                    f"but the main report {rep['_path']} is on snapshot {main_sid}"
+                )
+            runs.append((f"drop {name}", doc, hits[-1]))
     if len(runs) == 1:
         return
     lines = [
@@ -222,6 +245,30 @@ def trigger_ablation_table(rep, reports_dir, source, out):
         )
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(out, f"trigger-ablation-{source}.tex", "; ".join(p for _l, _d, p in runs), "\n".join(lines) + "\n")
+    released = [(label, doc, p) for label, doc, p in runs[1:] if doc["tables"].get("released_rows")]
+    if released:
+        rl = [
+            r"\begin{tabular}{lrrrrr}",
+            r"\toprule",
+            r"setting & released rows & tests & log score (90\%) & Brier skill (90\%) & dir.\ acc.\ (90\%) \\",
+            r"\midrule",
+        ]
+        for label, doc, _p in released:
+            r = next((x for x in doc["tables"]["released_rows"] if x["cell"] == "ALL" and x["rung"] == "P2"), None)
+            if r is None:
+                continue
+            rl.append(
+                f"{esc(label)} & {r['n']} & {r['n_tests']} & {interval(r, 'logscore')} & {interval(r, 'brier_skill')} & "
+                f"{interval(r, 'direction_accuracy')} \\\\"
+            )
+        rl += [r"\bottomrule", r"\end{tabular}"]
+        write(
+            out,
+            f"trigger-released-{source}.tex",
+            "; ".join(p for _l, _d, p in released)
+            + " (tables.released_rows, rung P2, cell ALL: rows abstained in the main run and issued without the trigger)",
+            "\n".join(rl) + "\n",
+        )
 
 
 def drift_table(rep, source, out, rungs=("P0", "P1", "P2")):

@@ -78,14 +78,40 @@ def _shell_tokens(string: str) -> list[str]:
         return string.split()
 
 
-_ENV_VALUE_OPTIONS = {"-u", "--unset", "-C", "--chdir", "-P", "--default-path", "-a", "--argv0"}      # options of env that take the next word
+_ENV_VALUE_LETTERS = "uCPa"                 # short options of env that take a value: -u NAME, -C DIR, -P PATH, -a ARG
+_ENV_VALUE_LONG = {"--unset", "--chdir", "--default-path", "--argv0", "--split-string"}      # long forms; "=VALUE" attaches the value
+
+
+def _env_short_cluster(word: str) -> tuple[str | None, bool]:
+    """Read a short option cluster of env (``-i``, ``-uNAME``, ``-iS``, ``-Sstring``) from its first letter.
+
+    Letters that take no value (``-i``, ``-0``, ``-v``) are skipped. The first letter that takes a value ends the cluster: the rest of
+    the word is its value (``-uSHELL`` unsets SHELL, it does not mean ``-S HELL``), and when nothing follows, the next word is.
+    Returns ``(letter, attached)``: the value-taking letter that ended the cluster, or None, and whether its value is in the word.
+    """
+    for k, letter in enumerate(word[1:], 1):
+        if letter in _ENV_VALUE_LETTERS or letter == "S":
+            return letter, k + 1 < len(word)
+    return None, False
+
+
+def _env_option_width(command: list[str], i: int) -> int:
+    """Number of words the env option at ``command[i]`` occupies (the option and its value)."""
+    word = command[i]
+    if word.startswith("--"):
+        return 1 if "=" in word or word not in _ENV_VALUE_LONG else 2
+    if word.startswith("-") and len(word) > 1:
+        letter, attached = _env_short_cluster(word)
+        return 2 if letter is not None and not attached else 1
+    return 1
 
 
 def _split_env_strings(command: list[str], depth: int = 0) -> list[str]:
     """``command`` with the string of ``env -S`` (``--split-string``, in any spelling) split into words and put in its place.
 
     ``env -S 'sh -c "python3 /x/agent.py"' `` runs what the string says, so its words are checked like any others; a string
-    that is itself an ``env -S`` command is split again (to a small depth).
+    that is itself an ``env -S`` command is split again (to a small depth). Only a bare ``-S`` (or ``-S`` among argument-free
+    letters, ``-iS``) starts a split: in ``-uSHELL`` the S belongs to the name that ``-u`` unsets.
     """
     if not command or os.path.basename(command[0]) != "env" or depth > 4:
         return command
@@ -97,17 +123,18 @@ def _split_env_strings(command: list[str], depth: int = 0) -> list[str]:
             value, width = word.split("=", 1)[1], 1
         elif word == "--split-string":
             value, width = (command[i + 1] if i + 1 < len(command) else ""), 2
-        elif re.fullmatch(r"-[A-Za-z]*S.*", word) and not word.startswith("--"):      # -S, -iS, or the value attached as in -Sstring
-            head, _, attached = word[1:].partition("S")
-            value, width = (attached, 1) if attached else ((command[i + 1] if i + 1 < len(command) else ""), 2)
+        elif word.startswith("-") and not word.startswith("--") and len(word) > 1:
+            letter, attached = _env_short_cluster(word)
+            if letter == "S":                                                   # -S, -iS, or the value attached as in -Sstring
+                value, width = (word[word.index("S") + 1:], 1) if attached else ((command[i + 1] if i + 1 < len(command) else ""), 2)
         if value is not None:
             rest = _split_env_strings(command[:1] + _shell_tokens(value), depth + 1)
             return _split_env_strings(command[:i] + rest[1:] + command[i + width:], depth + 1)
         if not word.startswith("-") and "=" not in word:
-            if os.path.basename(word) == "env":                                         # env env -S '...'
+            if os.path.basename(word) == "env":                                 # env env -S '...'
                 return command[:i] + _split_env_strings(command[i:], depth + 1)
             break
-        i += 2 if word in _ENV_VALUE_OPTIONS else 1
+        i += _env_option_width(command, i) if word.startswith("-") else 1
     return command
 
 
@@ -117,7 +144,7 @@ def _program_index(command: list[str]) -> int:
     while i < len(command) and os.path.basename(command[i]) == "env":                # env may wrap env
         i += 1
         while i < len(command) and (command[i].startswith("-") or "=" in command[i]):
-            i += 2 if command[i] in _ENV_VALUE_OPTIONS else 1      # these options take the next word as their value
+            i += _env_option_width(command, i) if command[i].startswith("-") else 1     # an option's value is part of the option
     return min(i, len(command) - 1)
 
 
