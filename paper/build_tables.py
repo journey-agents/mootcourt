@@ -182,7 +182,7 @@ def gates_table(path, out):
 
 
 def ablation_table(reports_dir, source, out):
-    files = sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*.json")))
+    files = [f for f in sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*.json"))) if "--drop-trigger-" not in f]
     lines = [r"\begin{tabular}{lrrr}", r"\toprule", r"setting & P2 log score & P2 CRPS & P2 Brier skill \\", r"\midrule"]
     for fpath in files:
         rep = load(fpath)
@@ -193,6 +193,91 @@ def ablation_table(reports_dir, source, out):
             lines.append(f"{esc(setting)} & {f3(r['logscore'])} & {f3(r['crps'], 2)} & {f3(r['brier_skill'])} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(out, f"ablations-{source}.tex", f"{reports_dir}/ablations/backtest-{source}-*.json ({len(files)} files)", "\n".join(lines) + "\n")
+
+
+def trigger_ablation_table(rep, reports_dir, source, out):
+    """Skill on the cards that still issue, with one abstention trigger switched off at a time (the primary rung, all cells)."""
+    names = ("support", "novelty", "reliability", "instability")
+    runs = [("none (main run)", rep, rep["_path"])]
+    for name in names:
+        hits = sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*--drop-trigger-{name}.json")))
+        if hits:
+            runs.append((f"drop {name}", load(hits[-1]), hits[-1]))
+    if len(runs) == 1:
+        return
+    lines = [
+        r"\begin{tabular}{lrrrrr}",
+        r"\toprule",
+        r"setting & abst.\ rate & issued rows & log score, issued & Brier, issued & dir.\ acc., issued \\",
+        r"\midrule",
+    ]
+    for label, doc, _path in runs:
+        rows = [r for r in doc["tables"]["aggregate"] if r["cell"] == "ALL" and r["rung"] == "P2"]
+        if not rows:
+            continue
+        r = rows[0]
+        lines.append(
+            f"{esc(label)} & {f3(r['abstention_rate'])} & {r.get('n_nonabstained', '')} & {interval(r, 'logscore_nonabstained')} & "
+            f"{interval(r, 'brier_nonabstained')} & {interval(r, 'direction_accuracy_nonabstained')} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(out, f"trigger-ablation-{source}.tex", "; ".join(p for _l, _d, p in runs), "\n".join(lines) + "\n")
+
+
+def drift_table(rep, source, out, rungs=("P0", "P1", "P2")):
+    """Scores by the calendar year in which the test started (tables.score_by_year), all cells pooled."""
+    t = [r for r in rep["tables"].get("score_by_year", []) if r["cell"] == "ALL" and r["rung"] in rungs]
+    if not t:
+        return
+    lines = [
+        r"\begin{tabular}{rlrrrrrr}",
+        r"\toprule",
+        r"year & model & rows & tests & log score (90\%) & Brier skill (90\%) & dir.\ acc. & abst. \\",
+        r"\midrule",
+    ]
+    for r in sorted(t, key=lambda x: (x["year"], rungs.index(x["rung"]))):
+        lines.append(
+            f"{r['year']} & {esc(r['rung'])} & {r['n']} & {r['n_tests']} & {interval(r, 'logscore')} & {interval(r, 'brier_skill')} & "
+            f"{f3(r['direction_accuracy'])} & {f3(r['abstention_rate'])} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(out, f"drift-{source}.tex", f"{rep['_path']} (tables.score_by_year)", "\n".join(lines) + "\n")
+
+
+def replay_table(path, source, out):
+    """The weekly replay summed by calendar quarter of the week, with the typed misses and the weeks the loop would have flagged."""
+    import pandas as pd
+
+    d = load(path)
+    w = pd.DataFrame(d["weeks"])
+    w["quarter"] = pd.to_datetime(w["week_start"], utc=True).dt.tz_localize(None).dt.to_period("Q").astype(str)
+    kinds = ["hit", "magnitude_miss", "direction_miss", "confident_but_wrong", "abstained_but_clear"]
+    lines = [
+        r"\begin{tabular}{lrrrrrrrrrrr}",
+        r"\toprule",
+        r"quarter & weeks & cards & joined & abst. & hit & magn. & dir. & conf.\ wrong & abst.\ clear & cov.\ 90 (last wk) & flagged wks \\",
+        r"\midrule",
+    ]
+    for q, g in w.groupby("quarter", sort=True):
+        cards, ab = int(g["cards_issued"].sum()), int(g["abstained"].sum())
+        counts = [int(sum(m[k] for m in g["miss_counts"])) for k in kinds]
+        last_cov = next((c for c in reversed(g["coverage_90"].tolist()) if c is not None and c == c), None)
+        lines.append(
+            f"{q} & {len(g)} & {cards} & {int(g['outcomes_joined'].sum())} & {f3(ab / cards if cards else None, 2)} & "
+            + " & ".join(str(c) for c in counts)
+            + f" & {f3(last_cov, 2)} & {int(g['flagged'].sum())} \\\\"
+        )
+    t = d["totals"]
+    lines += [
+        r"\midrule",
+        f"all & {d['header']['n_weeks']} & {t['cards_issued']} & {t['outcomes_joined']} & "
+        f"{f3(t['abstained'] / t['cards_issued'] if t['cards_issued'] else None, 2)} & "
+        + " & ".join(str(t["miss_counts"][k]) for k in kinds)
+        + f" & {f3(t.get('coverage_90_all'), 2)} & {t['n_flagged_weeks']} \\\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+    ]
+    write(out, f"replay-{source}.tex", path, "\n".join(lines) + "\n")
 
 
 def learning_table(path, source, out):
@@ -276,6 +361,11 @@ if __name__ == "__main__":
         abstention_table(rep, source, a.out)
         selection_table(rep, source, a.out)
         ablation_table(a.reports, source, a.out)
+        trigger_ablation_table(rep, a.reports, source, a.out)
+        drift_table(rep, source, a.out)
+        rp = latest(os.path.join(a.reports, f"replay-{source}-*.json"))
+        if rp:
+            replay_table(rp, source, a.out)
         lc = latest(os.path.join(a.reports, f"learning-curve-{source}-*.json"))
         if lc:
             learning_table(lc, source, a.out)

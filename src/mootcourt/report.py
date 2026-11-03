@@ -234,7 +234,8 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
         "tables": {
             "aggregate": agg, **({"by_metric": by_metric} if multi else {}), "decision_value": dv,
             "abstention": hs.abstention_summary(scores), "origins": by_origin,
-            "score_by_origin": stats_by_origin, "reliability_bins": pd.concat(bins, ignore_index=True),
+            "score_by_origin": stats_by_origin, "score_by_year": hs.by_year(scores, row_years(scores, ledger), gates, B=B, seed=seed),
+            "reliability_bins": pd.concat(bins, ignore_index=True),
             "coverage": hs.coverage_by_cell(scores[scores["rung"] == primary]),
             "calibration_by_precision": hs.calibration_by_precision(scores),
             "split_half": [{"cell": c, **v} for c, v in _split_half(ledger, scores["origin"].max()).items()],
@@ -243,6 +244,18 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
             **({"second_opinion": so_table} if so_table is not None else {}),
         },
     })
+
+
+def row_years(scores: pd.DataFrame, ledger: pd.DataFrame) -> np.ndarray:
+    """Calendar year (UTC) in which the test of each scored row started, from the ledger's ``started_at``.
+
+    A row scored at origin t starts in the quarter of t, so this is also the year of its origin; the ledger value is used so the
+    definition does not depend on the origin grid. A row id absent from the ledger falls back to the year of its origin.
+    """
+    started = ledger.drop_duplicates("row_id").set_index("row_id")["started_at"]
+    year = pd.to_datetime(started.reindex(scores["row_id"]).to_numpy(), utc=True).year.to_numpy(dtype=float)
+    fallback = pd.DatetimeIndex(pd.to_datetime(scores["origin"], utc=True)).year.to_numpy(dtype=float)
+    return np.where(np.isnan(year), fallback, year).astype(int)
 
 
 def _split_half(ledger: pd.DataFrame, origin=None) -> dict:
@@ -380,6 +393,11 @@ def render_markdown(doc: dict) -> str:
     out += _table(t["origins"], ["origin", "n_scored", "n_tests", "abstention_rate", "logscore", "burn_in"])
     out += ["### Log score by origin with 90 percent intervals", ""]
     out += _table(t["score_by_origin"], ["origin", "rung", "n", "logscore", "logscore_lo", "logscore_hi"])
+    out += ["### Scores by calendar year of the test start", "",
+            "Each scored row belongs to the year in which its test started; the years partition the scored rows. Brier skill and "
+            "log score carry 90 percent by-test intervals.", ""]
+    out += _table(t.get("score_by_year", []), ["year", "cell", "rung", "n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier_skill",
+                                                "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "abstention_rate"])
     out += ["## Coverage of the intervals for y (primary rung)", ""]
     out += _table(t["coverage"], ["cell", "n", "coverage_80", "coverage_90"])
     out += ["## Calibration by precision", "",

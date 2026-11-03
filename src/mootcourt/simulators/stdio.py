@@ -9,7 +9,8 @@ The group is killed on every exit path, including an interrupt (Ctrl-C does not 
 session) and any exception. The adapter also refuses a command that would run anything inside the data root: the
 resolved working directory, the program, any argument that names a path, the value after ``=`` in an ``--opt=path``
 argument (and each piece of it when it is a ``:`` list), the words of a string after ``sh -c`` (or bash, zsh, dash, ksh), and
-the file a ``-m module`` or ``-mmodule`` argument would load; letter case is ignored where the volume ignores it. A shell string
+the string of ``env -S`` (``--split-string``), which env splits into a command, and the file a ``-m module`` or ``-mmodule``
+argument would load; letter case is ignored where the volume ignores it. A shell string
 is split into words and each word is checked as a path; what a shell would build at run time (variables, command substitution,
 a path assembled by concatenation) is not evaluated, so a shell wrapper is a convenience to be reviewed, not a sandbox.
 
@@ -77,19 +78,53 @@ def _shell_tokens(string: str) -> list[str]:
         return string.split()
 
 
+_ENV_VALUE_OPTIONS = {"-u", "--unset", "-C", "--chdir", "-P", "--default-path", "-a", "--argv0"}      # options of env that take the next word
+
+
+def _split_env_strings(command: list[str], depth: int = 0) -> list[str]:
+    """``command`` with the string of ``env -S`` (``--split-string``, in any spelling) split into words and put in its place.
+
+    ``env -S 'sh -c "python3 /x/agent.py"' `` runs what the string says, so its words are checked like any others; a string
+    that is itself an ``env -S`` command is split again (to a small depth).
+    """
+    if not command or os.path.basename(command[0]) != "env" or depth > 4:
+        return command
+    i = 1
+    while i < len(command):
+        word = command[i]
+        value = None
+        if word.startswith("--split-string="):
+            value, width = word.split("=", 1)[1], 1
+        elif word == "--split-string":
+            value, width = (command[i + 1] if i + 1 < len(command) else ""), 2
+        elif re.fullmatch(r"-[A-Za-z]*S.*", word) and not word.startswith("--"):      # -S, -iS, or the value attached as in -Sstring
+            head, _, attached = word[1:].partition("S")
+            value, width = (attached, 1) if attached else ((command[i + 1] if i + 1 < len(command) else ""), 2)
+        if value is not None:
+            rest = _split_env_strings(command[:1] + _shell_tokens(value), depth + 1)
+            return _split_env_strings(command[:i] + rest[1:] + command[i + width:], depth + 1)
+        if not word.startswith("-") and "=" not in word:
+            if os.path.basename(word) == "env":                                         # env env -S '...'
+                return command[:i] + _split_env_strings(command[i:], depth + 1)
+            break
+        i += 2 if word in _ENV_VALUE_OPTIONS else 1
+    return command
+
+
 def _program_index(command: list[str]) -> int:
     """Index of the program a command runs: past a leading ``env`` and its options and NAME=VALUE arguments."""
     i = 0
-    if os.path.basename(command[0]) == "env":
-        i = 1
+    while i < len(command) and os.path.basename(command[i]) == "env":                # env may wrap env
+        i += 1
         while i < len(command) and (command[i].startswith("-") or "=" in command[i]):
-            i += 2 if command[i] in ("-u", "--unset", "-C", "--chdir") else 1      # these options take the next word as their value
+            i += 2 if command[i] in _ENV_VALUE_OPTIONS else 1      # these options take the next word as their value
     return min(i, len(command) - 1)
 
 
 def _expand_shell_strings(command: list[str]) -> list[str]:
     """``command`` plus the words of the string that follows ``-c`` after a shell program (``sh -c 'python3 /x/agent.py'``, also
-    behind ``env NAME=VALUE``), nested ones too."""
+    behind ``env NAME=VALUE``), nested ones too, and the words of an ``env -S`` string."""
+    command = _split_env_strings(command)
     out = list(command)
     start = _program_index(command)
     if os.path.basename(command[start]) in SHELLS:

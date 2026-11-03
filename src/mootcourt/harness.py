@@ -27,6 +27,7 @@ only, burn-in at the first scored origin), 5, 10 (P3 scored beside each rung aga
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import json
 import math
 import sys
@@ -556,6 +557,7 @@ def rolling_origin(
     source: str | None = None,
     verbose: bool = False,
     s_star_mode: str = "prelaunch",
+    drop_triggers=(),
 ) -> pd.DataFrame:
     """Score every admitted row once per rung, at the origin whose quarter it starts in.
 
@@ -566,10 +568,17 @@ def rolling_origin(
     ``min_fit_rows`` visible rows, where nothing could be fitted).
 
     ``audit_fit_rows`` wraps the model ``fit`` methods during factory calls (see module docstring).
+
+    ``drop_triggers`` names abstention triggers to switch off for the run (the trigger-removal ablation): a dropped trigger is
+    never evaluated, adds no reason and cannot flag a row, while the others are computed exactly as before. Predictions, scores and
+    the reliability report do not depend on abstention, so only the abstention columns change. ``frame.attrs["dropped_triggers"]``
+    lists them.
     """
     if s_star_mode not in ("prelaunch", "realized"):
         raise ValueError("s_star_mode must be prelaunch or realized")
     cfg = abstain_config or AbstainConfig()
+    if drop_triggers:
+        cfg = dataclasses.replace(cfg, disabled=frozenset(cfg.disabled) | frozenset(drop_triggers))
     adm = ledger.loc[ledger["status"] == ADMITTED]
     origins = sorted(to_utc(o) for o in origins)
     if not origins:
@@ -658,6 +667,7 @@ def rolling_origin(
         out["direction_correct"] = out["direction_correct"].astype(float)
     out["usable_after"] = pd.to_datetime(out["usable_after"], utc=True)
     out.attrs["skipped_origins"] = [t.isoformat() for t in skipped]
+    out.attrs["dropped_triggers"] = sorted(cfg.disabled)
     out.attrs["selections"] = selections
     return out
 
@@ -676,9 +686,9 @@ def _basic_abstain(scored, n_vis, report, t, cfg) -> _Abstain:
     now = t.to_pydatetime()
     for i, c in enumerate(scored["cell"].tolist()):
         r = []
-        if check_support(int(n_vis[i]), cfg):
+        if cfg.enabled("support") and check_support(int(n_vis[i]), cfg):
             r.append("support")
-        if reliability_reason(report, c, now, cfg) is not None:
+        if cfg.enabled("reliability") and reliability_reason(report, c, now, cfg) is not None:
             r.append("reliability")
         flags[i] = bool(r)
         reasons.append(",".join(r))

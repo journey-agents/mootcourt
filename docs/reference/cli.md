@@ -24,6 +24,7 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--recency` | str |  | Time kernel for P2: select, or a half-life in days. |
 | `--p2-guard` | str |  | Ablation: P2 admission guard multiplier, or off. |
 | `--effect-scale` | str | `absolute` | absolute (default) or relative: the cautionary first run (Upworthy only). |
+| `--drop-trigger` | str |  | Ablation: switch an abstention trigger off (support, novelty, reliability or instability); repeatable. |
 | `--s-star` | str | `prelaunch` | prelaunch (default) or realized: feed the realized standard error (cautionary run). |
 | `--local-k` | int | `50` | Neighbors used by the local_eb challenger. |
 | `--primary-metric` | str |  | Multi-metric ledgers: the metric the decision value uses. |

@@ -14,7 +14,7 @@ script is reported (a homoglyph disguise), a word written in look-alike letters 
 any Unicode dash punctuation other than the hyphen-minus counts as a dash (as does anything that folds to an em or en dash). A URL
 that names a tier 1 term in its host or path fails the scan, after its percent-escapes are decoded. A committed file that is not
 UTF-8 text must be a picture or a Parquet file, must start with the magic bytes of its type, and has its text payload (PNG text
-chunks, JPEG comment and application segments, GIF extensions, Parquet metadata and every text or binary value including dictionary,
+chunks, JPEG comments, Exif text tags and XMP packets, GIF extensions, Parquet metadata and every text or binary value including dictionary,
 list and struct children, printable runs of the bytes) scanned. The two dash characters and the role noun are built
 with chr() for the same reason. URLs are removed from a file before it is tokenized, because
 a cited link is a citation and not prose. The path components of every committed file are tokenized and held to the same
@@ -374,8 +374,56 @@ def _parquet_texts(data: bytes) -> list[str]:
         return []
 
 
+def _exif_texts(app1: bytes) -> list[str]:
+    """The text tags of an Exif APP1 segment: every ASCII tag, UserComment and the Windows XP tags, in every IFD it links to.
+
+    The embedded thumbnail (a whole second picture) and every binary tag are never read, so compressed picture bytes cannot match a
+    blocked term by chance. A segment that is not a readable TIFF structure yields nothing (the raw-byte pass still reads its printable runs).
+    """
+    tiff = app1[6:]
+    order = {b"II": "little", b"MM": "big"}.get(tiff[:2])
+    if order is None or len(tiff) < 8:
+        return []
+
+    def num(off: int, size: int) -> int:
+        return int.from_bytes(tiff[off:off + size], order) if 0 <= off and off + size <= len(tiff) else 0
+
+    out: list[str] = []
+    seen: set[int] = set()
+
+    def walk(off: int, depth: int) -> None:
+        if off in seen or off < 8 or off + 2 > len(tiff) or depth > 6:
+            return
+        seen.add(off)
+        count = num(off, 2)
+        for i in range(min(count, 1000)):
+            entry = off + 2 + 12 * i
+            tag, kind, n = num(entry, 2), num(entry + 2, 2), num(entry + 4, 4)
+            if tag in (0x8769, 0x8825, 0xA005) and kind in (4, 13):          # the Exif, GPS and interoperability IFDs
+                walk(num(entry + 8, 4), depth + 1)
+                continue
+            if n > len(tiff) or not (kind == 2 or (kind == 7 and tag == 0x9286) or (kind == 1 and 0x9C9B <= tag <= 0x9C9F)):
+                continue
+            start = entry + 8 if n <= 4 else num(entry + 8, 4)
+            value = tiff[start:start + n]
+            if kind == 1:                                                    # XPTitle, XPComment, XPAuthor, XPKeywords, XPSubject
+                out.append(value.decode("utf-16-le", "replace"))
+            elif kind == 7:                                                  # UserComment: an 8-byte character-set code, then the text
+                out.extend([value[8:].decode("utf-8", "replace"), value[8:].decode("utf-16-le", "replace")])
+            else:
+                out.append(value.decode("latin-1"))
+        walk(num(off + 2 + 12 * count, 4), depth + 1)                        # the next IFD (IFD1 holds the thumbnail's pointers, not its bytes)
+
+    walk(num(4, 4), 0)
+    return out
+
+
 def _jpeg_texts(data: bytes) -> list[str]:
-    """The body of every comment (COM) and application (APP0 to APP15) segment of a JPEG, as latin-1 text (EXIF, XMP and captions live there)."""
+    """The text a JPEG can carry: every comment (COM) segment, the text tags of Exif (``_exif_texts``) and XMP packets, as text.
+
+    The other application segments (ICC profiles, multi-picture data, Photoshop blocks) and the embedded Exif thumbnail are binary
+    and are not read here; the raw-byte pass still reads their printable runs, with the rule it uses for every binary file.
+    """
     out, pos = [], 2
     while pos + 4 <= len(data):
         if data[pos] != 0xFF:
@@ -392,8 +440,12 @@ def _jpeg_texts(data: bytes) -> list[str]:
             break
         size = int.from_bytes(data[pos + 2:pos + 4], "big")
         body = data[pos + 4:pos + 2 + size]
-        if marker == 0xFE or 0xE0 <= marker <= 0xEF:
+        if marker == 0xFE:
             out.append(body.decode("latin-1"))
+        elif marker == 0xE1 and body.startswith(b"Exif\x00\x00"):
+            out += _exif_texts(body)
+        elif marker == 0xE1 and body.startswith(b"http://ns.adobe.com/"):
+            out.append(body.decode("utf-8", "replace"))              # an XMP packet is XML text
         pos += 2 + max(size, 2)
         if marker == 0xDA:                                           # entropy-coded data: skip to the next real marker
             while pos + 1 < len(data) and not (data[pos] == 0xFF and data[pos + 1] not in (0x00, 0xFF) and not 0xD0 <= data[pos + 1] <= 0xD7):
@@ -443,7 +495,8 @@ def scan_binary(data: bytes, suffix: str, digests: set[str], restricted: set[str
     """What is wrong with a picture or Parquet file: content that does not match its suffix, and blocked terms in its text payload.
 
     The payload is the printable runs of the raw bytes (a stored caption or metadata value is readable there), plus the text chunks of a PNG
-    the comment and application segments of a JPEG, the extensions of a GIF, and the column names, metadata and text or binary values of a Parquet
+    the comments, Exif text tags and XMP packets of a JPEG (never its Exif thumbnail or binary segments), the extensions of a GIF, and the
+    column names, metadata and text or binary values of a Parquet
     file (nested and dictionary columns included), which a compressor hides from the raw bytes. The dash and
     role-noun rules are for prose and do not apply to pictures.
     """
@@ -970,8 +1023,8 @@ def test_jpeg_comment_and_application_segments_and_gif_extensions_are_scanned():
     assert _short_term_hits(_jpeg((0xE0, b"JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00")), ".jpg") == []
     assert _short_term_hits(_jpeg((0xFE, b"a plain comment")), ".jpeg") == []
     assert _short_term_hits(_jpeg((0xFE, b"made by qzx")), ".jpg") == ["forbidden term"]
-    assert _short_term_hits(_jpeg((0xE1, b"Exif\x00\x00 qzx")), ".jpg") == ["forbidden term"]
-    assert _short_term_hits(_jpeg((0xE0, b"JFIF\x00"), (0xED, b"Photoshop 3.0\x00 qzx")), ".jpg") == ["forbidden term"]
+    assert _short_term_hits(_jpeg((0xE1, b"http://ns.adobe.com/xap/1.0/\x00<x>qzx</x>")), ".jpg") == ["forbidden term"]      # XMP; REV-H-001
+    assert _short_term_hits(_jpeg((0xE0, b"JFIF\x00"), (0xED, b"Photoshop 3.0\x00 qzx")), ".jpg") == []      # binary block: raw rule only
     clean_gif = _gif(_gif_ext(0xFE, b"just a comment"))
     assert _short_term_hits(clean_gif, ".gif") == []
     assert _short_term_hits(_gif(_gif_ext(0xFE, b"made by ", b"qzx")), ".gif") == ["forbidden term"]

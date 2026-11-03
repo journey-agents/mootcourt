@@ -3,6 +3,7 @@
 # Usage: scripts/run_ablations.sh SOURCE [JOBS]
 #   upworthy  P2 selection rule, recency, feature sets, bandwidth, lambda, kappa, prior, P2 admission guard (off, 1.0)
 #   asos      kappa, prior and the P2 admission guard (the other switches change only P2, which equals P1 on a cell-only space)
+#   both      also the trigger-removal runs: each abstention trigger switched off on its own (--drop-trigger support, novelty, reliability, instability)
 # Needs MOOTCOURT_DATA_ROOT or the repo-local folders to hold the ledger and gates.json. Logs go to $LOGS (default: a temp folder).
 set -u
 SOURCE="${1:-upworthy}"
@@ -22,9 +23,11 @@ case "$SOURCE" in
       "--kappa 0" "--kappa 5" "--kappa 80"
       "--prior normal"
       "--p2-guard off" "--p2-guard 1.0"
+      "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;
   asos)
-    SETTINGS=("--kappa 0" "--kappa 5" "--kappa 80" "--prior normal" "--p2-guard off" "--p2-guard 1.0") ;;
+    SETTINGS=("--kappa 0" "--kappa 5" "--kappa 80" "--prior normal" "--p2-guard off" "--p2-guard 1.0"
+              "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability") ;;
   *) echo "unknown source $SOURCE" >&2; exit 2 ;;
 esac
 mkdir -p "$LOGS"

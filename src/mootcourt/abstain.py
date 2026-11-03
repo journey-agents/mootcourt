@@ -66,7 +66,12 @@ class ReliabilityReport(TypedDict):
 
 @dataclass(frozen=True)
 class AbstainConfig:
-    """Thresholds of the four triggers."""
+    """Thresholds of the four triggers.
+
+    ``disabled`` names triggers that are never evaluated: they add no reason and cannot make a card abstain, and the other
+    triggers are computed exactly as before. It exists for the trigger-removal ablation of a backtest; the card, the service
+    and the weekly loop always use the empty set.
+    """
 
     support_min: int = SUPPORT_MIN
     novelty_percentile: float = NOVELTY_PERCENTILE
@@ -75,6 +80,18 @@ class AbstainConfig:
     bootstrap_resamples: int = BOOTSTRAP_RESAMPLES
     action_threshold: float = ACTION_THRESHOLD
     same_side_fraction: float = SAME_SIDE_FRACTION
+    disabled: frozenset = frozenset()
+
+    def __post_init__(self) -> None:
+        names = frozenset(self.disabled)
+        unknown = sorted(names - set(TRIGGERS))
+        if unknown:
+            raise ValueError(f"unknown trigger {', '.join(unknown)}; the triggers are {', '.join(TRIGGERS)}")
+        object.__setattr__(self, "disabled", names)
+
+    def enabled(self, trigger: str) -> bool:
+        """False for a trigger switched off (``--drop-trigger`` in a backtest); a live card never switches one off."""
+        return trigger not in self.disabled
 
 
 @dataclass(frozen=True)
@@ -211,17 +228,19 @@ def decide(
     """
     cfg = config or AbstainConfig()
     reasons, details = [], {}
-    if check_support(n_support, cfg):
+    if cfg.enabled("support") and check_support(n_support, cfg):
         reasons.append("support")
         details["support"] = f"{n_support} admitted rows visible in the cell, fewer than {cfg.support_min}"
-    if check_novelty(density, density_threshold):
+    if cfg.enabled("novelty") and check_novelty(density, density_threshold):
         reasons.append("novelty")
         details["novelty"] = f"query density {density:.4g} is below the stored leave-one-out threshold {density_threshold:.4g}"
-    why = reliability_reason(reliability_report, cell, now, cfg)
+    why = reliability_reason(reliability_report, cell, now, cfg) if cfg.enabled("reliability") else None
     if why is not None:
         reasons.append("reliability")
         details["reliability"] = why
-    if neighbor_state is not None:
+    if not cfg.enabled("instability"):
+        details["instability_check"] = "disabled for this run"
+    elif neighbor_state is not None:
         res = check_instability(neighbor_state, s_star, seed=seed, config=cfg)
         details["instability_same_side_fraction"] = res.same_side_fraction
         if res.fires:

@@ -185,7 +185,8 @@ def ablation_lines(reports: Path, source: str = "upworthy") -> list[str]:
     """Ablations of one source: the main run and every report in ``ablations/``, P1 and P2 side by side, and the per-cell P2 selections."""
     reports = Path(reports)
     main_files = visible_glob(reports, f"backtest-{source}-*.json")
-    var_files = visible_glob((reports / "ablations"), f"backtest-{source}-*--*.json")
+    # The trigger-removal runs change abstention only, so every column below equals the main run's; they have their own table in the paper.
+    var_files = [f for f in visible_glob((reports / "ablations"), f"backtest-{source}-*--*.json") if "--drop-trigger-" not in f.name]
     if not main_files or not var_files:
         return []
     docs = [("main run (defaults)", json.loads(main_files[-1].read_text(encoding="utf-8")))]

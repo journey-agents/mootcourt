@@ -25,7 +25,7 @@ SETUP := uv sync --extra dev --extra docs
 endif
 MOOT := $(PY) -m mootcourt.cli
 
-.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve card serve test lint power audit docs docs-serve build docker-check release-check
+.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check
 
 setup:
 	$(SETUP)
@@ -55,6 +55,10 @@ CHALLENGER_FLAGS := --challenger gbm --challenger local_eb $(if $(filter asos,$(
 
 learning-curve:
 	$(MOOT) backtest --source $(SOURCE) --learning-curve 0.05,0.1,0.25,0.5,1 --seeds 3 $(CHALLENGER_FLAGS)
+
+# The weekly replay of the archive (reports/replay-<source>-<snapshot>.json): what the weekly loop would have done and flagged.
+replay:
+	$(PY) scripts/replay_weekly.py --source $(SOURCE)
 
 audit:
 	for f in "$(REPORTS)"/scores-$(SOURCE)-*.parquet; do $(PY) scripts/leakage_audit.py --ledger "$(LEDGER)" --scores "$$f" --out "$(REPORTS)/leakage-audit-$(SOURCE).txt"; done

@@ -8,12 +8,14 @@ time cap is a wall clock for the whole exchange (connection, headers and body): 
 when the cap is reached the caller gets a timeout at once and the connection is closed, so a server that sends one byte at
 a time cannot stretch it. A reply larger than one megabyte is refused.
 
-One limit: the worker is a thread and cannot be interrupted, so what it does before a socket exists is not cut short at the
-cap. That is name resolution for a host that is not a literal address (``allow_remote`` only; a loopback URL names a
-literal address or ``localhost``). The TCP connect and the TLS handshake each carry the cap as their own timeout (the
-handshake as one deadline, whatever the server drips), so a stalled handshake ends the worker by itself within one more
-cap after the caller has already received its timeout; the caller is never held. The worker is a daemon thread and holds
-no state the next call reads.
+Two limits, both from the worker being a thread that cannot be interrupted. First, what it does before a socket exists is not
+cut short at the cap. That is name resolution for a host that is not a literal address (``allow_remote`` only; a loopback URL names a
+literal address or ``localhost``). Second, the TCP connect carries the cap as its own timeout, so a host with several addresses can
+take one cap per address, and the TLS handshake carries it as one deadline whatever the server drips. If the cap is reached during
+the connect, the worker notices before it sends and returns without sending; once the request has gone out, a POST may still be sent
+or already have been received by the agent after the caller recorded its timeout. In every case the caller has its timeout at the cap
+and is never held, and the worker ends by itself within about one more cap. The worker is a daemon thread and holds no state the next
+call reads.
 
 A decline is the agent replying ``null``. Any other None result is a failure: ``last_failure`` holds its kind
 (transport, timeout, invalid) and ``last_note`` the reason; the runner records it and does not cache it.
@@ -88,6 +90,9 @@ class HttpSimulator:
             cls = http.client.HTTPSConnection if parts.scheme == "https" else http.client.HTTPConnection
             conn = cls(parts.hostname, parts.port, timeout=cap)       # inside the guard: any construction error reaches box["exc"]
             box["conn"] = conn
+            conn.connect()                                  # a cap reached during the connect (one cap per address) is seen before anything is sent
+            if box.get("aborted"):
+                return
             target = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
             conn.request("POST", target, body=body, headers={"Content-Type": "application/json"})
             if box.get("aborted"):

@@ -484,3 +484,22 @@ count and the promotion gate falls back to its row count, saying so in the refus
 cell must share a unit within a file and across imports, and the check names the rows that differ. Pooling a relative and a standardized effect would have corrupted P0 to
 P2 without a sign. A derived standard error always says in `variance_method` how it was derived and at what assumed level. Counts must be finite whole numbers no larger than
 2**53. An input error (a bad value, a missing file, a conflicting row) ends in one line on standard error and exit code 2; `MOOTCOURT_DEBUG=1` shows the traceback.
+
+## Calls made for the abstention and drift experiments (3 Nov 2026)
+
+### Call 78: dropping a trigger, the year of a row, and the weekly replay
+
+`moot backtest --drop-trigger NAME` (repeatable; support, novelty, reliability or instability) switches an abstention trigger off for the run. A dropped trigger is never evaluated: it adds no reason and cannot make a row
+abstain, and the other triggers are computed exactly as before, so the reasons of a row are the main run's minus the dropped name. Predictions, scores and the reliability report do not depend on abstention, so only the abstention
+columns, the abstention table and the non-abstained columns of the aggregate change. The report is written under `reports/ablations` with the suffix `drop-trigger-<names>` and its header records the dropped names. A trigger can
+be redundant: when every row it flags is also flagged by another trigger, dropping it leaves the abstention rate unchanged.
+
+`tables.score_by_year` groups the scored rows by the calendar year (UTC) in which the row's test started, read from the ledger's `started_at`. Each row is scored once, at the origin of the quarter it starts in, so the year is also
+the year of its origin; the years partition the scored rows of every rung. Each year is scored with the same definitions, bootstrap and seed as the main aggregate on its own rows, so the table adds to the report and changes none of its
+other tables. A year with a few tests has a wide interval; read the interval before the point.
+
+`scripts/replay_weekly.py` replays an archive at weekly joins using only what was visible at each week. A week starts seven days after the last, from the first quarterly origin at which a champion can be fitted. One card is issued per
+admitted row at the start of the week in which its test starts, from the champion bundle fitted at the latest quarterly origin on or before that week. At each week it first joins the outcomes whose `usable_after` has passed
+(typed by the weekly join's own rule), then rewrites the reliability report by the weekly join's rule, then issues the week's cards against that report. The report is built from the forecast every card made, abstained or not, as the backtest
+does, because a loop that counted only issued cards could not leave an all-abstaining start; the typed misses follow the card as issued. A week is flagged when the report written at its join marks a cell drifted: two joins in a row, each with at
+least ten outcomes in the trailing eight weeks and a rolling log score more than 0.10 nats under the baseline. The replay writes `reports/replay-<source>-<snapshot>.json` with per-week counts and nothing else.

@@ -49,7 +49,7 @@ def _frame(outcomes) -> pd.DataFrame:
         df = pd.DataFrame(list(outcomes), columns=_OUTCOME_COLUMNS)
     if len(df) == 0:
         df = pd.DataFrame({c: [] for c in _OUTCOME_COLUMNS})
-    df["at"] = pd.to_datetime(df["at"], utc=True)
+    df["at"] = pd.to_datetime(df["at"], utc=True, format="ISO8601")
     return df
 
 

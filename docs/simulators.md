@@ -57,7 +57,7 @@ earliest origin.
 
 ## Attach an agent behind HTTP
 
-The adapter POSTs the request JSON and reads the result JSON. Loopback only by default; pass `--allow-remote` on the command line for any other host (a config table cannot grant it). The time cap is a wall clock for the whole exchange: a server that sends one byte at a time is cut off at the cap. Proxy settings in the environment are ignored, redirects are not followed and a reply larger than one megabyte is refused.
+The adapter POSTs the request JSON and reads the result JSON. Loopback only by default; pass `--allow-remote` on the command line for any other host (a config table cannot grant it). The time cap is a wall clock for the whole exchange: a server that sends one byte at a time is cut off at the cap. Proxy settings in the environment are ignored, redirects are not followed and a reply larger than one megabyte is refused. Two limits to know about. The cap cannot interrupt name resolution, so with `--allow-remote` a host name that is slow to resolve is not cut short at the cap, although your call still gets its timeout on time. And a request may still be sent after your call has timed out: the cap applies to the whole exchange, but a request that has already left may be received by the agent even though the caller recorded a timeout, so an agent should treat a repeated or abandoned request as harmless. A host with several addresses can also use one cap per address while connecting, in the background.
 
 ```python
 from http.server import BaseHTTPRequestHandler, HTTPServer

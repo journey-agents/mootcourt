@@ -276,7 +276,7 @@ def _parse_guard(value: str | None):
 
 
 def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale="absolute", s_star="prelaunch",
-                      p2_guard="default") -> dict:
+                      p2_guard="default", drop_triggers=()) -> dict:
     """The ablation settings that differ from the defaults, as a dict; empty for the main run."""
     from mootcourt.config import KAPPA, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 
@@ -301,12 +301,19 @@ def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection,
         v["effect_scale"] = effect_scale
     if s_star != "prelaunch":
         v["s_star"] = s_star
+    if drop_triggers:
+        v["drop_trigger"] = sorted(set(drop_triggers))
     return v
 
 
 def _variant_name(v: dict) -> str:
     """File-name suffix of a variant, for example ``features-text`` or ``p2-selection-forward+recency-select``."""
-    return "+".join(f"{k.replace('_', '-')}-{val}" for k, val in v.items())
+    return "+".join(f"{k.replace('_', '-')}-{'-'.join(val) if isinstance(val, list) else val}" for k, val in v.items())
+
+
+def _variant_flags(v: dict) -> str:
+    """The command-line flags that reproduce a variant; a list (``--drop-trigger``) is one flag per name."""
+    return "".join(f" --{k.replace('_', '-')} {x}" for k, val in v.items() for x in (val if isinstance(val, list) else [val]))
 
 
 @app.command()
@@ -327,6 +334,8 @@ def backtest(
     recency: str | None = typer.Option(None, "--recency", help="Time kernel for P2: select, or a half-life in days."),
     p2_guard: str | None = typer.Option(None, "--p2-guard", help="Ablation: P2 admission guard multiplier, or off."),
     effect_scale: str = typer.Option("absolute", "--effect-scale", help="absolute (default) or relative: the cautionary first run (Upworthy only)."),
+    drop_trigger: list[str] | None = typer.Option(
+        None, "--drop-trigger", help="Ablation: switch an abstention trigger off (support, novelty, reliability or instability); repeatable."),
     s_star: str = typer.Option("prelaunch", "--s-star", help="prelaunch (default) or realized: feed the realized standard error (cautionary run)."),
     local_k: int = typer.Option(50, "--local-k", help="Neighbors used by the local_eb challenger."),
     primary_metric: str | None = typer.Option(None, "--primary-metric", help="Multi-metric ledgers: the metric the decision value uses."),
@@ -376,7 +385,13 @@ def backtest(
     if effect_scale == "relative" and source != "upworthy":
         raise typer.BadParameter("--effect-scale relative needs the Upworthy source (it reads the relative lift stored with each row)")
     guard_arg = _parse_guard(p2_guard)
-    variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg)
+    from mootcourt.abstain import TRIGGERS
+
+    for name in drop_trigger or []:
+        if name not in TRIGGERS:
+            raise typer.BadParameter(f"--drop-trigger must be one of {', '.join(TRIGGERS)}; got {name!r}")
+    variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg,
+                                tuple(drop_trigger or ()))
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
     sid = ensure_snapshot(df, ledger_path.parent)
@@ -399,7 +414,7 @@ def backtest(
             raise typer.BadParameter(str(exc)) from None
 
     command = f"moot backtest --source {source} --origins {origins}" + "".join(f" --challenger {n}" for n in names)
-    command += "".join(f" --{k.replace('_', '-')} {v}" for k, v in variant.items()) + f" --seed {seed}"
+    command += _variant_flags(variant) + f" --seed {seed}"
     if learning_curve is not None:
         from mootcourt.learning_curve import parse_fractions, run_learning_curve, write_learning_curve
 
@@ -422,7 +437,8 @@ def backtest(
         typer.echo("cautionary run: y is the relative lift in percent and s its standard error")
     if s_star == "realized":
         typer.echo("cautionary run: the forecaster is given each row's realized standard error")
-    scores = rolling_origin(df, make_rungs(df), quarterly_origins(df), source=source, verbose=verbose, s_star_mode=s_star)
+    scores = rolling_origin(df, make_rungs(df), quarterly_origins(df), source=source, verbose=verbose, s_star_mode=s_star,
+                            drop_triggers=tuple(drop_trigger or ()))
     t_scored = time.perf_counter() - t0
     so_meta, out_dir, suffix, main_run = None, reports_dir, "", True
     if variant:

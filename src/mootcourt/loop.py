@@ -91,14 +91,65 @@ def _atomic_write(path: Path, text: str, read_only: bool = False) -> None:
     os.replace(tmp, path)
 
 
+def _forecast_logscore(point, interval90, y: float, s: float) -> float | None:
+    """Log score of the Normal forecast described by a point and a 90 percent interval; None without both."""
+    if interval90 is None or point is None:
+        return None
+    sd = max((interval90[1] - interval90[0]) / (2.0 * _Z90), 1e-6)
+    grid = build_grid(point, sd)
+    return float(Predictive.from_normal(grid, point, sd).logscore(y, s))
+
+
 def _model_logscore(card: dict, y: float, s: float) -> float | None:
     pred = card["prediction"]
-    iv = pred.get("interval_90")
-    if card["abstention"]["status"] != "issue" or iv is None or pred.get("point") is None:
+    if card["abstention"]["status"] != "issue":
         return None
-    sd = max((iv[1] - iv[0]) / (2.0 * _Z90), 1e-6)
-    grid = build_grid(pred["point"], sd)
-    return float(Predictive.from_normal(grid, pred["point"], sd).logscore(y, s))
+    return _forecast_logscore(pred.get("point"), pred.get("interval_90"), y, s)
+
+
+def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime, forecast: dict | None = None) -> dict | None:
+    """The outcome of one issued card given its ledger row, or None while the row's registered horizon has not passed at ``now``.
+
+    ``card`` is the frozen card JSON, ``row`` the admitted ledger row (a mapping with ``y``, ``s`` and ``usable_after``), ``p0`` the
+    baseline fitted on the ledger. The miss type always follows the card as issued. ``forecast`` (a dict with ``point``,
+    ``interval_90`` and ``p_sig``) replaces the forecast that is scored: the weekly join scores only issued cards and passes
+    nothing, while the replay of an archive scores the forecast an abstained card would have made, as the backtest does, so the
+    reliability report has evidence in cells where every card abstained.
+    """
+    if pd.Timestamp(row["usable_after"]) > pd.Timestamp(now):      # horizon guard: no outcome before its registered horizon
+        return None
+    y, s = float(row["y"]), float(row["s"])
+    star = card["request"].get("s_star")
+    has_star = star is not None and math.isfinite(float(star)) and float(star) > 0
+    if not has_star:        # no scale was known at issue: a log score on the realized s would leak the result (REV-039)
+        LOG.warning("card %s has no usable s_star; its log scores are left null and it is excluded from reliability", card["card_id"])
+    s_card = float(star) if has_star else s      # log scores use the scale known at issue, as in the backtest
+    pred, issued = card["prediction"], card["abstention"]["status"] == "issue"
+    event = y > Z * s
+    iv = tuple(pred["interval_90"]) if issued and pred.get("interval_90") else None
+    base = card["evidence"].get("base_rate_sig_pos")
+    origin = dt.datetime.fromisoformat(card["origin"])
+    scored = forecast if forecast is not None else ({"point": pred.get("point"), "interval_90": pred.get("interval_90"), "p_sig": pred.get("p_sig")}
+                                                    if issued else None)
+    try:
+        p0_ls = float(p0.predict(None, s_card, card["cell"], origin).logscore(y, s_card)) if has_star else None
+    except ValueError:          # no row was visible at the card's origin: there is no baseline to compare with
+        p0_ls = None
+    p_scored = None if scored is None else scored.get("p_sig")
+    return {
+        "card_id": card["card_id"], "row_id": card["request"].get("row_id"), "source": card["source"], "cell": card["cell"],
+        "model_id": card["model_id"],
+        "snapshot_id": card["snapshot_id"], "y": y, "s": s, "event": bool(event), "abstained": not issued,
+        "p_sig": pred.get("p_sig") if issued else None, "point": pred.get("point") if issued else None, "interval_90": list(iv) if iv else None,
+        "miss_type": type_miss(abstained=not issued, p_sig=pred.get("p_sig") if issued else None, point=pred.get("point") if issued else None,
+                               interval90=iv, y=y, s=s),
+        "logscore": (_forecast_logscore(scored.get("point"), scored.get("interval_90"), y, s_card)
+                     if scored is not None and has_star else None),
+        "p0_logscore": p0_ls,
+        "brier": float((p_scored - event) ** 2) if p_scored is not None else None,
+        "p0_brier": float((base - event) ** 2) if base is not None else None,
+        "at": pd.Timestamp(row["usable_after"]).isoformat(), "joined_at": now.isoformat(),
+    }
 
 
 def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.datetime, p0: P0Predictor | None = None) -> list[dict]:
@@ -119,35 +170,9 @@ def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.dateti
         row_id = card["request"].get("row_id")
         if card["source"] != source or not row_id or row_id not in adm.index or out_path.exists():
             continue
-        row = adm.loc[row_id]
-        if pd.Timestamp(row["usable_after"]) > pd.Timestamp(now):      # horizon guard: no outcome before its registered horizon
+        outcome = outcome_from_card(card, adm.loc[row_id], p0, now)
+        if outcome is None:
             continue
-        y, s = float(row["y"]), float(row["s"])
-        star = card["request"].get("s_star")
-        has_star = star is not None and math.isfinite(float(star)) and float(star) > 0
-        if not has_star:        # no scale was known at issue: a log score on the realized s would leak the result (REV-039)
-            LOG.warning("card %s has no usable s_star; its log scores are left null and it is excluded from reliability", card["card_id"])
-        s_card = float(star) if has_star else s      # log scores use the scale known at issue, as in the backtest
-        pred, issued = card["prediction"], card["abstention"]["status"] == "issue"
-        event = y > Z * s
-        iv = tuple(pred["interval_90"]) if issued and pred.get("interval_90") else None
-        base = card["evidence"].get("base_rate_sig_pos")
-        origin = dt.datetime.fromisoformat(card["origin"])
-        try:
-            p0_ls = float(p0.predict(None, s_card, card["cell"], origin).logscore(y, s_card)) if has_star else None
-        except ValueError:          # no row was visible at the card's origin: there is no baseline to compare with
-            p0_ls = None
-        outcome = {
-            "card_id": card["card_id"], "row_id": row_id, "source": source, "cell": card["cell"], "model_id": card["model_id"],
-            "snapshot_id": card["snapshot_id"], "y": y, "s": s, "event": bool(event), "abstained": not issued,
-            "p_sig": pred.get("p_sig") if issued else None, "point": pred.get("point") if issued else None, "interval_90": list(iv) if iv else None,
-            "miss_type": type_miss(abstained=not issued, p_sig=pred.get("p_sig") if issued else None, point=pred.get("point") if issued else None,
-                                   interval90=iv, y=y, s=s),
-            "logscore": _model_logscore(card, y, s_card) if has_star else None, "p0_logscore": p0_ls,
-            "brier": float((pred["p_sig"] - event) ** 2) if issued and pred.get("p_sig") is not None else None,
-            "p0_brier": float((base - event) ** 2) if base is not None else None,
-            "at": pd.Timestamp(row["usable_after"]).isoformat(), "joined_at": now.isoformat(),
-        }
         _atomic_write(out_path, json.dumps(outcome, indent=1, sort_keys=True) + "\n", read_only=True)
         written.append(outcome)
     return written

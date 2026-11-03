@@ -266,17 +266,25 @@ def abstention_trigger_note(scores: pd.DataFrame) -> str:
     """One paragraph saying which abstention triggers never fired and whether drift ever did (builder call 49).
 
     Counts rows of the primary rung. ``Reliability`` rows at the first scored origin are the burn-in (no report exists yet);
-    rows after it can only come from a stale or drifted report.
+    rows after it can only come from a stale or drifted report. A run that switched triggers off (``--drop-trigger``, recorded in
+    ``scores.attrs["dropped_triggers"]``) says so first and leaves those triggers out of the "never fired" list.
     """
     df = scores
     if "rung" in df.columns:
         df = df[df["rung"] == ("P2" if (df["rung"] == "P2").any() else sorted(df["rung"].unique())[0])]
+    dropped = [t for t in TRIGGERS if t in set(scores.attrs.get("dropped_triggers") or [])]
     reasons = df["abstain_reasons"].fillna("").map(lambda r: set(filter(None, str(r).split(","))))
     counts = {t: int(reasons.map(lambda r, t=t: t in r).sum()) for t in TRIGGERS}
-    never = [t for t in TRIGGERS if counts[t] == 0]
-    head = f"Never fired in this backtest: {', '.join(never)}." if never else "All four triggers fired at least once."
+    never = [t for t in TRIGGERS if counts[t] == 0 and t not in dropped]
+    live = [t for t in TRIGGERS if t not in dropped]
+    every = "All four" if not dropped else f"All {len(live)} remaining"
+    head = f"Never fired in this backtest: {', '.join(never)}." if never else f"{every} triggers fired at least once."
+    if dropped:
+        head = f"Disabled for this run: {', '.join(sorted(dropped))}. " + head
     first = df["origin"].min()
     after = int((reasons.map(lambda r: "reliability" in r) & (df["origin"] > first)).sum())
+    if "reliability" in dropped:
+        return head
     tail = f" After the burn-in origin the reliability trigger fired on {after} rows"
     tail += ", so no cell was marked drifted and every reliability abstention is the missing report at the burn-in origin." if after == 0 else "."
     return head + tail
@@ -417,6 +425,27 @@ def brier_skill_draws(g: pd.DataFrame, B: int = DEFAULT_B, seed: int = 0) -> np.
     counts = ts.resample_counts(B, np.random.default_rng(seed))
     with np.errstate(invalid="ignore", divide="ignore"):
         return 1.0 - (counts @ ts.sums["b"]) / (counts @ ts.sums["base"])
+
+
+YEAR_COLUMNS = ["n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier_skill", "brier_skill_lo", "brier_skill_hi",
+                "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi", "abstention_rate"]
+
+
+def by_year(scores: pd.DataFrame, years, gates: dict, B: int = DEFAULT_B, seed: int = 0) -> pd.DataFrame:
+    """The headline scores per calendar year, rung and cell (plus an ``ALL`` cell).
+
+    ``years`` is one year per row of ``scores`` (the calendar year of the test's start, see ``report.row_years``). Every scored row
+    falls in exactly one year, so the groups partition the rows of each rung. Each year is scored with ``aggregate_scores`` on its own
+    rows (same definitions, same by-test bootstrap, same seed), so a year's numbers are those the full table would give on that slice.
+    """
+    years = pd.Series(np.asarray(years), index=scores.index)
+    parts = []
+    for year in sorted(years.unique()):
+        agg = aggregate_scores(scores[years == year], gates, B=B, seed=seed)
+        keep = agg[["cell", "rung", *[c for c in YEAR_COLUMNS if c in agg.columns]]].copy()
+        keep.insert(0, "year", int(year))
+        parts.append(keep)
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["year", "cell", "rung", *YEAR_COLUMNS])
 
 
 def by_origin(scores: pd.DataFrame, column: str = "logscore", B: int = BY_ORIGIN_RESAMPLES, seed: int = 0) -> pd.DataFrame:
