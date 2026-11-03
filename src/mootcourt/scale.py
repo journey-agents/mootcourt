@@ -195,6 +195,25 @@ def relative_lift_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
+def prelaunch_admission_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
+    """The ledger re-admitted on exposure only: a ``low_clicks`` row with a finite estimate and standard error becomes ``admitted``.
+
+    The minimum-clicks rule is decided on realized clicks, an outcome a launching team cannot know, so it conditions the scored population
+    on a post-launch quantity (round 00, R2). This view drops that rule and keeps the exposure rule, which depends on the planned
+    exposure; every contrast whose estimate and standard error exist is then scored. It is the ``--admission prelaunch`` ablation: the
+    main run keeps the ledger's statuses. Rows of any other status are untouched.
+    """
+    out = ledger.copy()
+    ok = (
+        (out["status"] == "low_clicks")
+        & np.isfinite(out["y"].to_numpy(float))
+        & (out["s"].to_numpy(float) > 0)
+        & np.isfinite(out["s"].to_numpy(float))
+    )
+    out.loc[ok.to_numpy(), "status"] = "admitted"
+    return out
+
+
 def planned_exposure(rows: pd.DataFrame) -> np.ndarray:
     """Planned exposures per arm of ledger rows: the mean of the two arms' impressions."""
     return 0.5 * (rows["n_ref"].to_numpy(float) + rows["n_var"].to_numpy(float))

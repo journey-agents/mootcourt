@@ -127,7 +127,7 @@ def test_gbm_residual_spread_comes_from_out_of_fold_predictions(imp, make_synth)
     assert g.sd == pytest.approx(expected)
     # An in-sample fit would leave smaller residuals than the out-of-fold ones that set the spread.
     order = adm.sort_values("started_at", kind="stable")
-    insample = order["y"].to_numpy() - g.model.predict(g.space.transform(order))
+    insample = order["y"].to_numpy() - g.model.predict(g._bin(g._raw(order)))          # round 00: the model reads quantized columns and the cell
     assert np.mean(insample ** 2) < np.mean(g.oof_residuals ** 2)
 
 
@@ -320,7 +320,9 @@ def test_challenger_flags_in_the_cli_and_the_asos_guard(imp, root):
     res = _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--challenger", "gbm", "--challenger", "local_eb,text_lr"], root)
     assert res.exit_code == 0, res.output
     js = json.loads(next((root / "reports").glob("backtest-synthetic-*.json")).read_text())
-    assert js["header"]["challengers"] == ["GBM", "local_eb", "text_lr"] and "always_reference" in js["header"]["rungs"]
+    # round 00 (T-054): `moot backtest` adds a recalibrated rung (+cal) for every challenger unless --no-recalibrate is given
+    assert js["header"]["challengers"] == ["GBM", "GBM+cal", "local_eb", "local_eb+cal", "text_lr", "text_lr+cal"]
+    assert "always_reference" in js["header"]["rungs"]
     assert "--challenger gbm --challenger local_eb --challenger text_lr" in js["header"]["command"]
     off = _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--no-baselines"], root)
     assert off.exit_code == 0

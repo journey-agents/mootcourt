@@ -15,10 +15,13 @@ visible at each week. Design calls, also stated in the report header:
   typed by the same function the weekly join uses (``loop.outcome_from_card``); then the reliability report is rewritten by the same
   rule (``reliability.build_reliability``, trailing eight weeks, ``advance`` only when outcomes arrived); then the week's cards are
   issued against that report.
-* Reliability evidence. The report is built from the forecast each card made, abstained or not (as the backtest does), because a
-  loop whose only evidence were issued cards could never leave an all-abstaining burn-in. The typed misses follow the card as issued.
+* Reliability evidence. The replay and the live weekly join share one code path (round 00, call 163): ``loop.outcome_from_card`` scores a
+  card with its own stored predictive, and an abstained card is scored on the forecast it withheld in a sealed block, flagged and not
+  dropped, so a stale or drifted cell collects evidence and can recover; ``loop.reliability_row`` turns outcomes into the evidence the
+  report is built from. The typed misses follow the card as issued. The replay passes nothing the live join would not have.
 * Coverage. The rolling 90 percent coverage of a week is the share of issued cards joined in the trailing eight weeks whose
-  result lay inside the card's 90 percent interval (abstained cards have no interval).
+  result lay inside the card's 90 percent interval for the observed estimate at the planned standard error (``interval_90_y``,
+  the interval the backtest's coverage is measured against; abstained cards have no public interval).
 * Flagged week. A week is flagged when the report written at its join marks at least one cell drifted: two joins in a row with at
   least ten outcomes in the window and a rolling log score more than 0.10 nats under the baseline (``abstain.py``, ``reliability.py``).
   ``below_cells`` lists the cells below threshold at the join (a first warning); ``drift_onsets`` the weeks a cell newly drifted.
@@ -52,7 +55,6 @@ from mootcourt.scale import prelaunch_view
 from mootcourt.storage import storage_paths
 
 WEEK = pd.Timedelta(days=7)
-_OUTCOME_KEYS = ("logscore", "p0_logscore", "brier", "p0_brier")
 
 
 def week_flags(report: dict | None) -> tuple[list[str], list[str]]:
@@ -67,8 +69,8 @@ def _request(row, source: str) -> card_mod.CardRequest:
     f = prelaunch_view(json.loads(row.features_json))
     return card_mod.CardRequest(
         source=source, headline=str(f.get("headline", "")), image_changed=bool(f.get("image_changed", False)),
-        impressions=max(1, int(round(float(0.5 * (row.n_ref + row.n_var))))), origin=row.week, row_id=row.row_id,
-        headline_changed=bool(f.get("headline_changed", True)), cell=row.cell)
+        impressions=max(1, int(row.n_ref)), impressions_variant=max(1, int(row.n_var)), origin=row.week, row_id=row.row_id,
+        headline_changed=bool(f.get("headline_changed", True)), cell=row.cell, reference_headline=str(f.get("reference_headline", "") or ""))
 
 
 def _compact(report: dict | None) -> dict:
@@ -119,15 +121,16 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
             if usable > t:
                 still.append(rec)
                 continue
-            out = loop.outcome_from_card(rec["card"], by_id.loc[rec["card"]["request"]["row_id"]], p0, t.to_pydatetime(), forecast=rec["forecast"])
+            out = loop.outcome_from_card(rec["card"], by_id.loc[rec["card"]["request"]["row_id"]], p0, t.to_pydatetime())
             rec["outcome"], rec["joined_week"] = out, t.isoformat()
             written.append(out)
         pending = still
         for out in written:
             miss_total[out["miss_type"]] += 1
-            if None not in (out[k] for k in _OUTCOME_KEYS):
-                outcomes_rel.append({"cell": out["cell"], "at": out["at"], **{k: out[k] for k in _OUTCOME_KEYS}})
-            if not out["abstained"] and out["interval_90"]:
+            rel = loop.reliability_row(out)
+            if rel is not None:
+                outcomes_rel.append(rel)
+            if not out["abstained"] and out["interval_90_y"]:
                 joined_issued.append((t, out))
         # 2. reliability, by the rule of the weekly join
         report = build_reliability(report, outcomes_rel, t.to_pydatetime(), advance=bool(written), source=source)
@@ -150,10 +153,9 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
             card = card_mod.build_card(bundle, request, reliability=report, now=t.to_pydatetime(), config=cfg)
             if bundle.fit_cutoff is not None and bundle.fit_cutoff > t:
                 raise RuntimeError(f"the bundle of origin {q} saw a result usable after week {t}")
-            p = card.prediction
             rec = {"card": card_mod.to_json(card), "request": request, "issue_week": t.isoformat(), "bundle_origin": q.isoformat(),
                    "fit_cutoff": None if bundle.fit_cutoff is None else bundle.fit_cutoff.isoformat(), "reliability_used": report,
-                   "forecast": {"point": p.point, "interval_90": p.interval_90, "p_sig": p.p_sig}, "outcome": None, "joined_week": None}
+                   "outcome": None, "joined_week": None}
             pending.append(rec)
             if keep_records:
                 records.append(rec)
@@ -163,7 +165,7 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
                 by_trigger[reason] += 1
         n_cards += issued
         win = [o for j, o in joined_issued if t - pd.Timedelta(weeks=TRAILING_WEEKS) < j <= t]
-        cover = float(np.mean([o["interval_90"][0] <= o["y"] <= o["interval_90"][1] for o in win])) if win else None
+        cover = float(np.mean([bool(o["covered_90"]) for o in win])) if win else None
         counts = {m: 0 for m in loop.MISS_TYPES}
         for out in written:
             counts[out["miss_type"]] += 1
@@ -188,9 +190,10 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
                 "One card per admitted row, issued at the start of the week its test starts, from the champion bundle fitted at the latest "
                 "quarterly origin on or before that week.",
                 "Outcomes are joined at the first weekly join on or after usable_after, typed by the weekly join's own rule.",
-                "The reliability report is built from the forecast of every card, abstained or not, as the backtest does; "
-                "typed misses follow the card as issued.",
-                "Rolling coverage is over issued cards joined in the trailing eight weeks. A flagged week is one whose report marks a cell drifted.",
+                "The reliability report is built by the weekly join's own code: every card with a forecast is scored with its stored predictive, "
+                "an abstained card on the forecast it withheld (flagged, not dropped); typed misses follow the card as issued.",
+                "Rolling coverage is over issued cards joined in the trailing eight weeks, against the interval for the observed estimate at the "
+                "planned standard error. A flagged week is one whose report marks a cell drifted.",
             ],
         },
         "weeks": week_docs,
@@ -200,7 +203,7 @@ def replay(ledger: pd.DataFrame, source: str, snapshot_id: str, *, keep_records:
             "cards_issued": n_cards, "outcomes_joined": n_out, "miss_counts": miss_total, "n_flagged_weeks": len(flagged_weeks),
             "abstained": int(sum(w["abstained"] for w in week_docs)),
             "abstained_by_trigger": {t: int(sum(w["abstained_by_trigger"][t] for w in week_docs)) for t in TRIGGERS},
-            "coverage_90_all": float(np.mean([o["interval_90"][0] <= o["y"] <= o["interval_90"][1] for o in allw])) if allw else None,
+            "coverage_90_all": float(np.mean([bool(o["covered_90"]) for o in allw])) if allw else None,
             "coverage_90_all_n": len(allw),
         },
     }

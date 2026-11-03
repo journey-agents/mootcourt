@@ -18,6 +18,11 @@ def f3(x, nd=3):
     return "" if x is None else f"{x:.{nd}f}"
 
 
+def fr(x):
+    """Regret in the units of y: one decimal when large (Upworthy), three when small (ASOS), never a printed 0.0 for a nonzero value."""
+    return "" if x is None else (f"{x:.1f}" if abs(x) >= 10 else f"{x:.3f}")
+
+
 def interval(r, key, nd=3):
     if r.get(key) is None:
         return ""
@@ -63,11 +68,15 @@ def write(out, name, header_comment, body):
 
 def main_table(rep, source, out):
     h, agg = rep["header"], rep["tables"]["aggregate"]
-    rows = [r for r in agg if r["cell"] == "ALL"] + challenger_rows(os.path.dirname(rep["_path"]), source)
+    rows = [r for r in agg if r["cell"] == "ALL"]
+    have = {r["rung"] for r in rows}
+    # a run before the challengers joined the main report
+    rows += [r for r in challenger_rows(os.path.dirname(rep["_path"]), source) if r["rung"] not in have]
     lines = [
-        r"\begin{tabular}{llrrrrrrrr}",
+        r"\begin{tabular}{llrrrrrrrrr}",
         r"\toprule",
-        r"kind & model & tests & log score & CRPS & Brier skill (90\%) & dir.\ acc.\ / ceiling & cov.\ 80 / 90 & abst. & decid. \\",
+        r"kind & model & tests & log score & CRPS & Brier / base / floor & Brier skill (90\%) & dir.\ acc.\ / ceiling & "
+        r"cov.\ 80 / 90 & abst. & decid. \\",
         r"\midrule",
     ]
     for r in rows:
@@ -81,6 +90,7 @@ def main_table(rep, source, out):
                     str(r.get("n_tests", "")),
                     f3(r["logscore"]),
                     f3(r["crps"], 2),
+                    f"{f3(r.get('brier'), 4)} / {f3(r.get('brier_base'), 4)} / {f3(r.get('brier_floor'), 4)}" if r.get("brier") is not None else "",
                     interval(r, "brier_skill"),
                     f"{f3(r['direction_accuracy'])} / {f3(r.get('direction_ceiling'))}",
                     (f"{f3(r['coverage_80'], 2)} / {f3(r['coverage_90'], 2)}" if r.get("coverage_80") is not None else ""),
@@ -123,13 +133,14 @@ def calibration_table(rep, source, out, rungs=("P1", "P2")):
 
 
 def decision_table(rep, source, out):
-    """Captured fraction and regret per policy and model, as the mean over the per-origin rows of tables.decision_value.
+    """Captured fraction and regret per policy and model, as the mean over the per-origin rows of tables.decision_value (25 percent budget).
 
     The pooled row (origin ALL) is a different quantity, the share over every chosen test, so it is left out of the means; the
-    generated comment line says so and counts the origins averaged.
+    generated comment line says so and counts the origins averaged. A table with only the pooled row is refused. The pooled rows with their
+    bootstrap intervals are in ``decision-intervals-<source>.tex`` (``decision_intervals_table``).
     """
     t = rep["tables"]["decision_value"]
-    per_origin = [r for r in t if r["origin"] != "ALL"]
+    per_origin = [r for r in t if r["origin"] != "ALL" and r.get("budget", 0.25) == 0.25]
     if not per_origin:
         raise ValueError(f"{rep['_path']} has no per-origin decision value rows (only the pooled ALL row)")
     keys = sorted({(r["policy"], r["rung"]) for r in per_origin}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
@@ -138,12 +149,94 @@ def decision_table(rep, source, out):
         rows = [r for r in per_origin if r["policy"] == pol and r["rung"] == rg]
         cf = statistics.mean(r["captured_fraction"] for r in rows)
         rg_ = statistics.mean(r["regret"] for r in rows)
-        lines.append(f"{esc(pol)} & {esc(rg)} & {f3(cf)} & {f3(rg_, 1)} \\\\")
+        lines.append(f"{esc(pol)} & {esc(rg)} & {f3(cf)} & {fr(rg_)} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     n_origins = len({r["origin"] for r in per_origin})
     note = (f"{rep['_path']} (tables.decision_value; each mean is over the {n_origins} per-origin rows of the policy "
             "and excludes the pooled origin=ALL row)")
     write(out, f"decision-{source}.tex", note, "\n".join(lines) + "\n")
+    decision_intervals_table(rep, source, out)
+
+
+def decision_intervals_table(rep, source, out):
+    """The pooled decision value with its intervals, at every budget (tables.decision_value, origin ALL).
+
+    Columns: captured_fraction with captured_fraction_lo and captured_fraction_hi, diff_random (the captured fraction minus the random policy's)
+    with diff_random_lo and diff_random_hi, regret with regret_lo and regret_hi, and constant_within_cell. Every interval is a 90 percent bootstrap
+    that resamples whole tests within each origin; random order is exact (K over n); a rung whose p_win is constant within a cell chooses by
+    cell and then at random.
+    """
+    pooled = [r for r in rep["tables"]["decision_value"] if r["origin"] == "ALL"]
+    if not pooled or "captured_fraction_lo" not in pooled[0]:
+        return
+    budgets = sorted({r.get("budget", 0.25) for r in pooled}, key=lambda b: (b != 0.25, b))
+    lines = [r"\begin{tabular}{llrrrrr}", r"\toprule",
+             r"budget & policy & model & captured fraction (90\%) & minus random (90\%) & regret (90\%) & const.\ in cell \\", r"\midrule"]
+    for bud in budgets:
+        rows = [r for r in pooled if r.get("budget", 0.25) == bud]
+        keys = sorted({(r["policy"], r["rung"]) for r in rows}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
+        for pol, rg in keys:
+            r = next(x for x in rows if x["policy"] == pol and x["rung"] == rg)
+            cf = f"{f3(r['captured_fraction'])} ({f3(r.get('captured_fraction_lo'))}, {f3(r.get('captured_fraction_hi'))})"
+            dr = ""
+            if r.get("diff_random_lo") is not None:
+                dr = f"{f3(r.get('diff_random'))} ({f3(r.get('diff_random_lo'))}, {f3(r.get('diff_random_hi'))})"
+            rgt = fr(r["regret"])
+            if r.get("regret_lo") is not None:
+                rgt += f" ({fr(r.get('regret_lo'))}, {fr(r.get('regret_hi'))})"
+            const = "" if r.get("constant_within_cell") is None else ("yes" if r["constant_within_cell"] else "no")
+            lines.append(f"{bud:g} & {esc(pol)} & {esc(rg)} & {cf} & {dr} & {rgt} & {const} \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    note = (f"{rep['_path']} (tables.decision_value, origin ALL; intervals are 90 percent bootstrap by test within each origin; random order is "
+            "exact, K over n; constant_within_cell: p_win is one number per cell, so the policy chooses by cell and then at random)")
+    write(out, f"decision-intervals-{source}.tex", note, "\n".join(lines) + "\n")
+
+
+def coverage_ratio_table(rep, source, out, rungs=("P0", "P1", "P2")):
+    """Coverage of the 90 percent interval within deciles of the realized over the planned standard error (tables.coverage_by_se_ratio)."""
+    t = rep["tables"].get("coverage_by_se_ratio", [])
+    if not t:
+        return
+    lines = [r"\begin{tabular}{r" + "r" * (2 + len(rungs)) + "}", r"\toprule",
+             r"decile & ratio range & event rate (" + esc(rungs[0]) + ") & " + " & ".join(f"{esc(r)} cov.\\ 90" for r in rungs) + r" \\", r"\midrule"]
+    first = [r for r in t if r["rung"] == rungs[0]] or [r for r in t if r["rung"] == t[0]["rung"]]
+    for row in first:
+        cells = [str(row["decile"]), f"{f3(row['ratio_lo'], 2)} to {f3(row['ratio_hi'], 2)}", f3(row["event_rate"])]
+        for rg in rungs:
+            m = [r for r in t if r["rung"] == rg and r["decile"] == row["decile"]]
+            cells.append(f3(m[0]["coverage_90"], 2) if m else "")
+        lines.append(" & ".join(cells) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        f"coverage-ratio-{source}.tex",
+        f"{rep['_path']} (tables.coverage_by_se_ratio, deciles of the realized over the planned standard error)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def ece_table(rep, source, out, rungs=("P0", "P1", "P2")):
+    """ECE with the clustered null percentile, the independent percentile, the design effect and the adjusted skill bounds (cell ALL)."""
+    rows = [r for r in rep["tables"]["aggregate"] if r["cell"] == "ALL" and r["rung"] in rungs]
+    if not rows:
+        return
+    lines = [
+        r"\begin{tabular}{lrrrrrrr}",
+        r"\toprule",
+        r"model & ECE & pct.\ (clustered null) & pct.\ (independent) & design effect & Brier skill (90\%) & adjusted bounds ($m$) \\",
+        r"\midrule",
+    ]
+    for r in sorted(rows, key=lambda x: rungs.index(x["rung"])):
+        adj = f"({f3(r.get('adjusted_lo'))}, {f3(r.get('adjusted_hi'))}) $m={r.get('family_size')}$" if r.get("adjusted_lo") is not None else ""
+        lines.append(f"{esc(r['rung'])} & {f3(r.get('ece'), 4)} & {f3(r.get('ece_percentile'), 1)} & {f3(r.get('ece_percentile_independent'), 1)} & "
+                     f"{f3(r.get('design_effect'), 2)} & {interval(r, 'brier_skill', 4)} & {adj} \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        f"ece-{source}.tex",
+        f"{rep['_path']} (tables.aggregate, cell ALL; the null draws contrasts of one test together, 500 draws, so 100 means above every draw)",
+        "\n".join(lines) + "\n",
+    )
 
 
 def abstention_table(rep, source, out):
@@ -178,32 +271,120 @@ def selection_table(rep, source, out):
 
 def gates_table(path, out):
     g = load(path)
-    bt = g.get("by_target", {})
-    lines = [r"\begin{tabular}{lrr}", r"\toprule", r"power target & rows for skill 0.20 & rows for skill 0.10 \\", r"\midrule"]
-    for k in sorted(bt):
-        v = bt[k]
-        lines.append(f"{k} & {v.get('n_200', '')} & {v.get('n_400', '')} \\\\")
+    by_rate = g.get("by_base_rate") or {f"{g.get('base_rate', 0.3):.2f}": g}
+    unit = "tests" if (g.get("interval") or {}).get("by") == "test" else "rows"
+    lines = [r"\begin{tabular}{rlrr}", r"\toprule", f"base rate & power target & {unit} for skill 0.20 & {unit} for skill 0.10 \\\\", r"\midrule"]
+    for rate in sorted(by_rate):
+        bt = by_rate[rate].get("by_target", {})
+        for k in sorted(bt):
+            v = bt[k]
+            lines.append(f"{rate} & {k} & {v.get('n_200', '')} & {v.get('n_400', '')} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
+    iv = g.get("interval", {})
     write(
         out,
         "gates.tex",
-        f"{path} (base rate {g.get('base_rate')}, reps {g.get('reps')}, bootstrap {g.get('bootstrap')}, seed {g.get('seed')})",
+        f"{path} (base rates {sorted(by_rate)}, interval {iv.get('level', 0.95)} by {iv.get('by', 'row')}, "
+        f"{iv.get('rows_per_test', 1)} rows per test, "
+        f"reps {g.get('reps')}, bootstrap {g.get('bootstrap')}, seed {g.get('seed')})",
         "\n".join(lines) + "\n",
     )
 
 
 def ablation_table(reports_dir, source, out):
+    """P2 scores per ablation with the guard on and with ``--p2-guard off`` side by side.
+
+    A setting run with the guard off is the file named ``<setting>+p2-guard-off`` (the ablation behind the guard rarely reaches a forecast,
+    so the off run is what isolates it); the report header records the guard setting (``p2_guard``). Settings with one run print the other cell empty.
+    """
     files = [f for f in sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*.json"))) if "--drop-trigger-" not in f]
-    lines = [r"\begin{tabular}{lrrr}", r"\toprule", r"setting & P2 log score & P2 CRPS & P2 Brier skill \\", r"\midrule"]
+    runs = {}
     for fpath in files:
         rep = load(fpath)
         setting = os.path.basename(fpath).split("--", 1)[-1].rsplit(".json", 1)[0]
         rows = [r for r in rep["tables"]["aggregate"] if r["cell"] == "ALL" and r["rung"] == "P2"]
         if rows:
-            r = rows[0]
-            lines.append(f"{esc(setting)} & {f3(r['logscore'])} & {f3(r['crps'], 2)} & {f3(r['brier_skill'])} \\\\")
+            runs[setting] = (rows[0], rep["header"].get("p2_guard"), rep["header"].get("bootstrap_resamples"))
+    def base_of(name):          # the setting without its guard token, whichever side of the name the token is on
+        return "+".join(t for t in name.split("+") if t != "p2-guard-off") or "p2-guard-off"
+
+    bases = sorted({base_of(k) for k in runs})
+    guard_off = {base_of(k): k for k in runs if "p2-guard-off" in k.split("+") and k != "p2-guard-off"}
+    lines = [r"\begin{tabular}{lrrrr}", r"\toprule",
+             r"setting & log score, guard on & Brier skill, guard on & log score, guard off & Brier skill, guard off \\", r"\midrule"]
+    for base in bases:
+        on = runs.get(base) if base != "p2-guard-off" else None
+        off = runs.get(guard_off[base]) if base in guard_off else (runs.get("p2-guard-off") if base == "p2-guard-off" else None)
+        if base == "p2-guard-off":
+            base = "p2-guard-off (main settings)"
+        cells = [esc(base)]
+        for run in (on, off):
+            cells += ([f3(run[0]["logscore"]), interval(run[0], "brier_skill")] if run else ["", ""])
+        lines.append(" & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
-    write(out, f"ablations-{source}.tex", f"{reports_dir}/ablations/backtest-{source}-*.json ({len(files)} files)", "\n".join(lines) + "\n")
+    resamples = sorted({v[2] for v in runs.values() if v[2]})
+    write(out, f"ablations-{source}.tex", f"{reports_dir}/ablations/backtest-{source}-*.json ({len(files)} files; bootstrap resamples {resamples}; "
+          "guard setting from each header p2_guard)", "\n".join(lines) + "\n")
+
+
+def admission_table(rep, reports_dir, source, out):
+    """The main run beside the run that admits on exposure only (``--admission prelaunch``): scored rows, event rate, P1 and P2 skill."""
+    hits = sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*--admission-prelaunch.json")))
+    if not hits:
+        return
+    alt = load(hits[-1])
+    lines = [
+        r"\begin{tabular}{llrrrr}",
+        r"\toprule",
+        r"admission & model & scored rows & event rate & log score & Brier skill (90\%) \\",
+        r"\midrule",
+    ]
+    for label, doc in (("realized clicks (main)", rep), ("exposure only", alt)):
+        rate = next((r["brier_base"] for r in doc["tables"]["aggregate"] if r["cell"] == "ALL" and r["rung"] == "P0"), None)
+        for rg in ("P0", "P1", "P2"):
+            r = next((x for x in doc["tables"]["aggregate"] if x["cell"] == "ALL" and x["rung"] == rg), None)
+            if r:
+                lines.append(
+                    f"{esc(label)} & {rg} & {r['n']} & {f3(rate, 4) if rate is not None else ''} & {f3(r['logscore'])} & "
+                    f"{interval(r, 'brier_skill', 4)} \\\\"
+                )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        f"admission-{source}.tex",
+        f"{rep['_path']} and {hits[-1]} (the event rate column is the base-rate Brier score of P0 per row, so it falls with the event rate)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def positive_control_table(reports_dir, out):
+    """The synthetic archive with a planted text signal (``positive-control/backtest-synthetic-*.json``): P1 against P2 and the guard's admissions."""
+    hits = sorted(glob.glob(os.path.join(reports_dir, "positive-control", "backtest-synthetic-*.json")))
+    if not hits:
+        return
+    rep = load(hits[-1])
+    lines = [
+        r"\begin{tabular}{llrrrr}",
+        r"\toprule",
+        r"cell & model & log score & Brier skill (90\%) & mean $\lambda$ & share $\lambda=0$ \\",
+        r"\midrule",
+    ]
+    sel = {(r["cell"], r["rung"]): r for r in rep["tables"].get("p2_selection_by_cell", [])}
+    for r in rep["tables"]["aggregate"]:
+        if r["rung"] not in ("P1", "P2"):
+            continue
+        sr = sel.get((r["cell"], r["rung"]), {}) if r["rung"] == "P2" else {}
+        lines.append(
+            f"{esc(r['cell'])} & {r['rung']} & {f3(r['logscore'])} & {interval(r, 'brier_skill', 4)} & "
+            f"{f3(sr.get('lambda_mean'), 2)} & {f3(sr.get('share_lambda_zero'), 2)} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        "positive-control.tex",
+        f"{hits[-1]} (command {rep['header'].get('command')}; planted text signal, guard {rep['header'].get('p2_guard')})",
+        "\n".join(lines) + "\n",
+    )
 
 
 def trigger_ablation_table(rep, reports_dir, source, out):
@@ -404,7 +585,10 @@ if __name__ == "__main__":
         rep["_path"] = p
         main_table(rep, source, a.out)
         calibration_table(rep, source, a.out)
+        coverage_ratio_table(rep, source, a.out)
+        ece_table(rep, source, a.out)
         decision_table(rep, source, a.out)
+        admission_table(rep, a.reports, source, a.out)
         abstention_table(rep, source, a.out)
         selection_table(rep, source, a.out)
         ablation_table(a.reports, source, a.out)
@@ -419,4 +603,5 @@ if __name__ == "__main__":
     gp = os.path.join(a.reports, "gates.json")
     if os.path.exists(gp):
         gates_table(gp, a.out)
+    positive_control_table(a.reports, a.out)
     cautionary_table(a.reports, a.out)

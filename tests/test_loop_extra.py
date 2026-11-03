@@ -38,7 +38,9 @@ def test_outcome_files_are_read_only_hold_scores_and_match_the_ledger_row(imp, t
         o = json.loads(p.read_text())
         assert o["y"] == ledger.loc[o["row_id"], "y"] and o["s"] == ledger.loc[o["row_id"], "s"]
         assert np.isfinite(o["p0_logscore"])
-        assert (o["logscore"] is None) == o["abstained"]
+        # round 00 (T-054, call 163): an abstained card is scored on the forecast it withheld, so only a card with no forecast at all has no score
+        assert (o["logscore"] is None) == (o["scored_forecast"] is None)
+        assert o["scored_forecast"] == ("withheld" if o["abstained"] else "issued")
         assert o["event"] == (o["y"] > 1.96 * o["s"])
 
 

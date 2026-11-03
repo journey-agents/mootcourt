@@ -82,6 +82,19 @@ _ENV_VALUE_LETTERS = "uCPa"                 # short options of env that take a v
 _ENV_VALUE_LONG = {"--unset", "--chdir", "--default-path", "--argv0", "--split-string"}      # long forms; "=VALUE" attaches the value
 
 
+_ENV_LONG_ALL = ("--ignore-environment", "--null", "--unset", "--chdir", "--split-string", "--block-signal", "--default-signal", "--ignore-signal",
+                 "--list-signal-handling", "--debug", "--argv0", "--version", "--help", "--default-path")
+
+
+def _env_long(word: str) -> str | None:
+    """The long option of env a word names, by unique prefix as GNU env reads it (``--spl`` is ``--split-string``); None if unknown or ambiguous."""
+    name = word.split("=", 1)[0]
+    if name in _ENV_LONG_ALL:
+        return name
+    hits = [o for o in _ENV_LONG_ALL if o.startswith(name)] if len(name) > 2 else []
+    return hits[0] if len(hits) == 1 else None
+
+
 def _env_short_cluster(word: str) -> tuple[str | None, bool]:
     """Read a short option cluster of env (``-i``, ``-uNAME``, ``-iS``, ``-Sstring``) from its first letter.
 
@@ -99,7 +112,7 @@ def _env_option_width(command: list[str], i: int) -> int:
     """Number of words the env option at ``command[i]`` occupies (the option and its value)."""
     word = command[i]
     if word.startswith("--"):
-        return 1 if "=" in word or word not in _ENV_VALUE_LONG else 2
+        return 1 if "=" in word or _env_long(word) not in _ENV_VALUE_LONG else 2
     if word.startswith("-") and len(word) > 1:
         letter, attached = _env_short_cluster(word)
         return 2 if letter is not None and not attached else 1
@@ -119,10 +132,11 @@ def _split_env_strings(command: list[str], depth: int = 0) -> list[str]:
     while i < len(command):
         word = command[i]
         value = None
-        if word.startswith("--split-string="):
-            value, width = word.split("=", 1)[1], 1
-        elif word == "--split-string":
-            value, width = (command[i + 1] if i + 1 < len(command) else ""), 2
+        if word.startswith("--") and _env_long(word) == "--split-string":          # in any unique-prefix spelling, as GNU env reads it
+            if "=" in word:
+                value, width = word.split("=", 1)[1], 1
+            else:
+                value, width = (command[i + 1] if i + 1 < len(command) else ""), 2
         elif word.startswith("-") and not word.startswith("--") and len(word) > 1:
             letter, attached = _env_short_cluster(word)
             if letter == "S":                                                   # -S, -iS, or the value attached as in -Sstring

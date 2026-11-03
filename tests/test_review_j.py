@@ -121,7 +121,7 @@ def test_tail_shares_are_fractions_of_the_weight_beyond_the_top_m():
 def test_the_script_writes_one_report_with_every_value_and_the_inputs_it_came_from(root):
     out = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "paper_extras.py"), "--source", "synthetic", "--guard-seeds", "2", "--guard-tests", "80",
-         "--tail-sizes", "300,600", "--tail-top-m", "20", "--tail-queries", "4"],
+         "--tail-sizes", "300,600", "--tail-top-m", "20", "--tail-queries", "4", "--sensitivity-seeds", "0"],
         env={**__import__("os").environ, "MOOTCOURT_DATA_ROOT": str(root)}, capture_output=True, text=True, cwd=ROOT)
     assert out.returncode == 0, out.stderr
     sid = _main(root)["header"]["snapshot_id"]
@@ -326,7 +326,8 @@ def test_the_generated_decision_tables_match_the_reports_on_the_data_root():
         if not files or not table.exists():
             continue
         doc = json.loads(files[-1].read_text())
-        rows = [r for r in doc["tables"]["decision_value"] if r["origin"] != "ALL"]
+        # round 00 (T-054): the table also holds the 10 and 50 percent budgets; the generated means are the 25 percent rows
+        rows = [r for r in doc["tables"]["decision_value"] if r["origin"] != "ALL" and r.get("budget", 0.25) == 0.25]
         text = table.read_text()
         assert files[-1].name in text.splitlines()[0], "the table was built from another report"
         for pol, rg in {(r["policy"], r["rung"]) for r in rows}:

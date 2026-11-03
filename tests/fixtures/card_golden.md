@@ -1,6 +1,6 @@
 # Moot Court card
 
-- Card id: 44b970da6862045b
+- Card id: a31d66506fc30ff7
 - Source: synthetic
 - Cell: headline_only
 - Origin: 2014-07-15T12:00:00+00:00
@@ -21,6 +21,7 @@
 - P(significant and positive): 0.443
 - Point estimate: 2.10 percent lift
 - 80 percent interval for the true effect: -2.08 to 6.28 percent lift
+- 80 percent interval for the result of the test at the planned standard error: -2.42 to 6.61 percent lift
 - P(true effect above 0): 0.740
 - Rung: P2, weight on precedents 0.2
 
@@ -36,7 +37,8 @@
 
 ## Skill at this n
 
-- Brier skill against P0: 0.120 measured on 500 rows, as of 2014-07-14T12:00:00+00:00
+- Brier skill against the cell base rate, trailing window: 0.120 (no interval is recorded in this reliability report, so this number cannot be judged), measured on 500 rows, as of 2014-07-14T12:00:00+00:00
+- Gate at this n: the number of tests in the window is not recorded, so the skill cannot be judged
 
 ## Abstention
 

@@ -40,13 +40,26 @@ from scipy import special
 
 from mootcourt import scale
 from mootcourt.abstain import AbstainConfig, check_support, decide, reliability_reason
-from mootcourt.config import GBM_FOLDS, KAPPA, LOCAL_EB_K, NU_GRID, P2_GUARD_MULT, P2_SELECTIONS, Z
-from mootcourt.features import FEATURE_SETS, FeatureSpace, _parse_rows, sq_dists, use_cell_only
+from mootcourt.config import (
+    GBM_CONFIGS,
+    GBM_FOLDS,
+    GBM_ITER_MAX,
+    GBM_VALIDATION_FRACTION,
+    KAPPA,
+    LOCAL_EB_K,
+    NU_GRID,
+    P2_GUARD_MULT,
+    P2_SELECTIONS,
+    Z,
+)
+from mootcourt.features import FEATURE_SETS, FeatureSpace, _parse_rows, has_reference, parse_references, sq_dists, use_cell_only
 from mootcourt.ledger import ADMITTED, metric_of, quarter_of, to_utc, visible_rows
 from mootcourt.predictors.base import Predictive, build_grid
 from mootcourt.predictors.p0 import P0Predictor
 from mootcourt.predictors.p1 import P1Predictor, sd_equivalent
 from mootcourt.predictors.p2 import P2Predictor
+from mootcourt.recalibration import METHODS as RECAL_METHODS
+from mootcourt.recalibration import Calibrator, time_folds
 from mootcourt.reliability import build_reliability
 
 BURN_IN_NOTE = (
@@ -56,6 +69,7 @@ BURN_IN_NOTE = (
 )
 MIN_FIT_ROWS = 20
 INTERVAL_POINTS = 201
+CALIBRATION_MAX_ROWS = 3000                      # visible rows used to fit a recalibration map (a fixed subsample above this)
 _GH_NODES, _GH_WEIGHTS = np.polynomial.hermite.hermgauss(24)
 
 SCORE_COLUMNS = [
@@ -208,47 +222,113 @@ class TeamModel:
 class GBMChallenger:
     """Gradient-boosted regression of y on the same features, as a predictive Normal for theta.
 
-    Calibration. The spread of the predictive comes from out-of-fold residuals: the visible rows are put in time
-    order and cut into ``GBM_FOLDS`` contiguous folds, each fold is predicted by a model fit on the other folds, and
-    the variance of those residuals minus the mean ``s^2`` (floored) is the spread of theta around the prediction.
-    Every row therefore contributes one residual that its own model did not see. The model used for prediction is
-    then refit on all visible rows. Below ``min_rows`` rows it is a constant (the mean of y). Its ``p_sig`` goes
-    through the same reliability bins as every other rung, which is where its calibration is judged.
+    Fairness (round 00, docs/method.md call 169). The model is weighted by ``1 / (s^2 + tau^2)`` (``tau`` the DerSimonian-Laird
+    between-test spread of the visible rows), so a noisy estimate counts less, as it does in the ladder. A small time-ordered
+    search picks the learning rate, the leaf count and the number of rounds: the earliest 80 percent of the visible rows (in
+    start-time order) fit each configuration and the latest 20 percent score it by weighted squared error at every boosting
+    round, so the stopping point never looks at a later row than a validation row. The chosen configuration is refit on all
+    visible rows. ``tuned=False`` restores the earlier untuned, unweighted model (100 rounds, 0.1, 15 leaves).
+
+    Calibration of the spread. The spread of the predictive comes from out-of-fold residuals: the visible rows are put in time
+    order and cut into ``GBM_FOLDS`` contiguous folds, each fold is predicted by a model fit on the other folds, and the variance
+    of those residuals minus the mean ``s^2`` (floored) is the spread of theta around the prediction. Below ``min_rows`` rows
+    it is a constant (the weighted mean of y). Its ``p_sig`` goes through the same reliability bins as every other rung; the
+    recalibrated rung (``oof_probabilities``) is fit on the out-of-fold predictions.
     """
 
     min_rows = 40
 
-    def __init__(self, space: FeatureSpace, rows: pd.DataFrame, seed: int = 0, n_folds: int = GBM_FOLDS):
+    def __init__(self, space: FeatureSpace, rows: pd.DataFrame, seed: int = 0, n_folds: int = GBM_FOLDS, tuned: bool = True):
+        from threadpoolctl import threadpool_limits
+
+        # one thread is faster than eight on these row counts (thread start-up dominates) and lets runs share the machine
+        with threadpool_limits(limits=1):
+            self._fit(space, rows, seed, n_folds, tuned)
+
+    def _fit(self, space: FeatureSpace, rows: pd.DataFrame, seed: int, n_folds: int, tuned: bool) -> None:
         from sklearn.ensemble import HistGradientBoostingRegressor
 
         self.space, self.n_folds = space, n_folds
         order = rows.sort_values("started_at", kind="stable")
-        X, y, s = space.transform(order), order["y"].to_numpy(float), order["s"].to_numpy(float)
-
-        def new():
-            return HistGradientBoostingRegressor(max_iter=100, learning_rate=0.1, max_leaf_nodes=15, min_samples_leaf=10,
-                                                 random_state=seed)
-
+        # the cell is a feature: the ladder fits each cell apart, so a model of all cells must see which one
+        self.cells = tuple(sorted(order["cell"].unique()))
+        X, y, s = self._raw(order), order["y"].to_numpy(float), order["s"].to_numpy(float)
+        # Quantize each column once (at most 63 levels, from the visible rows). With a sample weight scikit-learn finds its histogram bins by a
+        # weighted percentile on every fit, which cost seven seconds a fit here; a column with fewer levels than bins skips that search.
+        self._edges = [np.unique(np.quantile(X[:, j], np.linspace(0.0, 1.0, 64)[1:-1])) for j in range(X.shape[1])]
+        X = self._bin(X)
+        self.sorted_rows = order
         n = len(y)
-        self.oof_residuals = np.full(n, np.nan)
+        w = np.ones(n)
+        if tuned and n > 1:
+            _, tau = dersimonian_laird(y, s)
+            w = 1.0 / (s ** 2 + tau ** 2)
+            w = w / w.mean()
+
+        def new(lr: float, leaves: int, iters: int):
+            return HistGradientBoostingRegressor(max_iter=iters, learning_rate=lr, max_leaf_nodes=leaves, min_samples_leaf=10,
+                                                 random_state=seed, early_stopping=False)
+
+        self.oof_mean = np.full(n, np.nan)
+        self.config: dict = {"tuned": bool(tuned)}
         if n < self.min_rows:
-            self.model, self._const = None, float(y.mean())
-            self.oof_residuals = y - self._const
+            self.model, self._const = None, float(np.average(y, weights=w))
+            self.oof_mean = np.full(n, self._const)
         else:
-            edges = np.linspace(0, n, n_folds + 1).astype(int)
-            for a, b in zip(edges[:-1], edges[1:]):
-                train = np.r_[0:a, b:n]
-                self.oof_residuals[a:b] = y[a:b] - new().fit(X[train], y[train]).predict(X[a:b])
-            self.model, self._const = new().fit(X, y), 0.0
+            lr, leaves, iters = 0.1, 15, 100
+            if tuned:
+                cut = max(int(n * (1.0 - GBM_VALIDATION_FRACTION)), 10)
+                best = None
+                for lr_c, leaves_c in GBM_CONFIGS:
+                    m = new(lr_c, leaves_c, GBM_ITER_MAX).fit(X[:cut], y[:cut], sample_weight=w[:cut])
+                    errs = [float(np.average((yp - y[cut:]) ** 2, weights=w[cut:])) for yp in m.staged_predict(X[cut:])]
+                    k = int(np.argmin(errs))
+                    if best is None or errs[k] < best[0]:
+                        best = (errs[k], lr_c, leaves_c, k + 1)
+                _, lr, leaves, iters = best
+                self.config.update({"learning_rate": lr, "max_leaf_nodes": leaves, "rounds": int(iters)})
+            for a, b in time_folds(n, n_folds):
+                self.oof_mean[b] = new(lr, leaves, iters).fit(X[a], y[a], sample_weight=w[a]).predict(X[b])
+            self.model, self._const = new(lr, leaves, iters).fit(X, y, sample_weight=w), 0.0
+        self.oof_residuals = y - self.oof_mean
         v = float(np.mean(self.oof_residuals ** 2) - np.mean(s ** 2))
         self.sd = float(np.sqrt(max(v, 1e-4)))
         self.range = (float(y.min()), float(y.max()))
 
+    def _raw(self, rows: pd.DataFrame) -> np.ndarray:
+        """The feature space of the rows with one 0/1 column per cell seen at fit appended."""
+        onehot = (rows["cell"].to_numpy()[:, None] == np.asarray(self.cells, dtype=object)[None, :]).astype(np.float64)
+        return np.hstack([self.space.transform(rows), onehot])
+
+    def _bin(self, X: np.ndarray) -> np.ndarray:
+        """The columns of ``X`` as ordinal quantile levels (0 to 63) by the edges found at fit."""
+        X = np.asarray(X, dtype=np.float64)
+        return np.column_stack([np.searchsorted(e, X[:, j], side="right") for j, e in enumerate(self._edges)]).astype(np.float64)
+
     def predict(self, x, s_star: float, cell: str, origin) -> Predictive:
-        """Normal(prediction, sd^2) for theta on a grid covering the observed range of y."""
-        mean = self._const if self.model is None else float(self.model.predict(np.asarray(x).reshape(1, -1))[0])
+        """Normal(prediction, sd^2) for theta on a grid covering the observed range of y; ``x`` is a feature-space row, ``cell`` its cell."""
+        onehot = np.array([[1.0 if c == cell else 0.0 for c in self.cells]])
+        mean = self._const if self.model is None else float(self.model.predict(self._bin(np.hstack([np.asarray(x).reshape(1, -1), onehot])))[0])
         grid = build_grid(mean, self.sd, y_min=self.range[0], y_max=self.range[1])
         return Predictive.from_normal(grid, mean, self.sd)
+
+    def _p_sig(self, mean, s_star) -> np.ndarray:
+        return special.ndtr((np.asarray(mean) - Z * s_star) / np.sqrt(self.sd ** 2 + s_star ** 2))
+
+    def raw_p_sig(self, scored: pd.DataFrame, s_star, X_cache=None) -> np.ndarray:
+        """Closed-form ``p_sig`` of every scored row (what the recalibration map is applied to)."""
+        key = id(self.space)
+        X = (X_cache or {}).get(key)
+        onehot = (scored["cell"].to_numpy()[:, None] == np.asarray(self.cells, dtype=object)[None, :]).astype(np.float64)
+        X = np.hstack([self.space.transform(scored) if X is None else X, onehot])
+        mean = np.full(len(scored), self._const) if self.model is None else self.model.predict(self._bin(X))
+        return self._p_sig(mean, np.asarray(s_star, dtype=float))
+
+    def oof_probabilities(self) -> tuple[np.ndarray, np.ndarray]:
+        """``(p_sig, event)`` of the visible rows from their out-of-fold predictions, at their own pre-launch ``s_star``."""
+        rows = self.sorted_rows
+        s_star = scale.s_star_rows(rows, rows)
+        return self._p_sig(self.oof_mean, s_star), (rows["y"].to_numpy(float) > Z * rows["s"].to_numpy(float)).astype(float)
 
 
 def dersimonian_laird(y, s) -> tuple[float, float]:
@@ -280,6 +360,8 @@ class LocalEB:
     than two). The prior is Normal(mu, tau^2) from ``dersimonian_laird`` on those neighbors alone: nothing is shrunk
     toward the cell prior, which is what makes it a baseline for the ladder and not another rung of it. The
     predictive for theta is that prior; its spread is floored at a thousandth of the range of y so the grid is defined.
+    The feature space reads the reference headline where the rows carry one, so the neighbors are contrasts that changed
+    the way the query does.
     """
 
     def __init__(self, space: FeatureSpace, rows: pd.DataFrame, k: int = LOCAL_EB_K):
@@ -288,30 +370,80 @@ class LocalEB:
         self.space, self.k = space, int(k)
         X = space.transform(rows).astype(np.float32)
         y, s = rows["y"].to_numpy(float), rows["s"].to_numpy(float)
-        cells = rows["cell"].to_numpy()
-        self._all = (X, np.einsum("ij,ij->i", X, X), y, s)
-        self._by_cell = {}
-        for c in np.unique(cells):
-            idx = np.flatnonzero(cells == c)
-            self._by_cell[c] = (X[idx], np.einsum("ij,ij->i", X[idx], X[idx]), y[idx], s[idx])
+        self.rows = rows
+        self._X, self._y, self._s, self._cells = X, y, s, rows["cell"].to_numpy()
+        self._tables = self._build(np.ones(len(y), bool))
         self._floor = 1e-3 * float(y.max() - y.min() or 1.0)
         self.range = (float(y.min()), float(y.max()))
 
-    def neighbors(self, x, cell: str):
-        """``(y, s)`` of the ``k`` nearest visible rows of the cell."""
-        X, sq, y, s = self._by_cell.get(cell, self._all)
+    def _build(self, mask: np.ndarray):
+        """Search tables of the rows in ``mask``: ``(all, {cell: table})`` with a table ``(X, squared norms, y, s)``."""
+        X, y, s, cells = self._X[mask], self._y[mask], self._s[mask], self._cells[mask]
+        full = (X, np.einsum("ij,ij->i", X, X), y, s)
+        by_cell = {}
+        for c in np.unique(cells):
+            idx = np.flatnonzero(cells == c)
+            by_cell[c] = (X[idx], np.einsum("ij,ij->i", X[idx], X[idx]), y[idx], s[idx])
+        return full, by_cell
+
+    @staticmethod
+    def _neighbors(tables, k: int, x, cell: str):
+        full, by_cell = tables
+        X, sq, y, s = by_cell.get(cell, full)
         if len(y) < 2:
-            X, sq, y, s = self._all
+            X, sq, y, s = full
         d2 = sq_dists(np.asarray(x, dtype=X.dtype), X, sq)
-        kk = min(self.k, len(y))
+        kk = min(k, len(y))
         idx = np.argpartition(d2, kk - 1)[:kk] if kk < len(y) else np.arange(len(y))
         return y[idx], s[idx]
+
+    def neighbors(self, x, cell: str):
+        """``(y, s)`` of the ``k`` nearest visible rows of the cell."""
+        return self._neighbors(self._tables, self.k, x, cell)
 
     def predict(self, x, s_star: float, cell: str, origin) -> Predictive:
         ny, ns = self.neighbors(x, cell)
         mu, tau = dersimonian_laird(ny, ns)
         sd = max(tau, self._floor)
         return Predictive.from_normal(build_grid(mu, sd, y_min=self.range[0], y_max=self.range[1]), mu, sd)
+
+    def _p_sig(self, tables, x, cell: str, s_star: float) -> float:
+        ny, ns = self._neighbors(tables, self.k, x, cell)
+        mu, tau = dersimonian_laird(ny, ns)
+        sd = max(tau, self._floor)
+        return float(special.ndtr((mu - Z * s_star) / math.sqrt(sd * sd + s_star * s_star)))
+
+    def raw_p_sig(self, scored: pd.DataFrame, s_star, X_cache=None) -> np.ndarray:
+        """Closed-form ``p_sig`` of every scored row (what the recalibration map is applied to)."""
+        key = id(self.space)
+        X = (X_cache or {}).get(key)
+        if X is None:
+            X = self.space.transform(scored)
+        cells = scored["cell"].to_numpy()
+        return np.array([self._p_sig(self._tables, X[i], cells[i], float(s_star[i])) for i in range(len(scored))])
+
+    def oof_probabilities(self, max_rows: int = CALIBRATION_MAX_ROWS, n_folds: int = GBM_FOLDS, seed: int = 0) -> tuple[np.ndarray, np.ndarray]:
+        """``(p_sig, event)`` of a subsample of the visible rows, each predicted from the rows of the other time folds.
+
+        The visible rows are put in start-time order and cut into contiguous folds; a row's neighbors come from the other
+        folds only, so it never neighbors itself or its own test's siblings that share its fold.
+        """
+        rows = self.rows
+        order = np.argsort(rows["started_at"].to_numpy(), kind="stable")
+        fold = np.empty(len(rows), int)
+        for f, (_, test) in enumerate(time_folds(len(rows), n_folds)):
+            fold[order[test]] = f
+        pick = np.arange(len(rows))
+        if len(pick) > max_rows:
+            pick = np.sort(np.random.default_rng(seed).choice(len(pick), max_rows, replace=False))
+        s_star = scale.s_star_rows(rows.iloc[pick], rows)
+        p = np.empty(len(pick))
+        for f in np.unique(fold):
+            tables = self._build(fold != f)
+            for j in np.flatnonzero(fold[pick] == f):
+                i = pick[j]
+                p[j] = self._p_sig(tables, self._X[i], str(self._cells[i]), float(s_star[j]))
+        return p, (self._y[pick] > Z * self._s[pick]).astype(float)
 
 
 class TextLR:
@@ -321,36 +453,103 @@ class TextLR:
     significant-positive event ``y > Z s`` (the realized ``s`` of past rows, which is history). There is no density,
     no interval and no Platt scaling, so the rung is scored with Brier and direction accuracy only. It ignores the
     precision of the future test, which is part of what the comparison shows.
+
+    Pairwise (round 00, call 167). Where the rows carry a reference headline the design is the difference of the two headlines'
+    TF-IDF vectors beside the variant's own, so the classifier sees what changed; without one it is the variant's TF-IDF.
     """
 
-    def __init__(self, rows: pd.DataFrame, seed: int = 0):
+    def __init__(self, rows: pd.DataFrame, seed: int = 0, pairwise: bool | None = None):
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.linear_model import LogisticRegression
 
         heads = _parse_rows(rows)[0]
+        self.cells = tuple(sorted(rows["cell"].unique()))           # one 0/1 column per cell, as for the GBM
+        self.pairwise = has_reference(rows) if pairwise is None else (bool(pairwise) and has_reference(rows))
+        refs = parse_references(rows) if self.pairwise else []
         self.vec = TfidfVectorizer(ngram_range=(1, 2), min_df=3, dtype=np.float64)
-        Xt = self.vec.fit_transform(heads)
+        self.vec.fit(list(dict.fromkeys(heads + refs)))
+        Xt = self._design(heads, refs, rows["cell"].to_numpy())
         y, s = rows["y"].to_numpy(float), rows["s"].to_numpy(float)
+        self._seed = seed
+        self._rows = rows
+        self._X, self._labels = Xt, (y > 0, y > Z * s)
         self._models = []
-        for label in (y > 0, y > Z * s):
+        for label in self._labels:
             if label.all() or not label.any():
                 self._models.append(float(label.mean()))
             else:
                 self._models.append(LogisticRegression(C=1.0, max_iter=500, random_state=seed).fit(Xt, label))
+
+    def _design(self, heads, refs, cells):
+        from scipy import sparse
+
+        Xv = self.vec.transform(heads)
+        onehot = sparse.csr_matrix((np.asarray(cells, dtype=object)[:, None] == np.asarray(self.cells, dtype=object)[None, :]).astype(np.float64))
+        if not self.pairwise:
+            return sparse.hstack([Xv, onehot], format="csr")
+        return sparse.hstack([Xv - self.vec.transform(refs), Xv, onehot], format="csr")
 
     def _proba(self, model, Xt) -> np.ndarray:
         if isinstance(model, float):
             return np.full(Xt.shape[0], model)
         return model.predict_proba(Xt)[:, 1]
 
+    def _scored_design(self, scored: pd.DataFrame):
+        return self._design(_parse_rows(scored)[0], parse_references(scored) if self.pairwise else [], scored["cell"].to_numpy())
+
+    def raw_p_sig(self, scored: pd.DataFrame, s_star, X_cache=None) -> np.ndarray:
+        """``p_sig`` of every scored row (what the recalibration map is applied to)."""
+        return self._proba(self._models[1], self._scored_design(scored))
+
+    def oof_probabilities(self, max_rows: int = CALIBRATION_MAX_ROWS, n_folds: int = GBM_FOLDS, seed: int = 0) -> tuple[np.ndarray, np.ndarray]:
+        """``(p_sig, event)`` of a subsample of the visible rows, each predicted by a classifier fit on the other time folds."""
+        from sklearn.linear_model import LogisticRegression
+
+        label = self._labels[1]
+        n = len(label)
+        order = np.argsort(self._rows["started_at"].to_numpy(), kind="stable")
+        p = np.full(n, np.nan)
+        for train, test in time_folds(n, n_folds):
+            tr, te = order[train], order[test]
+            if label[tr].all() or not label[tr].any():
+                p[te] = float(label[tr].mean())
+            else:
+                p[te] = LogisticRegression(C=1.0, max_iter=500, random_state=self._seed).fit(self._X[tr], label[tr]).predict_proba(self._X[te])[:, 1]
+        pick = np.arange(n)
+        if n > max_rows:
+            pick = np.sort(np.random.default_rng(seed).choice(n, max_rows, replace=False))
+        return p[pick], label[pick].astype(float)
+
     def score_block(self, scored: pd.DataFrame, y, s_star, origin, X_cache=None):
         """``(columns, keep)``: ``p_sig`` and ``p_win`` (the direction probability) with NaN where a rung has nothing to say."""
         n = len(scored)
-        Xt = self.vec.transform(_parse_rows(scored)[0])
+        Xt = self._scored_design(scored)
         p_dir, p_sig = self._proba(self._models[0], Xt), self._proba(self._models[1], Xt)
         nan = np.full(n, np.nan)
         cols = {k: nan.copy() for k in ("logscore", "crps", "lo80", "hi80", "lo90", "hi90")}
         cols.update(p_sig=p_sig, p_win=p_dir, p_gt0=p_dir, point=p_dir - 0.5)           # only the sign of the point is used
+        return cols, np.ones(n, bool)
+
+
+class Recalibrated:
+    """A challenger's significant-positive probability through a monotone map fit on the visible rows only (``recalibration.py``).
+
+    The map is fit on the inner model's out-of-fold predictions for the rows visible at the origin against their events, so
+    nothing from the scored rows reaches it. Only ``p_sig`` is reported: the density columns, the direction and the win
+    probability are left empty, because the raw rung already carries them and a monotone map does not change a ranking.
+    """
+
+    def __init__(self, inner, method: str = "platt"):
+        p, event = inner.oof_probabilities()
+        self.inner = inner
+        self.calibrator = Calibrator(method).fit(p, event)
+        self.n_fit = self.calibrator.n_fit
+
+    def score_block(self, scored: pd.DataFrame, y, s_star, origin, X_cache=None):
+        n = len(scored)
+        nan = np.full(n, np.nan)
+        cols = {k: nan.copy() for k in ("logscore", "crps", "lo80", "hi80", "lo90", "hi90", "p_win", "p_gt0", "point")}
+        cols["p_sig"] = self.calibrator.transform(self.inner.raw_p_sig(scored, np.asarray(s_star, dtype=float), X_cache))
         return cols, np.ones(n, bool)
 
 
@@ -373,6 +572,7 @@ class DirectionBaseline:
 
 
 CHALLENGERS = ("gbm", "local_eb", "text_lr")
+RECAL_SUFFIX = "+cal"
 PRIOR_KINDS = ("t", "normal")
 
 
@@ -391,14 +591,18 @@ def parse_challengers(challenger) -> list[str]:
 def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=None, *, features: str = "both",
                   bandwidth_mult: float | None = None, lam: float | None = None, kappa: float = KAPPA, prior: str = "t",
                   p2_selection: str | None = None, recency: str | float | None = None, local_k: int = LOCAL_EB_K,
-                  baselines: bool = False, p2_guard: float | None = P2_GUARD_MULT) -> dict[str, Callable]:
+                  baselines: bool = False, p2_guard: float | None = P2_GUARD_MULT, recalibrate: bool = False,
+                  recalibration: str = "platt", gbm_tuned: bool = True, pairwise: bool | None = None) -> dict[str, Callable]:
     """Rung factories ``factory(rows, origin)``: P0, P1, P2, P3 when the ledger has team forecasts, then challengers.
 
     ``challenger`` is a name, a comma-separated string or a list from ``CHALLENGERS`` (gbm, local_eb, text_lr).
     ``baselines`` adds the two direction baselines. The keyword arguments are the ablation switches: ``features``
     (``text``, ``structured`` or ``both``), a fixed ``bandwidth_mult`` and ``lam`` for P2, the P1 pooling strength
     ``kappa``, the P1 ``prior`` (``t`` or ``normal``), and P2's ``p2_selection``, ``recency`` and ``p2_guard`` (the admission
-    guard multiplier, None for no guard).
+    guard multiplier, None for no guard). With ``recalibrate`` every challenger also gets a recalibrated rung (``GBM+cal`` and so on; the
+    ``moot backtest`` command turns it on by default); ``recalibration`` is ``platt`` or ``isotonic`` and ``gbm_tuned`` False restores
+    the untuned GBM.
+    ``pairwise`` None reads the reference headline where the rows carry one (the default), ``False`` is the single-headline space of earlier versions.
     """
     names = parse_challengers(challenger)
     if features not in FEATURE_SETS:
@@ -417,7 +621,7 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
         return shared.get("p1", rows, origin, lambda: P1Predictor(kappa=kappa, nu_grid=nu_grid).fit(rows))
 
     def space_of(rows, origin):
-        return shared.get("space", rows, origin, lambda: FeatureSpace.fit(rows, cell_only=cell_only, feature_set=features))
+        return shared.get("space", rows, origin, lambda: FeatureSpace.fit(rows, cell_only=cell_only, feature_set=features, pairwise=pairwise))
 
     def p0(rows, origin):
         return P0Predictor().fit(rows)
@@ -429,12 +633,30 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
     rungs: dict[str, Callable] = {"P0": p0, "P1": lambda rows, origin: p1_of(rows, origin), "P2": p2}
     if ledger is not None and has_team_forecasts(ledger):
         rungs["P3"] = lambda rows, origin: TeamModel(rows)
+    if recalibration not in RECAL_METHODS:
+        raise ValueError(f"recalibration must be one of {RECAL_METHODS}")
+
+    def gbm_of(rows, origin):
+        return shared.get("gbm", rows, origin, lambda: GBMChallenger(space_of(rows, origin), rows, tuned=gbm_tuned))
+
+    def local_of(rows, origin):
+        return shared.get("local_eb", rows, origin, lambda: LocalEB(space_of(rows, origin), rows, k=local_k))
+
+    def text_of(rows, origin):
+        return shared.get("text_lr", rows, origin, lambda: TextLR(rows, pairwise=pairwise))
+
     if "gbm" in names:
-        rungs["GBM"] = lambda rows, origin: GBMChallenger(space_of(rows, origin), rows)
+        rungs["GBM"] = gbm_of
+        if recalibrate:
+            rungs["GBM" + RECAL_SUFFIX] = lambda rows, origin: Recalibrated(gbm_of(rows, origin), recalibration)
     if "local_eb" in names:
-        rungs["local_eb"] = lambda rows, origin: LocalEB(space_of(rows, origin), rows, k=local_k)
+        rungs["local_eb"] = local_of
+        if recalibrate:
+            rungs["local_eb" + RECAL_SUFFIX] = lambda rows, origin: Recalibrated(local_of(rows, origin), recalibration)
     if "text_lr" in names:
-        rungs["text_lr"] = lambda rows, origin: TextLR(rows)
+        rungs["text_lr"] = text_of
+        if recalibrate:
+            rungs["text_lr" + RECAL_SUFFIX] = lambda rows, origin: Recalibrated(text_of(rows, origin), recalibration)
     if baselines:
         rungs["always_reference"] = lambda rows, origin: DirectionBaseline(reference_wins=True)
         rungs["always_variant"] = lambda rows, origin: DirectionBaseline(reference_wins=False)
@@ -527,7 +749,7 @@ def posterior_floor(rows: pd.DataFrame, p1: P1Predictor, origin) -> dict[str, np
 
 def _outcomes_for_reliability(blocks: list[pd.DataFrame], rel_rung: str, t) -> pd.DataFrame:
     """Outcomes known at ``t`` (``usable_after <= t``) from earlier origins, in the reliability schema."""
-    cols = ["cell", "at", "logscore", "p0_logscore", "brier", "p0_brier"]
+    cols = ["cell", "at", "logscore", "p0_logscore", "brier", "p0_brier", "test_id"]
     if not blocks:
         return pd.DataFrame({c: [] for c in cols})
     allr = pd.concat(blocks, ignore_index=True)
@@ -536,7 +758,8 @@ def _outcomes_for_reliability(blocks: list[pd.DataFrame], rel_rung: str, t) -> p
     main = main[main["usable_after"] <= t]
     p0_ls = main["logscore"].to_numpy() if base is None else base.reindex(main["row_id"]).to_numpy()
     return pd.DataFrame({"cell": main["cell"].to_numpy(), "at": main["usable_after"].to_numpy(), "logscore": main["logscore"].to_numpy(),
-                         "p0_logscore": p0_ls, "brier": main["brier_event"].to_numpy(), "p0_brier": main["brier_base"].to_numpy()})
+                         "p0_logscore": p0_ls, "brier": main["brier_event"].to_numpy(), "p0_brier": main["brier_base"].to_numpy(),
+                         "test_id": main["test_id"].to_numpy()})
 
 
 @dataclass

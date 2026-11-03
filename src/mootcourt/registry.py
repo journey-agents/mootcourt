@@ -11,7 +11,14 @@ the number of those rows. Writes are atomic (a temporary file in the same direct
 a concurrent reader sees the old file or the new one, never a partial file. There is no cross-process lock:
 the registry is written by one operator at a time (builder call 34).
 
-Promotion rule (``promote``): the challenger replaces the champion only when its Brier skill beats the
+Champion refresh (round 00, docs/method.md call 165). A bundle fit with the champion's METHOD (the same ``method_id``, a hash of the method
+version and the fixed hyperparameters, never of the data) on a newer fit time is the same method on newer data. ``register_model`` makes
+it the champion directly, without the challenger margin, after a no-regression check: it is refused (and the bundle becomes the
+challenger, with the reason in the history) only when its backtest Brier skill interval lies entirely below the champion's. A bundle with
+a different ``method_id`` is a different method and is a challenger that needs the margin below. Without this split a method with skill
+near zero could never replace a champion that is merely older.
+
+Promotion rule (``promote``, for a different method): the challenger replaces the champion only when its Brier skill beats the
 champion's by at least the margin (default ``config.PROMOTION_MARGIN``, 0.02 in Brier skill) and its
 backtest row count reaches the gate for its own skill: ``n_200`` when the challenger's skill is at least
 0.20, otherwise ``n_400``, both read from gates.json. Otherwise the reason says which condition failed and by
@@ -156,23 +163,35 @@ class Registry:
         self._log(e, "second_opinion_weight", now, provider_id=provider_id, version=version, weight=float(weight), contaminated=bool(contaminated))
         self._write(doc)
 
-    def register_model(self, source: str, model_id: str, backtest_summary: dict | None = None, now: dt.datetime | None = None) -> str:
+    def register_model(self, source: str, model_id: str, backtest_summary: dict | None = None, now: dt.datetime | None = None,
+                       method_id: str | None = None, fitted_at: str | None = None) -> str:
         """Register a fitted model. Returns ``"champion"`` or ``"challenger"``, the role it holds afterwards.
 
-        The first model of a source becomes the champion. A later model becomes the challenger (replacing any
-        earlier challenger) unless it already is the champion or the challenger, in which case only its
-        summary is refreshed.
+        The first model of a source becomes the champion. A later model with the champion's ``method_id`` and a newer ``fitted_at`` is
+        a refresh and becomes the champion (see the module docstring); any other later model becomes the challenger (replacing any
+        earlier challenger) unless it already is the champion or the challenger, in which case only its summary is refreshed.
         """
         doc = self._read()
         e = self._entry(doc, source)
         if backtest_summary is not None:
             e["summaries"][model_id] = backtest_summary
+        if method_id is not None:
+            e.setdefault("methods", {})[model_id] = method_id
+        if fitted_at is not None:
+            e.setdefault("fitted_at", {})[model_id] = fitted_at
         if e["champion"] is None:
             e["champion"] = model_id
             role = "champion"
             self._log(e, "champion_set", now, model_id=model_id)
         elif e["champion"] == model_id:
             role = "champion"
+        elif self._is_refresh(e, model_id):
+            old = e["champion"]
+            e["champion"] = model_id
+            if e.get("challenger") == model_id:
+                e["challenger"] = None
+            role = "champion"
+            self._log(e, "champion_refreshed", now, model_id=model_id, replaced=old, method_id=method_id)
         else:
             if e["challenger"] != model_id:
                 self._log(e, "challenger_set", now, model_id=model_id)
@@ -180,6 +199,22 @@ class Registry:
             role = "challenger"
         self._write(doc)
         return role
+
+    @staticmethod
+    def _is_refresh(e: dict, model_id: str) -> bool:
+        """True when ``model_id`` is the champion's method on a newer fit and its backtest is not clearly worse than the champion's."""
+        champ = e["champion"]
+        methods, fitted = e.get("methods", {}), e.get("fitted_at", {})
+        mid = methods.get(model_id)
+        if not mid or methods.get(champ) != mid:
+            return False
+        new_t, old_t = fitted.get(model_id), fitted.get(champ)
+        if not new_t or not old_t or dt.datetime.fromisoformat(new_t) <= dt.datetime.fromisoformat(old_t):
+            return False
+        s_new, s_old = e["summaries"].get(model_id) or {}, e["summaries"].get(champ) or {}
+        if s_new.get("brier_skill_hi") is not None and s_old.get("brier_skill_lo") is not None and s_new["brier_skill_hi"] < s_old["brier_skill_lo"]:
+            return False            # clearly worse on the backtest: not a refresh, a challenger
+        return True
 
     def set_challenger(self, source: str, model_id: str, now: dt.datetime | None = None) -> None:
         """Name the challenger of a source."""
@@ -277,7 +312,9 @@ def fit_command(source: str, df, ledger_dir, models_dir, reports_dir) -> tuple[s
     summary = backtest_summary(*found) if found else None
     bundle.backtest_summary = summary
     save_bundle(bundle, models_dir)
-    role = Registry(models_dir).register_model(source, bundle.model_id, summary)
+    role = Registry(models_dir).register_model(
+        source, bundle.model_id, summary, method_id=bundle.method_id or None, fitted_at=bundle.fit_time or None
+    )
     return bundle.model_id, sid, role, summary
 
 

@@ -10,13 +10,18 @@ For a query ``x`` in a cell, with kernel ``k_i = k(x, x_i)`` over the cell's row
     theta^  = lam m + (1 - lam) mu_c
     v       = lam (v_m + tau_res^2) + (1 - lam) tau_c^2
 
-and the working predictive is ``theta ~ Normal(theta^, v)`` placed on the grid. With ``lam = 0`` the
-predictive is exactly P1's grid (the equality the spec requires), so ``predict`` returns P1's prediction.
+and the working predictive is ``theta ~ t(theta^, scale, nu)`` placed on the grid, the SAME family as P1 with the cell's fitted
+degrees of freedom ``nu`` (round 00, docs/method.md call 161), moment matched: ``scale = sqrt(v (nu - 2) / nu)``, so the theta variance
+is ``v`` as before and ``lam = 0`` gives ``scale = tau`` of P1 exactly. At every lam the lambda ablation therefore varies the
+precedent weighting only, not the distribution family; the earlier Normal mixture is gone. With ``lam = 0`` the predictive is exactly
+P1's grid, so ``predict`` returns P1's prediction.
 Units: ``y``, ``s``, ``tau``, ``mu`` and ``theta^`` are in the units of y; ``v`` and ``tau_res^2`` are
 squared. ``tau_c`` is P1's cell prior expressed as a standard deviation (for a Student-t prior,
 ``tau sqrt(nu / (nu - 2))``), so that ``tau_c^2`` is a variance.
 
-Choosing lam and tau_res^2 (documented builder calls)
+Choosing lam and tau_res^2 (documented builder calls; the log score of a candidate is that of the t predictive it would issue, the
+marginal density of y given theta ~ t(theta^_i, scale_i, nu) and y | theta ~ Normal(theta, s_i^2), so the lam = 0 baseline is
+P1's actual predictive and not a Normal stand-in)
 * Leave-one-TEST-out. Contrasts of one test share a reference arm and similar text, so a row is scored
   with every row of its own test removed. ``leave_out="row"`` removes only the row itself and is kept
   to show that it leaks (it rewards lam near 1).
@@ -62,7 +67,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy import special
 
 from mootcourt.config import (
     BANDWIDTH_MULTIPLIERS,
@@ -80,7 +84,7 @@ from mootcourt.config import (
 from mootcourt.features import FeatureSpace, Index, density, median_bandwidth, sq_dists
 from mootcourt.ledger import ADMITTED, quarter_of, series_ns, timestamp_ns
 from mootcourt.predictors.base import Predictive, build_grid
-from mootcourt.predictors.p1 import P1Predictor, sd_equivalent
+from mootcourt.predictors.p1 import P1Predictor, marginal_logpdf_rows, p_sig_t, scale_from_sd, sd_equivalent
 
 _CHUNK = 256
 _KERNEL_FLOOR = 1e-100  # below this peak kernel value a query is rescaled so that squared weights do not underflow
@@ -141,6 +145,7 @@ class NeighborState:
     lam: float
     tau_res2: float
     tail: tuple = (0.0, 0.0, 0.0, 0.0)
+    nu: float = math.inf                  # degrees of freedom of the cell's P1 prior (infinite is the Normal)
 
     def moments(self) -> Moments:
         """P2 moments of this state, including the unlisted tail."""
@@ -159,12 +164,13 @@ class NeighborState:
 
 
 def p_sig_from_state(st: NeighborState, s_star: float, z: float = Z) -> float:
-    """Closed-form P(y* > z s*) for the working Normal predictive of a state (no grid involved).
+    """P(y* > z s*) for the working t predictive of a state, by the scale-mixture form (no grid involved).
 
-    ``theta ~ Normal(theta^, v)`` so ``y* ~ Normal(theta^, v + s*^2)``; ``s_star`` is in the units of y.
+    ``theta ~ t(theta^, scale, nu)`` with variance ``v``; for an infinite ``nu`` this is the Normal closed form
+    ``y* ~ Normal(theta^, v + s*^2)``. ``s_star`` is in the units of y.
     """
     mo = st.moments()
-    return float(special.ndtr((mo.theta_hat - z * s_star) / math.sqrt(mo.v + s_star * s_star)))
+    return float(p_sig_t(mo.theta_hat, mo.v, st.nu, s_star, z))
 
 
 class _CellData:
@@ -375,7 +381,7 @@ class P2Predictor:
             for c in mults:
                 for hl in half_lives:
                     m, v_m, valid = stats[(c, hl)]
-                    pick = self._choose(data, queries, m, v_m, valid, tau, par["mu"], codes[queries])
+                    pick = self._choose(data, queries, m, v_m, valid, tau, par["mu"], codes[queries], par["nu"])
                     picks.append((c, hl, pick))
             c, hl, pick, diag = self._select(picks)
             data.h *= c
@@ -426,7 +432,7 @@ class P2Predictor:
         return c, hl, pick, {"lambda": lam, "score": pick["base_mean"] + gain, "lambda_unguarded": unguarded["lambda"], "gain": gain,
                              "gain_se": se, "guard_held": False}
 
-    def _choose(self, data, queries, m, v_m, valid, tau, mu, codes_q) -> dict:
+    def _choose(self, data, queries, m, v_m, valid, tau, mu, codes_q, nu=math.inf) -> dict:
         """Statistics for one bandwidth and half-life.
 
         Returns ``tau_res2``, ``lam`` and ``score`` (the earlier rule: the smallest lam within the tie tolerance of the best mean
@@ -444,8 +450,9 @@ class P2Predictor:
         rows = []
         for lam in lams:
             theta = lam * m + (1.0 - lam) * mu
-            v = lam * (v_m + tau_res2) + (1.0 - lam) * tau * tau + s2
-            rows.append(-0.5 * (np.log(2.0 * np.pi * v) + (y - theta) ** 2 / v))
+            v = lam * (v_m + tau_res2) + (1.0 - lam) * tau * tau
+            scale = np.sqrt(v) if math.isinf(nu) else scale_from_sd(np.sqrt(v), nu)
+            rows.append(marginal_logpdf_rows(y, s2, theta, scale, nu))
         means = np.array([float(r.mean()) for r in rows])
         top = int(np.argmax(means))
         # smallest lam within the tie tolerance of the best: a flat curve means the precedents add nothing
@@ -474,18 +481,25 @@ class P2Predictor:
         data = self._cells.get(cell)
         k = 0 if data is None else data.prefix(timestamp_ns(origin))
         if k == 0:
-            return NeighborState((), np.zeros(0), np.zeros(0), np.zeros(0), (), par["mu"], tau, 0.0, 0.0)
-        d2 = sq_dists(np.asarray(x, dtype=data.X.dtype), data.X[:k], data.sq[:k])
-        kern_all = np.exp(-d2.astype(np.float64) / (2.0 * data.h * data.h))
+            return NeighborState((), np.zeros(0), np.zeros(0), np.zeros(0), (), par["mu"], tau, 0.0, 0.0, nu=par["nu"])
+        d2 = sq_dists(np.asarray(x, dtype=data.X.dtype), data.X[:k], data.sq[:k]).astype(np.float64)
+        inv = -1.0 / (2.0 * data.h * data.h)
+        recency = 1.0
         hl = self.half_life_by_cell.get(cell, math.inf)
         if not math.isinf(hl):          # recency: older precedents count less, with age measured from the origin
             age = np.maximum((timestamp_ns(origin) - data.usable_ns[:k]) / _NS_PER_DAY, 0.0)
-            kern_all = kern_all * np.exp2(-age / hl)
+            recency = np.exp2(-age / hl)
+        kern_all = np.exp(d2 * inv) * recency
         peak = float(kern_all.max())
-        if 0.0 < peak < _KERNEL_FLOOR:
-            # A query far from every precedent (the 9-dimensional structured space with a small bandwidth reaches this):
-            # the moments depend only on ratios of the weights, so rescale before squares underflow to zero.
-            kern_all = kern_all / peak
+        if peak < _KERNEL_FLOOR:
+            # A query far from every precedent (a small bandwidth in many standardized dimensions reaches this, and a few hundred history rows reach
+            # it with the pairwise features): the moments depend only on ratios of the weights, so measure every distance from the nearest
+            # precedent. This is exact where the peak merely underflows squares, and it is the only way to get a weight at all where the kernel
+            # underflows to exactly zero for every precedent.
+            kern_all = np.exp((d2 - d2.min()) * inv) * recency
+            peak = float(kern_all.max())
+            if 0.0 < peak < _KERNEL_FLOOR:
+                kern_all = kern_all / peak
         m = k if self.top_m is None else min(self.top_m, k)
         if m < k:
             top = np.argpartition(-kern_all, m - 1)[:m]
@@ -502,7 +516,7 @@ class P2Predictor:
         return NeighborState(
             tuple(data.row_ids[i] for i in idx), kern_all[idx], data.y[idx], data.s[idx],
             tuple(data.test_ids[i] for i in idx), par["mu"], tau, self._lam(cell),
-            self.tau_res2_by_cell.get(cell, 0.0), tail,
+            self.tau_res2_by_cell.get(cell, 0.0), tail, par["nu"],
         )
 
     def predictive_from_state(self, st: NeighborState, x, s_star: float, cell: str, origin) -> Predictive:
@@ -510,12 +524,13 @@ class P2Predictor:
             return self.p1.predict(x, s_star, cell, origin)
         mo = st.moments()
         sd = max(math.sqrt(mo.v), _SD_FLOOR)
+        scale = sd if math.isinf(st.nu) else max(float(scale_from_sd(sd, st.nu)), _SD_FLOOR)
         lo, hi = self.p1.y_range(cell)
-        grid = build_grid(mo.theta_hat, sd, y_min=lo, y_max=hi)
-        return Predictive.from_normal(grid, mo.theta_hat, sd)
+        grid = build_grid(mo.theta_hat, scale, y_min=lo, y_max=hi)
+        return Predictive.from_t(grid, mo.theta_hat, scale, st.nu)
 
     def predict(self, x, s_star: float, cell: str, origin) -> Predictive:
-        """Working predictive ``Normal(theta^, v)`` on the grid; P1's grid when lam is 0 or there are no precedents."""
+        """Working predictive ``t(theta^, scale, nu)`` (variance ``v``) on the grid; P1's grid when lam is 0 or there are no precedents."""
         return self.predictive_from_state(self.neighbor_state(x, cell, origin), x, s_star, cell, origin)
 
     def top_precedents(self, x, cell: str, origin, k: int) -> pd.DataFrame:

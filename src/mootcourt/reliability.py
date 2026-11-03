@@ -26,6 +26,9 @@ Rules (builder calls 4 and 26):
   and its old ``as_of`` (only the report-level ``as_of`` moves), so the staleness trigger of ``abstain`` fires after
   ``reliability_max_age_days`` and a cell that stopped receiving outcomes is never reported as current (builder call
   82, code review finding REV-002). The backtest replay calls this same function, so it behaves the same way.
+* Every entry also carries the window's evidence about its own precision (round 00, call 166): ``n_tests`` (distinct tests among the
+  window's outcomes when the outcomes carry a ``test_id``), the 90 percent by-test bootstrap interval of the Brier skill
+  (``brier_skill_lo``, ``brier_skill_hi``, 200 seeded resamples) and ``window_weeks``, so a card never prints a bare number.
 * ``advance=False`` is a join that brought no new outcomes: the counters are carried unchanged. A cell whose window
   still holds outcomes gets a fresh ``as_of``; a cell whose window is empty keeps its old one.
 """
@@ -39,6 +42,7 @@ import pandas as pd
 from mootcourt.config import DRIFT_CONSECUTIVE, DRIFT_LOGSCORE_MARGIN, TRAILING_WEEKS
 
 MIN_DRIFT_N = 10
+SKILL_RESAMPLES = 200
 _OUTCOME_COLUMNS = ["cell", "at", "logscore", "p0_logscore", "brier", "p0_brier"]
 
 
@@ -46,11 +50,34 @@ def _frame(outcomes) -> pd.DataFrame:
     if isinstance(outcomes, pd.DataFrame):
         df = outcomes.copy()
     else:
-        df = pd.DataFrame(list(outcomes), columns=_OUTCOME_COLUMNS)
+        rows = list(outcomes)
+        df = pd.DataFrame(rows, columns=_OUTCOME_COLUMNS + (["test_id"] if any("test_id" in r for r in rows) else []))
     if len(df) == 0:
         df = pd.DataFrame({c: [] for c in _OUTCOME_COLUMNS})
     df["at"] = pd.to_datetime(df["at"], utc=True, format="ISO8601")
     return df
+
+
+def skill_interval(
+    brier: np.ndarray, base: np.ndarray, test_ids, B: int = SKILL_RESAMPLES, seed: int = 0
+) -> tuple[float | None, float | None, int | None]:
+    """90 percent by-test bootstrap interval of ``1 - mean(brier) / mean(base)`` and the number of tests; ``(None, None, None)`` without test ids."""
+    if test_ids is None:
+        return None, None, None
+    codes, uniq = pd.factorize(pd.Series(np.asarray(test_ids)))
+    t = len(uniq)
+    if t < 2:
+        return None, None, int(t)
+    sb = np.bincount(codes, weights=np.asarray(brier, float), minlength=t)
+    s0 = np.bincount(codes, weights=np.asarray(base, float), minlength=t)
+    counts = np.random.default_rng(seed).multinomial(t, np.full(t, 1.0 / t), size=B).astype(float)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        draws = 1.0 - (counts @ sb) / (counts @ s0)
+    draws = draws[np.isfinite(draws)]
+    if len(draws) < 2:
+        return None, None, int(t)
+    lo, hi = np.percentile(draws, [5.0, 95.0])
+    return float(lo), float(hi), int(t)
 
 
 def _iso(t: dt.datetime) -> str:
@@ -100,9 +127,13 @@ def build_reliability(prev: dict | None, outcomes, now: dt.datetime, advance: bo
         n = int(len(g))
         below = (ls - p0 < -DRIFT_LOGSCORE_MARGIN) if n >= MIN_DRIFT_N else None
         consecutive, drifted = mark_drift(old, below)
+        lo_s, hi_s, n_tests = skill_interval(
+            g["brier"].to_numpy(), g["p0_brier"].to_numpy(), g["test_id"].to_numpy() if "test_id" in g.columns else None
+        )
         cells[cell] = {
             "as_of": now_iso, "rolling_logscore": ls, "p0_rolling_logscore": p0,
             "brier_skill": (1.0 - b / b0) if b0 > 0 and np.isfinite(b0) else None,
             "n": n, "drifted": bool(drifted), "consecutive_below": int(consecutive),
+            "n_tests": n_tests, "brier_skill_lo": lo_s, "brier_skill_hi": hi_s, "window_weeks": TRAILING_WEEKS,
         }
     return {"source": src, "as_of": now_iso, "cells": cells}

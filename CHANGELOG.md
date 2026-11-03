@@ -50,6 +50,24 @@ First release.
 - Bad inputs end in one line and exit code 2; `MOOTCOURT_DEBUG=1` restores the traceback.
 - Every read of a folder under the data root skips dot files, so the AppleDouble sidecars of exFAT volumes cannot break a command.
 
+### Changed after the round 00 red-team review
+
+- P0 is the empirical base-rate forecaster of the visible ledger (its `p_sig` is the visible event rate, so its Brier skill is zero by construction); the statement that each rung is a strict generalization of the one
+  below is replaced by what each rung adds. The P2 predictive is a Student-t of P1's family at every lambda (moment matched), and the selection scores every candidate, the lambda 0 baseline included, with that predictive.
+- Card schema version 2: the card stores its predictive (family, degrees of freedom, location, scale, grid and the planned standard error), the interval for the true effect and the interval for the observed estimate, a sealed
+  `withheld` forecast on an abstained card, and a skill line with the interval, the test count and the gate verdict. The weekly join and the replay score outcomes with the stored predictive, and an abstained card is scored on the forecast it withheld (flagged,
+  not dropped), so a stale or drifted cell recovers; the two paths share one code path.
+- `moot card`, `POST /card` and the MCP tool `get_card` accept a row id (or the ledger row key), the planned exposures of the two arms and the reference headline. Champion refresh: a refit of the same method on a newer fit replaces the
+  champion without the challenger margin (`method_id` in the manifest and the registry); a different method still needs the margin.
+- `moot simulate gate-power` sizes the gates by test at one or several base rates (default 0.09, 0.14 and 0.30) with a 90 percent interval; `gates.json` gains `by_base_rate` and `interval`, and the harness reads each group's gate at the nearest base rate and keeps the
+  0.30 gate as the column `decidable_by_tests_base_0.3`.
+- Report tables: `coverage_by_se_ratio`; a perfect-calibration null clustered by test with the design effect, the independent percentile and an equal-mass ECE; decision value with exact random order, a bootstrap interval for every fraction, regret and difference from random
+  order, budgets of 10, 25 and 50 percent, every challenger and a note; Bonferroni-adjusted bounds (`adjusted_lo`, `adjusted_hi`) on the aggregate and year tables; the counts of tests in the ledger, admitted and scored; the P2 guard setting in the header; the direction accuracy on decisive rows.
+- The feature space reads the reference headline where the ledger has one (variant, reference and difference blocks, and three pair features), so the feature hash and every model id changed; `--pairwise off` restores the single-headline space. The GBM is precision weighted
+  and tuned on the latest visible rows; every challenger gets a recalibrated rung (Platt map fit on out-of-fold predictions of visible rows only; `--no-recalibrate`, `--recalibration isotonic`).
+- Ablations: the feature, bandwidth, selection, recency and pairwise ablations also run with `--p2-guard off`; `--admission prelaunch` admits on exposure only (ablation); `moot simulate ledger --text-effect` plants a text signal for the positive control.
+- The learning curve drops the direction baselines. The decision-value rows of a benchmark card read the 25 percent budget.
+
 ### Security
 
 - The HTTP simulator adapter ignores proxy settings and refuses redirects and non-loopback hosts unless allowed.

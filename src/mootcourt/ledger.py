@@ -86,6 +86,25 @@ def make_row_id(source: str, test_id: str, variant_id: str) -> str:
     return f"{source}:{test_id}:{variant_id}"
 
 
+def resolve_row_id(source: str, row_id: str | None = None, test_id: str | None = None, variant_id: str | None = None) -> str | None:
+    """The ledger row id a card is joined to: ``row_id`` as given, or ``make_row_id(source, test_id, variant_id)``; None when neither is given.
+
+    Raises ValueError when both forms are given, when only one of ``test_id`` and ``variant_id`` is given, or when a part is empty or
+    contains a newline (the id is a file-safe key, and the join matches it exactly).
+    """
+    if row_id is not None and (test_id is not None or variant_id is not None):
+        raise ValueError("give either a row id or a test id with a variant id, not both")
+    if row_id is None and test_id is None and variant_id is None:
+        return None
+    if row_id is None:
+        if not test_id or not variant_id:
+            raise ValueError("a ledger row key needs both a test id and a variant id")
+        row_id = make_row_id(source, test_id, variant_id)
+    if not str(row_id).strip() or "\n" in str(row_id):
+        raise ValueError("the row id must be a non-empty single line")
+    return str(row_id)
+
+
 def to_utc(ts) -> pd.Timestamp:
     """Coerce a datetime-like to a timezone-aware UTC Timestamp; naive values are rejected."""
     t = pd.Timestamp(ts)

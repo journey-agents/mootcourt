@@ -41,6 +41,7 @@ import numpy as np
 import pandas as pd
 
 from mootcourt import scale
+from mootcourt.config import BANDWIDTH_MULTIPLIERS, KAPPA, LAMBDA_GRID, NU_GRID, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 from mootcourt.features import FeatureSpace, feature_hash, use_cell_only
 from mootcourt.ledger import ADMITTED, series_ns, visible_rows
 from mootcourt.predictors.base import Predictive
@@ -50,6 +51,8 @@ from mootcourt.predictors.p2 import NeighborState, P2Predictor
 from mootcourt.storage import visible_iterdir
 
 BUNDLE_FORMAT = 1
+# raised when the method changes in a way that makes a refit a different method (round 00: P0, P2 predictive family, pairwise features)
+METHOD_VERSION = 2
 _ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 _DEFAULT_CTR = 0.02
 REQUIRED_ARTIFACTS = frozenset(
@@ -78,6 +81,7 @@ class ModelBundle:
     fit_time: str = ""
     n_rows: int = 0
     backtest_summary: dict | None = None
+    method_id: str = ""
 
     # --------------------------------------------------------------- cutoff
     @property
@@ -96,9 +100,12 @@ class ModelBundle:
 
     # ------------------------------------------------------------ features
     def transform_text(self, headline: str, image_changed: bool = False, cell: str | None = None,
-                       exposure: float | None = None) -> np.ndarray:
-        """Standardized feature vector of one headline (1-D); ``exposure`` is the planned exposures per arm."""
-        return self.space.transform_text([headline], image_changed, cell=cell, exposure=exposure)[0]
+                       exposure: float | None = None, reference: str | None = None) -> np.ndarray:
+        """Standardized feature vector of one headline (1-D); ``exposure`` is the planned exposures per arm.
+
+        ``reference`` is the reference headline of a pairwise space (None or empty: the fit-set mean reference vector).
+        """
+        return self.space.transform_text([headline], image_changed, cell=cell, exposure=exposure, reference=reference or None)[0]
 
     # ---------------------------------------------------------- predictions
     def cells(self) -> list[str]:
@@ -145,20 +152,44 @@ class ModelBundle:
         known = [v["median_ctr_ref"] for v in self.cell_stats.values() if "median_ctr_ref" in v]
         return float(np.median(known)) if known else _DEFAULT_CTR
 
-    def s_star(self, cell: str, impressions: float) -> float:
-        """Pre-launch standard error of the future estimate for planned exposures per arm (see ``mootcourt.scale``).
+    def s_star(self, cell: str, impressions: float, impressions_variant: float | None = None) -> float:
+        """Pre-launch standard error of the future estimate for planned exposures (see ``mootcourt.scale``).
 
-        Upworthy: ``100 sqrt(2 c (1 - c) / n)`` with the cell's median reference rate ``c``. ASOS:
-        ``sqrt(2 / n)``. Any other source: the cell's median ``s sqrt(n)`` over its rows divided by ``sqrt(n)``.
+        ``impressions`` is the reference arm's exposure and ``impressions_variant`` the variant's (default: equal arms).
+        Upworthy: ``100 sqrt(c (1 - c) (1 / n_ref + 1 / n_var))`` with the cell's median reference rate ``c``. ASOS:
+        ``sqrt(1 / n_ref + 1 / n_var)``. Any other source: the cell's median ``s sqrt(n)`` over its rows divided by
+        ``sqrt(n)`` with ``n`` the mean of the two arms.
         """
-        if impressions <= 0:
+        n_var = impressions if impressions_variant is None else impressions_variant
+        if impressions <= 0 or n_var <= 0:
             raise ValueError("impressions per arm must be positive")
         if self.source == "upworthy":
-            return float(scale.upworthy_s_star(impressions, impressions, self.median_ctr_ref(cell)))
+            return float(scale.upworthy_s_star(impressions, n_var, self.median_ctr_ref(cell)))
         if self.source == "asos":
-            return math.sqrt(2.0 / impressions)
+            return math.sqrt(1.0 / impressions + 1.0 / n_var)
         stats = self.cell_stats.get(cell) or next(iter(self.cell_stats.values()), {})
-        return float(stats.get("median_s_sqrt_n", 100.0 * math.sqrt(2.0 * _DEFAULT_CTR * (1.0 - _DEFAULT_CTR)))) / math.sqrt(impressions)
+        n = 0.5 * (impressions + n_var)
+        return float(stats.get("median_s_sqrt_n", 100.0 * math.sqrt(2.0 * _DEFAULT_CTR * (1.0 - _DEFAULT_CTR)))) / math.sqrt(n)
+
+
+def method_id(space: FeatureSpace | None = None) -> str:
+    """12 hex characters naming the METHOD a bundle was fit with, independent of the data it was fit on.
+
+    The registry compares them: a bundle with the champion's method id on a newer snapshot is a refresh of the champion and replaces it
+    without the challenger margin; a different method id is a different method and needs the margin (docs/operations.md). The id covers
+    the method version, the fixed hyperparameters of the ladder and the kind of feature space (single headline or pairwise).
+    """
+    payload = {
+        "version": METHOD_VERSION,
+        "kappa": KAPPA,
+        "nu_grid": [None if math.isinf(v) else v for v in NU_GRID],
+        "lambda_grid": list(LAMBDA_GRID),
+        "bandwidth_multipliers": list(BANDWIDTH_MULTIPLIERS),
+        "guard": P2_GUARD_MULT,
+        "selection": P2_SELECTION_DEFAULT,
+        "pairwise": bool(space.pairwise) if space is not None else False,
+    }
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:12]
 
 
 # --------------------------------------------------------------------- fitting
@@ -222,7 +253,7 @@ def fit_bundle(ledger: pd.DataFrame, source: str, snapshot_id: str, as_of=None, 
     return ModelBundle(
         model_id=model_id, snapshot_id=snapshot_id, feature_hash=fh, source=source, space=space, p0=p0, p1=p1, p2=p2,
         parameters=parameters, cell_stats=_cell_stats(adm), p0_rows=p0_rows,
-        fit_time=dt.datetime.now(dt.timezone.utc).isoformat(), n_rows=int(len(adm)),
+        fit_time=dt.datetime.now(dt.timezone.utc).isoformat(), n_rows=int(len(adm)), method_id=method_id(space),
     )
 
 
@@ -276,7 +307,7 @@ def save_bundle(bundle: ModelBundle, models_dir) -> Path:
             "parameters": {
                 k: v for k, v in bundle.parameters.items() if k != "p1"
             } | {"p1_global": bundle.p1.to_state()["global"]},
-            "fit_time": bundle.fit_time, "backtest_summary": bundle.backtest_summary, "artifacts": artifacts,
+            "fit_time": bundle.fit_time, "backtest_summary": bundle.backtest_summary, "method_id": bundle.method_id, "artifacts": artifacts,
         }
         (tmp / "manifest.json").write_text(json.dumps(manifest, indent=1, sort_keys=True), encoding="utf-8")
         old = None
@@ -358,5 +389,5 @@ def load_bundle(model_id: str, models_dir) -> ModelBundle:
         model_id=manifest["model_id"], snapshot_id=manifest["snapshot_id"], feature_hash=manifest["feature_hash"],
         source=manifest["source"], space=space, p0=p0, p1=p1, p2=p2, parameters=parameters,
         cell_stats=meta["cell_stats"], p0_rows=p0_rows, fit_time=manifest["fit_time"], n_rows=meta["n_rows"],
-        backtest_summary=manifest["backtest_summary"],
+        backtest_summary=manifest["backtest_summary"], method_id=str(manifest.get("method_id", "")),
     )

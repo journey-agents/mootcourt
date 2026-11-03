@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 from mootcourt import card as card_mod
 from mootcourt.bundle import ModelBundle, load_bundle
 from mootcourt.config import BOUNDARY_SENTENCE
+from mootcourt.ledger import resolve_row_id
 from mootcourt.predictors.p3 import TeamForecast
 from mootcourt.registry import Registry
 from mootcourt.settings import abstain_config
@@ -75,6 +76,9 @@ class ServingState:
             source=payload["source"], headline=payload.get("headline") or "", image_changed=bool(payload.get("image_changed", False)),
             impressions=int(payload["impressions"]), origin=payload.get("origin") or now,
             headline_changed=bool(payload.get("headline_changed", True)), cell=payload.get("cell"),
+            row_id=resolve_row_id(payload["source"], payload.get("row_id"), payload.get("test_id"), payload.get("variant_id")),
+            reference_headline=payload.get("reference_headline") or "",
+            impressions_variant=None if payload.get("impressions_variant") is None else int(payload["impressions_variant"]),
             team_forecast=TeamForecast.create(team["p_win_team"], team["point_team"], clock=self.now) if team else None,
             guardrails=tuple(card_mod.Guardrail(g["cell"], float(g["delta"])) for g in (payload.get("guardrails") or [])),
         )
@@ -82,7 +86,17 @@ class ServingState:
     def issue(self, payload: dict) -> card_mod.Card:
         """Issue a card (not frozen) from a payload with the bundle preloaded."""
         req = self.request(payload)
-        return card_mod.build_card(self.bundle(req.source), req, reliability=self.reliability(req.source), now=self.now(), config=self.config)
+        return card_mod.build_card(self.bundle(req.source), req, reliability=self.reliability(req.source), now=self.now(), config=self.config,
+                                   gates=self.gates())
+
+    def gates(self) -> dict | None:
+        """The gates of the reports folder (read on each request, like the reliability report), or None when there is no gates.json."""
+        from mootcourt import simulate
+
+        try:
+            return simulate.load_gates(self.reports_dir / "gates.json")
+        except FileNotFoundError:
+            return None
 
 
 class TeamPayload(BaseModel):
@@ -109,6 +123,11 @@ class CardPayload(BaseModel):
     origin: dt.datetime | None = None
     headline_changed: bool = True
     cell: str | None = Field(default=None, max_length=64)
+    row_id: str | None = Field(default=None, max_length=256)          # the ledger row the weekly join attaches the outcome to
+    test_id: str | None = Field(default=None, max_length=200)         # with variant_id: the ledger row key, instead of row_id
+    variant_id: str | None = Field(default=None, max_length=200)
+    reference_headline: str = Field(default="", max_length=1000)
+    impressions_variant: int | None = Field(default=None, gt=0)
     team_forecast: TeamPayload | None = None
     guardrails: list[GuardrailPayload] = Field(default_factory=list, max_length=20)
 
@@ -155,7 +174,7 @@ def create_app(models_dir, cards_dir, reports_dir=None, now: Callable[[], dt.dat
         except ValueError as exc:
             return JSONResponse(status_code=422, content={"error": str(exc)})
         try:
-            return card_mod.freeze_or_load(issued, cards_dir)  # the one write: the new card file, or the identical frozen one
+            return card_mod.public_json(card_mod.freeze_or_load(issued, cards_dir))  # the one write: the new card file, or the identical frozen one
         except card_mod.CardFrozenError as exc:
             return JSONResponse(status_code=409, content={"error": str(exc)})
 

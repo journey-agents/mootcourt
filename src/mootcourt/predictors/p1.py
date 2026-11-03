@@ -81,6 +81,51 @@ def _loglik_fast(y: np.ndarray, s: np.ndarray, mu: float, tau: float, nu: float)
     return float(special.logsumexp(logd, axis=1).sum())
 
 
+def _mixture_nodes(nu: float) -> tuple[np.ndarray, np.ndarray]:
+    """Nodes ``g`` and weights of the scale-mixture integral ``t(nu) = integral Normal(0, 1 / g) Gamma(g; nu/2, nu/2) dg``.
+
+    The same trapezoid over ``log g`` as the likelihood uses; the weights sum to one. ``nu`` must be finite.
+    """
+    a = nu / 2.0
+    g = np.exp(_LOG_U)
+    logw = a * math.log(a) + a * _LOG_U - a * g - special.gammaln(a) + math.log(_LOG_U_STEP)
+    w = np.exp(logw - logw.max())
+    return g, w / w.sum()
+
+
+def marginal_logpdf_rows(y, s2, loc, scale, nu: float) -> np.ndarray:
+    """Per-row log density of ``y`` when ``theta ~ t(loc, scale, nu)`` and ``y | theta ~ Normal(theta, s2)``.
+
+    ``y``, ``s2``, ``loc`` and ``scale`` are arrays of one shape (or broadcastable), in the units of y; ``nu`` is a
+    scalar and infinite gives the closed Normal. The t is integrated as a scale mixture of normals (about 90 nodes), so
+    the same call scores a P1 prediction and a P2 prediction of the same family and the selection of lambda compares
+    like with like.
+    """
+    y, s2, loc, scale = np.broadcast_arrays(*(np.asarray(v, dtype=np.float64) for v in (y, s2, loc, scale)))
+    if math.isinf(nu):
+        var = scale * scale + s2
+        return -0.5 * (np.log(2.0 * np.pi * var) + (y - loc) ** 2 / var)
+    g, w = _mixture_nodes(nu)
+    var = (scale * scale)[..., None] / g + s2[..., None]
+    logd = -0.5 * ((y - loc) ** 2)[..., None] / var - 0.5 * (np.log(var) + _LOG_2PI) + np.log(np.maximum(w, 1e-300))
+    return special.logsumexp(logd, axis=-1)
+
+
+def p_sig_t(loc, v, nu: float, s_star, z: float = 1.96):
+    """P(y* > z s*) when ``theta ~ t(loc, scale, nu)`` with theta variance ``v`` (moment matched) and ``y* = theta + Normal(0, s*^2)``.
+
+    ``loc`` and ``v`` may be arrays; ``s_star`` is a scalar in the units of y. The scale is ``sqrt(v (nu - 2) / nu)``;
+    an infinite ``nu`` gives the closed Normal form. Agrees with the grid computation of ``Predictive.p_sig`` to about 1e-3.
+    """
+    loc, v = np.asarray(loc, dtype=np.float64), np.asarray(v, dtype=np.float64)
+    if math.isinf(nu):
+        return special.ndtr((loc - z * s_star) / np.sqrt(v + s_star * s_star))
+    scale2 = v * (nu - 2.0) / nu
+    g, w = _mixture_nodes(nu)
+    sd = np.sqrt(scale2[..., None] / g + s_star * s_star)
+    return (special.ndtr((loc[..., None] - z * s_star) / sd) * w).sum(axis=-1)
+
+
 def marginal_loglik(y, s, mu: float, tau: float, nu: float, n_grid: int | None = None) -> float:
     """``sum_i log integral Normal(y_i | theta, s_i^2) t(theta | mu, tau, nu) d theta`` on a theta grid.
 
@@ -266,18 +311,7 @@ class P1Predictor:
         par = self.cell_params(cell, quarter_of(origin))
         lo, hi = self._ranges.get(cell, self._yrange_global)
         grid = build_grid(par["mu"], par["tau"], y_min=lo, y_max=hi)
-        dx = grid[1] - grid[0]
-        edges = np.concatenate([grid - dx / 2.0, [grid[-1] + dx / 2.0]])
-        z = (edges - par["mu"]) / par["tau"]
-        cdf = special.ndtr(z) if math.isinf(par["nu"]) else stats.t.cdf(z, df=par["nu"])
-        pmf = np.diff(cdf)
-        total = pmf.sum()
-        if total <= 0:
-            pmf = np.zeros_like(grid)
-            pmf[int(np.argmin(np.abs(grid - par["mu"])))] = 1.0
-        else:
-            pmf = pmf / total
-        return Predictive(grid, pmf)
+        return Predictive.from_t(grid, par["mu"], par["tau"], par["nu"])
 
     # ----------------------------------------------------------------- state
     def to_state(self) -> dict:

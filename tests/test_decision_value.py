@@ -40,7 +40,8 @@ def test_wrong_ranking_has_positive_regret_and_oracle_is_best(imp):
     tab = dv.decision_value(_scores(values, p_win=[0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]))
     assert _row(tab, "p_win")["captured_fraction"] == pytest.approx((2 + 1) / sum(values))
     assert _row(tab, "p_win")["regret"] == pytest.approx(15 - 3)
-    best = max(tab["captured_fraction"])
+    main = tab[tab["budget"] == 0.25]          # round 00: the table also holds the 10 and 50 percent budgets, so compare within one budget
+    best = max(main["captured_fraction"])
     assert _row(tab, "oracle")["captured_fraction"] == pytest.approx(best)
 
 

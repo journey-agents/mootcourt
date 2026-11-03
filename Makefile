@@ -79,7 +79,7 @@ lint:
 	$(PY) -m ruff check .
 
 power:
-	$(MOOT) simulate power
+	$(MOOT) simulate gate-power
 
 # The documentation site. The command line page is generated from the commands, then mkdocs builds with warnings as errors.
 docs:

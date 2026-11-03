@@ -24,11 +24,11 @@ Reliability report schema (also used by ``loop.py``), one JSON document per sour
 from __future__ import annotations
 
 import datetime as dt
+import math
 from dataclasses import dataclass, field
 from typing import TypedDict
 
 import numpy as np
-from scipy import special
 
 from mootcourt.config import (
     ACTION_THRESHOLD,
@@ -40,6 +40,7 @@ from mootcourt.config import (
     SUPPORT_MIN,
     Z,
 )
+from mootcourt.predictors.p1 import p_sig_t
 
 TRIGGERS = ("support", "novelty", "reliability", "instability")
 
@@ -178,7 +179,7 @@ def check_instability(state, s_star: float, seed: int = 0, config: AbstainConfig
     """
     cfg = config or AbstainConfig()
     full = state.moments()
-    p_full = _p_sig(full.theta_hat, full.v, s_star)
+    p_full = _p_sig(full.theta_hat, full.v, s_star, getattr(state, "nu", math.inf))
     if len(state.row_ids) == 0 or state.lam == 0.0:
         return InstabilityResult(False, 1.0, p_full, 0)
     tests, test_index = np.unique(np.asarray(state.test_ids), return_inverse=True)
@@ -197,15 +198,16 @@ def check_instability(state, s_star: float, seed: int = 0, config: AbstainConfig
     v_m = (mult @ (w * w * var) + t_sw2v) / (sw_safe * sw_safe)
     theta = state.lam * m + (1.0 - state.lam) * state.mu
     v = state.lam * (v_m + state.tau_res2) + (1.0 - state.lam) * tau2
-    p = _p_sig(theta, v, s_star)
+    p = _p_sig(theta, v, s_star, getattr(state, "nu", math.inf))
     above = p >= cfg.action_threshold
     same = above == (p_full >= cfg.action_threshold)
     frac = float(np.mean(same[ok])) if ok.any() else 1.0
     return InstabilityResult(frac <= cfg.same_side_fraction, frac, p_full, int(cfg.bootstrap_resamples))
 
 
-def _p_sig(theta_hat, v, s_star: float, z: float = Z):
-    return special.ndtr((np.asarray(theta_hat) - z * s_star) / np.sqrt(np.asarray(v) + s_star * s_star))
+def _p_sig(theta_hat, v, s_star: float, nu: float = math.inf, z: float = Z):
+    """P(y* > z s*) of a t predictive with variance ``v`` and ``nu`` degrees of freedom (the Normal for an infinite ``nu``)."""
+    return p_sig_t(theta_hat, v, nu, s_star, z)
 
 
 def decide(

@@ -23,10 +23,11 @@ Origin semantics: a Predictor stands at an origin and may use only rows with sta
 """
 from __future__ import annotations
 
+import math
 from typing import Protocol
 
 import numpy as np
-from scipy import special
+from scipy import special, stats
 
 from mootcourt.config import GRID_SPAN_TAU, THETA_GRID_N, Z
 
@@ -73,7 +74,7 @@ def _check_s(s) -> np.ndarray:
 class Predictive:
     """Probability mass function ``pmf`` over a uniform ``theta`` grid."""
 
-    def __init__(self, theta: np.ndarray, pmf: np.ndarray):
+    def __init__(self, theta: np.ndarray, pmf: np.ndarray, spec: dict | None = None):
         theta = np.asarray(theta, dtype=np.float64)
         pmf = np.asarray(pmf, dtype=np.float64)
         if theta.ndim != 1 or theta.shape != pmf.shape or len(theta) < 3:
@@ -88,23 +89,49 @@ class Predictive:
         self.dx = float(theta[1] - theta[0])
         self._cdf = np.cumsum(self.pmf)
         self._autocorr: np.ndarray | None = None
+        self.spec = spec          # how this predictive was built (family, degrees of freedom, location, scale, grid), or None
 
     # ------------------------------------------------------------ builders
     @classmethod
     def from_normal(cls, theta: np.ndarray, mu: float, sd: float) -> Predictive:
         """Normal(mu, sd^2) placed on the grid by integrating over each bin; tails beyond it are renormalized."""
+        return cls.from_family(theta, mu, sd, math.inf)
+
+    @classmethod
+    def from_t(cls, theta: np.ndarray, loc: float, scale: float, nu: float) -> Predictive:
+        """Student-t(loc, scale, nu) placed on the grid by integrating over each bin; ``nu`` infinite is the Normal."""
+        return cls.from_family(theta, loc, scale, nu)
+
+    @classmethod
+    def from_family(cls, theta: np.ndarray, loc: float, scale: float, nu: float) -> Predictive:
+        """The one builder behind ``from_normal`` and ``from_t``: bin masses of a location-scale family, renormalized.
+
+        ``spec`` records the family, the degrees of freedom, the location, the scale and the grid, which is everything
+        ``from_spec`` needs to rebuild the same object (the card stores it so a later score is the backtest's score).
+        """
         theta = np.asarray(theta, dtype=np.float64)
         dx = theta[1] - theta[0]
         edges = np.concatenate([theta - dx / 2.0, [theta[-1] + dx / 2.0]])
-        cdf = special.ndtr((edges - mu) / max(sd, 1e-12))
+        u = (edges - loc) / max(scale, 1e-12)
+        cdf = special.ndtr(u) if math.isinf(nu) else stats.t.cdf(u, df=nu)
         pmf = np.diff(cdf)
         total = pmf.sum()
-        if total <= 0:  # mu far outside the grid: put all mass on the nearest point
+        if total <= 0:  # loc far outside the grid: put all mass on the nearest point
             pmf = np.zeros_like(theta)
-            pmf[int(np.argmin(np.abs(theta - mu)))] = 1.0
+            pmf[int(np.argmin(np.abs(theta - loc)))] = 1.0
         else:
             pmf = pmf / total
-        return cls(theta, pmf)
+        spec = {"family": "normal" if math.isinf(nu) else "student_t", "df": None if math.isinf(nu) else float(nu),
+                "location": float(loc), "scale": float(scale), "grid_lo": float(theta[0]), "grid_hi": float(theta[-1]),
+                "grid_n": int(len(theta))}
+        return cls(theta, pmf, spec)
+
+    @classmethod
+    def from_spec(cls, spec: dict) -> Predictive:
+        """Rebuild the predictive a ``spec`` describes (the inverse of the ``spec`` attribute), on the same grid."""
+        nu = math.inf if spec.get("df") is None else float(spec["df"])
+        theta = np.linspace(float(spec["grid_lo"]), float(spec["grid_hi"]), int(spec["grid_n"]))
+        return cls.from_family(theta, float(spec["location"]), float(spec["scale"]), nu)
 
     # ------------------------------------------------------- theta moments
     def mean(self) -> float:

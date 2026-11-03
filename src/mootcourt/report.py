@@ -36,22 +36,51 @@ from mootcourt.harness import BURN_IN_NOTE, MIN_FIT_ROWS  # noqa: E402
 from mootcourt.reliability import build_reliability  # noqa: E402
 
 SYNTHETIC = "synthetic"
+P0_SKILL_NOTE = (
+    "P0 is the empirical base-rate forecaster: its significant-positive probability is the visible event rate of its cell, the same "
+    "quantity the Brier skill is measured against, so its Brier skill is zero by construction and its calibration is a real out-of-time "
+    "check of the base rate. A rung's Brier skill is always against that cell base rate, never against another rung."
+)
+INTERVAL_NOTE = (
+    "Three interval conventions are used. Every score interval is a 90 percent percentile bootstrap that resamples whole tests. "
+    "The ECE percentile is read in a perfect-calibration null whose outcomes are drawn by test (contrasts of one test move together, "
+    "with the within-test correlation estimated from the rows); 500 draws resolve percentiles up to 99.8, so 100 means above every draw. "
+    "The gate simulation bootstraps by test and uses a 90 percent interval. Columns named adjusted_lo and adjusted_hi, and those ending "
+    "in _adjusted_lo and _adjusted_hi, are Bonferroni-adjusted bounds for the family of intervals the table shows (the bootstrap "
+    "standard error times the Bonferroni normal quantile); the per-cell and per-year intervals are descriptive."
+)
+CALIBRATION_NOTE = (
+    "design_effect is the variance of the total residual with whole tests as the units over its independent-rows value; icc is the "
+    "within-test correlation of the standardized residuals it implies and drives the clustered null. ece_percentile_independent is the "
+    "percentile in the earlier null that draws every row independently, kept for comparison."
+)
+DECISION_NOTE = (
+    "Random order captures K over n of the total by linearity, so it is exact, not a draw. A rung whose p_win is constant within a cell "
+    "chooses by cell and then at random; its capture differs from random order only through between-cell differences. Intervals "
+    "resample whole tests within each origin."
+)
 MIN_BIN_N = 10          # bins with fewer rows are in the tables but not drawn
+DECISION_BOOTSTRAP = 500
 FIGURE_NAMES = ("reliability", "score_by_origin", "coverage", "decision_value")
 RUNG_NOTES = {
-    "P0": "base rate of the cell (Normal of the observed y)",
+    "P0": "empirical base-rate forecaster of the visible ledger per cell: p_sig is the visible event rate, so its Brier skill is zero "
+          "by construction",
     "P1": "empirical-Bayes prior per cell, pooled over kind of change and period",
     "P2": "weighted precedents (kernel regression on headline features) shrunk toward P1",
     "P3": "the team's own forecast, where the source has one",
-    "GBM": "gradient-boosted challenger on the same features, calibrated with out-of-fold residual variance",
+    "GBM": "gradient-boosted challenger on the same features, precision weighted with a time-ordered search, spread from out-of-fold residuals",
     "local_eb": "challenger: empirical-Bayes prior fit on the k nearest visible rows in feature space, no shrinkage to the cell prior",
-    "text_lr": "challenger: TF-IDF and logistic regression on the headline text, probabilities used directly (no density)",
+    "text_lr": "challenger: TF-IDF and logistic regression on the headline text (the difference of the two headlines where present), "
+               "probabilities used directly (no density)",
+    "GBM+cal": "the GBM's p_sig through a Platt map fit on out-of-fold predictions of the visible rows only; probabilities only",
+    "local_eb+cal": "local_eb's p_sig through a Platt map fit on out-of-fold predictions of the visible rows only; probabilities only",
+    "text_lr+cal": "text_lr's p_sig through a Platt map fit on out-of-fold predictions of the visible rows only; probabilities only",
     "always_reference": "direction baseline: the reference arm wins (creation-order effect); direction accuracy only",
     "always_variant": "direction baseline: the variant wins; direction accuracy only",
     "agent": "an outside agent's recorded probability that the test ends significant and positive; probabilities only",
     "P2+agent": "p_sig of P2 stacked with the agent at the weight in force; probabilities only",
 }
-CHALLENGER_RUNGS = ("GBM", "local_eb", "text_lr")
+CHALLENGER_RUNGS = ("GBM", "local_eb", "text_lr", "GBM+cal", "local_eb+cal", "text_lr+cal")
 BASELINE_RUNGS = ("always_reference", "always_variant")
 SECOND_OPINION_RUNGS = ("agent", "P2+agent")
 
@@ -189,7 +218,7 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
             a.insert(2, "kind", a["rung"].map(rung_kind))
             by_metric.append({"metric": m, "primary": m == pm, "n_rows": int(part.loc[part["rung"] == primary, "row_id"].nunique()),
                               "aggregate": a})
-    dv = decision_value(scores[scores["metric"] == pm] if multi else scores, ledger, seed=seed)
+    dv = decision_value(scores[scores["metric"] == pm] if multi else scores, ledger, seed=seed, B=min(B, DECISION_BOOTSTRAP))
     first = scores["origin"].min()
     by_origin = scores[scores["rung"] == primary].groupby("origin").agg(
         n_scored=("row_id", "size"), n_tests=("test_id", "nunique"), abstention_rate=("abstain", "mean"),
@@ -219,12 +248,20 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
         "scored_rows": int(scores.loc[scores["rung"] == primary, "row_id"].nunique()),
     }
     header["not_scored_rows"] = header["admitted_rows"] - header["scored_rows"]
+    header.update(test_counts(ledger, scores, primary))
+    header["p2_guard"] = guard_setting(scores)
+    if gates.get("by_base_rate"):
+        header["gate_base_rates"] = sorted(gates["by_base_rate"])
+        header["gate_by_base_rate"] = {f"{b:.2f}": {"n_200": v["n_200"], "n_400": v["n_400"]} for b, v in sorted(gates["by_base_rate"].items())}
+    if gates.get("interval"):
+        header["gate_interval"] = gates["interval"]
     if multi:
         header["metrics"], header["primary_metric"] = metrics, pm
     if variant:
         header["variant"] = variant
     notes = {"circularity": hs.CIRCULARITY_NOTE, "burn_in": BURN_IN_NOTE, "abstention_triggers": hs.abstention_trigger_note(scores),
-             "rungs": {r: RUNG_NOTES.get(r, "") for r in header["rungs"]}}
+             "rungs": {r: RUNG_NOTES.get(r, "") for r in header["rungs"]}, "p0_skill": P0_SKILL_NOTE, "intervals": INTERVAL_NOTE,
+             "calibration_null": CALIBRATION_NOTE, "decision_value": DECISION_NOTE}
     so_table = None
     if second_opinion:
         from mootcourt.simulators.scoring import CONTAMINATION_SENTENCE
@@ -249,6 +286,7 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
             "reliability_bins": pd.concat(bins, ignore_index=True),
             "coverage": hs.coverage_by_cell(scores[scores["rung"] == primary]),
             "calibration_by_precision": hs.calibration_by_precision(scores),
+            "coverage_by_se_ratio": hs.coverage_by_se_ratio(scores),
             "split_half": [{"cell": c, **v} for c, v in _split_half(ledger, scores["origin"].max()).items()],
             "p2_selection": pd.DataFrame(scores.attrs.get("selections") or []),
             "p2_selection_by_cell": selection_by_cell(scores.attrs.get("selections") or []),
@@ -256,6 +294,32 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
             **({"released_rows": released} if released is not None else {}),
         },
     })
+
+
+def guard_setting(scores: pd.DataFrame):
+    """The P2 admission guard multiplier the run used (a number), or ``"off"``; None when no P2 selection was recorded."""
+    recs = scores.attrs.get("selections") or []
+    for r in recs:
+        if r.get("rung") == "P2":
+            g = r.get("guard")
+            return "off" if g is None or (isinstance(g, float) and math.isnan(g)) else float(g)
+    return None
+
+
+TEST_COUNT_DEFINITION = (
+    "Tests in the ledger are the distinct test ids of every row of the source whatever its status. Tests admitted are the distinct test "
+    "ids with at least one admitted contrast. Tests scored are the admitted tests with at least one contrast scored by the primary rung. "
+    "The difference between admitted and scored is the contrasts of the first quarters, before the first origin with enough visible rows "
+    "to fit (they are history only), plus any test whose contrasts all fall there."
+)
+
+
+def test_counts(ledger: pd.DataFrame, scores: pd.DataFrame, primary: str) -> dict:
+    """Tests in the ledger, admitted and scored, with the definition of each (the header states why the counts differ)."""
+    adm = ledger.loc[ledger["status"] == "admitted"]
+    scored = scores.loc[scores["rung"] == primary]
+    return {"tests_in_ledger": int(ledger["test_id"].nunique()), "tests_admitted": int(adm["test_id"].nunique()),
+            "tests_scored": int(scored["test_id"].nunique()), "test_count_definition": TEST_COUNT_DEFINITION}
 
 
 def row_years(scores: pd.DataFrame, ledger: pd.DataFrame) -> np.ndarray:
@@ -302,16 +366,19 @@ def _table(rows: list[dict], columns: list[str]) -> list[str]:
 
 _AGG_GROUPS = [
     ("Rows, tests, gates and abstention (the headline decidability is by tests; the by-row columns are beside it)",
-     ["cell", "rung", "kind", "n", "n_tests", "n_nonabstained", "abstention_rate", "decidable_by_tests", "decidable_research_by_tests",
-      "decidable", "decidable_research"]),
+     ["cell", "rung", "kind", "n", "n_tests", "n_nonabstained", "abstention_rate", "gate_base_rate", "decidable_by_tests",
+      "decidable_by_tests_base_0.3", "decidable_research_by_tests", "decidable", "decidable_research"]),
     ("Log score and CRPS, all predicted rows (higher log score is better, lower CRPS is better)",
      ["cell", "rung", "logscore", "logscore_lo", "logscore_hi", "crps", "crps_lo", "crps_hi"]),
     ("Brier score of p_sig against the significant-positive event, with skill against the base rate",
      ["cell", "rung", "brier", "brier_lo", "brier_hi", "brier_base", "brier_skill", "brier_skill_lo", "brier_skill_hi", "brier_floor"]),
-    ("Calibration of p_sig against the perfect-calibration null",
-     ["cell", "rung", "ece", "ece_percentile"]),
+    ("Calibration of p_sig against the perfect-calibration null, clustered by test",
+     ["cell", "rung", "ece", "ece_percentile", "ece_percentile_independent", "ece_equal_mass", "ece_equal_mass_percentile", "design_effect", "icc"]),
+    ("Bonferroni-adjusted bounds for the family of intervals of this table (descriptive intervals are the unadjusted ones above)",
+     ["cell", "rung", "family_size", "brier_skill", "adjusted_lo", "adjusted_hi", "logscore", "logscore_adjusted_lo", "logscore_adjusted_hi"]),
     ("Direction accuracy and coverage of the intervals for y",
-     ["cell", "rung", "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi", "direction_ceiling",
+     ["cell", "rung", "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi", "n_decisive", "direction_accuracy_decisive",
+      "direction_ceiling",
       "coverage_80", "coverage_80_lo", "coverage_80_hi", "coverage_90", "coverage_90_lo", "coverage_90_hi"]),
     ("The same scores on non-abstained rows only",
      ["cell", "rung", "logscore_nonabstained", "logscore_nonabstained_lo", "logscore_nonabstained_hi",
@@ -328,27 +395,63 @@ def render_markdown(doc: dict) -> str:
     if h["synthetic"]:
         out += ["**Synthetic data.** Every number below comes from simulated tests with known truth. "
                 "It shows the method works, not what any real archive says.", ""]
-    out += [f"> {h['boundary']}", "", "## Header", "",
-            f"- Source: {h['source']}",
-            f"- Ledger snapshot: {h['snapshot_id']}",
-            f"- Model: {h['model_id']}",
-            f"- Feature hash: {h['feature_hash']}",
-            f"- Command: `{h['command']}`",
-            f"- Seed: {h['seed']}, bootstrap resamples: {h['bootstrap_resamples']}",
-            *([f"- Variant (an ablation, not the main run): {json.dumps(h['variant'], sort_keys=True)}"] if h.get("variant") else []),
-            f"- Gate sizes from the power simulation at the release gate"
-            f"{' (power ' + format(h['gate_decision_target'], '.2f') + ')' if h.get('gate_decision_target') else ''}: "
-            f"n_200 = {h['gate_n_200']} (skill 0.20), n_400 = {h['gate_n_400']} (skill 0.10)",
-            *_research_gate_lines(h),
-            f"- Rungs: {', '.join(h['rungs'])}; primary rung for decisions and plots: {h['primary_rung']}",
-            f"- Origins scored: {h['origins_scored']} from {h['first_origin']} to {h['last_origin']}",
-            f"- Origins with fewer than {h['min_fit_rows']} visible rows (nothing fitted): {', '.join(h['skipped_origins']) or 'none'}",
-            f"- Ledger rows: {h['ledger_rows']}, admitted: {h['admitted_rows']}, scored: {h['scored_rows']}, "
-            f"admitted but never scored (before the first fit): {h['not_scored_rows']}",
-            "", "## How to read the scores", "", notes["circularity"], "", notes["burn_in"], "",
-            "Intervals are 90 percent bootstrap intervals that resample whole tests. Scores are given on all predicted rows "
-            "(so rungs are comparable) and, separately, on rows where the card would not have abstained.", "",
-            "Rungs:", ""]
+    out += [
+        f"> {h['boundary']}",
+        "",
+        "## Header",
+        "",
+        f"- Source: {h['source']}",
+        f"- Ledger snapshot: {h['snapshot_id']}",
+        f"- Model: {h['model_id']}",
+        f"- Feature hash: {h['feature_hash']}",
+        f"- Command: `{h['command']}`",
+        f"- Seed: {h['seed']}, bootstrap resamples: {h['bootstrap_resamples']}",
+        *([f"- Variant (an ablation, not the main run): {json.dumps(h['variant'], sort_keys=True)}"] if h.get("variant") else []),
+        f"- Gate sizes from the power simulation at the release gate"
+        f"{' (power ' + format(h['gate_decision_target'], '.2f') + ')' if h.get('gate_decision_target') else ''}: "
+        f"n_200 = {h['gate_n_200']} (skill 0.20), n_400 = {h['gate_n_400']} (skill 0.10)",
+        *_research_gate_lines(h),
+        f"- Rungs: {', '.join(h['rungs'])}; primary rung for decisions and plots: {h['primary_rung']}",
+        f"- Origins scored: {h['origins_scored']} from {h['first_origin']} to {h['last_origin']}",
+        f"- Origins with fewer than {h['min_fit_rows']} visible rows (nothing fitted): {', '.join(h['skipped_origins']) or 'none'}",
+        f"- Ledger rows: {h['ledger_rows']}, admitted: {h['admitted_rows']}, scored: {h['scored_rows']}, "
+        f"admitted but never scored (before the first fit): {h['not_scored_rows']}",
+        *(
+            [
+                f"- Tests: {h['tests_in_ledger']} in the ledger, {h['tests_admitted']} admitted, {h['tests_scored']} scored. "
+                f"{h['test_count_definition']}"
+            ]
+            if "tests_scored" in h
+            else []
+        ),
+        *([f"- P2 admission guard: {h['p2_guard']}"] if h.get("p2_guard") is not None else []),
+        *(
+            [
+                "- Gate sizes by base rate (tests): "
+                + "; ".join(f"{b}: n_200 {v['n_200']}, n_400 {v['n_400']}" for b, v in h["gate_by_base_rate"].items())
+            ]
+            if h.get("gate_by_base_rate")
+            else []
+        ),
+        "",
+        "## How to read the scores",
+        "",
+        notes["circularity"],
+        "",
+        notes["burn_in"],
+        "",
+        "Intervals are 90 percent bootstrap intervals that resample whole tests. Scores are given on all predicted rows "
+        "(so rungs are comparable) and, separately, on rows where the card would not have abstained.",
+        "",
+        notes.get("p0_skill", ""),
+        "",
+        notes.get("intervals", ""),
+        "",
+        notes.get("calibration_null", ""),
+        "",
+        "Rungs:",
+        "",
+    ]
     out += [f"- {r}: {d}" for r, d in notes["rungs"].items() if d] + [""]
     out += ["## Scores by cell and rung", ""]
     seen: set[str] = set()
@@ -417,6 +520,13 @@ def render_markdown(doc: dict) -> str:
                                                 "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "abstention_rate"])
     out += ["## Coverage of the intervals for y (primary rung)", ""]
     out += _table(t["coverage"], ["cell", "n", "coverage_80", "coverage_90"])
+    out += ["## Coverage by realized over planned standard error", "",
+            "Rows grouped in deciles of the ratio of the realized to the planned standard error (an evaluation-time stratifier: the realized "
+            "standard error is never a forecast input). The forecaster fixes the click-through level at the cell median, so the ratio varies "
+            "with the realized level; `coverage_80` and `coverage_90` should be near 0.80 and 0.90 in every decile. A rung that is not in "
+            "range here is not calibrated within strata, whatever its pooled coverage.", ""]
+    out += _table(t.get("coverage_by_se_ratio", []), ["rung", "decile", "ratio_lo", "ratio_hi", "n", "mean_ratio", "coverage_80", "coverage_90",
+                                                      "event_rate", "mean_p_sig"])
     out += ["## Calibration by precision", "",
             "Rows grouped in deciles of the planned exposures per arm (fewer groups when exposures tie). A forecaster that is "
             "calibrated overall but not within these groups is not calibrated. `mean_p_sig` should match `event_rate`, and "
@@ -428,10 +538,13 @@ def render_markdown(doc: dict) -> str:
     out += ["## Split-half check of the prior", "", "P1 fit on odd tests and on even tests; the gap in the cell mean and spread.", ""]
     out += _table(t["split_half"], ["cell", "mu_odd", "mu_even", "mu_gap", "tau_odd", "tau_even", "tau_gap", "n_odd", "n_even"])
     out += ["## Decision value", "",
-            "Reported separately from calibration and never combined with it. Each origin picks K tests (a quarter of the period's tests, "
-            "rounded, at least one) at random, by p_win, or by an oracle that knows y. Captured is the lift won in the units of y, "
-            "the fraction is of the period's total positive observed lift, and regret is the oracle's capture minus the policy's.", ""]
-    out += _table(t["decision_value"], ["origin", "policy", "rung", "K", "n_tests", "total", "captured", "captured_fraction", "regret"])
+            "Reported separately from calibration and never combined with it. Each origin picks K tests (10, 25 and 50 percent of the "
+            "period's tests, rounded, at least one) at random, by p_win, or by an oracle that knows y. Captured is the lift won in the units "
+            "of y, the fraction is of the period's total positive observed lift, and regret is the oracle's capture minus the policy's. "
+            + notes.get("decision_value", ""), ""]
+    out += _table(t["decision_value"], ["origin", "policy", "rung", "budget", "K", "n_tests", "total", "captured", "captured_fraction",
+                                        "captured_fraction_lo", "captured_fraction_hi", "regret", "regret_lo", "regret_hi", "random_fraction",
+                                        "diff_random", "diff_random_lo", "diff_random_hi", "constant_within_cell"])
     out += ["## Figures", ""] + [f"- figures/{n}-{h['source']}.png" for n in FIGURE_NAMES] + [""]
     return "\n".join(out)
 
@@ -510,7 +623,7 @@ def plot_coverage(doc: dict, path: Path) -> Path:
 def plot_decision_value(doc: dict, path: Path) -> Path:
     """Share of the period's total positive lift captured by each policy, pooled over origins."""
     d = pd.DataFrame(doc["tables"]["decision_value"])
-    d = d[d["origin"] == "ALL"]
+    d = d[(d["origin"] == "ALL") & (d["budget"] == 0.25)] if "budget" in d.columns else d[d["origin"] == "ALL"]
     primary = doc["header"]["primary_rung"]
     d = d[(d["rung"] == primary) | (d["rung"] == "all")]
     fig, ax = plt.subplots(figsize=(5.2, 4.2))
@@ -548,7 +661,8 @@ def write_reliability(scores: pd.DataFrame, source: str, out_dir, as_of: dt.date
     base = scores[scores["rung"] == "P0"].set_index("row_id")["logscore"] if (scores["rung"] == "P0").any() else None
     p0_ls = main["logscore"].to_numpy() if base is None else base.reindex(main["row_id"]).to_numpy()
     outcomes = pd.DataFrame({"cell": main["cell"].to_numpy(), "at": main["usable_after"].to_numpy(), "logscore": main["logscore"].to_numpy(),
-                             "p0_logscore": p0_ls, "brier": main["brier_event"].to_numpy(), "p0_brier": main["brier_base"].to_numpy()})
+                             "p0_logscore": p0_ls, "brier": main["brier_event"].to_numpy(), "p0_brier": main["brier_base"].to_numpy(),
+                             "test_id": main["test_id"].to_numpy()})
     report = build_reliability(None, outcomes, when.to_pydatetime(), advance=True, source=source)
     if path.exists() and not overwrite:
         old = json.loads(path.read_text(encoding="utf-8"))

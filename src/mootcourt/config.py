@@ -64,6 +64,11 @@ HALF_LIFE_DAYS = (math.inf, 365.0, 180.0, 90.0)
 LOCAL_EB_K = 50
 # Gradient-boosted challenger: contiguous folds for the out-of-fold residual variance.
 GBM_FOLDS = 5
+# Its time-ordered search (round 00, docs/method.md call 169): the most boosting rounds tried, the (learning rate, leaves) configurations, and the
+# latest share of the visible rows (in start-time order) that picks among them.
+GBM_ITER_MAX = 120
+GBM_CONFIGS = ((0.05, 7), (0.05, 15), (0.1, 7), (0.1, 15))
+GBM_VALIDATION_FRACTION = 0.2
 
 # Gate margin used by promotion and second-opinion earning (Brier skill).
 PROMOTION_MARGIN = 0.02

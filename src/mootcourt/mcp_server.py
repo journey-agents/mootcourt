@@ -33,15 +33,22 @@ def _parse_origin(value: str | None) -> dt.datetime | None:
 
 
 def tool_get_card(state: ServingState, source: str, headline: str, image_changed: bool, impressions: int, origin: str | None = None,
-                  cell: str | None = None, headline_changed: bool = True) -> str:
-    """Issue a card without freezing it and return its JSON."""
+                  cell: str | None = None, headline_changed: bool = True, row_id: str | None = None, test_id: str | None = None,
+                  variant_id: str | None = None, reference_headline: str = "", impressions_variant: int | None = None) -> str:
+    """Issue a card without freezing it and return its JSON (without the sealed forecast of an abstained card).
+
+    ``row_id`` (or ``test_id`` with ``variant_id``) names the ledger row a frozen copy of this card would be joined to; the tool never freezes,
+    so it only echoes the key, and the same key on ``moot card`` or ``POST /card`` freezes the card the weekly join can score.
+    """
     issued = state.issue({"source": source, "headline": headline, "image_changed": image_changed, "impressions": impressions,
-                          "origin": _parse_origin(origin), "cell": cell, "headline_changed": headline_changed})
-    return json.dumps(card_mod.to_json(issued), sort_keys=True)
+                          "origin": _parse_origin(origin), "cell": cell, "headline_changed": headline_changed, "row_id": row_id,
+                          "test_id": test_id, "variant_id": variant_id, "reference_headline": reference_headline,
+                          "impressions_variant": impressions_variant})
+    return json.dumps(card_mod.public_json(card_mod.to_json(issued)), sort_keys=True)
 
 
 def tool_list_precedents(state: ServingState, source: str, headline: str, image_changed: bool, k: int = 5, origin: str | None = None,
-                         cell: str | None = None, headline_changed: bool = True) -> str:
+                         cell: str | None = None, headline_changed: bool = True, reference_headline: str = "") -> str:
     """The ``k`` highest-weight precedents for a proposed headline, sorted by weight descending, as a JSON list."""
     if k < 1:
         raise ValueError("k must be at least 1")
@@ -49,7 +56,7 @@ def tool_list_precedents(state: ServingState, source: str, headline: str, image_
     at = _parse_origin(origin) or state.now()
     bundle.check_origin(at)                # an origin before the fit cutoff would use parameters fitted on later rows
     cell = cell or card_mod.derive_cell(source, image_changed, headline_changed)
-    x = bundle.transform_text(headline, image_changed, cell=cell)
+    x = bundle.transform_text(headline, image_changed, cell=cell, reference=reference_headline or None)
     table = bundle.p2.top_precedents(x, cell, at, k)
     return json.dumps(table.to_dict(orient="records"))
 
@@ -75,8 +82,10 @@ def build_server(models_dir, reports_dir, now=None):
     @server.tool(name="get_card", description="Issue a read-only pre-trial card for a proposed experiment. Nothing is frozen or written. "
                                               "Leave the headline out for a ledger without headline text, and name the cell.")
     def get_card(source: str, impressions: int, headline: str = "", image_changed: bool = False, origin: str | None = None,
-                 cell: str | None = None, headline_changed: bool = True) -> str:
-        return tool_get_card(state, source, headline, image_changed, impressions, origin, cell, headline_changed)
+                 cell: str | None = None, headline_changed: bool = True, row_id: str | None = None, test_id: str | None = None,
+                 variant_id: str | None = None, reference_headline: str = "", impressions_variant: int | None = None) -> str:
+        return tool_get_card(state, source, headline, image_changed, impressions, origin, cell, headline_changed, row_id, test_id, variant_id,
+                             reference_headline, impressions_variant)
 
     @server.tool(name="list_precedents", description="Top-k weighted precedents (row id, weight, kernel, y, s, test id) for a proposed headline.")
     def list_precedents(source: str, headline: str = "", image_changed: bool = False, k: int = 5, origin: str | None = None,

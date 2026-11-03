@@ -12,17 +12,21 @@ Miss types, one per joined card, in this precedence (builder call 14):
 2. ``confident_but_wrong``: it did not abstain, and either ``p_sig >= 0.6`` while ``y <= z s`` or
    ``p_sig <= 0.1`` while ``y > z s``.
 3. ``direction_miss``: the sign of the point estimate differs from the sign of ``y`` and ``|y| > s``.
-4. ``magnitude_miss``: the direction is right but ``y`` is outside the 90 percent interval.
+4. ``magnitude_miss``: the direction is right but ``y`` is outside the 90 percent interval of the observed estimate at the planned
+   standard error (the interval the card stores for it; the interval for the true effect is narrower and would miss by construction).
 5. ``hit``.
 
-Scoring an outcome. ``y`` and ``s`` are the realized estimate and standard error of the ledger row; ``s`` defines the
-event only. The model log score is that of ``Normal(point, sd_theta^2 + s_star^2)`` with the ``s_star`` the card
-recorded at issue (the scale known before launch, as in the backtest), where ``point`` and the 90 percent interval of theta come from
-the frozen card (the working predictive of an issued P2 card is exactly Normal; a card that fell back to P1's
-t prior is scored by this Normal approximation). Abstained cards have no model log score (``null``) and are not
-counted in reliability, because the card made no claim. The baseline log score is P0 refit on the ledger rows
-visible at the card's origin. Brier compares ``p_sig`` with the event ``y > z s``; the Brier baseline is the
-cell's significant-positive base rate stored on the card.
+Scoring an outcome (round 00, docs/method.md calls 162 and 163). ``y`` and ``s`` are the realized estimate and standard error of the
+ledger row; ``s`` defines the event only. The forecast that is scored is the card's own: the predictive it stored (family, degrees of
+freedom, location, scale, grid and the planned ``s_star`` it recorded at issue, the scale known before launch, as in the backtest), so
+the log score and the coverage of the 90 percent interval of the observed estimate are the backtest's, not those of a Normal rebuilt
+from an interval. An ABSTAINED card is scored too: it keeps the forecast it withheld in a sealed block and the join scores that for
+reliability, flagged (``abstained: true``), never dropped, so a cell whose entry is stale or marked drifted collects evidence and can
+recover. This is the convention of the backtest and of the replay, and the replay calls this same function. A card from before schema
+version 2 has no predictive and is scored by the Normal its point and interval imply (``legacy_normal: true``), and an abstained one has
+no forecast to score. The baseline log score is P0 (the empirical base-rate forecaster) refit on the ledger rows visible at the card's
+origin. Brier compares ``p_sig`` with the event ``y > z s``; the Brier baseline is the cell's significant-positive base rate stored on
+the card.
 
 Units: ``y``, ``s`` and the point estimate are in the source's unit (percentage points for Upworthy); probabilities
 are unitless; log scores are per unit of y.
@@ -100,14 +104,26 @@ def _forecast_logscore(point, interval90, y: float, s: float) -> float | None:
     return float(Predictive.from_normal(grid, point, sd).logscore(y, s))
 
 
-def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime, forecast: dict | None = None) -> dict | None:
-    """The outcome of one issued card given its ledger row, or None while the row's registered horizon has not passed at ``now``.
+def card_forecast(card: dict) -> dict | None:
+    """The forecast a card scores with: its issued prediction, or the one an abstained card withheld; None when there is none.
 
-    ``card`` is the frozen card JSON, ``row`` the admitted ledger row (a mapping with ``y``, ``s`` and ``usable_after``), ``p0`` the
-    baseline fitted on the ledger. The miss type always follows the card as issued. ``forecast`` (a dict with ``point``,
-    ``interval_90`` and ``p_sig``) replaces the forecast that is scored: the weekly join scores only issued cards and passes
-    nothing, while the replay of an archive scores the forecast an abstained card would have made, as the backtest does, so the
-    reliability report has evidence in cells where every card abstained.
+    Returns a dict with ``p_sig``, ``point``, ``interval_90_y`` (the interval of the observed estimate, None on a card of schema
+    version 1), ``interval_90`` (of the true effect) and ``predictive`` (the stored spec with ``s_star``, None on version 1).
+    """
+    pred, issued = card["prediction"], card["abstention"]["status"] == "issue"
+    src = pred if issued else card.get("withheld")
+    if not src or src.get("p_sig") is None and src.get("point") is None:
+        return None
+    return {"p_sig": src.get("p_sig"), "point": src.get("point"), "interval_90": src.get("interval_90"), "interval_90_y": src.get("interval_90_y"),
+            "predictive": src.get("predictive")}
+
+
+def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime) -> dict | None:
+    """The outcome of one card given its ledger row, or None while the row's registered horizon has not passed at ``now``.
+
+    ``card`` is the frozen card JSON, ``row`` the admitted ledger row (a mapping with ``y``, ``s``, ``usable_after`` and, for the
+    reliability interval, ``test_id``), ``p0`` the baseline fitted on the ledger. The miss type always follows the card as issued; the
+    scores follow ``card_forecast``, so an abstained card is scored on the forecast it withheld.
     """
     if pd.Timestamp(row["usable_after"]) > pd.Timestamp(now):      # horizon guard: no outcome before its registered horizon
         return None
@@ -116,37 +132,68 @@ def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime, foreca
     has_star = star is not None and math.isfinite(float(star)) and float(star) > 0
     if not has_star:        # no scale was known at issue: a log score on the realized s would leak the result (REV-039)
         LOG.warning("card %s has no usable s_star; its log scores are left null and it is excluded from reliability", card["card_id"])
-    s_card = float(star) if has_star else s      # log scores use the scale known at issue, as in the backtest
+    s_card = float(star) if has_star else s      # log scores use the scale known before launch, as in the backtest
     pred, issued = card["prediction"], card["abstention"]["status"] == "issue"
     event = y > Z * s
     iv = tuple(pred["interval_90"]) if issued and pred.get("interval_90") else None
+    iv_y = tuple(pred["interval_90_y"]) if issued and pred.get("interval_90_y") else None
     base = card["evidence"].get("base_rate_sig_pos")
     origin = dt.datetime.fromisoformat(card["origin"])
-    scored = forecast if forecast is not None else ({"point": pred.get("point"), "interval_90": pred.get("interval_90"), "p_sig": pred.get("p_sig")}
-                                                    if issued else None)
+    fc = card_forecast(card)
     try:
-        p0_ls = float(p0.predict(None, s_card, card["cell"], origin).logscore(y, s_card)) if has_star else None
+        p0_ls = float(p0.logscore(y, card["cell"], origin)) if has_star else None
     except ValueError:          # no row was visible at the card's origin: there is no baseline to compare with
         p0_ls = None
-    p_scored = None if scored is None else scored.get("p_sig")
+    p_scored = None if fc is None else fc.get("p_sig")
+    logscore, legacy, cover90 = None, False, None
+    if fc is not None and has_star:
+        if fc.get("predictive"):
+            pr = Predictive.from_spec(fc["predictive"])
+            logscore = float(pr.logscore(y, s_card))
+        else:                    # a card of schema version 1: a Normal from the point and the interval for the true effect
+            legacy = True
+            logscore = _forecast_logscore(fc.get("point"), fc.get("interval_90"), y, s_card)
+        look = fc.get("interval_90_y")
+        cover90 = None if not look else bool(look[0] <= y <= look[1])
+    interval_for_miss = iv_y if iv_y is not None else iv
     return {
-        "card_id": card["card_id"], "row_id": card["request"].get("row_id"), "source": card["source"], "cell": card["cell"],
+        "card_id": card["card_id"],
+        "row_id": card["request"].get("row_id"),
+        "test_id": row.get("test_id") if hasattr(row, "get") else None,
+        "source": card["source"],
+        "cell": card["cell"],
         "model_id": card["model_id"],
-        "snapshot_id": card["snapshot_id"], "y": y, "s": s, "event": bool(event), "abstained": not issued,
-        "p_sig": pred.get("p_sig") if issued else None, "point": pred.get("point") if issued else None, "interval_90": list(iv) if iv else None,
-        "miss_type": type_miss(abstained=not issued, p_sig=pred.get("p_sig") if issued else None, point=pred.get("point") if issued else None,
-                               interval90=iv, y=y, s=s),
-        "logscore": (_forecast_logscore(scored.get("point"), scored.get("interval_90"), y, s_card)
-                     if scored is not None and has_star else None),
+        "snapshot_id": card["snapshot_id"],
+        "y": y,
+        "s": s,
+        "event": bool(event),
+        "abstained": not issued,
+        "p_sig": pred.get("p_sig") if issued else None,
+        "point": pred.get("point") if issued else None,
+        "interval_90": list(iv) if iv else None,
+        "interval_90_y": list(iv_y) if iv_y else None,
+        "miss_type": type_miss(
+            abstained=not issued,
+            p_sig=pred.get("p_sig") if issued else None,
+            point=pred.get("point") if issued else None,
+            interval90=interval_for_miss,
+            y=y,
+            s=s,
+        ),
+        "logscore": logscore,
         "p0_logscore": p0_ls,
+        "scored_forecast": "withheld" if (fc is not None and not issued) else ("issued" if fc is not None else None),
+        "legacy_normal": legacy,
+        "covered_90": cover90,
         "brier": float((p_scored - event) ** 2) if p_scored is not None else None,
         "p0_brier": float((base - event) ** 2) if base is not None else None,
-        "at": pd.Timestamp(row["usable_after"]).isoformat(), "joined_at": now.isoformat(),
+        "at": pd.Timestamp(row["usable_after"]).isoformat(),
+        "joined_at": now.isoformat(),
     }
 
 
 def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.datetime, p0: P0Predictor | None = None) -> list[dict]:
-    """Write ``cards/outcomes/<card_id>.json`` for each issued card of ``source`` whose row is now in the ledger.
+    """Write ``cards/outcomes/<card_id>.json`` for each card of ``source``, abstained or issued, whose row is now in the ledger.
 
     Existing outcome files are left alone (they are written once). Returns the outcomes written. Card files are
     only read. Rows that are not admitted (excluded from scoring) get no outcome. Horizon guard (builder call 42):
@@ -171,15 +218,27 @@ def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.dateti
     return written
 
 
+def reliability_row(o: dict) -> dict | None:
+    """One outcome in the reliability schema (``cell``, ``at``, the four scores, ``test_id``), or None while a score is missing.
+
+    The one function the weekly join and the replay both use to turn outcomes into reliability evidence, abstained cards included.
+    """
+    if None in (o["logscore"], o["p0_logscore"], o["brier"], o["p0_brier"]):
+        return None
+    return {"cell": o["cell"], "at": o["at"], "logscore": o["logscore"], "p0_logscore": o["p0_logscore"], "brier": o["brier"],
+            "p0_brier": o["p0_brier"], "test_id": o.get("test_id")}
+
+
 def load_outcomes(cards_dir, source: str) -> list[dict]:
-    """All outcome files of a source in the reliability schema (issued cards only, where both scores exist)."""
+    """All outcome files of a source in the reliability schema: every card that has a forecast to score, abstained ones included."""
     rows = []
     for path in visible_glob(Path(cards_dir) / "outcomes", "*.json"):
         o = json.loads(path.read_text(encoding="utf-8"))
-        if o["source"] != source or None in (o["logscore"], o["p0_logscore"], o["brier"], o["p0_brier"]):
+        if o["source"] != source:
             continue
-        rows.append({"cell": o["cell"], "at": o["at"], "logscore": o["logscore"], "p0_logscore": o["p0_logscore"],
-                     "brier": o["brier"], "p0_brier": o["p0_brier"]})
+        r = reliability_row(o)
+        if r is not None:
+            rows.append(r)
     return rows
 
 

@@ -150,7 +150,9 @@ def test_outcomes_are_typed_like_the_weekly_join_and_carry_the_shadow_scores(run
         typed += 1
         card = rec["card"]
         issued = card["abstention"]["status"] == "issue"
-        iv = tuple(card["prediction"]["interval_90"]) if issued and card["prediction"].get("interval_90") else None
+        # round 00 (T-054): the miss is typed against the stored 90 percent interval for the OBSERVED estimate, not the interval for theta
+        key = "interval_90_y" if card["prediction"].get("interval_90_y") else "interval_90"
+        iv = tuple(card["prediction"][key]) if issued and card["prediction"].get(key) else None
         assert out["miss_type"] == loop.type_miss(abstained=not issued, p_sig=card["prediction"].get("p_sig") if issued else None,
                                                   point=card["prediction"].get("point") if issued else None, interval90=iv, y=out["y"], s=out["s"])
         assert out["miss_type"] in loop.MISS_TYPES
@@ -162,7 +164,8 @@ def test_the_rolling_coverage_is_the_share_of_trailing_issued_intervals_that_hel
     _mod, doc, records = run
     from mootcourt.config import TRAILING_WEEKS
 
-    outs = [(pd.Timestamp(r["joined_week"]), r["outcome"]) for r in records if r["outcome"] is not None and r["outcome"]["interval_90"]]
+    # round 00 (T-054): rolling coverage is that of the stored interval for the observed estimate at the planned standard error (interval_90_y)
+    outs = [(pd.Timestamp(r["joined_week"]), r["outcome"]) for r in records if r["outcome"] is not None and r["outcome"]["interval_90_y"]]
     seen = 0
     for w in doc["weeks"]:
         t = pd.Timestamp(w["week_start"])
@@ -171,7 +174,7 @@ def test_the_rolling_coverage_is_the_share_of_trailing_issued_intervals_that_hel
             assert w["coverage_90"] is None and w["coverage_90_n"] == 0
             continue
         seen += 1
-        hit = np.mean([o["interval_90"][0] <= o["y"] <= o["interval_90"][1] for o in win])
+        hit = np.mean([o["interval_90_y"][0] <= o["y"] <= o["interval_90_y"][1] for o in win])
         assert w["coverage_90"] == pytest.approx(hit) and w["coverage_90_n"] == len(win)
     assert seen > 5
 

@@ -6,6 +6,14 @@ with the named structured features and the log of the planned exposures per arm,
 statistics from the fit set. Only the pre-launch allow-list of ``mootcourt.scale`` is read from a row's features;
 a post-launch field among them raises ``PostLaunchFieldError``.
 
+Pairwise text (round 00, docs/method.md call 167). When the rows carry a reference headline (Upworthy does), the text part is
+three blocks of ``PAIRWISE_SVD_DIMS`` columns from one TF-IDF and SVD fit on the variant and reference headlines together: the
+variant vector, the reference vector and their difference, and three pair features are appended after the structured ones (the
+word-count difference, the character-count difference and the share of words the two headlines have in common). A contrast is a
+pair, and a kernel on the variant text alone cannot represent what changed. Rows without a reference headline (synthetic, ASOS,
+imported ledgers) keep the single-headline space and its feature hash. A card request without a reference headline gets the fit-set
+mean reference vector.
+
 Kernel: ``k(x, x_i) = exp(-d^2 / (2 h^2))`` with ``d`` the Euclidean distance on standardized
 features and ``h`` the median pairwise distance of the fit set (median heuristic).
 
@@ -40,6 +48,9 @@ STRUCTURED_FEATURES = [
     "has_exclaim", "n_chars",
 ]
 EXPOSURE_FEATURES = ["log_exposure"]          # natural log of the planned exposures per arm, appended after the structured ones
+# Pairwise features (round 00, call 167), added only when the rows carry a reference headline: the change between the arms.
+PAIR_FEATURES = ["words_diff", "chars_diff", "shared_token_share"]
+PAIRWISE_SVD_DIMS = 32          # per block: variant, reference and their difference, so the text part has three blocks
 _PRONOUNS = frozenset(
     "i me my mine we us our ours you your yours he him his she her hers it its they them their theirs "
     "this that these those who".split()
@@ -98,6 +109,28 @@ def structured_features(headline: str, image_changed: bool = False) -> np.ndarra
     )
 
 
+def _tokens(text: str) -> set:
+    return {w.lower() for w in _WORD.findall(text or "")}
+
+
+def pair_features(headline: str, reference: str) -> np.ndarray:
+    """Unitless pair features, ordered as ``PAIR_FEATURES``: word-count difference, character-count difference and shared-word share."""
+    a, b = _tokens(headline), _tokens(reference)
+    union = a | b
+    return np.array([len((headline or "").split()) - len((reference or "").split()),
+                     len(headline or "") - len(reference or ""), (len(a & b) / len(union)) if union else 1.0], dtype=np.float64)
+
+
+def parse_references(rows: pd.DataFrame) -> list[str]:
+    """Reference headlines of ledger rows from the pre-launch allow-list (empty string where a row has none)."""
+    return [str(prelaunch_view(json.loads(j)).get("reference_headline", "") or "") for j in rows["features_json"]]
+
+
+def has_reference(rows: pd.DataFrame) -> bool:
+    """True when at least one row carries a non-empty reference headline in its pre-launch features."""
+    return any(r.strip() for r in parse_references(rows))
+
+
 def _parse_rows(rows: pd.DataFrame) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray]:
     """Headlines, image-changed flags, variant counts and log planned exposures of ledger rows.
 
@@ -127,6 +160,8 @@ class FeatureSpace:
     min_df: int = 3
     backend: str = "tfidf"
     feature_set: str = "both"
+    pairwise: bool = False
+    ref_fill: np.ndarray | None = None          # mean raw SVD vector of the fit set's reference headlines (a request without one gets it)
 
     @property
     def dim(self) -> int:
@@ -138,7 +173,8 @@ class FeatureSpace:
         n = int(self.mean.shape[0])
         if self.cell_only or self.feature_set == "both":
             return np.arange(n)
-        return np.arange(self.svd_dims) if self.feature_set == "text" else np.arange(self.svd_dims, n)
+        n_text = self.svd_dims * (3 if self.pairwise else 1)
+        return np.arange(n_text) if self.feature_set == "text" else np.arange(n_text, n)
 
     # ------------------------------------------------------------------ fit
     @classmethod
@@ -150,12 +186,16 @@ class FeatureSpace:
         cell_only: bool = False,
         backend: str = "tfidf",
         feature_set: str = "both",
+        pairwise: bool | None = None,
     ) -> FeatureSpace:
         """Fit on the given rows (the caller passes only rows visible at the origin).
 
         ``svd_dims`` is capped at vocabulary size minus 1 and at rows minus 1; a cap is logged.
         With ``cell_only`` the space is the cell one-hot plus the variant count (metric id and number
         of variants), the degenerate space used for sources without text. Fitting is deterministic.
+
+        ``pairwise`` None means "when the rows carry a reference headline"; ``False`` gives the single-headline space of
+        earlier versions and ``True`` requires reference headlines.
         """
         if feature_set not in FEATURE_SETS:
             raise ValueError(f"feature_set must be one of {FEATURE_SETS}")
@@ -172,25 +212,42 @@ class FeatureSpace:
             std = np.where(std < _STD_FLOOR, 1.0, std)
             return cls(None, None, mean, std, 0, True, cells, min_df, backend, feature_set)
         heads, imgs, _, logexp = _parse_rows(rows)
+        refs = parse_references(rows)
+        pair = has_reference(rows) if pairwise is None else bool(pairwise)
+        if pair and not has_reference(rows):
+            raise ValueError("a pairwise feature space needs reference headlines in the rows")
+        # each distinct text once: a shared reference is not weighted by its contrasts
+        corpus = list(dict.fromkeys(heads + refs)) if pair else heads
         vec = TfidfVectorizer(ngram_range=(1, 2), min_df=min_df, dtype=np.float64)
-        tfidf = vec.fit_transform(heads)
+        tfidf_all = vec.fit_transform(corpus)
         vocab = len(vec.vocabulary_)
-        cap = min(svd_dims, vocab - 1, len(heads) - 1)
+        dims = PAIRWISE_SVD_DIMS if pair else svd_dims
+        cap = min(dims, vocab - 1, len(corpus) - 1)
         if cap < 1:
             raise ValueError("not enough text to fit a feature space")
-        if cap < svd_dims:
-            log.info("svd dims cap: requested %d, using %d (vocabulary %d, rows %d)", svd_dims, cap, vocab, len(heads))
+        if cap < dims:
+            log.info("svd dims cap: requested %d, using %d (vocabulary %d, texts %d)", dims, cap, vocab, len(corpus))
         svd = TruncatedSVD(n_components=cap, random_state=_RANDOM_STATE)
-        reduced = svd.fit_transform(tfidf)
-        raw = np.hstack([reduced, cls._structured_matrix(heads, imgs, logexp)])
+        svd.fit(tfidf_all)
+        u_var = svd.transform(vec.transform(heads))
+        if pair:
+            u_ref = svd.transform(vec.transform(refs))
+            text = np.hstack([u_var, u_ref, u_var - u_ref])
+            ref_fill = u_ref.mean(axis=0)
+        else:
+            text, ref_fill = u_var, None
+        raw = np.hstack([text, cls._structured_matrix(heads, imgs, logexp, refs if pair else None)])
         mean, std = raw.mean(0), raw.std(0)
         std = np.where(std < _STD_FLOOR, 1.0, std)
-        return cls(vec, svd, mean, std, cap, False, (), min_df, backend, feature_set)
+        return cls(vec, svd, mean, std, cap, False, (), min_df, backend, feature_set, pair, ref_fill)
 
     @staticmethod
-    def _structured_matrix(heads, imgs, logexp) -> np.ndarray:
+    def _structured_matrix(heads, imgs, logexp, refs=None) -> np.ndarray:
         base = np.array([structured_features(h, bool(i)) for h, i in zip(heads, imgs)]).reshape(len(heads), -1)
-        return np.hstack([base, np.asarray(logexp, dtype=np.float64).reshape(-1, 1)])
+        cols = [base, np.asarray(logexp, dtype=np.float64).reshape(-1, 1)]
+        if refs is not None:
+            cols.append(np.array([pair_features(h, r) for h, r in zip(heads, refs)]).reshape(len(heads), -1))
+        return np.hstack(cols)
 
     @staticmethod
     def _cell_matrix(cell_values, nvar, cells) -> np.ndarray:
@@ -204,15 +261,17 @@ class FeatureSpace:
         if self.cell_only:
             raw = self._cell_matrix(rows["cell"].tolist(), nvar, self.cells)
             return (raw - self.mean) / self.std
-        return self._transform(heads, imgs, logexp)
+        return self._transform(heads, imgs, logexp, parse_references(rows) if self.pairwise else None)
 
     def transform_text(self, headlines, image_changed=False, cell: str | None = None, n_variants: float = 2.0,
-                       exposure=None) -> np.ndarray:
+                       exposure=None, reference=None) -> np.ndarray:
         """Standardized features for bare headlines (unseen and out-of-vocabulary text is fine).
 
         ``image_changed`` is one flag or one per headline. ``cell`` and ``n_variants`` are used only
         by a cell-only space. ``exposure`` is the planned exposures per arm (one value or one per headline);
-        left out, the fit-set average of the log exposure is used, which standardizes to zero.
+        left out, the fit-set average of the log exposure is used, which standardizes to zero. ``reference`` is the reference
+        headline (one for all or one per headline) of a pairwise space; left out, the fit-set mean reference vector is used
+        and the pair features are those of an empty reference.
         """
         heads = [str(h) for h in headlines]
         imgs = np.broadcast_to(np.asarray(image_changed, dtype=bool), (len(heads),))
@@ -226,11 +285,22 @@ class FeatureSpace:
             if np.any(expo <= 0):
                 raise ValueError("planned exposures must be positive")
             logexp = np.log(expo)
-        return self._transform(heads, imgs, logexp)
+        refs = None
+        if self.pairwise:
+            refs = [""] * len(heads) if reference is None else [str(r) for r in np.broadcast_to(np.asarray(reference, dtype=object), (len(heads),))]
+        return self._transform(heads, imgs, logexp, refs, no_reference=reference is None)
 
-    def _transform(self, heads, imgs, logexp) -> np.ndarray:
-        reduced = self.svd.transform(self.vectorizer.transform(heads))
-        raw = np.hstack([reduced, self._structured_matrix(heads, imgs, logexp)])
+    def _transform(self, heads, imgs, logexp, refs=None, no_reference: bool = False) -> np.ndarray:
+        u_var = self.svd.transform(self.vectorizer.transform(heads))
+        if self.pairwise:
+            if no_reference and self.ref_fill is not None:
+                u_ref = np.broadcast_to(self.ref_fill, u_var.shape)
+            else:
+                u_ref = self.svd.transform(self.vectorizer.transform(refs))
+            text = np.hstack([u_var, u_ref, u_var - u_ref])
+        else:
+            text = u_var
+        raw = np.hstack([text, self._structured_matrix(heads, imgs, logexp, refs if self.pairwise else None)])
         full = (raw - self.mean) / self.std
         return full if self.feature_set == "both" else full[:, self._columns()]
 
@@ -238,10 +308,10 @@ class FeatureSpace:
     def to_state(self) -> dict[str, Any]:
         """Split into ``arrays`` (for npz), ``meta`` (JSON) and ``objects`` (sklearn, for joblib)."""
         return {
-            "arrays": {"mean": self.mean, "std": self.std},
+            "arrays": {"mean": self.mean, "std": self.std, **({"ref_fill": self.ref_fill} if self.ref_fill is not None else {})},
             "meta": {
                 "svd_dims": self.svd_dims, "cell_only": self.cell_only, "cells": list(self.cells),
-                "min_df": self.min_df, "backend": self.backend, "feature_set": self.feature_set,
+                "min_df": self.min_df, "backend": self.backend, "feature_set": self.feature_set, "pairwise": self.pairwise,
             },
             "objects": {"vectorizer": self.vectorizer, "svd": self.svd},
         }
@@ -253,7 +323,8 @@ class FeatureSpace:
         return cls(
             state["objects"]["vectorizer"], state["objects"]["svd"], np.asarray(state["arrays"]["mean"]),
             np.asarray(state["arrays"]["std"]), int(m["svd_dims"]), bool(m["cell_only"]), tuple(m["cells"]),
-            int(m["min_df"]), str(m["backend"]), str(m.get("feature_set", "both")),
+            int(m["min_df"]), str(m["backend"]), str(m.get("feature_set", "both")), bool(m.get("pairwise", False)),
+            np.asarray(state["arrays"]["ref_fill"]) if "ref_fill" in state["arrays"] else None,
         )
 
 
@@ -271,6 +342,10 @@ def feature_hash(space: FeatureSpace) -> str:
     }
     if space.feature_set != "both":                    # the default keeps the hash of every earlier model
         payload["feature_set"] = space.feature_set
+    if space.pairwise:                                 # a single-headline space keeps the hash it always had
+        payload["pairwise"] = True
+        payload["pair_features"] = PAIR_FEATURES
+        payload["svd_dims"] = space.svd_dims
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:12]
 
 

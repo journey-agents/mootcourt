@@ -26,6 +26,10 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--effect-scale` | str | `absolute` | absolute (default) or relative: the cautionary first run (Upworthy only). |
 | `--drop-trigger` | str |  | Ablation: switch an abstention trigger off (support, novelty, reliability or instability); repeatable. |
 | `--s-star` | str | `prelaunch` | prelaunch (default) or realized: feed the realized standard error (cautionary run). |
+| `--admission` | str | `realized` | realized (default: the ledger's statuses, including the minimum-clicks rule on realized clicks) or prelaunch: admit on exposure only, every contrast with a finite standard error (ablation). |
+| `--pairwise` | str | `on` | on (default): the feature space and the challengers read the reference headline where the ledger has one; off: the variant headline only. |
+| `--recalibrate`, `--no-recalibrate` | flag | `True` | Add a recalibrated rung (+cal) for every challenger, fit on visible rows only. |
+| `--recalibration` | str | `platt` | Map of the recalibrated rungs: platt or isotonic. |
 | `--local-k` | int | `50` | Neighbors used by the local_eb challenger. |
 | `--primary-metric` | str |  | Multi-metric ledgers: the metric the decision value uses. |
 | `--baselines`, `--no-baselines` | flag | `True` | Score the always_reference and always_variant baselines. |
@@ -62,12 +66,16 @@ Issue a card for a proposed experiment and freeze it under the cards directory.
 | `--source` | str |  | Data source: upworthy, asos or synthetic. |
 | `--headline` | str | `` | Proposed headline (text sources; leave out for ledgers without headline text). |
 | `--image-changed` | str | `false` | true or false. |
-| `--impressions` | int |  | Planned exposures (units) per arm. |
+| `--impressions` | int |  | Planned exposures (units) per arm (the reference arm's when --impressions-variant is given). |
+| `--impressions-variant` | int |  | Planned exposures of the variant arm; default: the same as --impressions. |
 | `--origin` | str |  | ISO-8601 time with offset; default now. |
 | `--models-dir` | path |  | Default: the storage root. |
 | `--cards-dir` | path |  | Default: the storage root. |
 | `--reports-dir` | path |  | Default: the storage root. |
 | `--now` | str |  | Issue time (ISO-8601 with offset); default now. |
+| `--row-id` | str |  | Ledger row the weekly join will attach the outcome to (source:test_id:variant_id). |
+| `--test-id` | str |  | With --variant-id: the ledger row key, instead of --row-id. |
+| `--variant-id` | str |  | With --test-id: the ledger row key, instead of --row-id. |
 | `--model-id` | str |  | Model to use; default the registry champion. |
 | `--cell` | str |  | Primary metric's cell (needed for metric-keyed sources). |
 | `--guardrail` | str |  | Guardrail as CELL:DELTA (harm margin above zero); repeat. |
@@ -75,7 +83,7 @@ Issue a card for a proposed experiment and freeze it under the cards directory.
 | `--json` | flag |  | Print the card as JSON instead of Markdown. |
 | `--verbose` | flag |  | Print timings to standard error. |
 | `--simulator` | str |  | Attach a response simulator (see `moot simulators list`) as a second opinion. |
-| `--reference-headline` | str | `` | Reference headline passed to the simulator, if known. |
+| `--reference-headline` | str | `` | Reference arm's headline: read by a pairwise feature space and passed to a simulator. |
 | `--sim-config` | path |  | Config file with [simulators.*] tables; default mootcourt.toml. |
 | `--allow-remote` | flag |  | Allow an http simulator on a non-loopback host. |
 
@@ -215,6 +223,21 @@ Start the read-only HTTP service (POST /card, GET /reliability/{source}, GET /he
 
 Synthetic data and gate power. Everything here is synthetic.
 
+### `moot simulate gate-power`
+
+Simulate the gates by test, at the base rates of the archives, and write reports/gates.json (synthetic data only).
+
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `--out` | path |  | Default: gates.json under the reports directory. |
+| `--reps` | int | `1000` | Simulated gates per point; lower is faster and noisier. |
+| `--bootstrap` | int | `500` | Bootstrap resamples (by test) per simulated gate. |
+| `--seed` | int | `20261102` |  |
+| `--base-rate` | float |  | Base rate of the significant-positive event; repeat for several. Default: 0.09 (the Upworthy archive), 0.14 (ASOS) and 0.30 (the earlier gates). |
+| `--target` | float |  | Power of the release gate; default gate.target_power in mootcourt.toml, else 0.90. |
+| `--rows-per-test` | float | `3.5` | Mean rows per test (Upworthy: 3.5); sizes are numbers of tests. |
+| `--level` | float | `0.9` | Interval whose lower end must clear zero (the harness reports 90 percent by test). |
+
 ### `moot simulate ledger`
 
 Write a synthetic ledger with known truth (source synthetic).
@@ -224,6 +247,8 @@ Write a synthetic ledger with known truth (source synthetic).
 | `--out` | path |  | Where to write the synthetic ledger (parquet). |
 | `--seed` | int | `0` |  |
 | `--n-tests` | int | `1000` |  |
+| `--text-effect` | float | `0.0` | Planted headline text signal (percent lift between headlines with and without a signal word); 0 is the no-signal archive, above 0 is the positive control. |
+| `--variants-per-test` | int range | `2` |  |
 
 ### `moot simulate power`
 
@@ -235,8 +260,10 @@ Simulate the release gates and write reports/gates.json (synthetic data only).
 | `--reps` | int | `1000` | Simulated gates per point; lower is faster and noisier. |
 | `--bootstrap` | int | `500` | Bootstrap resamples per simulated gate. |
 | `--seed` | int | `20261102` |  |
-| `--base-rate` | float | `0.3` |  |
+| `--base-rate` | float |  | Base rate of the significant-positive event; repeat for several. Default 0.30. |
 | `--target` | float |  | Power of the release gate; default gate.target_power in mootcourt.toml, else 0.90. |
+| `--rows-per-test` | float | `1.0` | Mean rows per test; above 1 simulates tests and bootstraps by test (the sizes are then tests). |
+| `--level` | float | `0.95` | Interval whose lower end must clear zero. |
 
 ## `moot simulators`
 

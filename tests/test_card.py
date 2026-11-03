@@ -164,7 +164,9 @@ def test_abstained_card_lists_reasons_and_hides_estimates(imp, frozen_clock, rel
     for r in reasons:
         assert r in md.lower()
     assert "p0" in md.lower(), "an abstained card still shows P0"
-    assert not re.search(r"point estimate|interval|80 percent|90 percent", md, re.I)
+    # round 00 (T-054): the skill section reports the MEASURED skill with its 90 percent interval, which is not a forecast of this test, so
+    # the hidden-estimate check reads the sections above it
+    assert not re.search(r"point estimate|interval|80 percent|90 percent", md.split("## Skill at this n")[0], re.I)
     j = card.to_json(c)
     assert j["abstention"]["status"] == "abstain" and list(j["abstention"]["reasons"]) == list(reasons)
     assert not ({"point", "interval_80", "interval_90", "p_win", "p_sig"} & set(j["prediction"] or {}))

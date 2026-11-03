@@ -78,7 +78,9 @@ def test_no_llm_or_network_client_imports_in_src():
     import sys
 
     runtime = {"mootcourt", "numpy", "scipy", "pandas", "sklearn", "joblib", "matplotlib", "typer",
-               "fastapi", "pydantic", "uvicorn", "mcp"}
+               "fastapi", "pydantic", "uvicorn", "mcp",
+               # scikit-learn's own dependency: the GBM challenger limits its thread pool (T-054); it is no LLM or network client
+               "threadpoolctl"}
     network_stdlib = {"socket", "ssl", "http", "urllib", "ftplib", "smtplib", "xmlrpc", "asyncio", "telnetlib"}
     allowed = {"service.py", "mcp_server.py", "http.py", "onboarding.py"}
     # http.py is the loopback-only HTTP simulator adapter (T-029); onboarding.py has the doctor's configured-URL health check (T-035)

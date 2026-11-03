@@ -13,6 +13,9 @@ and direction accuracy where the rung has them. The figure overlays the gate siz
 history axis: they are the numbers of scored rows a cell needs before a skill can be called decidable, drawn here so the
 history actually used can be read against them.
 
+Round 00: the planned design is 20 seeds per fraction and a smallest fraction that crosses the gate (0.01 and 0.02 leave fewer rows than
+the gate sizes), the direction baselines are left out of the table, and the gate sizes printed are those of the first base rate in gates.json.
+
 Units: skill, Brier and accuracy are unitless; log scores are per unit of y.
 """
 from __future__ import annotations
@@ -108,6 +111,8 @@ def run_learning_curve(ledger: pd.DataFrame, source: str, factory: Callable[[pd.
             n_fit.setdefault(f, []).append(len(visible_rows(sub.loc[sub["status"] == ADMITTED], T)))
             held_rows, held_tests = int(sc["row_id"].nunique()), int(sc["test_id"].nunique())
             for rung in sorted(sc["rung"].unique()):
+                if rung_kind(rung) == "baseline":        # the direction baselines have no Brier score: their columns would be empty (round 00 nit)
+                    continue
                 runs.setdefault((f, rung), []).append(_metrics(sc, rung, B, seed))
             if verbose:
                 print(f"learning curve: fraction {f}, seed {k}: {len(sub)} rows kept", flush=True)

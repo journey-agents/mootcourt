@@ -16,6 +16,13 @@ power simulation resamples independent rows, so applying its sizes to clustered 
 (code review finding REV-003, builder call 83). The row count (``decidable``, ``decidable_research``) is printed
 beside it and labelled as the by-row figure.
 
+Round 00 additions (docs/method.md calls 170 to 176): the perfect-calibration null is clustered by test (a one-factor Gaussian copula
+whose within-test correlation is estimated from the rows, so contrasts of one test are drawn together) and the design effect is
+reported; coverage is also tabulated by decile of the ratio of the realized to the planned standard error; the gate for a group is
+read at the base rate nearest to the group's own event rate, with the old base rate 0.3 kept beside it; every aggregate row carries
+Bonferroni-adjusted bounds (the bootstrap standard error times the Bonferroni normal quantile for the family of intervals the table
+shows) beside the percentile intervals.
+
 Units: log scores are per unit of y, CRPS is in the units of y, Brier scores and coverage are unitless.
 """
 from __future__ import annotations
@@ -24,10 +31,12 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from scipy import special
 
-from mootcourt.config import BY_ORIGIN_RESAMPLES
+from mootcourt.config import BY_ORIGIN_RESAMPLES, Z
 from mootcourt.ledger import ADMITTED, visible_rows
 from mootcourt.predictors.p1 import P1Predictor
+from mootcourt.simulate import select_gates
 
 CIRCULARITY_NOTE = (
     "Scores are computed against the observed estimate with known standard error, not against the unknown "
@@ -37,6 +46,9 @@ CIRCULARITY_NOTE = (
 TRIGGERS = ("support", "novelty", "reliability", "instability")
 DEFAULT_B = 500
 LEVEL = 0.90
+# perfect-calibration null draws: the percentile resolves at most (draws - 1) / draws, so 100 means "above every draw"
+NULL_DRAWS = 500
+LEGACY_BASE_RATE = 0.30               # the base rate of the gates before round 00, kept as a labelled column
 
 
 @dataclass(frozen=True)
@@ -115,27 +127,81 @@ def ece(p, event, n_bins: int = 10) -> float:
     return float((t["n"] * (t["mean_p"] - t["freq"]).abs()).sum() / t["n"].sum())
 
 
-def ece_null(p, draws: int = 500, seed: int = 0, n_bins: int = 10) -> np.ndarray:
-    """ECE of ``draws`` outcome sets resampled from the predicted probabilities (the perfect-calibration null)."""
+def _quantile_bin_index(p: np.ndarray, n_bins: int) -> np.ndarray:
+    """Equal-mass bin of each probability: the minimum rank cut into ``n_bins``, so equal probabilities share a bin."""
+    p = np.asarray(p, float)
+    rank_min = pd.Series(p).rank(method="min").to_numpy() - 1.0
+    return np.minimum((rank_min * n_bins // max(len(p), 1)).astype(int), n_bins - 1)
+
+
+def ece_equal_mass(p, event, n_bins: int = 10) -> float:
+    """Expected calibration error over ``n_bins`` equal-mass bins (the estimator less sensitive to which bins are populated)."""
+    p, e = np.asarray(p, float), np.asarray(event, float)
+    idx = _quantile_bin_index(p, n_bins)
+    sp, se = np.bincount(idx, weights=p, minlength=n_bins), np.bincount(idx, weights=e, minlength=n_bins)
+    return float(np.abs(sp - se).sum() / len(p))
+
+
+def design_effect(p, event, test_ids) -> dict:
+    """Clustering of the residuals ``event - p`` by test.
+
+    ``design_effect`` is the variance of the total residual with whole tests as the units (``sum_t (sum_{i in t} r_i)^2``) over its
+    independent-rows value (``sum_i p_i (1 - p_i)``); it is near 1 when contrasts of a test are as independent as the null says. ``icc`` is the
+    within-test correlation of the standardized residuals implied by it, ``(deff - 1) / (m - 1)`` with ``m`` the size-weighted mean test
+    size, clipped to [0, 0.99]; it is the correlation the clustered null uses.
+    """
+    p, e = np.asarray(p, float), np.asarray(event, float)
+    codes, _ = pd.factorize(pd.Series(np.asarray(test_ids)))
+    sizes = np.bincount(codes).astype(float)
+    r = e - p
+    num = float((np.bincount(codes, weights=r) ** 2).sum())
+    den = float((p * (1.0 - p)).sum())
+    deff = num / den if den > 0 else 1.0
+    m = float((sizes ** 2).sum() / sizes.sum())
+    icc = 0.0 if m <= 1.0 else float(np.clip((deff - 1.0) / (m - 1.0), 0.0, 0.99))
+    return {"design_effect": float(deff), "icc": icc, "mean_test_size": m, "n_tests": int(len(sizes))}
+
+
+def ece_null(p, draws: int = NULL_DRAWS, seed: int = 0, n_bins: int = 10, test_ids=None, icc: float = 0.0, equal_mass: bool = False) -> np.ndarray:
+    """ECE of ``draws`` outcome sets drawn from the predicted probabilities (the perfect-calibration null).
+
+    Without ``test_ids`` the outcomes are independent Bernoulli(p). With them, contrasts of one test are drawn together: a one-factor
+    Gaussian copula with within-test correlation ``icc`` (one shared normal per test plus one per row) keeps every marginal at its
+    ``p`` and makes outcomes of a test move together, which is what a shared reference arm does. ``icc = 0`` is the independent null.
+    ``equal_mass`` bins by quantile instead of equal width.
+    """
     p = np.asarray(p, float)
     if p.size == 0 or np.any(p < 0) or np.any(p > 1) or not np.all(np.isfinite(p)):
         raise ValueError("p must be a non-empty array of probabilities in [0, 1]")
     rng = np.random.default_rng(seed)
-    idx = _bin_index(p, n_bins)
+    idx = _quantile_bin_index(p, n_bins) if equal_mass else _bin_index(p, n_bins)
     sp = np.bincount(idx, weights=p, minlength=n_bins)
     out = np.empty(draws)
-    for a in range(0, draws, 100):
-        m = min(100, draws - a)
-        e = (rng.random((m, p.size)) < p[None, :]).astype(np.float64)
+    clustered = test_ids is not None and icc > 0.0
+    if clustered:
+        codes, uniq = pd.factorize(pd.Series(np.asarray(test_ids)))
+        thr = special.ndtri(np.clip(p, 1e-12, 1.0 - 1e-12))
+        a, b = np.sqrt(icc), np.sqrt(1.0 - icc)
+    for a0 in range(0, draws, 100):
+        m = min(100, draws - a0)
+        if clustered:
+            z = a * rng.standard_normal((m, len(uniq)))[:, codes] + b * rng.standard_normal((m, p.size))
+            e = (z < thr[None, :]).astype(np.float64)
+        else:
+            e = (rng.random((m, p.size)) < p[None, :]).astype(np.float64)
         se = np.stack([np.bincount(idx, weights=row, minlength=n_bins) for row in e])
-        out[a:a + m] = np.abs(sp[None, :] - se).sum(axis=1) / p.size          # sum_b n_b |mean_p - freq| / N
+        out[a0:a0 + m] = np.abs(sp[None, :] - se).sum(axis=1) / p.size          # sum_b n_b |mean_p - freq| / N
     return out
 
 
-def ece_percentile(p, event, draws: int = 500, seed: int = 0, n_bins: int = 10) -> float:
-    """Percentile (0 to 100) of the observed ECE within the perfect-calibration null; ties count half."""
-    obs = ece(p, event, n_bins)
-    null = ece_null(p, draws, seed, n_bins)
+def ece_percentile(p, event, draws: int = NULL_DRAWS, seed: int = 0, n_bins: int = 10, test_ids=None, icc: float = 0.0,
+                   equal_mass: bool = False) -> float:
+    """Percentile (0 to 100) of the observed ECE within the perfect-calibration null; ties count half.
+
+    A value of 100 means the observed ECE is above every draw; ``draws`` draws resolve percentiles only up to ``100 (draws - 1) / draws``.
+    """
+    obs = ece_equal_mass(p, event, n_bins) if equal_mass else ece(p, event, n_bins)
+    null = ece_null(p, draws, seed, n_bins, test_ids, icc, equal_mass)
     return float(100.0 * (np.mean(null < obs) + 0.5 * np.mean(null == obs)))
 
 
@@ -186,6 +252,46 @@ def calibration_by_precision(scores: pd.DataFrame, n_bins: int = 10) -> pd.DataF
                 "mean_s_star": float(b["s_star"].mean()) if "s_star" in b else float("nan"),
             })
     out = pd.DataFrame(rows, columns=PRECISION_COLUMNS)
+    out["decile"] = out.groupby("rung").cumcount() + 1
+    return out
+
+
+# ------------------------------------------------- coverage by realized over planned precision
+RATIO_COLUMNS = ["rung", "decile", "ratio_lo", "ratio_hi", "n", "mean_ratio", "coverage_80", "coverage_90", "event_rate", "mean_p_sig"]
+
+
+def coverage_by_se_ratio(scores: pd.DataFrame, n_bins: int = 10) -> pd.DataFrame:
+    """Coverage of the 80 and 90 percent intervals within deciles of the ratio of the realized to the planned standard error.
+
+    The realized standard error depends on the exposure and on the realized click-through level, while the forecaster fixes the level at
+    the cell median, so a forecast calibrated overall can be wrong in both directions inside strata of this ratio (round 00, R1). The
+    ratio is ``s / s_star`` per scored row; the decile edges come from the distinct scored rows, so every rung is binned the same way.
+    The ratio is an evaluation-time stratifier (it uses the realized ``s``) and never an input to a forecast. Per rung and decile:
+    ``n``, the mean ratio, the 80 and 90 percent coverage of ``y`` (NaN for a rung without intervals), the event rate and the mean
+    ``p_sig``. Returns an empty frame when the table has no ``s`` or ``s_star`` column.
+    """
+    if "s_star" not in scores.columns or "s" not in scores.columns or scores.empty:
+        return pd.DataFrame(columns=RATIO_COLUMNS)
+    uniq = scores.drop_duplicates("row_id")
+    ratio_u = (uniq["s"] / uniq["s_star"]).to_numpy(float)
+    inner = np.unique(np.quantile(ratio_u[np.isfinite(ratio_u)], np.linspace(0.0, 1.0, n_bins + 1)[1:-1]))
+    rows = []
+    for rung in sorted(scores["rung"].unique()):
+        g = scores[scores["rung"] == rung]
+        ratio = (g["s"] / g["s_star"]).to_numpy(float)
+        bin_of = np.searchsorted(inner, ratio, side="right")
+        for k in np.unique(bin_of):
+            b = g[bin_of == k]
+            r = ratio[bin_of == k]
+            has80, has90 = not b["lo80"].isna().all(), not b["lo90"].isna().all()
+            rows.append({
+                "rung": rung, "decile": 0, "ratio_lo": float(r.min()), "ratio_hi": float(r.max()), "n": int(len(b)), "mean_ratio": float(r.mean()),
+                "coverage_80": interval_coverage(b["y"], b["lo80"], b["hi80"]) if has80 else float("nan"),
+                "coverage_90": interval_coverage(b["y"], b["lo90"], b["hi90"]) if has90 else float("nan"),
+                "event_rate": float(b["event"].astype(float).mean()),
+                "mean_p_sig": float(b["p_sig"].mean()) if b["p_sig"].notna().any() else float("nan"),
+            })
+    out = pd.DataFrame(rows, columns=RATIO_COLUMNS)
     out["decile"] = out.groupby("rung").cumcount() + 1
     return out
 
@@ -295,8 +401,21 @@ def _na(x) -> float | None:
     return None if x is None or not np.isfinite(x) else float(x)
 
 
-def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, gates: dict, B: int, seed: int) -> dict:
-    """One row of the aggregate table for a (cell, rung) group."""
+def _bonferroni(est: float, draws: np.ndarray, family: int) -> tuple[float | None, float | None]:
+    """Bonferroni-adjusted 90 percent bounds: the estimate plus or minus the bootstrap standard error times the quantile of ``1 - 0.05 / family``."""
+    d = draws[np.isfinite(draws)]
+    if not np.isfinite(est) or len(d) < 2 or family < 1:
+        return None, None
+    half = float(special.ndtri(1.0 - (1.0 - LEVEL) / 2.0 / family)) * float(np.std(d, ddof=1))
+    return float(est - half), float(est + half)
+
+
+def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, gates: dict, B: int, seed: int, family: int = 1) -> dict:
+    """One row of the aggregate table for a (cell, rung) group.
+
+    ``family`` is the number of intervals the table shows, for the Bonferroni-adjusted bounds (``adjusted_lo``, ``adjusted_hi`` for the
+    Brier skill and ``logscore_adjusted_lo``, ``logscore_adjusted_hi`` for the log score).
+    """
     n = len(g)
     ev = g["event"].to_numpy(float)
     cov80 = ((g["y"] >= g["lo80"]) & (g["y"] <= g["hi80"])).to_numpy(float)
@@ -332,13 +451,15 @@ def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, ga
         lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
         return float(est), lo, hi
 
-    row: dict = {"n": n, "n_tests": ts.n_tests}
+    row: dict = {"n": n, "n_tests": ts.n_tests, "family_size": int(family)}
     for key, name in (("logscore", "logscore"), ("crps", "crps"), ("brier", "brier"), ("direction_accuracy", "dir"),
                       ("coverage_80", "cov80"), ("coverage_90", "cov90"), ("abstention_rate", "abstain")):
         est, lo, hi = mean_ci(name)
         row[key] = est
         if key != "abstention_rate":
             row[key + "_lo"], row[key + "_hi"] = lo, hi
+        if key == "logscore":
+            row["logscore_adjusted_lo"], row["logscore_adjusted_hi"] = _bonferroni(est, (counts @ ts.sums["logscore"]) / den_safe, family)
     # Brier skill against the base rate (call 1): 1 - Brier / Brier_base, resampled by test.
     if "base" in ts.sums:
         b_est, b0_est = ts.sums["brier"].sum() / ts.counts.sum(), ts.sums["base"].sum() / ts.counts.sum()
@@ -360,6 +481,7 @@ def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, ga
     row["brier_skill"] = _na(1.0 - b_est / b0_est) if np.isfinite(b0_est) and b0_est > 0 else None
     lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
     row["brier_skill_lo"], row["brier_skill_hi"] = _na(lo), _na(hi)
+    row["adjusted_lo"], row["adjusted_hi"] = _bonferroni(row["brier_skill"] if row["brier_skill"] is not None else float("nan"), draws, family)
     if "floor" in ts.sums:
         row["brier_floor"] = float(ts.sums["floor"].sum() / ts.counts.sum())
         row["direction_ceiling"] = float(ts.sums["ceiling"].sum() / ts.counts.sum())
@@ -370,21 +492,38 @@ def _group_table(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, ga
         for key, name in (("logscore", "logscore_na"), ("crps", "crps_na"), ("brier", "brier_na"), ("direction_accuracy", "dir_na")):
             est, lo, hi = mean_ci(name, na=True)
             row[key + "_nonabstained"], row[key + "_nonabstained_lo"], row[key + "_nonabstained_hi"] = est, lo, hi
-    # Calibration against the perfect-calibration null.
+    # Calibration against the perfect-calibration null, clustered by test (call 172); the independent-rows percentile is kept beside it.
     fin = np.isfinite(g["p_sig"].to_numpy(float))
     if fin.sum() >= 2:
-        row["ece"] = ece(g["p_sig"].to_numpy(float)[fin], ev[fin])
-        row["ece_percentile"] = ece_percentile(g["p_sig"].to_numpy(float)[fin], ev[fin], draws=500, seed=seed)
-    st = gate_status(n, gates)
+        p_f, e_f, t_f = g["p_sig"].to_numpy(float)[fin], ev[fin], g["test_id"].to_numpy()[fin]
+        de = design_effect(p_f, e_f, t_f)
+        row["ece"] = ece(p_f, e_f)
+        row["ece_percentile"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed, test_ids=t_f, icc=de["icc"])
+        row["ece_percentile_independent"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed)
+        row["ece_equal_mass"] = ece_equal_mass(p_f, e_f)
+        row["ece_equal_mass_percentile"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed, test_ids=t_f, icc=de["icc"], equal_mass=True)
+        row["design_effect"], row["icc"] = de["design_effect"], de["icc"]
+    # Decisive rows: the direction of the estimate on rows whose result was significant either way (the pairwise accuracy of the
+    # winner-prediction literature), beside the all-rows direction accuracy.
+    if "s" in g.columns:
+        dec = (np.abs(g["y"].to_numpy(float)) > Z * g["s"].to_numpy(float)) & np.isfinite(g["direction_correct"].to_numpy(float))
+        row["n_decisive"] = int(dec.sum())
+        row["direction_accuracy_decisive"] = float(g["direction_correct"].to_numpy(float)[dec].mean()) if dec.any() else None
+    # Gates are read at the base rate nearest to this group's own event rate; the base rate 0.3 of the earlier gates stays beside them.
+    sel = select_gates(gates, float(ev.mean()) if len(ev) else None)
+    row["gate_base_rate"] = sel.get("base_rate")
+    st = gate_status(n, sel)
     row["decidable"] = st["label"]
     row["decidable_research"] = st["label_research"]
-    st_tests = gate_status(ts.n_tests, gates)
+    st_tests = gate_status(ts.n_tests, sel)
     row["decidable_by_tests"] = st_tests["label"]
     row["decidable_research_by_tests"] = st_tests["label_research"]
+    legacy = select_gates(gates, LEGACY_BASE_RATE, exact=True)
+    row["decidable_by_tests_base_0.3"] = gate_status(ts.n_tests, legacy)["label"] if legacy else None
     return row
 
 
-def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed: int = 0) -> pd.DataFrame:
+def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed: int = 0, family_size: int | None = None) -> pd.DataFrame:
     """Aggregate table per cell and rung (plus an ``ALL`` cell), with 90 percent by-test bootstrap intervals.
 
     Columns: n, n_tests, logscore, crps, brier, brier_skill, direction_accuracy, coverage_80, coverage_90,
@@ -392,7 +531,9 @@ def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed
     non-abstained rows (``*_nonabstained``); the Brier floor and direction ceiling from the shrunken
     posterior when the columns exist; ECE and its percentile in the null; and ``decidable`` from the gates.
     The Brier skill baseline is the ``brier_base`` column (the cell's significant-positive base rate, call 1)
-    when present, otherwise the P0 rung's Brier score on the same tests.
+    when present, otherwise the P0 rung's Brier score on the same tests. Every row also carries the Bonferroni-adjusted bounds for the
+    family of ``family_size`` intervals (default: the number of (cell, rung) rows of the table), the design effect and the clustered
+    ECE percentile, the decisive-row direction accuracy and the gate read at the base rate nearest to the group's own.
     """
     rows = []
     p0_by_cell: dict[str, pd.DataFrame] = {}
@@ -401,11 +542,14 @@ def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed
         for cell, g in [("ALL", p0)] + list(p0.groupby("cell")):
             grp = g.groupby("test_id")["brier_event"]
             p0_by_cell[cell] = pd.DataFrame({"sum": grp.sum(), "n": grp.size().astype(float)})
+    family = (
+        family_size if family_size is not None else int(sum(1 + scores.loc[scores["rung"] == r, "cell"].nunique() for r in scores["rung"].unique()))
+    )
     for rung in sorted(scores["rung"].unique()):
         sr = scores[scores["rung"] == rung]
         for cell, g in [("ALL", sr)] + list(sr.groupby("cell")):
             base = (p0_by_cell[cell], "P0") if cell in p0_by_cell else None
-            row = _group_table(g, base, gates, B, seed)
+            row = _group_table(g, base, gates, B, seed, family)
             rows.append({"cell": cell, "rung": rung, **row})
     out = pd.DataFrame(rows)
     order = {"ALL": 0}
@@ -427,7 +571,8 @@ def brier_skill_draws(g: pd.DataFrame, B: int = DEFAULT_B, seed: int = 0) -> np.
         return 1.0 - (counts @ ts.sums["b"]) / (counts @ ts.sums["base"])
 
 
-YEAR_COLUMNS = ["n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier_skill", "brier_skill_lo", "brier_skill_hi",
+YEAR_COLUMNS = ["n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "logscore_adjusted_lo", "logscore_adjusted_hi", "brier_skill",
+                "brier_skill_lo", "brier_skill_hi", "adjusted_lo", "adjusted_hi", "family_size",
                 "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi", "abstention_rate"]
 
 
@@ -440,8 +585,10 @@ def by_year(scores: pd.DataFrame, years, gates: dict, B: int = DEFAULT_B, seed: 
     """
     years = pd.Series(np.asarray(years), index=scores.index)
     parts = []
+    family = int(sum(1 + scores.loc[(scores["rung"] == r) & (years == y), "cell"].nunique() for y in years.unique() for r in scores["rung"].unique()
+                     if ((scores["rung"] == r) & (years == y)).any()))
     for year in sorted(years.unique()):
-        agg = aggregate_scores(scores[years == year], gates, B=B, seed=seed)
+        agg = aggregate_scores(scores[years == year], gates, B=B, seed=seed, family_size=family)
         keep = agg[["cell", "rung", *[c for c in YEAR_COLUMNS if c in agg.columns]]].copy()
         keep.insert(0, "year", int(year))
         parts.append(keep)

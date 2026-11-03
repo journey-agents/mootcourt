@@ -264,7 +264,8 @@ def build_report_card(doc: dict, scores: pd.DataFrame, *, ledger_stem: str, snap
     events = scores.loc[scores["rung"] == primary, "event"].astype(float)
     ab = next((r for r in t["abstention"] if r["cell"] == "ALL"), {})
     dv = [{"policy": r["policy"], "rung": r["rung"], "K": r["K"], "n_tests": r["n_tests"], "captured_fraction": r["captured_fraction"]}
-          for r in t["decision_value"] if r["origin"] == "ALL" and (r["policy"] != "p_win" or r["rung"] in {x["rung"] for x in ladder})]
+          for r in t["decision_value"] if r["origin"] == "ALL" and r.get("budget", 0.25) == 0.25
+          and (r["policy"] != "p_win" or r["rung"] in {x["rung"] for x in ladder})]
     calib = [{"decile": r["decile"], "exposure_lo": r["exposure_lo"], "exposure_hi": r["exposure_hi"], "n": r["n"], "mean_p_sig": r["mean_p_sig"],
               "event_rate": r["event_rate"]} for r in t["calibration_by_precision"] if r["rung"] == primary]
     return {
