@@ -120,6 +120,13 @@ def test_markdown_and_json_agree_and_footer_is_the_boundary(imp, frozen_clock, r
     assert headings == sorted(headings), "sections must appear in spec order"
 
 
+_ID_LINE = re.compile(r"^(- (?:Card id|Model|Feature hash): )[0-9a-f]{12,16}$", re.MULTILINE)
+
+
+def _mask_ids(md: str) -> str:
+    return _ID_LINE.sub(r"\1<id>", md)
+
+
 def test_golden_markdown(imp, frozen_clock, reliability_factory):
     bundle, ledger = _bl()
     card = imp("mootcourt.card")
@@ -129,7 +136,13 @@ def test_golden_markdown(imp, frozen_clock, reliability_factory):
     if os.environ.get("MOOT_UPDATE_GOLDEN") == "1":
         GOLDEN.write_text(md, encoding="utf-8")
     assert GOLDEN.exists(), "golden file missing: review the output, then run once with MOOT_UPDATE_GOLDEN=1"
-    assert md == GOLDEN.read_text(encoding="utf-8")
+    # The card id, model id and feature hash are content hashes of fitted floating point parameters. The same fit on
+    # another operating system or linear algebra build differs in the last bits, so those three lines are compared
+    # against the card itself and masked in the layout comparison; the frozen-id tests cover their stability on one
+    # platform.
+    for value in (c.card_id, c.model_id, c.feature_hash):
+        assert value in md
+    assert _mask_ids(md) == _mask_ids(GOLDEN.read_text(encoding="utf-8"))
 
 
 def _forced_abstain(imp, c, reasons):

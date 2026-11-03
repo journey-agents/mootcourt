@@ -568,7 +568,7 @@ That claim is tested, not asserted. `moot backtest --challenger gbm` adds a grad
 
 P2 sits behind an admission guard. Choosing the precedent weight from about forty candidates on the same validation rows fits noise, so a weight above zero is used for a cell and origin only when its out-of-sample log-score gain over weight zero, minus two standard errors across tests, is above zero (a rung is used only when it beats the rung below out of sample by more than noise). Otherwise P2 equals P1 for that cell and origin. The results above show guarded and unguarded selection side by side on the same rows; `--p2-guard off` runs the unguarded rule and `--p2-guard 1.0` loosens the guard to one standard error.
 
-Ablations change one setting at a time (`--features`, `--bandwidth-mult`, `--lambda`, `--kappa`, `--prior`, `--p2-selection`, `--recency`, `--p2-guard`) and each writes its own report under `reports/ablations`. `moot backtest --learning-curve 0.1,0.25,0.5,1 --seeds 3` shows how skill grows with the history used, against the gate sizes. `make ablations` and `make learning-curve` run the full sets.
+Ablations change one setting at a time (`--features`, `--bandwidth-mult`, `--lambda`, `--kappa`, `--prior`, `--p2-selection`, `--recency`, `--p2-guard`, `--drop-trigger`) and each writes its own report under `reports/ablations`. `moot backtest --learning-curve 0.1,0.25,0.5,1 --seeds 3` shows how skill grows with the history used, against the gate sizes. `make ablations` and `make learning-curve` run the full sets.
 
 ## Run it
 
@@ -604,7 +604,7 @@ Issue a card for a proposed test:
 moot card --source upworthy --headline "A simple fact about your mornings" --image-changed false --impressions 20000
 ```
 
-A card is either a prediction with its evidence, robustness and skill at this sample size, or an abstention with every reason listed. Each card is frozen under `cards/` with the ledger snapshot id, model id and feature hash.
+A card is either a prediction with its evidence, robustness and skill at this sample size, or an abstention with every reason listed. Each card is frozen under `cards/` with the ledger snapshot id, model id and feature hash. The three ids are content hashes of the fitted parameters and the request: stable for a fit on the platform where it ran, while the same fit repeated on another operating system or linear algebra build can differ in the last bits of its parameters and so in its model id and feature hash, which is why a card is compared by its stored ids and never by recomputing them.
 
 The Upworthy archive ends in 2015, so its reliability report is dated 2015. With today's clock the command above abstains because that report is older than 14 days, and it says so. To see a card issued as of the end of the archive, add `--now 2015-05-07T00:00:00+00:00 --origin 2015-05-07T00:00:00+00:00`.
 
@@ -617,7 +617,7 @@ moot mcp        # tools get_card, list_precedents, reliability_report; read and 
 
 The service has no authentication and binds to the loopback address by default. Put your own access control in front of it before exposing it. Models are loaded only from local artifacts that `moot fit` wrote, checked by sha256, and never from downloads.
 
-Other commands: `make challengers` (the boosted, local and text-only comparisons), `make ablations`, `make learning-curve`, `moot storage` (where the data lives and how much room is left), `moot simulators list` (attach an outside agent as a second opinion, see `docs/simulators.md`), `make audit` (post-hoc leakage audit of a backtest), `make power` (the synthetic gate power run that writes `reports/gates.json`), `moot benchmark --ledger FILE` (a one-page report card for a ledger of your own), `moot benchmark --scale N` (timings on a synthetic ledger of N contrasts), `make docs`, `make test`, `make lint`. After a backtest, `python scripts/render_readme_results.py --write` refreshes the results block above, and `--check` fails if it is stale.
+Other commands: `make challengers` (the boosted, local and text-only comparisons), `make ablations` (the trigger-removal runs included), `make learning-curve`, `make replay` (the weekly replay of the archive, see `docs/method.md` call 78), `moot storage` (where the data lives and how much room is left), `moot simulators list` (attach an outside agent as a second opinion, see `docs/simulators.md`), `make audit` (post-hoc leakage audit of a backtest), `make power` (the synthetic gate power run that writes `reports/gates.json`), `moot benchmark --ledger FILE` (a one-page report card for a ledger of your own), `moot benchmark --scale N` (timings on a synthetic ledger of N contrasts), `make docs`, `make test`, `make lint`. After a backtest, `python scripts/render_readme_results.py --write` refreshes the results block above, and `--check` fails if it is stale.
 
 ## Documents
 

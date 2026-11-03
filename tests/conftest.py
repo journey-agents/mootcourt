@@ -8,6 +8,13 @@ Rules for every test in this directory:
 """
 from __future__ import annotations
 
+import os as _os
+
+# Typer renders errors through rich and forces terminal mode (colour codes and wrapped panels) whenever GITHUB_ACTIONS,
+# FORCE_COLOR or PY_COLORS is set, which splits the plain text the CLI tests look for. Disable that before any test
+# module imports typer, so the output is the same plain text on a laptop and on a hosted runner.
+_os.environ.setdefault("_TYPER_FORCE_DISABLE_TERMINAL", "1")
+
 import datetime as dt
 import importlib
 import ipaddress
