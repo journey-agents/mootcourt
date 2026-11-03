@@ -1,0 +1,22 @@
+\subsection{Tooling landscape}
+\label{sec:landscape}
+A fetch-verified survey of thirteen commercial experimentation platforms, seventeen open-source projects, sixteen internal platforms described in public papers, and the 2023 to 2026 wave of simulation and language-model tools (released with the code as \texttt{docs/landscape.md}) found no product that issues a pre-launch outcome distribution or win probability for a proposed experiment, abstains, scores its forecasts against live results, or runs a backtest over an experiment archive. What exists are the parts: power calculators fed by historical variance in nearly every platform; hand-typed informative priors whose documentation suggests past-experiment averages; searchable experiment knowledge bases in six commercial products and one open-source one; a single platform-wide learned prior pooled across customers; two archive-trained ranking scores for ideas and ad creatives, one of them a vendor claim without a published validation; and simulation agents whose directional backtests on a few dozen tests are the only validations reported. Table~\ref{tab:landscape} compresses the survey's gap table.
+
+\begin{table}[t]
+\centering\small
+\caption{Capabilities against tools (Y yes, P partial, N no, ND not documented publicly). Columns: pre-launch outcome distribution; calibrated win probability; abstention; precedent retrieval; scoring against live results; learned prior from the organization's own archive; experiment memory; open source.}
+\label{tab:landscape}
+\begin{tabular}{lcccccccc}
+\toprule
+ & dist. & $\pwin$ & abst. & prec. & scored & prior & memory & OSS \\
+\midrule
+Commercial platforms (13) & N & N & N & P & N & P & P & N \\
+GrowthBook & N & N & N & P & N & P & Y & Y \\
+Other open-source libraries & N & N & N & N & N & N & N & Y \\
+Internal platforms (public papers) & N & N & N & P & P & P & Y & N \\
+Simulation and LLM agents & P & N & P & N & P & N & N & P \\
+Archive priors (research) & N & N & N & N & N & Y & N & N \\
+This work & Y & Y & Y & Y & Y & Y & Y & Y \\
+\bottomrule
+\end{tabular}
+\end{table}

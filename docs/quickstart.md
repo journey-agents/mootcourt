@@ -1,0 +1,58 @@
+# Quickstart: from install to a first card in ten minutes
+
+This takes a fresh folder to a card on a small synthetic ledger. It needs no network after the install and no data of your own. A test runs the commands below in a temporary folder.
+
+## 1. Install
+
+```
+pip install -e .
+```
+
+(or `uv sync`). The command `moot` is then on your path. Python 3.11 or newer.
+
+## 2. Create the project
+
+```
+moot init
+```
+
+This writes `mootcourt.toml` (data root, the cells to forecast, the action threshold, the gate target and a place for simulators), creates the data root `mootcourt-data/` with its folders, writes a synthetic sample ledger and a quick gate file, and prints the three commands that follow.
+
+## 3. Import the sample ledger
+
+```
+moot ingest --format generic --input mootcourt-data/data/sample-ledger.csv --source-name sample
+```
+
+The ledger holds 120 synthetic experiments with three metrics each. `--dry-run` shows the admission summary without writing. Your own results come in the same way, from a file in the exchange format or from a vendor export; see `docs/ledger-format.md`.
+
+## 4. Fit the models and back-test them
+
+```
+moot fit --source sample
+moot backtest --source sample
+```
+
+The backtest replays the history one quarter at a time, scores every rung of the ladder on rows it could not have seen, and seeds the reliability report that cards check. It writes a report under `mootcourt-data/reports/`; open the Markdown file first and read the skill and the calibration before you trust any card.
+
+## 5. Ask for a card
+
+```
+moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
+```
+
+The sample ledger is static, so the card is issued as of the end of its history (`--now`); with your own live ledger leave `--now` out. The card shows the chance that the test ends significant and positive, an interval for the true effect, how fragile the opinion is, the skill measured at this n, and whether the model abstains and why. It prioritizes and sizes the test; the live test decides.
+
+## 6. Check health
+
+```
+moot doctor
+```
+
+It checks versions, the data root and its free space, the ledger, whether the model is fresh, how old the reliability report is, and the service if you set one. Exit code 0 is healthy, 1 means warnings and 2 means failures. On the static sample it warns that the reliability report is old, which is correct: nobody has joined new results since 2025.
+
+## Next
+
+- Bring your own results: `docs/ledger-format.md`.
+- Keep it current: `moot join` attaches new results to issued cards and refreshes reliability (see `docs/operations.md`).
+- Serve it: `moot serve` (HTTP) or `moot mcp`.

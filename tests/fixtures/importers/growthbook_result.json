@@ -1,0 +1,84 @@
+{
+ "experiment": {
+  "id": "exp_gb"
+ },
+ "result": {
+  "experimentId": "exp_gb",
+  "phase": 0,
+  "dateStart": "2024-06-01T00:00:00Z",
+  "dateEnd": "2024-06-15T00:00:00Z",
+  "results": [
+   {
+    "dimension": "All",
+    "totalUsers": 9000,
+    "checks": {
+     "srm": 0.6
+    },
+    "metrics": [
+     {
+      "metricId": "met_a",
+      "metricName": "A",
+      "variations": [
+       {
+        "variationId": "0",
+        "variationName": "Control",
+        "users": 4500,
+        "analyses": [
+         {
+          "engine": "frequentist",
+          "numerator": 10,
+          "denominator": 100,
+          "mean": 0.1,
+          "stddev": 0.3,
+          "percentChange": 0,
+          "effectStandardError": 0,
+          "ciLow": 0.0,
+          "ciHigh": 0.0,
+          "pValue": 0.1,
+          "risk": 0.0,
+          "chanceToBeatControl": 0.8
+         }
+        ]
+       },
+       {
+        "variationId": "1",
+        "variationName": "Var",
+        "users": 4500,
+        "analyses": [
+         {
+          "engine": "frequentist",
+          "numerator": 10,
+          "denominator": 100,
+          "mean": 0.1,
+          "stddev": 0.3,
+          "percentChange": 0.04,
+          "effectStandardError": 0.02,
+          "ciLow": 0.0008000000000000021,
+          "ciHigh": 0.07919999999999999,
+          "pValue": 0.1,
+          "risk": 0.0,
+          "chanceToBeatControl": 0.8
+         },
+         {
+          "engine": "bayesian",
+          "numerator": 10,
+          "denominator": 100,
+          "mean": 0.1,
+          "stddev": 0.3,
+          "percentChange": 0.05,
+          "effectStandardError": 0.03,
+          "ciLow": -0.008799999999999995,
+          "ciHigh": 0.10880000000000001,
+          "pValue": 0.1,
+          "risk": 0.0,
+          "chanceToBeatControl": 0.8
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

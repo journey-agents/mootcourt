@@ -1,0 +1,295 @@
+"""Shared fixtures for the Moot Court test suite.
+
+Rules for every test in this directory:
+  * no network (an autouse guard blocks every non-loopback connect),
+  * fixtures come from the synthetic source or small inline arrays,
+  * production modules are imported through the `imp` fixture so that a missing
+    module fails the single test that needs it, not the whole collection.
+"""
+from __future__ import annotations
+
+import datetime as dt
+import importlib
+import ipaddress
+import json
+import os
+import re
+import socket
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+# The data root of the developer's shell, captured before the autouse fixture clears it, so the tests that read real
+# downloads and reports find them wherever the root points.
+AMBIENT_ROOT = os.environ.get("MOOTCOURT_DATA_ROOT") or None
+
+
+def real_paths():
+    from mootcourt.storage import storage_paths
+
+    return storage_paths(root=AMBIENT_ROOT)
+SPEC_PATH = ROOT / "docs" / "superpowers" / "specs" / "2026-11-02-mootcourt-design.md"
+UTC = dt.timezone.utc
+
+# Ground truth of the tiny synthetic ledger.
+TRUE_MU = 2.0
+TRUE_TAU = 3.0
+
+# Fixed instants. ORIGIN is a quarter start; FROZEN_NOW is 14 days after it.
+ORIGIN = dt.datetime(2014, 7, 1, tzinfo=UTC)
+FROZEN_NOW = dt.datetime(2014, 7, 15, 12, 0, tzinfo=UTC)
+
+LEDGER_COLUMNS = [
+    "row_id", "source", "test_id", "variant_id", "cell", "period",
+    "started_at", "final_read_at", "usable_after", "y", "s",
+    "n_ref", "n_var", "status", "features_json", "schema_version",
+]
+
+
+# ---------------------------------------------------------------- plumbing
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: long-running benchmark or large fit")
+    config.addinivalue_line("markers", "realdata: needs data/raw (skipped when absent)")
+
+
+def pytest_collection_modifyitems(config, items):
+    if real_paths().raw.exists():
+        return
+    skip = pytest.mark.skip(reason="the raw data folder is absent")
+    for item in items:
+        if "realdata" in item.keywords:
+            item.add_marker(skip)
+
+
+_LOOPBACK_NAMES = {"localhost", "localhost.localdomain", ""}
+
+
+def _is_loopback(host) -> bool:
+    if isinstance(host, bytes):
+        host = host.decode()
+    if host in _LOOPBACK_NAMES:
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+@pytest.fixture(autouse=True)
+def _block_network(monkeypatch):
+    """Raise RuntimeError on any connect to a non-loopback address."""
+    real_connect = socket.socket.connect
+    real_connect_ex = socket.socket.connect_ex
+
+    def _check(sock, address):
+        if sock.family in (socket.AF_INET, socket.AF_INET6):
+            host = address[0] if isinstance(address, tuple) else address
+            if not _is_loopback(host):
+                raise RuntimeError(f"network access blocked in tests: {address!r}")
+
+    def guarded_connect(self, address):
+        _check(self, address)
+        return real_connect(self, address)
+
+    def guarded_connect_ex(self, address):
+        _check(self, address)
+        return real_connect_ex(self, address)
+
+    monkeypatch.setattr(socket.socket, "connect", guarded_connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", guarded_connect_ex)
+
+
+@pytest.fixture
+def imp():
+    """Import a production module by dotted name; ImportError fails the test."""
+    return importlib.import_module
+
+
+# ---------------------------------------------------------------- time
+class FrozenClock:
+    """Callable clock that returns a fixed instant until advanced."""
+
+    def __init__(self, now: dt.datetime = FROZEN_NOW):
+        self.now = now
+
+    def __call__(self) -> dt.datetime:
+        return self.now
+
+    def advance(self, **kwargs) -> dt.datetime:
+        self.now = self.now + dt.timedelta(**kwargs)
+        return self.now
+
+
+@pytest.fixture
+def frozen_clock():
+    return FrozenClock()
+
+
+@pytest.fixture
+def origin():
+    return ORIGIN
+
+
+def quarter_str(ts) -> str:
+    return f"{ts.year}Q{(ts.month - 1) // 3 + 1}"
+
+
+# ---------------------------------------------------------------- grid
+@pytest.fixture
+def theta_grid():
+    """801-point uniform grid over TRUE_MU +/- 8 TRUE_TAU."""
+    return np.linspace(TRUE_MU - 8 * TRUE_TAU, TRUE_MU + 8 * TRUE_TAU, 801)
+
+
+# ---------------------------------------------------------------- ledger
+def build_ledger_frame(
+    n=2000,
+    mu=TRUE_MU,
+    tau=TRUE_TAU,
+    cell="headline_only",
+    seed=11,
+    start=dt.datetime(2013, 1, 1, tzinfo=UTC),
+    span_days=500,
+    s_range=(0.5, 2.0),
+    status="admitted",
+    test_size=1,
+    source="synthetic",
+    horizon_days=7,
+    t_offset=0,
+    id_prefix="r",
+):
+    """Plain-pandas ledger with spec section 6 columns and known truth.
+
+    theta_i ~ Normal(mu, tau^2), y_i ~ Normal(theta_i, s_i^2).
+    The latent theta is regenerated by build_truth() with the same arguments; it is never a column
+    and never stored on the frame (frame attrs break pandas.concat).
+    """
+    import pandas as pd
+
+    rng = np.random.default_rng(seed)
+    theta = rng.normal(mu, tau, n)
+    s = rng.uniform(*s_range, n)
+    y = theta + rng.normal(0.0, s)
+    offsets = np.sort(rng.uniform(0, span_days, n))
+    started = [start + dt.timedelta(days=float(d)) for d in offsets]
+    final = [t + dt.timedelta(days=horizon_days) for t in started]
+    rows = {
+        "row_id": [f"{source}:{id_prefix}{t_offset + i // test_size}:v{i % test_size}" for i in range(n)],
+        "source": source,
+        "test_id": [f"{id_prefix}{t_offset + i // test_size}" for i in range(n)],
+        "variant_id": [f"v{i % test_size}" for i in range(n)],
+        "cell": cell,
+        "period": [quarter_str(f) for f in final],
+        "started_at": pd.to_datetime(started, utc=True),
+        "final_read_at": pd.to_datetime(final, utc=True),
+        "usable_after": pd.to_datetime(final, utc=True),
+        "y": y.astype("float64"),
+        "s": s.astype("float64"),
+        "n_ref": np.full(n, 10000, dtype="int64"),
+        "n_var": np.full(n, 10000, dtype="int64"),
+        "status": status,
+        "features_json": [json.dumps({"headline": f"headline number {i}", "image_changed": False}) for i in range(n)],
+        "schema_version": np.ones(n, dtype="int64"),
+    }
+    return pd.DataFrame(rows)[LEDGER_COLUMNS]
+
+
+def build_truth(n=2000, mu=TRUE_MU, tau=TRUE_TAU, seed=11):
+    """Latent theta of build_ledger_frame(n, mu, tau, seed=seed): same first draw, same stream."""
+    return np.random.default_rng(seed).normal(mu, tau, n)
+
+
+@pytest.fixture
+def ledger_builder():
+    return build_ledger_frame
+
+
+@pytest.fixture
+def tiny_ledger():
+    """2000 admitted rows, one cell, known mu=TRUE_MU and tau=TRUE_TAU, all visible at ORIGIN."""
+    return build_ledger_frame()
+
+
+@pytest.fixture
+def two_cell_ledger():
+    """Two cells with different truth, 2000 rows each, for per-cell recovery."""
+    import pandas as pd
+
+    a = build_ledger_frame(2000, 2.0, 3.0, "headline_only", seed=21, id_prefix="a")
+    b = build_ledger_frame(2000, -1.0, 1.5, "image_only", seed=22, id_prefix="b")
+    return pd.concat([a, b], ignore_index=True)
+
+
+@pytest.fixture
+def make_synth(imp):
+    """Wrapper over the synthetic source: make_synth(**config) -> (ledger, truth)."""
+    cache = {}
+
+    def _make(**kwargs):
+        key = json.dumps(kwargs, sort_keys=True, default=str)
+        if key not in cache:
+            synthetic = imp("mootcourt.sources.synthetic")
+            cache[key] = synthetic.generate(synthetic.SyntheticConfig(**kwargs))
+        return cache[key]
+
+    return _make
+
+
+# ---------------------------------------------------------------- reliability
+@pytest.fixture
+def reliability_factory():
+    """Build a reliability report dict in the schema of abstain.py (per cell)."""
+
+    def _make(cell="headline_only", as_of=FROZEN_NOW - dt.timedelta(days=1), rolling_logscore=-2.0,
+              p0_rolling_logscore=-2.1, brier_skill=0.12, n=120, drifted=False, consecutive_below=0,
+              source="synthetic"):
+        return {
+            "source": source,
+            "as_of": as_of.isoformat(),
+            "cells": {
+                cell: {
+                    "as_of": as_of.isoformat(),
+                    "rolling_logscore": rolling_logscore,
+                    "p0_rolling_logscore": p0_rolling_logscore,
+                    "brier_skill": brier_skill,
+                    "n": n,
+                    "drifted": drifted,
+                    "consecutive_below": consecutive_below,
+                }
+            },
+        }
+
+    return _make
+
+
+# ---------------------------------------------------------------- spec text
+@pytest.fixture(scope="session")
+def spec_text():
+    return SPEC_PATH.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="session")
+def spec_boundary_sentence(spec_text):
+    """The boundary text exactly as spec section 1 gives it."""
+    m = re.search(r"The card prioritizes and sizes the test\. The live test decides\. "
+                  r"Moot Court never touches a ship, allocation or stopping rule\.", spec_text)
+    assert m, "boundary text not found in the spec"
+    return m.group(0)
+
+
+@pytest.fixture(autouse=True)
+def _no_ambient_data_root(monkeypatch, tmp_path_factory):
+    """The storage root comes from the test, never from the developer's shell or from the repository's own mootcourt.toml."""
+    monkeypatch.delenv("MOOTCOURT_DATA_ROOT", raising=False)
+    from mootcourt import storage
+
+    original, repo = storage.data_root, Path(__file__).resolve().parents[1]
+    empty = tmp_path_factory.getbasetemp()
+
+    def data_root_without_repo_toml(environ=None, cwd=None):
+        here = Path(cwd if cwd is not None else Path.cwd())
+        return original(environ, empty if here.resolve() == repo else here)
+
+    monkeypatch.setattr(storage, "data_root", data_root_without_repo_toml)

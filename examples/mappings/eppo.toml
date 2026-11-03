@@ -1,0 +1,26 @@
+# Template for an Eppo results export. TEMPLATE ONLY: the Eppo documentation defers the results schema to its API reference, so no column
+# list is documented publicly and no built-in mapping ships. Open your own export, replace the right-hand names below, then run
+#   moot ingest --format eppo --input eppo_results.csv --mapping eppo.toml --dry-run
+# docs/ledger-format.md explains each exchange column and what to put in it.
+
+[columns]
+experiment_id = "EDIT: the experiment key or name column"
+variant_id = "EDIT: the treatment variant column"
+baseline_id = "EDIT: the control variant column"
+metric_id = "EDIT: the metric name column"
+effect = "EDIT: the lift or difference column (treatment minus control)"
+ci_low = "EDIT: lower interval bound"
+ci_high = "EDIT: upper interval bound"
+n_baseline = "EDIT: control subjects"
+n_variant = "EDIT: treatment subjects"
+started_at = "EDIT: analysis start"
+ended_at = "EDIT: analysis end"
+
+[constants]
+source_system = "eppo"
+variance_method = "EDIT: for example sequential or fixed-sample, CUPED or not, and the interval level"
+effect_unit = "relative"   # EDIT: absolute or relative, matching the effect column
+
+[options]
+ci_level = 0.95   # EDIT: the confidence level of your intervals
+scale = 1.0

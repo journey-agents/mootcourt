@@ -1,0 +1,14 @@
+{
+ "n_contrasts": 11,
+ "n_checkpoints": 5,
+ "last_checkpoint": "2019-01-06",
+ "metrics": [
+  "metric_1",
+  "metric_2",
+  "metric_3"
+ ],
+ "n_experiments": 3,
+ "n_admitted": 10,
+ "n_low_exposure": 1,
+ "note": "fixture columns copy the real file's layout (inventory in reports/data-inventory-asos.txt); 5 daily checkpoints per treatment and metric; ccc333 metric 2 has missing variance as five treatments do in the real file"
+}

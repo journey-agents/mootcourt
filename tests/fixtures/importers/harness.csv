@@ -1,0 +1,3 @@
+Metric,Impact,Impact lies above,Impact lies below,Baseline metric value,Comparison metric value,pValue,Baseline sample size,Comparison sample size,Sample Ratio,Baseline treatment,Comparison treatment,Version start time,Version end time,Experiment significance threshold,Minimum sample size,Multiple comparison correction,Metric aggregation
+checkout,0.08,0.16,0.0,0.1,0.108,0.04,3000,3050,0.5,off,on,2024-05-01T00:00:00Z,2024-05-15T00:00:00Z,0.05,355,none,average
+latency,-0.02,0.05,-0.09,200.0,196.0,0.5,3000,3050,0.5,off,on,2024-05-01T00:00:00Z,2024-05-15T00:00:00Z,0.05,355,none,average

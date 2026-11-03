@@ -1,0 +1,61 @@
+site_name: Moot Court
+site_description: Argue the next experiment from precedent before the trial.
+docs_dir: docs
+site_dir: site
+strict: true
+exclude_docs: |
+  superpowers/
+copyright: A precedent forecast is an argument about what to expect, not a replacement for running the experiment.
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    scheme: default
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: null
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 3
+            members_order: source
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts: concepts.md
+  - How to:
+      - Bring a ledger: howto/bring-a-ledger.md
+      - Attach a simulation agent: simulators.md
+      - Run the benchmark: benchmark.md
+      - Operate the weekly loop: operations.md
+      - Serve the card and use the MCP tool: howto/serve-and-mcp.md
+      - Read the scale results: scale.md
+  - Reference:
+      - Command line: reference/cli.md
+      - Configuration: reference/config.md
+      - Python API: reference/api.md
+      - Ledger format: ledger-format.md
+  - Method: method.md
+  - Landscape: landscape.md
+  - Limitations: limitations.md
+  - FAQ: faq.md
+  - Release: release.md

@@ -1,0 +1,5 @@
+Start Time (UTC),End Time (UTC),Variation Name,Variation ID,Is Baseline Variation,Metric Event Name,Metric Event ID,Metric Numerator Type,Metric Denominator Type,Metric Winning Direction,Numerator Value,Denominator Value,Metric Value,Improvement Status from Baseline,Improvement Value from Baseline,Statistical Significance,Is Improvement Significant,Confidence Interval - Low,Confidence Interval - High,Samples Remaining to Significance
+2024-03-01 00:00:00,2024-03-15 00:00:00,Original,v0,true,signup,signup_id,unique conversions,visitor,increasing,400,4000,0.1,n/a,,0.9,,0.0,0.0,0
+2024-03-01 00:00:00,2024-03-15 00:00:00,Variation A,v1,false,signup,signup_id,unique conversions,visitor,increasing,460,4000,0.115,better,0.15,0.9,true,0.0,0.3,0
+2024-03-01 00:00:00,2024-03-15 00:00:00,Original,v0,true,purchase,purchase_id,unique conversions,visitor,increasing,100,4000,0.025,n/a,,0.9,,0.0,0.0,0
+2024-03-01 00:00:00,2024-03-15 00:00:00,Variation A,v1,false,purchase,purchase_id,unique conversions,visitor,increasing,95,4000,0.02375,better,-0.05,0.9,false,-0.3,0.2,0

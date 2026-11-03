@@ -1,0 +1,17 @@
+{
+ "raw/asos/Datasheet - ASOS Digital Experiments Dataset.pdf": {
+  "osf_node": "64jsb",
+  "sha256": "e1e42e29a30fa7ad9eeeb2ac7b61d2f0221a531d2b030a8abd9c9f6371a93563",
+  "size": 206619
+ },
+ "raw/asos/asos_digital_experiments_dataset.parquet": {
+  "osf_node": "64jsb",
+  "sha256": "bdf88b27185d3f7e65912cbb421129a32ae347c2fb0d9442fe54d74266551524",
+  "size": 1003239
+ },
+ "raw/upworthy/upworthy-archive-exploratory-packages-03.12.2020.csv": {
+  "osf_node": "jd64p",
+  "sha256": "8368313b060f4015a0c6fb34e6d788163cee29554144aba9390b14922eb9d8ce",
+  "size": 14260949
+ }
+}

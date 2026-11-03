@@ -1,0 +1,210 @@
+{
+ "base_rate": 0.3,
+ "bootstrap": 500,
+ "by_target": {
+  "0.80": {
+   "n_200": 125,
+   "n_400": 300
+  },
+  "0.90": {
+   "n_200": 175,
+   "n_400": 375
+  }
+ },
+ "decision_target": 0.9,
+ "label": "synthetic",
+ "n_200": 175,
+ "n_400": 375,
+ "note": "n_200 and n_400 are the values this run produced on synthetic data at the decision target; by_target holds both targets, which read the same power curve at different levels. Nothing downstream hardcodes any of these sizes.",
+ "reps": 1000,
+ "research_target": 0.8,
+ "seconds": 41.4,
+ "seed": 20261102,
+ "skills": {
+  "n_200": 0.2,
+  "n_400": 0.1
+ },
+ "table": [
+  {
+   "n": 100,
+   "power": 0.235,
+   "skill": 0.05
+  },
+  {
+   "n": 125,
+   "power": 0.238,
+   "skill": 0.05
+  },
+  {
+   "n": 175,
+   "power": 0.339,
+   "skill": 0.05
+  },
+  {
+   "n": 250,
+   "power": 0.488,
+   "skill": 0.05
+  },
+  {
+   "n": 300,
+   "power": 0.533,
+   "skill": 0.05
+  },
+  {
+   "n": 375,
+   "power": 0.614,
+   "skill": 0.05
+  },
+  {
+   "n": 500,
+   "power": 0.722,
+   "skill": 0.05
+  },
+  {
+   "n": 1000,
+   "power": 0.948,
+   "skill": 0.05
+  },
+  {
+   "n": 2000,
+   "power": 0.998,
+   "skill": 0.05
+  },
+  {
+   "n": 100,
+   "power": 0.403,
+   "skill": 0.1
+  },
+  {
+   "n": 125,
+   "power": 0.465,
+   "skill": 0.1
+  },
+  {
+   "n": 175,
+   "power": 0.595,
+   "skill": 0.1
+  },
+  {
+   "n": 250,
+   "power": 0.742,
+   "skill": 0.1
+  },
+  {
+   "n": 300,
+   "power": 0.838,
+   "skill": 0.1
+  },
+  {
+   "n": 375,
+   "power": 0.903,
+   "skill": 0.1
+  },
+  {
+   "n": 500,
+   "power": 0.965,
+   "skill": 0.1
+  },
+  {
+   "n": 1000,
+   "power": 1.0,
+   "skill": 0.1
+  },
+  {
+   "n": 2000,
+   "power": 1.0,
+   "skill": 0.1
+  },
+  {
+   "n": 100,
+   "power": 0.713,
+   "skill": 0.2
+  },
+  {
+   "n": 125,
+   "power": 0.813,
+   "skill": 0.2
+  },
+  {
+   "n": 175,
+   "power": 0.926,
+   "skill": 0.2
+  },
+  {
+   "n": 250,
+   "power": 0.976,
+   "skill": 0.2
+  },
+  {
+   "n": 300,
+   "power": 0.991,
+   "skill": 0.2
+  },
+  {
+   "n": 375,
+   "power": 0.998,
+   "skill": 0.2
+  },
+  {
+   "n": 500,
+   "power": 1.0,
+   "skill": 0.2
+  },
+  {
+   "n": 1000,
+   "power": 1.0,
+   "skill": 0.2
+  },
+  {
+   "n": 2000,
+   "power": 1.0,
+   "skill": 0.2
+  },
+  {
+   "n": 100,
+   "power": 0.897,
+   "skill": 0.3
+  },
+  {
+   "n": 125,
+   "power": 0.945,
+   "skill": 0.3
+  },
+  {
+   "n": 175,
+   "power": 0.989,
+   "skill": 0.3
+  },
+  {
+   "n": 250,
+   "power": 0.998,
+   "skill": 0.3
+  },
+  {
+   "n": 300,
+   "power": 1.0,
+   "skill": 0.3
+  },
+  {
+   "n": 375,
+   "power": 1.0,
+   "skill": 0.3
+  },
+  {
+   "n": 500,
+   "power": 1.0,
+   "skill": 0.3
+  },
+  {
+   "n": 1000,
+   "power": 1.0,
+   "skill": 0.3
+  },
+  {
+   "n": 2000,
+   "power": 1.0,
+   "skill": 0.3
+  }
+ ],
+ "target_power": 0.9
+}

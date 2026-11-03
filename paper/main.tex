@@ -1,0 +1,134 @@
+% Build: tectonic -X compile main.tex   (from paper/)
+% For submission switch the class options to [sigconf,review,anonymous].
+\documentclass[sigconf,nonacm]{acmart}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\newcommand{\pwin}{p_{\mathrm{win}}}
+\newcommand{\psig}{p_{\mathrm{sig}}}
+\newcommand{\todo}[1]{{\color{red}[#1]}}
+
+\begin{document}
+
+\title{Arguing from Precedent: Calibrated Pre-Launch Forecasts of A/B Test Outcomes with Abstention}
+
+\author{Yingjie Li}
+\affiliation{\institution{Independent researcher}\city{Seattle}\country{USA}}
+\email{liyingjie@journey-ai.net}
+
+\begin{abstract}
+Teams that run many online controlled experiments accumulate a ledger of concluded tests, yet the ledger is rarely consulted before the next test launches. We study whether that ledger carries out-of-time predictive skill about a new experiment's result, and how to issue the forecast so that it helps prioritize and size tests without ever deciding them. We present Moot Court, an open-source system that turns the ledger into a pre-launch card through a ladder of predictors, each a strict generalization of the one below: a cell base rate, an empirical-Bayes Student-t prior fit by marginal likelihood with partial pooling, and kernel-weighted precedents with a mixing weight chosen out of time. The card abstains on four triggers (support, novelty, reliability, decision instability) and carries the identifiers of the data and model that produced it. We evaluate with a rolling-origin backtest on two public archives of real experiments, the Upworthy Research Archive (13,453 admitted contrasts from 4,873 headline tests) and the ASOS Digital Experiments Dataset (78 experiments), scoring with the logarithmic score, CRPS, Brier skill against the base rate with its irreducible floor, calibration against a perfect-calibration null, interval coverage, and sample-size gates from a power simulation. We measure decision value as test-and-roll regret of prioritizing experiments by predicted win probability. \todo{Headline results.} Every number in the paper is reproduced by one command of the released code.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\todo{Draft after results.} The three claims the paper makes: (1) the ledger of past experiments carries measurable out-of-time skill about the next one; (2) a ladder of simple, inspectable predictors with calibrated abstention captures that skill and declines to speak when it should; (3) the skill has decision value for prioritization, and the paper quantifies it as regret rather than as a score. The boundary is stated once and kept throughout: the card prioritizes and sizes the test, the live test decides, and no ship, allocation or stopping rule is ever touched.
+
+\input{sections/related-work}
+\input{sections/landscape}
+
+\section{Problem Setting and Data}
+\label{sec:setting}
+
+\paragraph{Contrast, cell, origin.} A \emph{contrast} is one treatment arm compared with the reference arm of one experiment, with an observed effect $y$ and a standard error $s$ at the experiment's registered horizon. A \emph{cell} groups contrasts by the kind of change; for a product it would be the product area crossed with the kind of change. An \emph{origin} $t$ is a point in time; a contrast is \emph{visible} at $t$ when its status is admitted and its usable-after time is at or before $t$. Every quantity the system computes at $t$ uses visible rows only.
+
+\paragraph{Ledger and admission.} The ledger holds one row per concluded contrast with the fields in Table~\ref{tab:schema}. Admission is a status, not a filter: rows that fail an admission rule stay in the ledger with their reason, so the harness can report how much of the archive the predictor was allowed to see. Snapshots are immutable and identified by a digest of the row contents, so every card names the exact data it was issued from.
+
+\begin{table}[t]
+\centering\small
+\caption{Ledger row.}
+\label{tab:schema}
+\begin{tabular}{ll}
+\toprule
+field & meaning \\
+\midrule
+row\_id, test\_id, variant\_id & identifiers \\
+cell, period & kind of change; calendar quarter of the final read \\
+started\_at, final\_read\_at, usable\_after & timeline of the contrast \\
+$y$, $s$, $n_{\mathrm{ref}}$, $n_{\mathrm{var}}$ & effect, standard error, exposures \\
+status & admitted or an exclusion reason \\
+features & text and structured features for retrieval \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Upworthy Research Archive.} The archive records every headline and image test the publisher ran between January 2013 and April 2015 \cite{matias2021upworthy}. We use only the public exploratory split: 4,873 tests and 22,666 packages (arms), each with impressions, clicks, headline text and an image identifier. The confirmatory and holdout splits exist in the same public folder; the archive asks researchers to pre-register before touching them, and we did not. Within a test the reference arm is the earliest-created package, and every other package is one contrast, which gives 17,793 contrasts. The effect $y$ is the absolute difference in click-through rate in percentage points, $100\,(\mathrm{ctr}_v - \mathrm{ctr}_r)$, with the binomial standard error of two independent proportions; the relative lift against the reference is kept for display only, for a reason Section~\ref{sec:cautionary} makes concrete. The cell is the kind of change, \emph{headline\_only}, \emph{image\_only} or \emph{both}, from comparing the variant with its reference; arms identical to the reference are excluded with status \emph{duplicate\_arm}. Admission requires at least 1,000 impressions and 10 clicks in both arms and non-empty headlines; 13,453 contrasts are admitted and every excluded row stays in the ledger with its reason. The registered horizon is seven days after the later of the two arms' creation times, a modelling choice the archive does not record; a row is invisible to every origin before that time, so a predictor never sees a contrast whose variant did not yet exist. Fields known only after a test runs (the two click-through rates, the clicks, the relative lift) are stored in a separate post-launch block that the feature builder cannot read; the pre-launch fields are the two headlines, whether the headline or the image changed, the number of arms in the test and the planned exposure per arm.
+
+\paragraph{ASOS Digital Experiments Dataset.} The dataset holds 78 real experiments from an online fashion retailer with two to five variants each, four decision metrics of binary, count and real-valued type, and daily or twelve-hourly cumulative checkpoints of each group's count, mean and variance \cite{liu2021datasets}. It is the only public archive shaped like product deployments, and it is small: one contrast per treatment variant and metric at the final checkpoint gives 337 scored contrasts. The effect is the standardized mean difference, the cell is the metric, and only the final checkpoint is admitted as the outcome; the intermediate checkpoints demonstrate the horizon rule and are never read as results. The dataset carries no calendar dates and no experiment content, so the loader assigns a nominal calendar that spreads the experiments evenly over two years in file order. The rolling origin on this archive therefore tests the mechanics of the protocol, not real temporal drift, and the paper says so wherever an ASOS number appears. The sample-size gates are expected to return \emph{undecidable} for every metric cell at this size, and that expected outcome is reported as a result rather than hidden.
+
+\section{Method}
+\label{sec:method}
+
+\subsection{Predictive distributions on a grid}
+Every predictor returns a probability mass function over a fixed grid of the true effect $\theta$. From it the card derives $\pwin = P(\theta > \delta)$, the predictive distribution of the estimate the new test will report, $y^\ast = \theta + \varepsilon$ with $\varepsilon \sim \mathcal{N}(0, s_\ast^2)$, obtained by convolution on the grid, and $\psig = P(y^\ast > z\, s_\ast)$, the probability that the new test will report a significant positive result at its planned sample size. Point estimates and intervals are grid moments and quantiles. Working on the grid makes every rung comparable and makes every score a function of the same object.
+
+\subsection{The ladder}
+\paragraph{P0, base rate.} Per cell, a normal distribution with the mean and variance of the visible estimates, ignoring measurement error, together with the empirical frequency of significant positive results. P0 is the baseline every skill number is measured against.
+
+\paragraph{P1, empirical-Bayes prior.} Per cell, a Student-t prior $t_\nu(\mu_c, \tau_c)$ on $\theta$ fit by maximizing the marginal likelihood
+\begin{equation}
+\sum_{i \in c} \log \int \mathcal{N}(y_i \mid \theta, s_i^2)\, t_\nu(\theta \mid \mu_c, \tau_c)\, d\theta ,
+\end{equation}
+with the integral on the grid and $\nu$ on a small grid that includes the normal limit. Cell parameters are partially pooled toward the global fit with weight $n_c / (n_c + \kappa)$, along the kind-of-change dimension and along calendar periods. \todo{State the pooling details exactly as docs/method.md calls 23 and 5.}
+
+\paragraph{P2, weighted precedents.} With features $x$ of the new contrast, a kernel $k(x, x_i) = \exp(-d^2/2h^2)$ on standardized features and weights $w_i = k(x, x_i)/(s_i^2 + \tau_c^2)$ over visible rows,
+\begin{align}
+m(x) &= \frac{\sum_i w_i y_i}{\sum_i w_i}, \qquad
+v_m(x) = \frac{\sum_i w_i^2 (s_i^2 + \tau_c^2)}{(\sum_i w_i)^2}, \\
+\hat\theta(x) &= \lambda\, m(x) + (1-\lambda)\, \mu_c, \\
+v(x) &= \lambda \left(v_m(x) + \tau_{\mathrm{res},c}^2\right) + (1-\lambda)\, \tau_c^2 ,
+\end{align}
+where $\tau_{\mathrm{res},c}^2$ is the residual between-test variance after kernel regression and $\lambda$ and the bandwidth multiplier are chosen per cell by the out-of-time logarithmic score, leaving one whole test out at a time because contrasts in a test share a reference arm. The working predictive is $\theta \sim \mathcal{N}(\hat\theta(x), v(x))$ placed on the grid; $\lambda = 0$ recovers P1 exactly. The effective number of precedents is $n_{\mathrm{eff}} = (\sum w_i)^2 / \sum w_i^2$.
+
+\paragraph{P3, the team's forecast.} A probability and a point estimate entered at setup and frozen with a timestamp. No public archive has historical forecasts, so P3 is exercised only on synthetic data and labelled as such.
+
+\paragraph{Second opinion.} $p_{\mathrm{stack}} = (1 - w)\, \psig + w\, p_{\mathrm{AI}}$ with $w = 0$ until a stacked Brier score beats $\psig$ out of time at the gate's sample size. In this paper $w$ stays zero; the interface exists so that the claim can be tested rather than asserted.
+
+\paragraph{Why a ladder and not a learned regressor.} With tens to a few hundred rows per cell, a boosted model on raw features cannot be checked for calibration per cell and offers no principled abstention. Each rung above is a strict generalization of the one below, every parameter is inspectable, and Section~\ref{sec:ablations} tests a gradient-boosted challenger on equal terms.
+
+\subsection{Abstention}
+The card abstains, listing every reason, when any of four triggers fires: fewer than 30 visible rows in the cell after pooling (support); the kernel density of $x$ among the cell's visible rows below the fifth percentile of the leave-one-out densities of those rows (novelty); a missing, stale, future-dated or drifted reliability report for the cell (reliability); or a bootstrap over precedents, resampled by test, that puts $\psig$ on the same side of the action threshold in 80 percent or fewer of resamples (decision instability). An abstained card still shows the base rate and the reasons.
+
+\subsection{The card and the operational loop}
+The card is issued before launch and frozen. It carries the identifiers of the ledger snapshot, the model and the feature set that produced it, so that a card can always be traced to the exact data it was argued from; the snapshot identifier is a digest of the row contents, not of the row identifiers alone. Its body lists the evidence (admitted rows in the cell, effective number of precedents, the cell's base rate of significant positive results), the prediction ($\psig$, the point estimate, the 80 percent interval, $\pwin$), the frozen team forecast when one was entered, two robustness checks (how many of the top precedents must be dismissed to move $\psig$ across the action threshold, and the share of bootstrap resamples on the same side of it), the cell's latest skill at its sample size, the abstention status with every reason, and the boundary sentence as its footer. A later outcome is attached in a separate file; the card itself is never edited.
+
+The loop around the card has three clocks. A nightly fit refits every rung on the current snapshot, rebuilds the retrieval index and writes a versioned model bundle whose files are hashed and verified before loading; a champion and challenger registry promotes a bundle only when its backtest skill beats the champion's by a fixed margin at the gate's sample size. A weekly join appends concluded contrasts with their usable-after time, attaches outcomes only to cards whose horizon has passed, types every miss (abstained but clear, confident but wrong, direction miss, magnitude miss) and rewrites a per-cell reliability report over the trailing eight weeks. A drift rule marks a cell when its rolling logarithmic score falls below the base rate's by a margin at two consecutive joins, and the card abstains for that cell until a join clears it. Cards are served three ways, as a command, as a read-only HTTP service and as a read-only tool interface for agents; none of them can change state. With the index preloaded a card takes tens of milliseconds; the service adds a few more.
+
+\subsection{Pluggable second opinions}
+Simulation agents that estimate how an audience would respond to a change, including language-model based synthetic panels, attach through one protocol: a request carrying only aggregate pre-launch fields and a budget, a result carrying a win probability with provenance, latency and cost. Adapters exist for a subprocess, a loopback HTTP endpoint and a recorded file, so an expensive agent is run once over the rolling-origin request set and scored out of time without being called again. The agent's output enters the card as $p_{\mathrm{AI}}$ at the earned weight described above, every result carries the provider's knowledge cutoff, and the harness reports scores separately for origins before and after that cutoff, because a model trained on the public web may have seen the archive.
+
+\section{Evaluation Protocol}
+\label{sec:protocol}
+\paragraph{Rolling origin.} For each origin $t_k$ the predictors are fit on rows visible at $t_k$ and score every admitted contrast that started in $[t_k, t_{k+1})$ using its realized standard error as $s_\ast$. A guard raises if any scored row was visible to the model that scored it.
+
+\paragraph{Scores.} The logarithmic score and the CRPS of the $y^\ast$ predictive at the observed $y$; the Brier score of $\psig$ against the significant-positive event with its irreducible floor $\mathbb{E}[p_\theta (1 - p_\theta)]$ and Brier skill $1 - \mathrm{Brier}/\mathrm{Brier}_{P0}$; direction accuracy against its ceiling $\mathbb{E}[\Phi(|\theta|/s)]$. All with bootstrap-by-test 90 percent intervals.
+
+\paragraph{Calibration and coverage.} Reliability diagrams and the expected calibration error compared with its distribution under the perfect-calibration null, obtained by resampling outcomes from the predicted probabilities; coverage of the 80 and 90 percent intervals for $y$.
+
+\paragraph{Gates.} A skill claim is decidable when the number of scored rows reaches the sample size at which a simulated calibrated forecaster of that skill clears a 95 percent bootstrap interval with power 0.90 (the release gate); the same curve at power 0.80 is reported beside it. The sizes come from the released power simulation, not from this paper's text.
+
+\paragraph{What the scores cannot do.} There is no ground truth for $\theta$; every score is against the observed estimate with known standard error. This is the only option when the truth is unobserved, and it is why the floors and ceilings above are reported next to every score.
+
+\paragraph{Decision value.} For each origin, a budget of $K$ tests is chosen three ways: at random, by $\pwin$, and by an oracle that knows the outcome. We report the share of the period's realized positive lift each policy captures and the test-and-roll regret against the oracle. Decision value is reported separately from calibration and never folded into one number.
+
+\input{sections/results}
+
+\section{Ablations and Learning Curve}
+\label{sec:ablations}
+\todo{E5, E6.}
+
+\section{Discussion}
+\todo{What headline tests can and cannot say about product deployments; when to abstain; the operational loop in practice.}
+
+\section{Limitations and Ethics}
+Three limits bound every claim. First, the archives: headline tests on one publisher are one kind of change in one product, and the deployment-shaped archive is too small for any gate to decide, so this paper measures the protocol on real experiments without measuring transfer to product deployments; the released benchmark lets an organization measure that on its own ledger privately. Second, the scores: no true effect is ever observed, so every score is against the test's own estimate with its known standard error, and the floors and ceilings are reported for that reason. Third, the archives' norms: we used only the Upworthy exploratory split and left the confirmatory and holdout data untouched, as the archive asks; both datasets are CC BY 4.0 and aggregate, and nothing in the system ingests user-level data. The system never decides: it prioritizes and sizes, the live test decides, and no ship, allocation or stopping rule is touched by any component, including any attached simulation agent. Language-model second opinions carry a contamination risk on public archives that the protocol flags per origin but cannot remove.
+
+\section{Reproducibility}
+\todo{One command per table; checksums; versions; wall times.}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,15 @@
+# Keeps the pinned actions, the locked Python dependencies (the uv ecosystem updates uv.lock together with pyproject.toml, so each pull request passes `uv sync --locked`) and the base image current. Each update arrives as a pull request that CI checks.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: uv
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly

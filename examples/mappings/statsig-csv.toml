@@ -1,0 +1,24 @@
+# Template for the Statsig console CSV download. TEMPLATE ONLY: the export page lists no fields. (The warehouse results view IS documented
+# and has a built-in mapping: moot ingest --format statsig --input view_extract.csv.) Edit the right-hand names to match your download, then
+#   moot ingest --format statsig --input download.csv --mapping statsig-csv.toml --dry-run
+
+[columns]
+experiment_id = "EDIT: experiment name"
+variant_id = "EDIT: test group"
+baseline_id = "EDIT: control group"
+metric_id = "EDIT: metric name"
+effect = "EDIT: delta"
+ci_halfwidth = "EDIT: delta confidence interval (a single number is a half-width)"
+n_baseline = "EDIT: control units"
+n_variant = "EDIT: test units"
+started_at = "EDIT: start"
+ended_at = "EDIT: end"
+
+[constants]
+source_system = "statsig_csv"
+variance_method = "EDIT: interval half-width at 0.95, CUPED yes or no, sequential yes or no"
+effect_unit = "absolute"
+
+[options]
+ci_level = 0.95
+scale = 1.0

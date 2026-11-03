@@ -1,0 +1,1 @@
+Run 1 (relative lift, realized standard error) is reproduced by `moot backtest --source upworthy --effect-scale relative --s-star realized` (task T-031); copy its report JSON here when regenerated. The original files were overwritten by the second run on 3 Nov 2026; the numbers quoted in the paper for run 1 come from the regenerated report, never from memory.

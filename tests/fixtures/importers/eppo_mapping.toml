@@ -1,0 +1,17 @@
+[columns]
+experiment_id = "exp"
+variant_id = "treat"
+baseline_id = "ctrl"
+metric_id = "metric"
+effect = "lift"
+ci_low = "lo"
+ci_high = "hi"
+n_baseline = "nc"
+n_variant = "nt"
+started_at = "s"
+ended_at = "e"
+
+[constants]
+source_system = "eppo"
+variance_method = "interval bounds at 0.95"
+effect_unit = "relative"

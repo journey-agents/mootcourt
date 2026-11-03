@@ -1,0 +1,5 @@
+ds,experimentName,controlGroupName,testGroupName,metricName,metricType,higherIsBetter,absoluteDelta,absoluteDeltaCI,relativeDelta,relativeDeltaCI,controlUnits,testUnits,experimentStartTs,experimentEndTs,useCUPED,useSequential
+2023-11-20,exp_a,Control,Test,m1,mean,True,0.5,2.0,0.05,0.2,4000,4100,1700000000000,1701000000000,True,False
+2023-11-26,exp_a,Control,Test,m1,mean,True,1.0,0.392,0.1,0.04,5000,5200,1700000000000,1701000000000,True,False
+2023-11-26,exp_a,Control,Test,m2,mean,True,-0.2,0.196,-0.02,0.02,5000,5200,1700000000000,1701000000000,True,False
+2023-11-26,exp_b,Control,Test,m1,mean,True,0.3,0.98,0.03,0.1,50,60,1700000000000,1701000000000,True,False

@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""Independent check of the numbers in the README results block.
+
+Standard library plus pandas only; nothing is imported from mootcourt. The script reads the README, finds every
+table in the results block, re-derives numbers from the report JSON files under the data root (and, for the
+backtest tables, from the per-row score tables next to them), and compares each to the printed value at the
+printed precision. It exits 1 when a number disagrees or when a table has fewer than three numbers checked.
+
+Usage: MOOTCOURT_DATA_ROOT=/path/to/root python scripts/verify_readme_numbers.py [--readme README.md] [--reports DIR]
+"""
+from __future__ import annotations
+
+import argparse
+import glob
+import json
+import math
+import os
+import re
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+NUM = re.compile(r"[+-]?\d+(?:\.\d+)?")
+RESULTS = []          # (section, table_label, token, derived, ok)
+
+
+def decimals(tok: str) -> int:
+    return len(tok.split(".")[1]) if "." in tok else 0
+
+
+def check(section: str, label: str, tok: str, derived) -> bool:
+    """Compare one printed token with a derived value at the printed precision."""
+    tok = tok.strip()
+    if derived is None or (isinstance(derived, float) and math.isnan(derived)):
+        ok = tok == "n/a"
+        RESULTS.append((section, label, tok, "nan" if derived is not None else "None", ok))
+        return ok
+    if tok == "n/a":
+        RESULTS.append((section, label, tok, derived, False))
+        return False
+    d = decimals(tok)
+    ok = abs(float(derived) - float(tok)) <= 0.5 * 10 ** (-d) + 1e-9
+    RESULTS.append((section, label, tok, derived, ok))
+    return ok
+
+
+def parse_tables(block: list[str]) -> list[tuple[list[str], list[list[str]]]]:
+    """Every pipe table in `block` as (header cells, body rows)."""
+    out, i = [], 0
+    while i < len(block):
+        if block[i].startswith("|") and i + 1 < len(block) and re.match(r"^\|[-| ]+\|$", block[i + 1].strip()):
+            head = [c.strip() for c in block[i].strip().strip("|").split("|")]
+            rows, j = [], i + 2
+            while j < len(block) and block[j].startswith("|"):
+                rows.append([c.strip() for c in block[j].strip().strip("|").split("|")])
+                j += 1
+            out.append((head, rows))
+            i = j
+        else:
+            i += 1
+    return out
+
+
+def split_sections(text: str) -> dict[str, list[str]]:
+    m = re.search(r"<!-- moot-results:start -->(.*)<!-- moot-results:end -->", text, re.S)
+    if not m:
+        sys.exit("README has no results block")
+    sections, cur = {}, None
+    for ln in m.group(1).splitlines():
+        if ln.startswith("### "):
+            cur = ln[4:].strip()
+            sections[cur] = []
+        elif cur:
+            sections[cur].append(ln)
+    return sections
+
+
+def jload(path: str) -> dict:
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def agg(report: dict) -> dict:
+    return {(r["cell"], r["rung"]): r for r in report["tables"]["aggregate"]}
+
+
+def skill(r: dict) -> float:
+    return 1.0 - r["brier"] / r["brier_base"]       # re-derived, not read from brier_skill
+
+
+def tri(tok: str) -> list[str]:
+    """'-0.0078 (-0.0120 to -0.0032)' -> three tokens."""
+    return NUM.findall(tok)
+
+
+def check_triple(sec, label, tok, point, lo, hi):
+    t = tri(tok)
+    if len(t) != 3:
+        return check(sec, label, "n/a", point) if tok.startswith("n/a") else RESULTS.append((sec, label, tok, "unparsed", False))
+    check(sec, label + " point", t[0], point)
+    check(sec, label + " lo", t[1], lo)
+    check(sec, label + " hi", t[2], hi)
+
+
+# ------------------------------------------------------------------ backtest sections
+def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
+    text = "\n".join(lines)
+    snap = re.search(r"Snapshot (\S+?),", text).group(1)
+    path = reports / f"backtest-{source}-{snap}.json"
+    rep = jload(str(path))
+    a = agg(rep)
+    hdr = rep["header"]
+    m = re.search(r"(\d+) rows scored over (\d+) quarterly origins out of (\d+) admitted", text)
+    check(sec, "header", m.group(1), hdr["scored_rows"])
+    check(sec, "header", m.group(2), hdr["origins_scored"])
+    check(sec, "header", m.group(3), hdr["admitted_rows"])
+    scores_path = glob.glob(str(reports / f"scores-{source}-{snap}.parquet"))
+    sc = pd.read_parquet(scores_path[0]) if scores_path else None
+    for head, rows in parse_tables(lines):
+        if head[:3] == ["cell", "rung", "n"]:
+            label = "main table"
+            for r in rows:
+                cell, rung = r[0], r[1]
+                j = a[(cell, rung)]
+                check(sec, f"{label} {cell}/{rung} n", r[2], j["n"])
+                if r[3] != "n/a":
+                    check(sec, f"{label} {cell}/{rung} logscore", r[3], j["logscore"])
+                    check_triple(sec, f"{label} {cell}/{rung} brier skill", r[4], skill(j),
+                                 j["brier_skill_lo"], j["brier_skill_hi"])
+                    c = tri(r[8])
+                    check(sec, f"{label} {cell}/{rung} cov80", c[0], j["coverage_80"])
+                    check(sec, f"{label} {cell}/{rung} cov90", c[1], j["coverage_90"])
+                check(sec, f"{label} {cell}/{rung} abstention", r[9], j["abstention_rate"])
+                if sc is not None and rung in ("P0", "P1", "P2"):
+                    s = sc[sc["rung"] == rung] if cell == "ALL" else sc[(sc["rung"] == rung) & (sc["cell"] == cell)]
+                    check(sec, f"scores parquet {cell}/{rung} n", r[2], len(s))
+                    check(sec, f"scores parquet {cell}/{rung} logscore", r[3], s["logscore"].mean())
+                    check(sec, f"scores parquet {cell}/{rung} abstention", r[9], s["abstain"].mean())
+                    inside90 = ((s["y"] >= s["lo90"]) & (s["y"] <= s["hi90"])).mean()
+                    check(sec, f"scores parquet {cell}/{rung} cov90", c[1], inside90)
+        elif head[:2] == ["rung", "decile"]:
+            for r in rows:
+                rung, dec = r[0], int(r[1])
+                j = next(x for x in rep["tables"]["calibration_by_precision"] if x["rung"] == rung and x["decile"] == dec)
+                check(sec, f"calibration {rung} d{dec} n", r[3], j["n"])
+                check(sec, f"calibration {rung} d{dec} mean p_sig", r[5], j["mean_p_sig"])
+                check(sec, f"calibration {rung} d{dec} event rate", r[6], j["event_rate"])
+                check(sec, f"calibration {rung} d{dec} cov90", r[7], j["coverage_90"])
+        elif head[:2] == ["rung", "kind"] and "ceiling" in head:
+            for r in rows:
+                j = a[("ALL", r[0])]
+                t = tri(r[2])
+                check(sec, f"direction {r[0]}", t[0], j["direction_accuracy"])
+                check(sec, f"direction {r[0]} lo", t[1], j["direction_accuracy_lo"])
+                check(sec, f"direction {r[0]} ceiling", r[3], j["direction_ceiling"])
+        elif head[:2] == ["cell", "rows"]:
+            tab = {x["cell"]: x for x in rep["tables"]["abstention"]}
+            for r in rows:
+                j = tab[r[0]]
+                check(sec, f"trigger {r[0]} rows", r[1], j["n"])
+                check(sec, f"trigger {r[0]} rate", r[2], j["rate"])
+                for k, name in enumerate(["support", "novelty", "reliability", "instability"]):
+                    check(sec, f"trigger {r[0]} {name}", r[3 + k], j[name])
+    # sentences
+    dv = rep["tables"]["decision_value"]
+    m = re.search(r"random captures ([\d.]+) of the total .* P2 p_win captures ([\d.]+), .* captures ([\d.]+)\.", text)
+    if m:
+        def pooled(policy, rung):
+            sel = [x for x in dv if x["policy"] == policy and (rung is None or x["rung"] == rung)]
+            return sum(x["captured"] for x in sel) / sum(x["total"] for x in sel)
+        check(sec, "decision value random", m.group(1), pooled("random", None))
+        check(sec, "decision value p_win", m.group(2), pooled("p_win", "P2"))
+        check(sec, "decision value oracle", m.group(3), pooled("oracle", None))
+    m = re.search(r"Log score on all rows: P0 ([-\d.]+), P1 ([-\d.]+), P2 ([-\d.]+)\.", text)
+    for k, rung in enumerate(["P0", "P1", "P2"]):
+        check(sec, f"sentence logscore {rung}", m.group(1 + k), a[("ALL", rung)]["logscore"])
+
+
+# ------------------------------------------------------------------ the other sections
+def verify_gates(sec, lines, reports):
+    g = jload(str(reports / "gates.json"))
+    by_skill_n = {(r["skill"], r["n"]): r["power"] for r in g["table"]}
+    for head, rows in parse_tables(lines):
+        if head[0] == "power target":
+            for r in rows:
+                key = "0.80" if r[0].startswith("0.80") else "0.90"
+                check(sec, f"rows for skill 0.20 at {key}", r[1], g["by_target"][key]["n_200"])
+                check(sec, f"rows for skill 0.10 at {key}", r[2], g["by_target"][key]["n_400"])
+        else:
+            ns = [int(x) for x in head[1:]]
+            for r in rows:
+                sk = float(r[0])
+                for n, tok in zip(ns, r[1:]):
+                    check(sec, f"power skill {sk} n {n}", tok, by_skill_n[(sk, n)])
+    m = re.search(r"base rate ([\d.]+), (\d+) replicates, seed (\d+)", "\n".join(lines))
+    check(sec, "base rate", m.group(1), g["base_rate"])
+    check(sec, "replicates", m.group(2), g["reps"])
+    check(sec, "seed", m.group(3), g["seed"])
+
+
+def verify_latency(sec, lines, reports):
+    j = jload(str(reports / "card-latency.json"))
+    keys = {"in process, bundle preloaded": "in_process_ms", "HTTP service on loopback, bundle preloaded": "service_ms",
+            "command line, fresh process": "cli_fresh_process_ms"}
+    for _head, rows in parse_tables(lines):
+        for r in rows:
+            for col, name in zip(r[1:], ("p50", "p95", "max")):
+                check(sec, f"{r[0]} {name}", col, j[keys[r[0]]][name])
+    check(sec, "model id (as number of characters)", str(len(re.search(r"model (\w+)\.", "\n".join(lines)).group(1))),
+          len(j["model_id"]))
+
+
+def verify_runtime(sec, lines, reports):
+    j = jload(str(reports / "run-log.json"))
+    st = {s["stage"]: s["seconds"] for s in j["stages"]}
+    for _head, rows in parse_tables(lines):
+        for r in rows:
+            check(sec, f"stage {r[0]}", r[1], st[r[0]])
+    body = "\n".join(lines)
+    m = re.search(r"download ([\d.]+) s \((\d+) files, (\d+) bytes.*compute ([\d.]+) s, total ([\d.]+) s", body)
+    if m:                                                           # a run from a clean copy that downloaded the archives
+        seconds, files, size, compute, total = m.groups()
+    else:                                                           # a run that only verified the checksums of archives already in place
+        m = re.search(r"Checksum verification ([\d.]+) s \(no download in this run\), compute ([\d.]+) s, total ([\d.]+) s", body)
+        seconds, compute, total = m.groups()
+        files, size = "0", "0"
+        kind = j.get("data_stage_kind")
+        RESULTS.append((sec, "data stage kind", "checksum verification", kind, kind == "checksum verification"))
+    check(sec, "download seconds", seconds, j["download_seconds"])
+    check(sec, "downloaded files", files, j["downloaded_files"])
+    check(sec, "downloaded bytes", size, j["downloaded_bytes"])
+    check(sec, "compute seconds", compute, j["compute_seconds"])
+    check(sec, "total seconds", total, j["total_seconds"])
+    check(sec, "stage seconds minus download equals compute", compute, sum(st.values()) - j["download_seconds"])
+
+
+def latest_snapshot(reports: Path, source: str) -> str:
+    name = Path(sorted(glob.glob(str(reports / f"backtest-{source}-*.json")))[-1]).name
+    return name[len(f"backtest-{source}-"):-len(".json")]
+
+
+def verify_challengers(sec, lines, reports, source):
+    f = sorted(glob.glob(str(reports / "challengers" / f"backtest-{source}-*.json")))[-1]
+    a = agg(jload(f))
+    for _head, rows in parse_tables(lines):
+        for r in rows:
+            j = a[("ALL", r[0])]
+            check(sec, f"{r[0]} n", r[2], j["n"])
+            check(sec, f"{r[0]} logscore", r[3], j["logscore"] if r[3] != "n/a" else None)
+            if r[4] != "n/a (n/a to n/a)":
+                check_triple(sec, f"{r[0]} skill", r[4], skill(j), j["brier_skill_lo"], j["brier_skill_hi"])
+            check(sec, f"{r[0]} direction", r[5], j["direction_accuracy"])
+            check(sec, f"{r[0]} abstention", r[6], j["abstention_rate"])
+    text = "\n".join(lines)
+    for name in ("GBM", "local_eb"):
+        m = re.search(rf"{name} minus P2 log score is ([-+\d.]+)", text)
+        if m:
+            check(sec, f"{name} minus P2", m.group(1), a[("ALL", name)]["logscore"] - a[("ALL", "P2")]["logscore"])
+
+
+def ablation_file(reports: Path, source: str, setting: str) -> str:
+    snap = latest_snapshot(reports, source)
+    if setting.startswith("main run"):
+        return str(reports / f"backtest-{source}-{snap}.json")
+    return str(reports / "ablations" / f"backtest-{source}-{snap}--{setting}.json")
+
+
+def verify_ablations(sec, lines, reports, source):
+    for head, rows in parse_tables(lines):
+        if head[0] == "setting" and "P1 log score" in head:
+            for r in rows:
+                a = agg(jload(ablation_file(reports, source, r[0])))
+                p1, p2 = a[("ALL", "P1")], a[("ALL", "P2")]
+                check(sec, f"{r[0]} P1 logscore", r[1], p1["logscore"])
+                check(sec, f"{r[0]} P2 logscore", r[2], p2["logscore"])
+                check(sec, f"{r[0]} P2 minus P1", r[3], p2["logscore"] - p1["logscore"])
+                check_triple(sec, f"{r[0]} P2 skill", r[4], skill(p2), p2["brier_skill_lo"], p2["brier_skill_hi"])
+                check(sec, f"{r[0]} P2 direction", r[5], p2["direction_accuracy"])
+                check(sec, f"{r[0]} P2 coverage90", r[6], p2["coverage_90"])
+
+
+def verify_guard(sec, lines, reports, source):
+    main = agg(jload(ablation_file(reports, source, "main run")))[("ALL", "P2")]
+    off = agg(jload(ablation_file(reports, source, "p2-guard-off")))[("ALL", "P2")]
+    for head, rows in parse_tables(lines):
+        if head[0] == "selection":
+            for r in rows:
+                j = main if r[0] == "guarded" else off
+                t = tri(r[1])
+                check(sec, f"{r[0]} logscore", t[0], j["logscore"])
+                check(sec, f"{r[0]} logscore lo", t[1], j["logscore_lo"])
+                check(sec, f"{r[0]} crps", tri(r[2])[0], j["crps"])
+                check(sec, f"{r[0]} skill", tri(r[3])[0], skill(j))
+        elif head[0] == "log score":
+            t = tri(" ".join(rows[0][:1]))
+            check(sec, "paired log score difference", t[0], main["logscore"] - off["logscore"])
+            check(sec, "paired crps difference", tri(rows[0][1])[0], main["crps"] - off["crps"])
+            check(sec, "paired skill difference", tri(rows[0][2])[0], skill(main) - skill(off))
+
+
+def verify_cautionary(sec, lines, reports):
+    snap = latest_snapshot(reports, "upworthy")
+    rel_report = jload(str(reports / "ablations" / f"backtest-upworthy-{snap}--effect-scale-relative+s-star-realized.json"))
+    a = agg(rel_report)
+    for head, rows in parse_tables(lines):
+        if head[0] == "rung" and "n" in head and "coverage 80% / 90%" in head:
+            for r in rows:
+                j = a[("ALL", r[0])]
+                check(sec, f"{r[0]} n", r[1], j["n"])
+                check(sec, f"{r[0]} logscore", r[2], j["logscore"])
+                check_triple(sec, f"{r[0]} skill", r[3], skill(j), j["brier_skill_lo"], j["brier_skill_hi"])
+                c = tri(r[4])
+                check(sec, f"{r[0]} cov80", c[0], j["coverage_80"])
+                check(sec, f"{r[0]} cov90", c[1], j["coverage_90"])
+        elif head[:2] == ["rung", "decile"]:
+            cal = rel_report["tables"]["calibration_by_precision"]
+            for r in rows:
+                j = next(x for x in cal if x["rung"] == r[0] and x["decile"] == int(r[1]))
+                check(sec, f"cautionary {r[0]} d{r[1]} n", r[3], j["n"])
+                check(sec, f"cautionary {r[0]} d{r[1]} mean s_star", r[4], j["mean_s_star"])
+                check(sec, f"cautionary {r[0]} d{r[1]} event rate", r[6], j["event_rate"])
+
+
+def verify_learning(sec, lines, reports, source):
+    f = sorted(glob.glob(str(reports / f"learning-curve-{source}-*.json")))[-1]
+    j = jload(f)
+    text = "\n".join(lines)
+    m = re.search(r"Final origin ([\d-]+), (\d+) held-out rows in (\d+) tests", text)
+    check(sec, "heldout rows", m.group(2), j["heldout_rows"])
+    check(sec, "heldout tests", m.group(3), j["heldout_tests"])
+    check(sec, "final origin year", m.group(1)[:4], int(j["final_origin"][:4]))
+    g = j["gates"]["by_target"]
+    for tgt, n200, n400 in re.findall(r"power (0\.\d+): n_200 = (\d+), n_400 = (\d+)", text):
+        check(sec, f"gate n_200 at {tgt}", n200, g[f"{float(tgt):.2f}"]["n_200"])
+        check(sec, f"gate n_400 at {tgt}", n400, g[f"{float(tgt):.2f}"]["n_400"])
+    for head, rows in parse_tables(lines):
+        if head[0] == "fraction":
+            for r in rows:
+                x = next(z for z in j["rows"] if abs(z["fraction"] - float(r[0])) < 1e-9 and z["rung"] == r[2])
+                tag = f"fraction {r[0]} {r[2]}"
+                check(sec, tag + " history rows", r[1], round(x["n_fit_rows"]))
+                check_triple(sec, tag + " skill", r[3], x["skill"], x["skill_lo"], x["skill_hi"])
+                check(sec, tag + " seed sd", r[4], x["skill_seed_sd"])
+                check(sec, tag + " logscore", r[5], x["logscore"] if x.get("logscore") is not None else None)
+                check(sec, tag + " direction", r[6], x["direction_accuracy"])
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    here = Path(__file__).resolve().parents[1]
+    ap.add_argument("--readme", default=str(here / "README.md"))
+    ap.add_argument("--reports", default=None)
+    ap.add_argument("--min-per-table", type=int, default=3)
+    args = ap.parse_args()
+    root = os.environ.get("MOOTCOURT_DATA_ROOT")
+    reports = Path(args.reports) if args.reports else (Path(root) / "reports" if root else here / "reports")
+    sections = split_sections(Path(args.readme).read_text(encoding="utf-8"))
+    handlers = {
+        "Upworthy backtest": lambda s, ln: verify_backtest(s, ln, reports, "upworthy"),
+        "ASOS backtest": lambda s, ln: verify_backtest(s, ln, reports, "asos"),
+        "Synthetic backtest (synthetic data, known truth)": lambda s, ln: verify_backtest(s, ln, reports, "synthetic"),
+        "Synthetic gate power (synthetic data only)": lambda s, ln: verify_gates(s, ln, reports),
+        "Challengers (GBM, local_eb, text_lr), Upworthy": lambda s, ln: verify_challengers(s, ln, reports, "upworthy"),
+        "Ablations, Upworthy": lambda s, ln: verify_ablations(s, ln, reports, "upworthy"),
+        "P2 admission guard, Upworthy": lambda s, ln: verify_guard(s, ln, reports, "upworthy"),
+        "Ablations, Asos": lambda s, ln: verify_ablations(s, ln, reports, "asos"),
+        "P2 admission guard, Asos": lambda s, ln: verify_guard(s, ln, reports, "asos"),
+        "The cautionary run": lambda s, ln: verify_cautionary(s, ln, reports),
+        "Learning curve, Asos": lambda s, ln: verify_learning(s, ln, reports, "asos"),
+        "Learning curve, Upworthy": lambda s, ln: verify_learning(s, ln, reports, "upworthy"),
+        "Card latency": lambda s, ln: verify_latency(s, ln, reports),
+        "Run time": lambda s, ln: verify_runtime(s, ln, reports),
+    }
+    skipped = [k for k in sections if k not in handlers and parse_tables(sections[k])]
+    for name, fn in handlers.items():
+        if name not in sections:
+            RESULTS.append((name, "section missing in README", "", "", False))
+            continue
+        fn(name, sections[name])
+    bad = [r for r in RESULTS if not r[4]]
+    print(f"README: {args.readme}\nreports: {reports}\n")
+    print(f"{'section':<52}{'checked':>9}{'mismatch':>10}")
+    fail = False
+    for name in handlers:
+        rs = [r for r in RESULTS if r[0] == name]
+        nb = sum(1 for r in rs if not r[4])
+        low = len([r for r in rs if r[4]]) < args.min_per_table
+        fail |= low
+        print(f"{name:<52}{len(rs):>9}{nb:>10}{'   TOO FEW' if low else ''}")
+    for k in skipped:
+        print(f"{k:<52}{'not checked (no table handler)':>30}")
+    print(f"\ntotal checked {len(RESULTS)}, mismatches {len(bad)}")
+    for r in bad[:40]:
+        print(f"MISMATCH [{r[0]}] {r[1]}: printed {r[2]!r}, derived {r[3]!r}")
+    return 1 if bad or fail else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

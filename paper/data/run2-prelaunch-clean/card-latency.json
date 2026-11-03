@@ -1,0 +1,29 @@
+{
+ "bundle_load_ms": 72.6,
+ "cli_fresh_process_ms": {
+  "max": 1130.4,
+  "n": 3,
+  "p50": 1124.1,
+  "p95": 1129.8
+ },
+ "impressions": 20000,
+ "in_process_ms": {
+  "max": 19.8,
+  "n": 30,
+  "p50": 16.8,
+  "p95": 17.4
+ },
+ "model_id": "5f1c07efd730",
+ "service_ms": {
+  "max": 46.9,
+  "n": 30,
+  "p50": 19.0,
+  "p95": 21.8
+ },
+ "source": "upworthy",
+ "statuses": {
+  "abstain": 11,
+  "issue": 19
+ },
+ "under_one_second_p95": true
+}

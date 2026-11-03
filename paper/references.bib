@@ -1,0 +1,682 @@
+% references.bib for the Moot Court paper.
+% Built from paper/related-work.md (fetch-verified 2 November 2026).
+% Fields are limited to what related-work.md verified; nothing was added from memory
+% except publishers implied by the venue, DOIs that appear in the fetched URL, and
+% diacritics restored on author names as LaTeX escapes (Montiel Olea, Schultzberg,
+% Franberg, Brocker, Schon, Prollochs, Parnamets, Bibaut, Aubin Le Quere).
+% Where the verification URL was a Crossref API record, the entry carries the DOI
+% and the API URL is kept in a comment line above the entry rather than in a url field.
+%
+% SKIPPED (marked UNVERIFIED in related-work.md; no entry written):
+%   U.1  "Deng et al. (2018)" refinement of the Microsoft empirical Bayes prior. Not located.
+%   U.2  2024 hierarchical Bayesian paper on cumulative returns to experimentation, cited as
+%        [ETSB24] in Sudijono et al. (2024). Title and venue not located.
+%   U.3  Ron Kohavi, Roger Longbotham. Online Controlled Experiments and A/B Testing.
+%        Encyclopedia of Machine Learning and Data Mining. Entry not fetched; cite
+%        kohavi2022intuition instead.
+% Two dataset-usage details (ASOS checkpoints in che2024optimization and kim2026odds) are
+% flagged in related-work.md as not confirmed from the fetched page; the entries themselves
+% are verified and included.
+
+% ------------------------------------------------------------------
+% 1. Empirical Bayes and meta-analysis over many A/B tests
+% ------------------------------------------------------------------
+
+@article{azevedo2019empirical,
+  author    = {Eduardo M. Azevedo and Alex Deng and Jos{\'e} L. {Montiel Olea} and E. Glen Weyl},
+  title     = {{Empirical Bayes Estimation of Treatment Effects with Many A/B Tests: An Overview}},
+  journal   = {AEA Papers and Proceedings},
+  year      = {2019},
+  volume    = {109},
+  pages     = {43--47},
+  publisher = {American Economic Association},
+  doi       = {10.1257/pandp.20191003},
+  url       = {https://www.aeaweb.org/articles?id=10.1257/pandp.20191003},
+}
+
+@article{azevedo2020fat,
+  author    = {Eduardo M. Azevedo and Alex Deng and Jos{\'e} Luis {Montiel Olea} and Justin Rao and E. Glen Weyl},
+  title     = {{A/B Testing with Fat Tails}},
+  journal   = {Journal of Political Economy},
+  year      = {2020},
+  volume    = {128},
+  number    = {12},
+  publisher = {University of Chicago Press},
+  doi       = {10.1086/710607},
+  url       = {https://ideas.repec.org/a/ucp/jpolec/doi10.1086-710607.html},
+}
+
+% Also fetched: https://exp-platform.com/objective-bayesian-ab/ and the Crossref record for the DOI.
+@inproceedings{deng2015objective,
+  author    = {Alex Deng},
+  title     = {{Objective Bayesian Two Sample Hypothesis Testing for Online Controlled Experiments}},
+  booktitle = {{Proceedings of the 24th International Conference on World Wide Web Companion (WWW 2015 Companion), 1st Workshop on Online and Offline Evaluation of Web-based Services}},
+  year      = {2015},
+  address   = {Florence, Italy},
+  publisher = {ACM},
+  doi       = {10.1145/2740908.2743062},
+  url       = {https://archives.iw3c2.org/www2015/documents/proceedings/companion/p913.pdf},
+}
+
+% Also fetched: Crossref record for the DOI.
+@inproceedings{coey2019improving,
+  author    = {Dominic Coey and Tom Cunningham},
+  title     = {{Improving Treatment Effect Estimators Through Experiment Splitting}},
+  booktitle = {{The World Wide Web Conference (WWW 2019)}},
+  year      = {2019},
+  pages     = {285--295},
+  publisher = {ACM},
+  doi       = {10.1145/3308558.3313452},
+  url       = {https://ai.meta.com/research/publications/improving-treatment-effect-estimators-through-experiment-splitting/},
+}
+
+@misc{goldberg2017decision,
+  author        = {David Goldberg and James E. Johndrow},
+  title         = {{A Decision Theoretic Approach to A/B Testing}},
+  year          = {2017},
+  eprint        = {1710.03410},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1710.03410},
+}
+
+@misc{guo2020empirical,
+  author        = {F. Richard Guo and James McQueen and Thomas S. Richardson},
+  title         = {{Empirical Bayes for Large-scale Randomized Experiments: a Spectral Approach}},
+  year          = {2020},
+  eprint        = {2002.02564},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ME},
+  url           = {https://arxiv.org/abs/2002.02564},
+}
+
+% Also fetched: Crossref record for the DOI.
+@inproceedings{deng2021postselection,
+  author        = {Alex Deng and Yicheng Li and Jiannan Lu and Vivek Ramamurthy},
+  title         = {{On Post-Selection Inference in A/B Testing}},
+  booktitle     = {{Proceedings of the 27th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD 2021)}},
+  year          = {2021},
+  pages         = {2743--2752},
+  publisher     = {ACM},
+  doi           = {10.1145/3447548.3467129},
+  eprint        = {1910.03788},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1910.03788},
+}
+
+@misc{guo2021machine,
+  author        = {Yongyi Guo and Dominic Coey and Mikael Konutgan and Wenting Li and Chris Schoener and Matt Goldman},
+  title         = {{Machine Learning for Variance Reduction in Online Experiments}},
+  year          = {2021},
+  eprint        = {2106.07263},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2106.07263},
+}
+
+@misc{schultzberg2026bayesian,
+  author        = {M{\aa}rten Schultzberg and Mattias Fr{\aa}nberg},
+  title         = {{Bayesian Inference Procedures for A/B Testing: An Overview}},
+  year          = {2026},
+  eprint        = {2608.12949},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2608.12949},
+}
+
+% Fetched: https://api.crossref.org/works/10.1080/01621459.1975.10479864
+@article{efron1975stein,
+  author    = {Bradley Efron and Carl Morris},
+  title     = {{Data Analysis Using Stein's Estimator and its Generalizations}},
+  journal   = {Journal of the American Statistical Association},
+  year      = {1975},
+  volume    = {70},
+  number    = {350},
+  pages     = {311--319},
+  publisher = {Taylor \& Francis},
+  doi       = {10.1080/01621459.1975.10479864},
+}
+
+% ------------------------------------------------------------------
+% 2. Predicting or forecasting experiment outcomes before or early in the test
+% ------------------------------------------------------------------
+
+@techreport{athey2019surrogate,
+  author      = {Susan Athey and Raj Chetty and Guido W. Imbens and Hyunseung Kang},
+  title       = {{The Surrogate Index: Combining Short-Term Proxies to Estimate Long-Term Treatment Effects More Rapidly and Precisely}},
+  institution = {National Bureau of Economic Research},
+  type        = {NBER Working Paper},
+  number      = {26463},
+  year        = {2019},
+  note        = {Revised 2024},
+  url         = {https://www.nber.org/papers/w26463},
+}
+
+@misc{johari2015always,
+  author        = {Ramesh Johari and Leo Pekelis and David J. Walsh},
+  title         = {{Always Valid Inference: Bringing Sequential Analysis to A/B Testing}},
+  year          = {2015},
+  eprint        = {1512.04922},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1512.04922},
+}
+
+% Fetched: https://api.crossref.org/works/10.1287/opre.2021.2135
+@article{johari2022always,
+  author    = {Ramesh Johari and Pete Koomen and Leonid Pekelis and David Walsh},
+  title     = {{Always Valid Inference: Continuous Monitoring of A/B Tests}},
+  journal   = {Operations Research},
+  year      = {2022},
+  volume    = {70},
+  number    = {3},
+  pages     = {1806--1821},
+  publisher = {INFORMS},
+  doi       = {10.1287/opre.2021.2135},
+}
+
+@article{howard2021timeuniform,
+  author        = {Steven R. Howard and Aaditya Ramdas and Jon McAuliffe and Jasjeet Sekhon},
+  title         = {{Time-uniform, nonparametric, nonasymptotic confidence sequences}},
+  journal       = {Annals of Statistics},
+  year          = {2021},
+  volume        = {49},
+  number        = {2},
+  pages         = {1055--1080},
+  publisher     = {Institute of Mathematical Statistics},
+  eprint        = {1810.08240},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.ST},
+  url           = {https://arxiv.org/abs/1810.08240},
+}
+
+@misc{deng2016continuous,
+  author        = {Alex Deng and Jiannan Lu and Shouyuan Chen},
+  title         = {{Continuous Monitoring of A/B Tests without Pain: Optional Stopping in Bayesian Testing}},
+  year          = {2016},
+  eprint        = {1602.05549},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1602.05549},
+}
+
+% Also fetched: https://ideas.repec.org/a/inm/ormksc/v44y2025i5p995-1016.html
+@article{ye2025lola,
+  author        = {Zikun Ye and Hema Yoganarasimhan and Yufeng Zheng},
+  title         = {{LOLA: LLM-Assisted Online Learning Algorithm for Content Experiments}},
+  journal       = {Marketing Science},
+  year          = {2025},
+  volume        = {44},
+  number        = {5},
+  pages         = {995--1016},
+  publisher     = {INFORMS},
+  eprint        = {2406.02611},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2406.02611},
+}
+
+@inproceedings{clark2026predict,
+  author    = {Nathan Clark},
+  title     = {{Predict, Observe, Retrain: Can a Language Model Learn to Pick A/B Test Winners from Its Own Feedback Loop?}},
+  booktitle = {{NeurIPS 2026 Workshop on Grounded User Simulation for Model Evaluation and Training}},
+  year      = {2026},
+  note      = {Workshop poster},
+  url       = {https://neurips.cc/virtual/2026/169211},
+}
+
+@misc{persson2026statistical,
+  author        = {Joel Persson and M{\aa}rten Schultzberg and Sebastian Ankargren},
+  title         = {{Statistical Foundations of LLM-based A/B Testing: A Surrogacy Framework for Human Causal Inference}},
+  year          = {2026},
+  eprint        = {2606.17165},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2606.17165},
+}
+
+@misc{ankargren2026when,
+  author       = {Sebastian Ankargren and Joel Persson and M{\aa}rten Schultzberg},
+  title        = {{When Can LLMs Replace Humans in A/B Tests?}},
+  howpublished = {Spotify Engineering (blog)},
+  year         = {2026},
+  month        = {August},
+  note         = {Blog post, 13 August 2026},
+  url          = {https://engineering.atspotify.com/2026/8/when-can-llms-replace-humans-in-a-b-tests/},
+}
+
+@article{ashokkumar2026large,
+  author    = {Ashwini Ashokkumar and Luke Hewitt and Isaias Ghezae and Robb Willer},
+  title     = {{Large Language Models Can Predict the Results of Social Science Experiments}},
+  journal   = {Nature},
+  year      = {2026},
+  volume    = {656},
+  pages     = {115--122},
+  publisher = {Nature Portfolio},
+  url       = {https://www.gsb.stanford.edu/faculty-research/publications/large-language-models-can-predict-results-social-science-experiments},
+}
+
+% ------------------------------------------------------------------
+% 3. Human forecasts of experiment results
+% ------------------------------------------------------------------
+
+@article{dellavigna2018predicting,
+  author    = {Stefano DellaVigna and Devin Pope},
+  title     = {{Predicting Experimental Results: Who Knows What?}},
+  journal   = {Journal of Political Economy},
+  year      = {2018},
+  volume    = {126},
+  number    = {6},
+  pages     = {2410--2456},
+  publisher = {University of Chicago Press},
+  url       = {https://www.nber.org/papers/w22566},
+}
+
+% Fetched: https://api.crossref.org/works/10.1126/science.aaz1704
+@article{dellavigna2019predict,
+  author    = {Stefano DellaVigna and Devin Pope and Eva Vivalt},
+  title     = {{Predict science to improve science}},
+  journal   = {Science},
+  year      = {2019},
+  volume    = {366},
+  number    = {6464},
+  pages     = {428--429},
+  publisher = {American Association for the Advancement of Science},
+  doi       = {10.1126/science.aaz1704},
+}
+
+% Also fetched: Crossref record for the author list.
+@article{milkman2021megastudies,
+  author    = {Katherine L. Milkman and others},
+  title     = {{Megastudies improve the impact of applied behavioural science}},
+  journal   = {Nature},
+  year      = {2021},
+  volume    = {600},
+  pages     = {478--483},
+  publisher = {Nature Portfolio},
+  doi       = {10.1038/s41586-021-04128-4},
+  url       = {https://www.nature.com/articles/s41586-021-04128-4},
+}
+
+% Also fetched: https://exp-platform.com/abtestingintuitionbusters/ and the Crossref record for the DOI.
+@inproceedings{kohavi2022intuition,
+  author    = {Ron Kohavi and Alex Deng and Lukas Vermeer},
+  title     = {{A/B Testing Intuition Busters: Common Misunderstandings in Online Controlled Experiments}},
+  booktitle = {{Proceedings of the 28th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD 2022)}},
+  year      = {2022},
+  pages     = {3168--3177},
+  publisher = {ACM},
+  doi       = {10.1145/3534678.3539160},
+  url       = {https://airbnb.tech/wp-content/uploads/sites/19/2025/10/ABTestingIntuitionBusters.pdf},
+}
+
+% Fetched: https://api.crossref.org/works/10.1145/2487575.2488217
+@inproceedings{kohavi2013online,
+  author    = {Ron Kohavi and Alex Deng and Brian Frasca and Toby Walker and Ya Xu and Nils Pohlmann},
+  title     = {{Online controlled experiments at large scale}},
+  booktitle = {{Proceedings of the 19th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD 2013)}},
+  year      = {2013},
+  pages     = {1168--1176},
+  publisher = {ACM},
+  doi       = {10.1145/2487575.2488217},
+}
+
+% Fetched: https://api.crossref.org/works/10.1007/s10618-008-0114-1
+@article{kohavi2009controlled,
+  author    = {Ron Kohavi and Roger Longbotham and Dan Sommerfield and Randal M. Henne},
+  title     = {{Controlled experiments on the web: survey and practical guide}},
+  journal   = {Data Mining and Knowledge Discovery},
+  year      = {2009},
+  volume    = {18},
+  number    = {1},
+  pages     = {140--181},
+  publisher = {Springer},
+  doi       = {10.1007/s10618-008-0114-1},
+}
+
+@article{kohavi2017surprising,
+  author  = {Ron Kohavi and Stefan Thomke},
+  title   = {{The Surprising Power of Online Experiments}},
+  journal = {Harvard Business Review},
+  year    = {2017},
+  month   = {September},
+  url     = {https://hbr.org/2017/09/the-surprising-power-of-online-experiments},
+}
+
+% ------------------------------------------------------------------
+% 4. Decision value of experimentation
+% ------------------------------------------------------------------
+
+@article{feit2019test,
+  author        = {Elea McDonnell Feit and Ron Berman},
+  title         = {{Test \& Roll: Profit-Maximizing A/B Tests}},
+  journal       = {Marketing Science},
+  year          = {2019},
+  publisher     = {INFORMS},
+  doi           = {10.1287/mksc.2019.1194},
+  eprint        = {1811.00457},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/1811.00457},
+}
+
+@book{kohavi2020trustworthy,
+  author    = {Ron Kohavi and Diane Tang and Ya Xu},
+  title     = {{Trustworthy Online Controlled Experiments: A Practical Guide to A/B Testing}},
+  publisher = {Cambridge University Press},
+  year      = {2020},
+  url       = {https://experimentguide.com/},
+}
+
+@article{berman2022false,
+  author    = {Ron Berman and Christophe {Van den Bulte}},
+  title     = {{False Discovery in A/B Testing}},
+  journal   = {Management Science},
+  year      = {2022},
+  volume    = {68},
+  number    = {9},
+  pages     = {6762--6782},
+  publisher = {INFORMS},
+  url       = {https://econpapers.repec.org/RePEc:inm:ormnsc:v:68:y:2022:i:9:p:6762-6782},
+}
+
+@article{lewis2015unfavorable,
+  author    = {Randall Lewis and Justin M. Rao},
+  title     = {{The Unfavorable Economics of Measuring the Returns to Advertising}},
+  journal   = {Quarterly Journal of Economics},
+  year      = {2015},
+  volume    = {130},
+  number    = {4},
+  pages     = {1941--1973},
+  publisher = {Oxford University Press},
+  url       = {https://econpapers.repec.org/RePEc:oup:qjecon:v:130:y:2015:i:4:p:1941-1973},
+}
+
+@misc{sudijono2024optimizing,
+  author        = {Timothy Sudijono and Simon Ejdemyr and Apoorva Lal and Martin Tingley},
+  title         = {{Optimizing Returns from Experimentation Programs}},
+  year          = {2024},
+  eprint        = {2412.05508},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2412.05508},
+}
+
+@inproceedings{chou2025evaluating,
+  author        = {Winston Chou and Colin Gray and Nathan Kallus and Aur{\'e}lien Bibaut and Simon Ejdemyr},
+  title         = {{Evaluating Decision Rules Across Many Weak Experiments}},
+  booktitle     = {{Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD 2025)}},
+  year          = {2025},
+  publisher     = {ACM},
+  eprint        = {2502.08763},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2502.08763},
+}
+
+@misc{larsen2022statistical,
+  author        = {Nicholas Larsen and Jonathan Stallrich and Srijan Sengupta and Alex Deng and Ron Kohavi and Nathaniel Stevens},
+  title         = {{Statistical Challenges in Online Controlled Experiments: A Review of A/B Testing Methodology}},
+  year          = {2022},
+  eprint        = {2212.11366},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ME},
+  url           = {https://arxiv.org/abs/2212.11366},
+}
+
+% ------------------------------------------------------------------
+% 5. Calibration, scoring and abstention
+% ------------------------------------------------------------------
+
+% Fetched: https://api.crossref.org/works/10.1198/016214506000001437
+@article{gneiting2007strictly,
+  author    = {Tilmann Gneiting and Adrian E. Raftery},
+  title     = {{Strictly Proper Scoring Rules, Prediction, and Estimation}},
+  journal   = {Journal of the American Statistical Association},
+  year      = {2007},
+  volume    = {102},
+  number    = {477},
+  pages     = {359--378},
+  publisher = {Taylor \& Francis},
+  doi       = {10.1198/016214506000001437},
+}
+
+% Fetched: https://api.crossref.org/works/10.1111/j.1467-9868.2007.00587.x
+@article{gneiting2007probabilistic,
+  author    = {Tilmann Gneiting and Fadoua Balabdaoui and Adrian E. Raftery},
+  title     = {{Probabilistic Forecasts, Calibration and Sharpness}},
+  journal   = {Journal of the Royal Statistical Society Series B},
+  year      = {2007},
+  volume    = {69},
+  number    = {2},
+  pages     = {243--268},
+  publisher = {Wiley},
+  doi       = {10.1111/j.1467-9868.2007.00587.x},
+}
+
+@article{matheson1976scoring,
+  author    = {James E. Matheson and Robert L. Winkler},
+  title     = {{Scoring Rules for Continuous Probability Distributions}},
+  journal   = {Management Science},
+  year      = {1976},
+  volume    = {22},
+  number    = {10},
+  pages     = {1087--1096},
+  publisher = {INFORMS},
+  url       = {https://econpapers.repec.org/RePEc:inm:ormnsc:v:22:y:1976:i:10:p:1087-1096},
+}
+
+% Fetched: https://api.crossref.org/works/10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2
+@article{murphy1973vector,
+  author    = {Allan H. Murphy},
+  title     = {{A New Vector Partition of the Probability Score}},
+  journal   = {Journal of Applied Meteorology},
+  year      = {1973},
+  volume    = {12},
+  number    = {4},
+  pages     = {595--600},
+  publisher = {American Meteorological Society},
+  doi       = {10.1175/1520-0450(1973)012<0595:ANVPOT>2.0.CO;2},
+}
+
+@article{brocker2007increasing,
+  author    = {Jochen Br{\"o}cker and Leonard A. Smith},
+  title     = {{Increasing the reliability of reliability diagrams}},
+  journal   = {Weather and Forecasting},
+  year      = {2007},
+  volume    = {22},
+  number    = {3},
+  pages     = {651--661},
+  publisher = {American Meteorological Society},
+  url       = {https://researchonline.lse.ac.uk/id/eprint/22217},
+}
+
+@inproceedings{vaicenavicius2019evaluating,
+  author    = {Juozas Vaicenavicius and David Widmann and Carl Andersson and Fredrik Lindsten and Jacob Roll and Thomas Sch{\"o}n},
+  title     = {{Evaluating model calibration in classification}},
+  booktitle = {{Proceedings of the 22nd International Conference on Artificial Intelligence and Statistics (AISTATS 2019)}},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {89},
+  year      = {2019},
+  pages     = {3459--3467},
+  publisher = {PMLR},
+  url       = {https://proceedings.mlr.press/v89/vaicenavicius19a.html},
+}
+
+% Fetched: https://api.crossref.org/works/10.1109/TIT.1970.1054406
+@article{chow1970optimum,
+  author    = {C. K. Chow},
+  title     = {{On optimum recognition error and reject tradeoff}},
+  journal   = {IEEE Transactions on Information Theory},
+  year      = {1970},
+  volume    = {16},
+  number    = {1},
+  pages     = {41--46},
+  publisher = {IEEE},
+  doi       = {10.1109/TIT.1970.1054406},
+}
+
+@misc{geifman2017selective,
+  author        = {Yonatan Geifman and Ran El-Yaniv},
+  title         = {{Selective Classification for Deep Neural Networks}},
+  year          = {2017},
+  eprint        = {1705.08500},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://arxiv.org/abs/1705.08500},
+}
+
+@book{vovk2005algorithmic,
+  author    = {Vladimir Vovk and Alexander Gammerman and Glenn Shafer},
+  title     = {{Algorithmic Learning in a Random World}},
+  publisher = {Springer},
+  year      = {2005},
+  doi       = {10.1007/b106715},
+  url       = {https://link.springer.com/book/10.1007/b106715},
+}
+
+@misc{angelopoulos2021gentle,
+  author        = {Anastasios N. Angelopoulos and Stephen Bates},
+  title         = {{A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification}},
+  year          = {2021},
+  eprint        = {2107.07511},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2107.07511},
+}
+
+% ------------------------------------------------------------------
+% 6. Prior work on the two datasets
+% ------------------------------------------------------------------
+
+@article{matias2021upworthy,
+  author    = {J. Nathan Matias and Kevin Munger and Marianne {Aubin Le Qu{\'e}r{\'e}} and Charles Ebersole},
+  title     = {{The Upworthy Research Archive, a time series of 32,487 experiments in U.S. media}},
+  journal   = {Scientific Data},
+  year      = {2021},
+  volume    = {8},
+  pages     = {195},
+  publisher = {Nature Portfolio},
+  doi       = {10.1038/s41597-021-00934-7},
+  url       = {https://www.nature.com/articles/s41597-021-00934-7},
+}
+
+@article{banerjee2025language,
+  author    = {Akshina Banerjee and Oleg Urminsky},
+  title     = {{The Language That Drives Engagement: A Systematic Large-scale Analysis of Headline Experiments}},
+  journal   = {Marketing Science},
+  year      = {2025},
+  volume    = {44},
+  number    = {3},
+  pages     = {566--592},
+  publisher = {INFORMS},
+  url       = {https://ideas.repec.org/a/inm/ormksc/v44y2025i3p566-592.html},
+}
+
+% Also fetched: Crossref record for the author list.
+@article{robertson2023negativity,
+  author    = {Claire E. Robertson and Nicolas Pr{\"o}llochs and Kaoru Schwarzenegger and Philip P{\"a}rnamets and Jay J. {Van Bavel} and Stefan Feuerriegel},
+  title     = {{Negativity drives online news consumption}},
+  journal   = {Nature Human Behaviour},
+  year      = {2023},
+  volume    = {7},
+  pages     = {812--822},
+  publisher = {Nature Portfolio},
+  doi       = {10.1038/s41562-023-01538-4},
+  url       = {https://www.nature.com/articles/s41562-023-01538-4},
+}
+
+@inproceedings{liu2021datasets,
+  author        = {C. H. Bryan Liu and Angelo Cardoso and Paul Couturier and Emma J. McCoy},
+  title         = {{Datasets for Online Controlled Experiments}},
+  booktitle     = {{Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks (NeurIPS 2021)}},
+  year          = {2021},
+  eprint        = {2111.10198},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2111.10198},
+}
+
+@misc{ottaviani2024testing,
+  author        = {Matteo Ottaviani and Stefan M. Herzog and Pietro Leonardo Nickl and Philipp Lorenz-Spreen},
+  title         = {{How A/B testing changes the dynamics of information spreading on a social network}},
+  year          = {2024},
+  eprint        = {2405.01165},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2405.01165},
+}
+
+@misc{liu2024statistical,
+  author        = {C. H. Bryan Liu},
+  title         = {{Some Statistical and Data Challenges When Building Early-Stage Digital Experimentation and Measurement Capabilities}},
+  year          = {2024},
+  note          = {PhD thesis},
+  eprint        = {2405.03579},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2405.03579},
+}
+
+@misc{che2024optimization,
+  author        = {Ethan Che and Daniel R. Jiang and Hongseok Namkoong and Jimmy Wang},
+  title         = {{Optimization-Driven Adaptive Experimentation}},
+  year          = {2024},
+  eprint        = {2408.04570},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2408.04570},
+}
+
+@misc{kim2026odds,
+  author        = {Sulgi Kim},
+  title         = {{Odds-Ratio Thompson Sampling: A Specification and Design Guide for Contrast-Based Multi-Armed Bandits}},
+  year          = {2026},
+  eprint        = {2609.19709},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2609.19709},
+}
+
+% ------------------------------------------------------------------
+% 7. Transfer across experiments and kernel or retrieval-based estimators
+% ------------------------------------------------------------------
+
+@misc{li2025learning,
+  author        = {Xinran Li},
+  title         = {{Learning Across Experiments and Time: Tackling Heterogeneity in A/B Testing}},
+  year          = {2025},
+  eprint        = {2511.21282},
+  archivePrefix = {arXiv},
+  url           = {https://arxiv.org/abs/2511.21282},
+}
+
+@misc{rosenman2020combining,
+  author        = {Evan T. R. Rosenman and Guillaume Basse and Art B. Owen and Mike Baiocchi},
+  title         = {{Combining Observational and Experimental Datasets Using Shrinkage Estimators}},
+  year          = {2020},
+  eprint        = {2002.06708},
+  archivePrefix = {arXiv},
+  primaryClass  = {stat.ME},
+  url           = {https://arxiv.org/abs/2002.06708},
+}
+
+% Fetched: https://api.crossref.org/works/10.1016/j.jml.2007.12.005
+@article{baayen2008mixed,
+  author    = {R. H. Baayen and D. J. Davidson and D. M. Bates},
+  title     = {{Mixed-effects modeling with crossed random effects for subjects and items}},
+  journal   = {Journal of Memory and Language},
+  year      = {2008},
+  volume    = {59},
+  number    = {4},
+  pages     = {390--412},
+  publisher = {Elsevier},
+  doi       = {10.1016/j.jml.2007.12.005},
+}
+
+% Fetched: https://api.crossref.org/works/10.1016/0197-2456(86)90046-2
+@article{dersimonian1986meta,
+  author    = {Rebecca DerSimonian and Nan Laird},
+  title     = {{Meta-analysis in clinical trials}},
+  journal   = {Controlled Clinical Trials},
+  year      = {1986},
+  volume    = {7},
+  number    = {3},
+  pages     = {177--188},
+  publisher = {Elsevier},
+  doi       = {10.1016/0197-2456(86)90046-2},
+}
+
+% Fetched: https://api.crossref.org/works/10.1017/CBO9780511790942
+@book{gelman2007multilevel,
+  author    = {Andrew Gelman and Jennifer Hill},
+  title     = {{Data Analysis Using Regression and Multilevel/Hierarchical Models}},
+  publisher = {Cambridge University Press},
+  year      = {2007},
+  doi       = {10.1017/CBO9780511790942},
+}

@@ -1,0 +1,23 @@
+{
+ "split": "checkout_flow",
+ "baselineTreatment": "off",
+ "comparisonTreatment": "on",
+ "versionStartTime": "2024-05-01T00:00:00Z",
+ "versionEndTime": "2024-05-15T00:00:00Z",
+ "significanceThreshold": 0.05,
+ "mcc": "none",
+ "metrics": [
+  {
+   "name": "checkout",
+   "key": "checkout",
+   "impact": 0.08,
+   "impactLower": 0.0,
+   "impactUpper": 0.16,
+   "pValue": 0.04,
+   "sampleSizeOfBaseline": 3000,
+   "sampleSizeOfComparison": 3050,
+   "srmPValue": 0.4,
+   "metricDefinition": {}
+  }
+ ]
+}

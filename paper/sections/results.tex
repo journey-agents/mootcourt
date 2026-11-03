@@ -1,0 +1,74 @@
+\section{Results}
+\label{sec:results}
+Every number in this section is rendered from a report JSON file by \texttt{paper/build\_tables.py}; the file path and snapshot identifier are written as a comment at the top of each table.
+
+\subsection{A cautionary run: ratio metrics and realized precision}
+\label{sec:cautionary}
+The first run of the protocol defined the effect as relative lift against the earliest-created arm and handed the forecaster each row's realized standard error. Both choices are common in practice, and both let post-launch information into a pre-launch question. Table~\ref{tab:cautionary} shows what that does, on the same 13,247 contrasts and nine origins, reproduced by one flag of the released code. By decile of the realized standard error the mean effect runs from minus 39 to plus 80 percent and the significant-positive rate from 0.5 to 21 percent, because a ratio against a noisy reference arm moves with the reference's realized click-through rate. The empirical-Bayes rung, which assumes the effect is independent of its precision, predicts the opposite gradient: a 16 percent chance of a significant positive result in the most precise decile, where it happened 0.5 percent of the time, and 3 percent in the least precise, where it happened 21 percent of the time. Its 90 percent intervals cover 65 percent of outcomes at both extremes. Its Brier skill against the base rate was minus 0.107, a number that a reader without this table would have taken as evidence that the ledger has no signal. Nothing in that run was a coding error; the protocol was wrong. Every number after this subsection uses the pre-launch-clean protocol of Section~\ref{sec:setting}: an absolute effect, a planned-exposure standard error from the cell's trailing level, and a feature allow-list that cannot read anything measured during the test.
+
+\begin{table}[t]\centering\scriptsize
+\caption{The cautionary run on the headline archive (relative lift, realized precision), by decile of realized standard error.}
+\label{tab:cautionary}
+\resizebox{\columnwidth}{!}{\input{tables/cautionary-upworthy}}
+\end{table}
+
+\subsection{Skill ladder on the headline archive}
+\label{sec:ladder-results}
+Table~\ref{tab:main-upworthy} gives the pooled scores over nine quarterly origins and 3,797 held-out tests. The empirical-Bayes prior (P1) improves the logarithmic score over the base-rate rung by 0.145 nats and is calibrated: its 80 and 90 percent intervals cover 81 and 89 percent of outcomes, and its Brier skill against the cell base rate is 0.001 with a 90 percent interval from minus 0.002 to 0.005, which is to say indistinguishable from zero. The ladder's direction accuracy of 0.573 against a ceiling of 0.823 equals that of the \emph{always\_reference} baseline (0.578): on this archive the only direction signal the ledger carries is that the earliest-created arm tends to win, and P1 learns exactly that through the cell mean. Every learned challenger loses to P1: the gradient-boosted model has Brier skill of minus 0.137 and the local empirical-Bayes comparison set minus 0.015. The precedent rung (P2) runs with the admission guard of Section~\ref{sec:method}: a precedent weight above zero is admitted only when its out-of-time gain over the prior clears two standard errors across tests. The guard leaves lambda at zero in 93 percent of cell-origin pairs (the guard itself holds it there in 52 percent, the selection in the rest), and where P2 does speak it does not help: its pooled logarithmic score is minus 0.896 against P1's minus 0.881 and its Brier skill minus 0.008 (minus 0.012 to minus 0.003). Without the guard the same rung falls to minus 0.935 and a Brier skill of minus 0.030. The guard recovers most of the loss and none of the gain, because on this archive the precedents carry no gain to recover.
+
+\begin{table*}[t]\centering\scriptsize
+\caption{Headline archive, pooled over origins and cells. Intervals are bootstrap by test.}
+\label{tab:main-upworthy}
+\resizebox{\textwidth}{!}{\input{tables/main-upworthy}}
+\end{table*}
+
+\subsection{Calibration by precision}
+Table~\ref{tab:calibration-upworthy} is the diagnostic the cautionary run lacked. By decile of planned exposure, P1's mean $\psig$ runs from 0.076 to 0.152 while the realized significant-positive rate runs from 0.065 to 0.110; the forecaster rises with exposure somewhat faster than the data, which is the whole of its miscalibration, and 90 percent coverage stays between 0.83 and 0.94 across deciles. P2's columns track P1's to within 0.015 in the first eight deciles; in the top two, where it admits precedents most often, its mean $\psig$ of 0.136 and 0.167 overshoots event rates of 0.081 and 0.110, and its 90 percent coverage runs from 0.83 to 0.95.
+
+\begin{table}[t]\centering\scriptsize
+\caption{Calibration by decile of planned exposure per arm (headline archive).}
+\label{tab:calibration-upworthy}
+\resizebox{\columnwidth}{!}{\input{tables/calibration-upworthy}}
+\end{table}
+
+\subsection{Decision value}
+Table~\ref{tab:decision-upworthy} answers the question the launching team actually asks. Choosing a quarter of each period's tests at random captures 0.250 of the realized positive lift; choosing by P1's $\pwin$ captures 0.250 and by P2's 0.255; an oracle that knows the outcomes captures 0.686. The ledger, on this archive, does not tell the team which headline tests to run; it tells them how their results will be distributed. We report this separately from calibration on purpose: a calibrated forecaster with no discrimination has zero decision value, and the two properties should never be summed into one number.
+
+\begin{table}[t]\centering\small
+\caption{Lift captured by prioritization policies at $K$ equal to a quarter of each period's tests (headline archive).}
+\label{tab:decision-upworthy}
+\resizebox{\columnwidth}{!}{\input{tables/decision-upworthy}}
+\end{table}
+
+\subsection{Learning curve and gates}
+Subsampling the ledger visible at the final origin (Table~\ref{tab:learning-upworthy}) shows P1 reaching a Brier skill near 0.03 on the final quarter's held-out tests with intervals above zero from five percent of the ledger onward, while the gradient-boosted challenger stays negative at every fraction and the text classifier stays at zero. The gate sizes from the power simulation are 175 and 375 rows for skills of 0.20 and 0.10 at the release target of 0.90 (125 and 300 at 0.80, Table~\ref{tab:gates}); decidability is reported by tests, not rows, because contrasts cluster within tests.
+
+\begin{table*}[t]\centering\scriptsize
+\caption{Brier skill against the base rate by fraction of the visible ledger at the final origin (headline archive).}
+\label{tab:learning-upworthy}
+\resizebox{\textwidth}{!}{\input{tables/learning-upworthy}}
+\end{table*}
+
+\begin{table}[t]\centering\small
+\caption{Gate sizes from the power simulation.}
+\label{tab:gates}
+\resizebox{\columnwidth}{!}{\input{tables/gates}}
+\end{table}
+
+\subsection{Abstention}
+Table~\ref{tab:abstention-upworthy} counts the triggers. The reliability trigger fires only at the burn-in origin, where no earlier report exists; support fires in the smallest cell; novelty fires on a few hundred rows; the decision-instability trigger never fires on this archive. The pooled abstention rate is 8.7 percent. \todo{Compare skill on issued versus forced rows once the ablation that removes one trigger at a time is in the report.}
+
+\begin{table}[t]\centering\small
+\caption{Abstention triggers (headline archive).}
+\label{tab:abstention-upworthy}
+\resizebox{\columnwidth}{!}{\input{tables/abstention-upworthy}}
+\end{table}
+
+\subsection{The deployment-shaped archive}
+Table~\ref{tab:main-asos} reports the same protocol on 68 experiments. Every metric cell is undecidable at both gate targets, the abstention rate is 0.552 because the support trigger fires in most cells, and P1's Brier skill is minus 0.107 with an interval that reaches zero. The reader should take exactly one thing from this table: the protocol says \emph{undecidable} when the ledger is too small, instead of reporting a number that looks like a result. The nominal calendar of this archive means its rolling origin tests the mechanics, not drift.
+
+\begin{table*}[t]\centering\scriptsize
+\caption{Deployment-shaped archive, pooled over origins and metric cells.}
+\label{tab:main-asos}
+\resizebox{\textwidth}{!}{\input{tables/main-asos}}
+\end{table*}

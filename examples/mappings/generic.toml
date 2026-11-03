@@ -1,0 +1,25 @@
+# Mapping for a results file whose columns are not the exchange columns. Edit the right-hand names to match your file.
+# docs/ledger-format.md lists every exchange column. Use: moot ingest --format generic --input results.csv --mapping generic.toml
+
+[columns]
+experiment_id = "experiment"
+variant_id = "variant"
+baseline_id = "control"
+metric_id = "metric"
+effect = "delta"
+# Give a standard error directly (se = "delta_se"), or interval bounds, or a half-width, or a p-value:
+ci_low = "delta_low"
+ci_high = "delta_high"
+n_baseline = "control_units"
+n_variant = "variant_units"
+started_at = "start"
+ended_at = "end"
+
+[constants]
+source_system = "my_platform"
+variance_method = "interval bounds at 0.95, normal approximation"
+effect_unit = "absolute"
+
+[options]
+ci_level = 0.95   # confidence level of the interval columns
+scale = 1.0       # multiply effect and se by this (0.01 turns percent into a fraction)
