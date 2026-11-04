@@ -611,7 +611,11 @@ def fit(
     df = _load_source_ledger(ledger_path, source)
     model_id, sid, role, summary = fit_command(source, df, ledger_path.parent, models_dir, reports_dir)
     typer.echo(f"fitted model {model_id} at snapshot {sid} in {time.perf_counter() - t0:.1f} s; it is the {role} for {source}")
-    if summary is None:
+    from mootcourt.registry import Registry
+
+    if summary is None and Registry(models_dir).pending_refresh(source) == model_id:
+        typer.echo("a refresh of the champion is pending: same method, newer data; `moot backtest` decides it (no further `moot fit`)")
+    elif summary is None:
         typer.echo("no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`")
     else:
         typer.echo(f"backtest summary filled from {summary['report']}: Brier skill {summary['brier_skill']:.4f} at n = {summary['n']}")
@@ -1017,7 +1021,7 @@ def init(
     typer.echo(f"wrote {res['config']}")
     typer.echo(f"data root {res['data_root']} (layout created)")
     typer.echo(f"sample ledger {res['sample_ledger']} (synthetic)")
-    typer.echo(f"quick gates {res['gates']} ({res['gate_replicates']} replicates; run `moot simulate power` for the full simulation)")
+    typer.echo(f"quick gates {res['gates']} ({res['gate_replicates']} replicates; run `moot simulate gate-power` for the full simulation)")
     typer.echo("Next, from the project folder:")
     for i, c in enumerate(res["commands"], 1):
         typer.echo(f"  {i}. {c}")

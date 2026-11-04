@@ -109,8 +109,9 @@ def init_project(directory: Path | str, data_root: Path | str | None = None, cel
     sample_exchange().to_csv(sample, index=False)
     gates = layout.gates_path
     if not gates.exists():
-        simulate.write_gates(gates, target=load_settings(d)["gate"]["target_power"], reps=QUICK_GATE["reps"], B=QUICK_GATE["B"],
-                             with_table=False)
+        rows_per_test, icc = simulate.SOURCE_DEPENDENCE[0.30]
+        simulate.write_gates(gates, base=0.30, base_rates=[0.30], target=load_settings(d)["gate"]["target_power"], reps=QUICK_GATE["reps"],
+                             B=QUICK_GATE["B"], with_table=False, rows_per_test=rows_per_test, icc=icc, level=simulate.DEFAULT_LEVEL)
     commands = [f"moot ingest --format generic --input {shlex.quote(str(sample))} --source-name sample",
                 "moot fit --source sample && moot backtest --source sample",
                 "moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00"]

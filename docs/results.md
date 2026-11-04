@@ -10,7 +10,7 @@ The first full run scored Upworthy on a relative lift against a noisy reference 
 - **Brier skill** is one minus the rung's Brier score over the Brier score of a constant base rate. Zero is no better than the base rate; the interval is a 90 percent bootstrap interval that resamples whole tests. An interval that contains zero means the data cannot tell the rung from the base rate. P0 is that base rate, so its skill is zero by construction and its interval has no width. The pooled table also gives Bonferroni-adjusted bounds, which cover every interval of the table at once.
 - **Decidable** says whether the number of scored tests reaches the gate, so that a skill difference of 0.20 or 0.10 could be told from zero. The gate is sized by test at the simulated base rate nearest the cell's own; one column keeps the earlier base rate of 0.3. "Undecidable at this n" is not a negative result. See [gates](concepts.md#gates).
 - **Coverage 80% / 90%** is the share of outcomes inside the central intervals for the observed estimate. Near 0.80 and 0.90 is calibrated. It holds on average and not within every group: the table by decile of the realized over the planned standard error shows where it does not.
-- **AUC and resolution** measure discrimination apart from skill: whether the forecasts separate rows with the event from rows without it. A rung can have a Brier skill of zero and still discriminate, or the reverse. The same table scores the forecast against the event defined on the planned standard error; the headline Brier skill stays on the realized event.
+- **AUC and resolution** measure discrimination apart from skill. AUC is whether the forecasts rank rows with the event above rows without it. Resolution is the Murphy term of the Brier score: how far the event frequencies of equal-mass forecast bins lie from the overall rate; it is zero for a forecaster that gives every row the same probability, and it is not the spread of the forecasts. A rung can have a Brier skill of zero and still discriminate, or the reverse. The same table scores the forecast against the event defined on the planned standard error; the headline Brier skill stays on the realized event.
 - **Guard pairs** list every cell and origin where the admission guard allowed a weight on precedents, with the gain it saw in selection and what the next quarter gave.
 - **Abstention rate** is the share of rows on which a card would have declined. It is reported with every score.
 - **Decision value** is reported at a budget of 25 percent of the tests, with the difference from random order and its interval. A difference whose interval contains zero is no edge.
@@ -67,19 +67,19 @@ Calibration error of `p_sig`, all cells pooled. The percentile is read in a perf
 | P1 | 0.0137 | 100.0 | 100.0 | 0.0148 | 100.0 | 1.43 | 0.1476 |
 | P2 | 0.0183 | 100.0 | 100.0 | 0.0183 | 100.0 | 1.38 | 0.1282 |
 
-Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the part of the Brier score that comes from forecasts differing between rows. The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
+Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the Murphy term of the Brier score: how far the observed event frequencies of equal-mass forecast bins lie from the overall event rate (zero when every bin has the overall rate, and not a measure of how much the forecasts vary). The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
 
 | rung | AUC of the event (90% interval) | resolution of the event | event rate, realized standard error | event rate, planned standard error | Brier skill on the planned event (90% interval) |
 |---|---|---|---|---|---|
-| GBM | 0.5614 (0.5440 to 0.5770) | 0.00929 | 0.1765 (mean `p_sig`) | 0.0814 | -0.1211 (-0.1364 to -0.1057) |
-| GBM+cal | 0.5543 (0.5385 to 0.5710) | 0.00124 | 0.1148 (mean `p_sig`) | 0.0814 | -0.0048 (-0.0082 to -0.0017) |
-| P0 | 0.5475 (0.5294 to 0.5655) | 0.00092 | 0.1098 (mean `p_sig`) | 0.0814 | 0.0000 (0.0000 to 0.0000) |
-| P1 | 0.5525 (0.5355 to 0.5704) | 0.00127 | 0.1044 (mean `p_sig`) | 0.0814 | -0.0002 (-0.0037 to 0.0038) |
-| P2 | 0.5595 (0.5429 to 0.5767) | 0.00133 | 0.1094 (mean `p_sig`) | 0.0814 | -0.0033 (-0.0068 to 0.0001) |
-| local_eb | 0.5537 (0.5360 to 0.5700) | 0.00277 | 0.1032 (mean `p_sig`) | 0.0814 | -0.0099 (-0.0158 to -0.0043) |
-| local_eb+cal | 0.5479 (0.5311 to 0.5639) | 0.00082 | 0.1136 (mean `p_sig`) | 0.0814 | 0.0008 (-0.0012 to 0.0028) |
-| text_lr | 0.5731 (0.5567 to 0.5896) | 0.00232 | 0.0993 (mean `p_sig`) | 0.0814 | 0.0037 (-0.0027 to 0.0098) |
-| text_lr+cal | 0.5822 (0.5673 to 0.5979) | 0.00138 | 0.1133 (mean `p_sig`) | 0.0814 | 0.0028 (-0.0011 to 0.0063) |
+| GBM | 0.5614 (0.5440 to 0.5770) | 0.00034 | 0.1765 (mean `p_sig`) | 0.0814 | -0.1211 (-0.1364 to -0.1057) |
+| GBM+cal | 0.5543 (0.5385 to 0.5710) | 0.00035 | 0.1148 (mean `p_sig`) | 0.0814 | -0.0048 (-0.0082 to -0.0017) |
+| P0 | 0.5475 (0.5294 to 0.5655) | 0.00050 | 0.1098 (mean `p_sig`) | 0.0814 | 0.0000 (0.0000 to 0.0000) |
+| P1 | 0.5525 (0.5355 to 0.5704) | 0.00027 | 0.1044 (mean `p_sig`) | 0.0814 | -0.0002 (-0.0037 to 0.0038) |
+| P2 | 0.5595 (0.5429 to 0.5767) | 0.00034 | 0.1094 (mean `p_sig`) | 0.0814 | -0.0033 (-0.0068 to 0.0001) |
+| local_eb | 0.5537 (0.5360 to 0.5700) | 0.00037 | 0.1032 (mean `p_sig`) | 0.0814 | -0.0099 (-0.0158 to -0.0043) |
+| local_eb+cal | 0.5479 (0.5311 to 0.5639) | 0.00035 | 0.1136 (mean `p_sig`) | 0.0814 | 0.0008 (-0.0012 to 0.0028) |
+| text_lr | 0.5731 (0.5567 to 0.5896) | 0.00052 | 0.0993 (mean `p_sig`) | 0.0814 | 0.0037 (-0.0027 to 0.0098) |
+| text_lr+cal | 0.5822 (0.5673 to 0.5979) | 0.00064 | 0.1133 (mean `p_sig`) | 0.0814 | 0.0028 (-0.0011 to 0.0063) |
 
 Calibration by precision: rows in deciles of planned exposures per arm (fewer groups when exposures tie). A forecaster calibrated overall but not within these groups is not calibrated; `mean p_sig` should match `event rate` and `coverage 90%` should be near 0.90 in every group.
 
@@ -223,17 +223,17 @@ Calibration error of `p_sig`, all cells pooled. The percentile is read in a perf
 | P1 | 0.1271 | 98.8 | 100.0 | 0.1447 | 99.6 | 3.82 | 0.5652 |
 | P2 | 0.1271 | 98.8 | 100.0 | 0.1447 | 99.6 | 3.82 | 0.5652 |
 
-Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the part of the Brier score that comes from forecasts differing between rows. The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
+Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the Murphy term of the Brier score: how far the observed event frequencies of equal-mass forecast bins lie from the overall event rate (zero when every bin has the overall rate, and not a measure of how much the forecasts vary). The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
 
 | rung | AUC of the event (90% interval) | resolution of the event | event rate, realized standard error | event rate, planned standard error | Brier skill on the planned event (90% interval) |
 |---|---|---|---|---|---|
-| GBM | 0.5471 (0.4132 to 0.6754) | 0.09906 | 0.4463 (mean `p_sig`) | 0.1395 | -0.7184 (-1.2760 to -0.3740) |
-| GBM+cal | 0.5081 (0.3706 to 0.6305) | 0.00654 | 0.1672 (mean `p_sig`) | 0.1395 | -0.0090 (-0.0756 to 0.0446) |
-| P0 | 0.5289 (0.4213 to 0.6245) | 0.00727 | 0.1708 (mean `p_sig`) | 0.1395 | 0.0000 (0.0000 to 0.0000) |
-| P1 | 0.5213 (0.3704 to 0.6443) | 0.02153 | 0.1784 (mean `p_sig`) | 0.1395 | -0.1073 (-0.2366 to -0.0020) |
-| P2 | 0.5213 (0.3704 to 0.6443) | 0.02153 | 0.1784 (mean `p_sig`) | 0.1395 | -0.1073 (-0.2366 to -0.0020) |
-| local_eb | 0.5398 (0.4114 to 0.6661) | 0.06015 | 0.3204 (mean `p_sig`) | 0.1395 | -0.3832 (-0.7359 to -0.1384) |
-| local_eb+cal | 0.5175 (0.3800 to 0.6400) | 0.00303 | 0.1531 (mean `p_sig`) | 0.1395 | 0.0150 (-0.0351 to 0.0691) |
+| GBM | 0.5471 (0.4132 to 0.6754) | 0.00966 | 0.4463 (mean `p_sig`) | 0.1395 | -0.7184 (-1.2760 to -0.3740) |
+| GBM+cal | 0.5081 (0.3706 to 0.6305) | 0.00620 | 0.1672 (mean `p_sig`) | 0.1395 | -0.0090 (-0.0756 to 0.0446) |
+| P0 | 0.5289 (0.4213 to 0.6245) | 0.00255 | 0.1708 (mean `p_sig`) | 0.1395 | 0.0000 (0.0000 to 0.0000) |
+| P1 | 0.5213 (0.3704 to 0.6443) | 0.01341 | 0.1784 (mean `p_sig`) | 0.1395 | -0.1073 (-0.2366 to -0.0020) |
+| P2 | 0.5213 (0.3704 to 0.6443) | 0.01341 | 0.1784 (mean `p_sig`) | 0.1395 | -0.1073 (-0.2366 to -0.0020) |
+| local_eb | 0.5398 (0.4114 to 0.6661) | 0.00677 | 0.3204 (mean `p_sig`) | 0.1395 | -0.3832 (-0.7359 to -0.1384) |
+| local_eb+cal | 0.5175 (0.3800 to 0.6400) | 0.00634 | 0.1531 (mean `p_sig`) | 0.1395 | 0.0150 (-0.0351 to 0.0691) |
 
 Calibration by precision: rows in deciles of planned exposures per arm (fewer groups when exposures tie). A forecaster calibrated overall but not within these groups is not calibrated; `mean p_sig` should match `event rate` and `coverage 90%` should be near 0.90 in every group.
 
@@ -348,19 +348,19 @@ Calibration error of `p_sig`, all cells pooled. The percentile is read in a perf
 | P1 | 0.0265 | 95.2 | 97.8 | 0.0284 | 91.4 | 1.09 | 0.0921 |
 | P2 | 0.0265 | 95.2 | 97.8 | 0.0284 | 91.4 | 1.09 | 0.0921 |
 
-Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the part of the Brier score that comes from forecasts differing between rows. The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
+Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the Murphy term of the Brier score: how far the observed event frequencies of equal-mass forecast bins lie from the overall event rate (zero when every bin has the overall rate, and not a measure of how much the forecasts vary). The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
 
 | rung | AUC of the event (90% interval) | resolution of the event | event rate, realized standard error | event rate, planned standard error | Brier skill on the planned event (90% interval) |
 |---|---|---|---|---|---|
-| GBM | 0.7275 (0.7042 to 0.7502) | 0.01293 | 0.1966 (mean `p_sig`) | 0.1990 | -0.0573 (-0.0860 to -0.0309) |
-| GBM+cal | 0.7286 (0.7054 to 0.7520) | 0.01733 | 0.1869 (mean `p_sig`) | 0.1990 | -0.0678 (-0.0986 to -0.0391) |
-| P0 | 0.7437 (0.7216 to 0.7677) | 0.02310 | 0.1807 (mean `p_sig`) | 0.1990 | 0.0000 (0.0000 to 0.0000) |
-| P1 | 0.7640 (0.7412 to 0.7882) | 0.02076 | 0.1819 (mean `p_sig`) | 0.1990 | 0.0023 (-0.0128 to 0.0168) |
-| P2 | 0.7640 (0.7412 to 0.7882) | 0.02076 | 0.1819 (mean `p_sig`) | 0.1990 | 0.0023 (-0.0128 to 0.0168) |
-| local_eb | 0.7552 (0.7335 to 0.7780) | 0.02051 | 0.1787 (mean `p_sig`) | 0.1990 | -0.0097 (-0.0274 to 0.0083) |
-| local_eb+cal | 0.7552 (0.7336 to 0.7787) | 0.02524 | 0.1842 (mean `p_sig`) | 0.1990 | -0.0115 (-0.0308 to 0.0061) |
-| text_lr | 0.7399 (0.7156 to 0.7646) | 0.02700 | 0.1820 (mean `p_sig`) | 0.1990 | -0.0359 (-0.0550 to -0.0165) |
-| text_lr+cal | 0.7379 (0.7138 to 0.7625) | 0.02098 | 0.1827 (mean `p_sig`) | 0.1990 | -0.0281 (-0.0463 to -0.0119) |
+| GBM | 0.7275 (0.7042 to 0.7502) | 0.01696 | 0.1966 (mean `p_sig`) | 0.1990 | -0.0573 (-0.0860 to -0.0309) |
+| GBM+cal | 0.7286 (0.7054 to 0.7520) | 0.01693 | 0.1869 (mean `p_sig`) | 0.1990 | -0.0678 (-0.0986 to -0.0391) |
+| P0 | 0.7437 (0.7216 to 0.7677) | 0.02050 | 0.1807 (mean `p_sig`) | 0.1990 | 0.0000 (0.0000 to 0.0000) |
+| P1 | 0.7640 (0.7412 to 0.7882) | 0.02171 | 0.1819 (mean `p_sig`) | 0.1990 | 0.0023 (-0.0128 to 0.0168) |
+| P2 | 0.7640 (0.7412 to 0.7882) | 0.02171 | 0.1819 (mean `p_sig`) | 0.1990 | 0.0023 (-0.0128 to 0.0168) |
+| local_eb | 0.7552 (0.7335 to 0.7780) | 0.02055 | 0.1787 (mean `p_sig`) | 0.1990 | -0.0097 (-0.0274 to 0.0083) |
+| local_eb+cal | 0.7552 (0.7336 to 0.7787) | 0.02062 | 0.1842 (mean `p_sig`) | 0.1990 | -0.0115 (-0.0308 to 0.0061) |
+| text_lr | 0.7399 (0.7156 to 0.7646) | 0.01867 | 0.1820 (mean `p_sig`) | 0.1990 | -0.0359 (-0.0550 to -0.0165) |
+| text_lr+cal | 0.7379 (0.7138 to 0.7625) | 0.01836 | 0.1827 (mean `p_sig`) | 0.1990 | -0.0281 (-0.0463 to -0.0119) |
 
 Calibration by precision: rows in deciles of planned exposures per arm (fewer groups when exposures tie). A forecaster calibrated overall but not within these groups is not calibrated; `mean p_sig` should match `event rate` and `coverage 90%` should be near 0.90 in every group.
 
@@ -604,7 +604,7 @@ Paired difference, guarded minus unguarded, on the same rows (positive log score
 
 ### Positive control, synthetic
 
-The synthetic archive with no text signal shows that the guard holds the weight on precedents at zero when there is nothing to learn. This run plants a text effect between headlines with and without a signal word (`moot simulate ledger --text-effect 1.0`, a 1.0 percent lift, 0.33 to 0.67 prior standard deviations in the default cells) and runs the whole protocol on it. If the guard works, it should admit a weight in `headline_only`, where the effect is planted, and hold it at zero in the other cells. 3576 rows scored over 8 origins. Command: `moot backtest --source synthetic --origins quarterly --challenger gbm --challenger local_eb --seed 0`.
+The synthetic archive with no text signal shows how often the guard admits a weight when no text signal is planted; that share is not a false-positive rate, because the ledger still has structure the precedents capture (method call 198). This run plants a text effect between headlines with and without a signal word (`moot simulate ledger --text-effect 1.0`, a 1.0 percent lift, 0.33 to 0.67 prior standard deviations in the default cells) and runs the whole protocol on it. If the guard works, it should admit a weight in `headline_only`, where the effect is planted, and hold it at zero in the other cells. 3576 rows scored over 8 origins. Command: `moot backtest --source synthetic --origins quarterly --challenger gbm --challenger local_eb --seed 0`.
 
 | cell | rung | n | log score | Brier skill (90% interval) |
 |---|---|---|---|---|
@@ -637,11 +637,11 @@ Sensitivity of the guard: the share of cell fits (multiplier 2.0) that admit a w
 | 1000 | 1.0 | 0.33 | 36 | 9 | 0.25 |
 | 1000 | 2.0 | 0.67 | 36 | 28 | 0.78 |
 | 1000 | 4.0 | 1.33 | 36 | 36 | 1.00 |
-| 3700 | 0.0 | 0.00 | 36 | 24 | 0.67 |
-| 3700 | 0.5 | 0.17 | 36 | 27 | 0.75 |
-| 3700 | 1.0 | 0.33 | 36 | 32 | 0.89 |
-| 3700 | 2.0 | 0.67 | 36 | 36 | 1.00 |
-| 3700 | 4.0 | 1.33 | 36 | 36 | 1.00 |
+| 11100 | 0.0 | 0.00 | 36 | 14 | 0.39 |
+| 11100 | 0.5 | 0.17 | 36 | 21 | 0.58 |
+| 11100 | 1.0 | 0.33 | 36 | 34 | 0.94 |
+| 11100 | 2.0 | 0.67 | 36 | 36 | 1.00 |
+| 11100 | 4.0 | 1.33 | 36 | 36 | 1.00 |
 
 ### Admission and the exposure proxy
 
@@ -832,6 +832,6 @@ With tens to a few hundred rows in a cell, a boosted model on raw features canno
 
 That is tested, not asserted. `moot backtest --challenger gbm` (also `local_eb` and `text_lr`) adds a challenger on the same features, origins and rows as one more rung of the main report, with a raw row and a recalibrated one whose probability goes through a map fit on the rows visible at the origin only. Its row in the results above is the result, whichever way it came out. `local_eb` is an empirical-Bayes prior fit on the k nearest visible rows in feature space, with no shrinkage toward the cell prior, and `text_lr` is a TF-IDF logistic regression on the headline text (the difference of the two headlines where the ledger has both) that predicts the direction and the significant-positive event. Two direction baselines are scored beside every rung: always the reference arm and always the variant. The earliest-created arm is the reference, so the first one measures the creation-order effect the archive carries.
 
-P2 sits behind an admission guard. Choosing the precedent weight from about forty candidates on the same validation rows fits noise, so a weight above zero is used for a cell and origin only when its gain in log score over weight zero on those rows, minus two standard errors across tests, is above zero. Otherwise P2 equals P1 for that cell and origin. The guard limits how much noise the selection fits, and it is a weak limit: the positive control above shows that at the size of the Upworthy headline-only cell it admits a weight in most cells where no signal exists, and the guard pairs show what the admitted weights did out of time. It does not promise that P2 beats P1 on later tests. The results above show guarded and unguarded selection side by side on the same rows; `--p2-guard off` runs the unguarded rule and `--p2-guard 1.0` loosens the guard to one standard error.
+P2 sits behind an admission guard. Choosing the precedent weight from about forty candidates on the same validation rows fits noise, so a weight above zero is used for a cell and origin only when its gain in log score over weight zero on those rows, minus two standard errors across tests, is above zero. Otherwise P2 equals P1 for that cell and origin. The guard limits how much noise the selection fits, and it is a weak limit: the positive control above shows that at the size of the Upworthy headline-only cell it admits a weight in most cells with no planted text signal (the share admitted, not a false-positive rate: the synthetic ledger still has structure the precedents capture, method call 198), and the guard pairs show what the admitted weights did out of time. It does not promise that P2 beats P1 on later tests. The results above show guarded and unguarded selection side by side on the same rows; `--p2-guard off` runs the unguarded rule and `--p2-guard 1.0` loosens the guard to one standard error.
 
 Ablations change one setting at a time (`--features`, `--bandwidth-mult`, `--lambda`, `--kappa`, `--prior`, `--p2-selection`, `--recency`, `--p2-guard`, `--pairwise`, `--admission`, `--drop-trigger`) and each writes its own report under `reports/ablations`. The feature, bandwidth, selection, recency and pairwise ablations also run with the guard off, named with `+p2-guard-off`. `moot backtest --learning-curve 0.1,0.25,0.5,1 --seeds 3` shows how skill grows with the history used, against the gate sizes. `make ablations` and `make learning-curve` run the full sets.

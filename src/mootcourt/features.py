@@ -279,7 +279,8 @@ class FeatureSpace:
             raw = self._cell_matrix([cell] * len(heads), np.full(len(heads), n_variants), self.cells)
             return (raw - self.mean) / self.std
         if exposure is None:
-            logexp = np.full(len(heads), self.mean[-1])
+            # the exposure column: the last one, or the last before the pair features of a pairwise space (REV-N-006)
+            logexp = np.full(len(heads), self.mean[len(self.mean) - 1 - (len(PAIR_FEATURES) if self.pairwise else 0)])
         else:
             expo = np.broadcast_to(np.asarray(exposure, dtype=np.float64), (len(heads),))
             if np.any(expo <= 0):

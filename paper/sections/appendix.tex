@@ -56,8 +56,8 @@ Its intervals cover 78 and 89 percent, its expected calibration error of 0.027 s
 % src: $RUN4/backtest-synthetic-20261103-bf4fd286e2b2.json tables.decision_value origin=ALL budget=0.25 captured_fraction random 0.2502, P1 0.4453, diff_random 0.1951 (0.1732, 0.2156), oracle 0.6104 (tables/decision-intervals-synthetic.tex)
 Here, unlike on the headline archive, ranking by $\pwin$ has decision value for the prior itself, 0.445 of the positive lift against 0.250 for random order (plus 0.195, 0.173 to 0.216) and 0.610 for the oracle, because the three cells differ in their means and the cell is known before launch: the measure responds to between-cell differences the ledger can see as well as to within-cell differences a rung can rank.
 
-% src: $RUN4/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows (multiplier 2.0, 12 seeds, 36 cells): n_tests 300 share_admitted 0.028, 0.028, 0.056, 0.194, 0.861 for text_effect_strength 0, 0.5, 1, 2, 4; n_tests 1000 share_admitted 0.028, 0.056, 0.250, 0.778, 1.000; n_tests 3700 share_admitted 0.667, 0.750, 0.889, 1.000, 1.000 (tables/positive-control-sensitivity.tex); strength_over_prior_sd headline_only 0 to 1.33, image_only 0 to 2.67; $RUN4/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=headline_only] n_tests 2280
-Sensitivity by planted strength and ledger size (Table~\ref{tab:positive-control-sensitivity}) gives the guard's admission curve: with 300 tests per ledger it admits a weight in 3, 3, 6, 19 and 86 percent of cells for planted lifts of 0, 0.5, 1, 2 and 4 percent (0 to 2.7 prior standard deviations, by cell), with 1,000 tests in 3, 6, 25, 78 and 100 percent, and with 3,700 tests, the size of the headline-only cell, in 67, 75, 89, 100 and 100 percent. The guard finds a planted two-percent effect, two thirds of a prior standard deviation in the headline-only cell, reliably at a thousand tests; at the size of the real cell it admits a weight in two thirds of cells with nothing planted, so there the admission says little and the realized out-of-time difference (Table~\ref{tab:guard-pairs}) is the evidence.
+% src: $RUN4/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows (multiplier 2.0, 12 seeds, 36 cells): n_tests 300 share_admitted 0.028, 0.028, 0.056, 0.194, 0.861 for text_effect_strength 0, 0.5, 1, 2, 4; n_tests 1000 share_admitted 0.028, 0.056, 0.250, 0.778, 1.000; n_tests 11100 rows_per_cell 7400 share_admitted 0.389, 0.583, 0.944, 1.000, 1.000 (tables/positive-control-sensitivity.tex); strength_over_prior_sd headline_only 0 to 1.33, image_only 0 to 2.67; $RUN4/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=headline_only] n_tests 2280
+Sensitivity by planted strength and ledger size (Table~\ref{tab:positive-control-sensitivity}) gives the guard's admission curve: with 300 tests per ledger it admits a weight in 3, 3, 6, 19 and 86 percent of cells for planted lifts of 0, 0.5, 1, 2 and 4 percent (0 to 2.7 prior standard deviations, by cell), with 1,000 tests (667 rows per cell) in 3, 6, 25, 78 and 100 percent, and with 11,100 tests (7,400 rows per cell, the size of the headline-only cell, because the generator spreads tests over three cells) in 39, 58, 94, 100 and 100 percent. The guard finds a planted two-percent effect, two thirds of a prior standard deviation in the headline-only cell, reliably at a thousand tests, and a one-percent effect reliably at the size of the real cell; there it also admits a weight in 39 percent of cells with no planted text effect, admissions that carry a positive held-out gain and so are not false positives (Section~\ref{sec:limitations}), and the realized out-of-time difference on the real archive (Table~\ref{tab:guard-pairs}) is the evidence that counts.
 
 \section{Tooling Landscape}
 \label{app:landscape}
@@ -219,9 +219,30 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 
 % src: tables/positive-control-sensitivity.tex from $RUN4/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity
 \begin{table}[tp]\centering\scriptsize
-\caption{Share of synthetic cell fits in which the two-standard-error guard admits a weight above zero, by planted lift and ledger size (12 seeds, 36 cells per row); 3,700 tests is the size of the headline-only cell.}
+\caption{Share of synthetic cell fits in which the two-standard-error guard admits a weight above zero, by planted lift and ledger size, counted in rows per cell because the guard works per cell (12 seeds, 36 cells per row); 7,400 rows per cell is the size of the headline-only cell.}
 \label{tab:positive-control-sensitivity}
-\input{tables/positive-control-sensitivity}
+\resizebox{\columnwidth}{!}{\input{tables/positive-control-sensitivity}}
+\end{table}
+
+% src: tables/guard-gain-diagnostic.tex from $RUN4/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_gain_diagnostic.rows
+\begin{table}[tp]\centering\scriptsize
+\caption{The admission guard on synthetic ledgers with no planted text effect, by size (12 seeds, 36 cells per row): the mean in-selection gain of the best candidate weight over weight zero (nats per row), its mean clustered standard error, their ratio, the share of cells with a positive gain and the share the two-standard-error rule admits.}
+\label{tab:guard-gain-diagnostic}
+\resizebox{\columnwidth}{!}{\input{tables/guard-gain-diagnostic}}
+\end{table}
+
+% src: tables/guard-gain-held-out.tex from $RUN4/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_held_out_gain
+\begin{table}[tp]\centering\scriptsize
+\caption{The in-selection gain against a held-out gain on the same synthetic ledgers (a random 15 percent of tests held out, by test; no planted text effect; nats per row): over all cells, over the cells the two-standard-error rule admits, and over the cells an unguarded rule would admit (count in parentheses).}
+\label{tab:guard-gain-held-out}
+\resizebox{\columnwidth}{!}{\input{tables/guard-gain-held-out}}
+\end{table}
+
+% src: tables/guard-fit-fraction.tex from $RUN4/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_fit_fraction_stability
+\begin{table}[tp]\centering\scriptsize
+\caption{Stability of the admission decision at 3,700 tests (36 cells, no planted text effect): the share of cells admitted when the fit uses the first 85, 90, 95 or 100 percent of rows in time order, or a random 85 percent.}
+\label{tab:guard-fit-fraction}
+\resizebox{0.8\columnwidth}{!}{\input{tables/guard-fit-fraction}}
 \end{table}
 
 % src: tables/guard-pairs-upworthy.tex from $RUN4/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs
@@ -233,7 +254,7 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 
 % src: tables/discrimination-upworthy.tex from $RUN4/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate auc_event, resolution_event, auc_direction, resolution_direction
 \begin{table}[tp]\centering\scriptsize
-\caption{Discrimination apart from skill, headline archive: AUC of $\psig$ against the significant-positive event and of the direction probability against the sign, with 90 percent intervals by test, and the resolution term (mean squared deviation of the forecast from the base rate) of each.}
+\caption{Discrimination apart from skill, headline archive: AUC of $\psig$ against the significant-positive event and of the direction probability against the sign, with 90 percent intervals by test, and the Murphy resolution term of each over ten equal-mass bins (the bin-weighted squared gap between a bin's observed frequency and the event rate), whose estimate is biased upward by about $9/N$ times the rate times one minus the rate and is read as a ranking of rungs on the same rows.}
 \label{tab:discrimination}
 \resizebox{\columnwidth}{!}{\input{tables/discrimination-upworthy}}
 \end{table}

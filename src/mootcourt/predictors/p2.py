@@ -87,7 +87,7 @@ from mootcourt.predictors.base import Predictive, build_grid
 from mootcourt.predictors.p1 import P1Predictor, marginal_logpdf_rows, p_sig_t, scale_from_sd, sd_equivalent
 
 _CHUNK = 256
-_KERNEL_FLOOR = 1e-100  # below this peak kernel value a query is rescaled so that squared weights do not underflow
+_F32_SMALLEST = float(np.finfo(np.float32).smallest_subnormal)   # below this the float32 kernel of the fit-time validation is exactly zero
 _SD_FLOOR = 1e-9
 _MIN_CV_ROWS = 5
 _LAMBDA_TIE = 1e-3  # nats of mean log score below which two lambdas are treated as tied
@@ -491,20 +491,12 @@ class P2Predictor:
             recency = np.exp2(-age / hl)
         kern_all = np.exp(d2 * inv) * recency
         peak = float(kern_all.max())
-        if peak == 0.0:
-            # The kernel underflows to exactly zero for every precedent: the query is far from all of them, the fit-time validation never saw
+        if peak < _F32_SMALLEST:
+            # The kernel is below the float32 range the validation used (or is exactly zero) for every precedent: the query is far from all of
+            # them and the fit-time validation never saw
             # such a query (it drops them), and a weight chosen on in-support queries applied to one dissimilar precedent would be an
             # unvalidated forecast. The state is empty with a weight of zero, so the predictive is P1's (REV-L-021).
             return NeighborState((), np.zeros(0), np.zeros(0), np.zeros(0), (), par["mu"], tau, 0.0, 0.0, nu=par["nu"])
-        if peak < _KERNEL_FLOOR:
-            # A query far from every precedent (a small bandwidth in many standardized dimensions reaches this, and a few hundred history rows reach
-            # it with the pairwise features): the moments depend only on ratios of the weights, so measure every distance from the nearest
-            # precedent. This is exact where the peak merely underflows squares, and it is the only way to get a weight at all where the kernel
-            # underflows to exactly zero for every precedent.
-            kern_all = np.exp((d2 - d2.min()) * inv) * recency
-            peak = float(kern_all.max())
-            if 0.0 < peak < _KERNEL_FLOOR:
-                kern_all = kern_all / peak
         m = k if self.top_m is None else min(self.top_m, k)
         if m < k:
             top = np.argpartition(-kern_all, m - 1)[:m]

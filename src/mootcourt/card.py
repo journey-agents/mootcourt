@@ -439,7 +439,7 @@ def _with_guardrails(card: Card, bundle: ModelBundle, request: CardRequest, orig
     return dataclasses.replace(card, card_id=content_id(card))
 
 
-def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: float | None) -> str:
+def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: float | None, n_rows: int | None = None) -> str:
     """Whether ``n_tests`` tests can decide a skill at the gate (read at the base rate nearest to ``base_rate``), and what the interval says."""
     if n_tests is None:
         return "the number of tests in the window is not recorded, so the skill cannot be judged"
@@ -449,7 +449,9 @@ def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: flo
     from mootcourt.simulate import select_gates
 
     sel = select_gates(gates, base_rate) or gates
-    st = hs.gate_status(int(n_tests), sel)
+    unit = (gates.get("interval") or {}).get("by")
+    per_row = unit != "test" and n_rows is not None
+    st = hs.gate_status(int(n_rows if per_row else n_tests), sel)      # a per-row gates file counts rows: compare rows with it (REV-N-007)
     where = f" at base rate {sel['base_rate']:.2f}" if sel.get("base_rate") is not None else ""
     side = ""
     if lo is not None and hi is not None:
@@ -458,11 +460,11 @@ def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: flo
             if lo <= 0.0 <= hi
             else (", and its interval is above zero" if lo > 0 else ", and its interval is below zero")
         )
-    unit = (gates.get("interval") or {}).get("by")
-    caveat = "" if unit == "test" else " (this gates file was simulated per row, which overstates what tests can decide)"
+    caveat = "" if unit == "test" else " (this gates file was simulated per row: its sizes are numbers of rows)"
     word = "tests" if unit == "test" else "rows"
     need = f" (the gate needs {sel['n_400']} {word} for a skill of 0.10 and {sel['n_200']} for 0.20{where}){caveat}"
-    return f"{n_tests} tests: {st['label']}{need}{side}"
+    counted = f"{n_rows} rows" if per_row else f"{n_tests} tests"
+    return f"{counted}: {st['label']}{need}{side}"
 
 
 def _skill(reliability: dict | None, cell: str, bundle=None, gates: dict | None = None, origin=None) -> Skill:
@@ -481,7 +483,7 @@ def _skill(reliability: dict | None, cell: str, bundle=None, gates: dict | None 
         except ValueError:
             base = None
     return Skill(True, entry.get("brier_skill"), entry.get("n"), entry.get("as_of"), lo, hi, n_tests, entry.get("window_weeks"),
-                 gate_verdict(n_tests, lo, hi, gates, base), backtest)
+                 gate_verdict(n_tests, lo, hi, gates, base, n_rows=entry.get("n")), backtest)
 
 
 def content_id(card: Card) -> str:

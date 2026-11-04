@@ -28,7 +28,7 @@ moot init
 wrote ~/moot-commands/mootcourt.toml
 data root ~/moot-commands/mootcourt-data (layout created)
 sample ledger ~/moot-commands/mootcourt-data/data/sample-ledger.csv (synthetic)
-quick gates ~/moot-commands/mootcourt-data/reports/gates.json (400 replicates; run `moot simulate power` for the full simulation)
+quick gates ~/moot-commands/mootcourt-data/reports/gates.json (400 replicates; run `moot simulate gate-power` for the full simulation)
 Next, from the project folder:
   1. moot ingest --format generic --input ~/moot-commands/mootcourt-data/data/sample-ledger.csv --source-name sample
   2. moot fit --source sample && moot backtest --source sample
@@ -58,7 +58,7 @@ tail -n 5 doctor.txt
 
 ```text output
 exit code: 1
-OK    data root: ~/moot-commands/mootcourt-data; free space 11.4 GB
+OK    data root: ~/moot-commands/mootcourt-data; free space 11.7 GB
 WARN  ledger: no ledger at ~/moot-commands/mootcourt-data/data/ledger/ledger.parquet; import results with `moot ingest`
 WARN  models: no registry; run `moot fit --source NAME`
 WARN  reliability: no reliability report; `moot backtest` seeds one and `moot join` keeps it current
@@ -89,13 +89,13 @@ moot storage
 
 ```text output
 data root: ~/moot-commands/mootcourt-data  [set MOOTCOURT_DATA_ROOT or storage.data_root in mootcourt.toml]
-raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 11.4 GB
-ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 11.4 GB
-reports     ~/moot-commands/mootcourt-data/reports  size 2.9 KB  free 11.4 GB
-models      ~/moot-commands/mootcourt-data/models  size 0 B  free 11.4 GB
-cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 11.4 GB
-cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 11.4 GB
-experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 11.4 GB
+raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 11.7 GB
+ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 11.7 GB
+reports     ~/moot-commands/mootcourt-data/reports  size 3.3 KB  free 11.7 GB
+models      ~/moot-commands/mootcourt-data/models  size 0 B  free 11.7 GB
+cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 11.7 GB
+cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 11.7 GB
+experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 11.7 GB
 ```
 
 **Common errors.** The command only reads, so nothing in your data makes it fail. A folder that does not exist yet is shown as `(not created yet)` with size 0, which is normal before `moot init` and means the first line names the wrong data root if you expected existing data: the line says whether the root came from the variable, the file or the working directory. `No such option: --nope` (exit 2) for any option; the command takes none.
@@ -205,7 +205,7 @@ moot fit --source sample
 ```
 
 ```text output
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.7 s; it is the champion for sample
+fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.8 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -232,10 +232,10 @@ moot backtest --source sample
 ```
 
 ```text output
-gates read from ~/moot-commands/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 400}
-note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+gates read from ~/moot-commands/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
+gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
 filled the backtest summary of model 097a3bd3b39b
-scored 330 rows over 11 origins in 4.2 s (report writing 4.8 s)
+scored 330 rows over 11 origins in 4.3 s (report writing 4.9 s)
 wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
 wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
@@ -262,7 +262,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: e2e1dc1f08778be9
+- Card id: 8f5b904729f2bbd2
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
@@ -410,7 +410,7 @@ moot earn-weight --source sample --second-opinion heuristic.jsonl
 ```
 
 ```text output
-heuristic 1 on all origins, scores scores-sample-20261104-80131c793938.parquet, 30 judged rows (10 tests) with an opinion: 30 judged rows with an opinion from 10 tests is below the gate of 400 tests; weight stays 0
+heuristic 1 on all origins, scores scores-sample-20261104-80131c793938.parquet, 30 judged rows (10 tests) with an opinion: 30 judged rows with an opinion from 10 tests is below the gate of 150 tests; weight stays 0
 ```
 
 **Common errors.** `error: ...: No such file or directory` (exit 2) for a wrong records path; `no backtest scores for SOURCE at snapshot ...; run moot backtest` means the ledger changed since the last backtest: run it again.
@@ -518,7 +518,7 @@ skill \ n       100     125     175     225     250     500    1000    2000
 0.30           0.85    0.90    1.00    1.00    1.00    1.00    1.00    1.00
 power 0.80: n_200 = 125 (skill 0.20), n_400 = 100 (skill 0.10)
 power 0.90: n_200 = 175 (skill 0.20), n_400 = 225 (skill 0.10)
-release gate = power 0.90; reps 20, bootstrap 20, 1.2 s. Synthetic data. Wrote gates-by-test.json
+release gate = power 0.90; reps 20, bootstrap 20, 1.0 s. Synthetic data. Wrote gates-by-test.json
 ```
 
 The lines to read are again `n_200` and `n_400` at power 0.90 and 0.80, now in tests. A small run is noisy; use the default for a decision. `--rows-per-test` sets the mean rows per test (3.5 for Upworthy; use the figure of your ledger), `--icc` the within-test correlation of the event (by default the measured value of each base rate: 0.13 for Upworthy, 0.67 for ASOS; contrasts of one test move together, so a ledger with more rows per test or a higher correlation needs more tests) and `--level` the interval (0.9). `gates.json` records the rows per test, the correlation and the latent correlation behind it for every base rate.
@@ -557,7 +557,7 @@ The loop waits at most 30 seconds for the service to answer.
 
 ### `moot mcp`
 
-**Purpose.** Start the read-only MCP server on standard input and output, with the tools `get_card`, `list_precedents` and `reliability_report`. An MCP client starts it as a child process.
+**Purpose.** Start the read-only MCP server on standard input and output, with the tools `get_card`, `list_precedents` (optional `exposure`, default the average exposure of the fit) and `reliability_report`. An MCP client starts it as a child process.
 
 **Reads** models and reports. **Writes** nothing. The example sends one protocol message and reads the reply.
 

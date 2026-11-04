@@ -67,7 +67,7 @@ def skill_interval(
     if test_ids is None:
         return None, None, None
     ids = pd.Series(np.asarray(test_ids, dtype=object))
-    keep = ids.notna().to_numpy() & (ids.astype(str).str.strip() != "").to_numpy() & (ids.astype(str) != "None").to_numpy()
+    keep = ids.notna().to_numpy() & (ids.astype(str).str.strip() != "").to_numpy()
     if not keep.any():                # files written before test ids were stored, or rows without one: no clusters, no interval (REV-L-001)
         return None, None, None
     brier, base = np.asarray(brier, float)[keep], np.asarray(base, float)[keep]

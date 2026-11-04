@@ -429,8 +429,8 @@ def discrimination_table(rep, source, out):
     ]
     for r in rows:
         lines.append(
-            f"{esc(r['rung'])} & {interval(r, 'auc_event')} & {f3(r.get('resolution_event'), 4)} & "
-            f"{interval(r, 'auc_direction')} & {f3(r.get('resolution_direction'), 4)} \\\\"
+            f"{esc(r['rung'])} & {interval(r, 'auc_event')} & {f3(r.get('resolution_event'), 5)} & "
+            f"{interval(r, 'auc_direction')} & {f3(r.get('resolution_direction'), 5)} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(
@@ -518,7 +518,9 @@ def sensitivity_table(reports_dir, out):
     lines = [
         r"\begin{tabular}{l" + "r" * len(sizes) + "}",
         r"\toprule",
-        "planted lift (percent) & " + " & ".join(f"{n:,} tests" for n in sizes) + r" \\",
+        "planted lift (percent) & "
+        + " & ".join(f"{n:,} tests ({by[(n, strengths[0])].get('rows_per_cell', 0):,} rows per cell)" for n in sizes)
+        + r" \\",
         r"\midrule",
     ]
     for st in strengths:
@@ -527,9 +529,75 @@ def sensitivity_table(reports_dir, out):
     write(
         out,
         "positive-control-sensitivity.tex",
-        f"{path} (positive_control_sensitivity; guard multiplier {sens.get('multiplier')}; two variants per test)",
+        f"{path} (positive_control_sensitivity; guard multiplier {sens.get('multiplier')}; two variants per test; "
+        "the guard works per cell, so the rows per cell are the size that matters)",
         "\n".join(lines) + "\n",
     )
+
+
+def guard_gain_table(reports_dir, out):
+    """The guard's in-selection gain, its standard error and the share admitted, by ledger size, with no planted signal."""
+    path = latest(os.path.join(reports_dir, "paper-extras-synthetic-*.json"))
+    diag = load(path).get("guard_gain_diagnostic") if path else None
+    if not diag or not diag.get("rows"):
+        return
+    lines = [
+        r"\begin{tabular}{rrrrrrrr}",
+        r"\toprule",
+        r"tests & rows per cell & cells & mean gain & mean s.e. & gain / s.e. (ratio of means) & share gain $>0$ & share admitted \\",
+        r"\midrule",
+    ]
+    for r in diag["rows"]:
+        lines.append(
+            f"{r['n_tests']:,} & {r['rows_per_cell']:,.0f} & {r['cells']} & {f3(r['mean_gain'], 5)} & {f3(r['mean_gain_se'], 5)} & "
+            f"{f3(r['ratio_of_means'], 2)} & {f3(r['share_gain_positive'], 2)} & {f3(r['share_admitted'], 2)} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        "guard-gain-diagnostic.tex",
+        f"{path} (guard_gain_diagnostic; no planted signal; guard multiplier {diag.get('multiplier')}; gain in nats per row)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def guard_held_out_table(reports_dir, out):
+    """In-selection gain against held-out gain by ledger size, and the share admitted under changes of the fit set."""
+    path = latest(os.path.join(reports_dir, "paper-extras-synthetic-*.json"))
+    doc = load(path) if path else {}
+    ho, fs = doc.get("guard_held_out_gain"), doc.get("guard_fit_fraction_stability")
+    if ho and ho.get("rows"):
+        lines = [
+            r"\begin{tabular}{rrrrrrrr}",
+            r"\toprule",
+            r"tests & cells & in-selection gain & held-out gain & difference & admitted cells & difference, admitted & difference, unguarded \\",
+            r"\midrule",
+        ]
+        for r in ho["rows"]:
+            lines.append(
+                f"{r['n_tests']:,} & {r['cells']} & {f3(r['mean_in_selection_gain'], 5)} & {f3(r['mean_held_out_gain'], 5)} & "
+                f"{f3(r['mean_difference'], 5)} & {r['admitted_cells']} & {f3(r['admitted_mean_difference'], 5)} & "
+                f"{f3(r['unguarded_mean_difference'], 5)} ({r['unguarded_cells_with_weight']}) \\\\"
+            )
+        lines += [r"\bottomrule", r"\end{tabular}"]
+        write(
+            out,
+            "guard-gain-held-out.tex",
+            f"{path} (guard_held_out_gain; {ho.get('held_out_share_of_tests')} of the tests held out; no planted signal; nats per row; "
+            "the unguarded column is the bias of the unguarded choice over the cells where it picks a weight, their number in brackets)",
+            "\n".join(lines) + "\n",
+        )
+    if fs and fs.get("rows"):
+        lines = [r"\begin{tabular}{lrrr}", r"\toprule", r"fit on & cells & admitted & share admitted \\", r"\midrule"]
+        for r in fs["rows"]:
+            lines.append(f"{esc(r['fit'])} & {r['cells']} & {r['admitted']} & {f3(r['share_admitted'], 2)} \\\\")
+        lines += [r"\bottomrule", r"\end{tabular}"]
+        write(
+            out,
+            "guard-fit-fraction.tex",
+            f"{path} (guard_fit_fraction_stability; {fs.get('n_tests')} tests; no planted signal)",
+            "\n".join(lines) + "\n",
+        )
 
 
 def walltime_table(reports_dir, out):
@@ -540,8 +608,10 @@ def walltime_table(reports_dir, out):
     rl = load(path)
     kind = rl.get("data_stage_kind", "")
     if kind == "download":
-        data_note = (f"data stage: downloaded {rl.get('downloaded_files')} files, {rl.get('downloaded_bytes')} bytes, "
-                     f"download script time {rl.get('download_seconds')} s")
+        data_note = (
+            f"data stage: downloaded {rl.get('downloaded_files')} files, {rl.get('downloaded_bytes')} bytes, "
+            f"download script time {rl.get('download_seconds')} s"
+        )
     else:
         data_note = f"data stage: {kind} ({rl.get('download_seconds')} s), nothing downloaded"
     lines = [r"\begin{tabular}{lr}", r"\toprule", r"stage & seconds \\", r"\midrule"]
@@ -768,4 +838,6 @@ if __name__ == "__main__":
     positive_control_table(a.reports, a.out)
     sensitivity_table(a.reports, a.out)
     walltime_table(a.reports, a.out)
+    guard_gain_table(a.reports, a.out)
+    guard_held_out_table(a.reports, a.out)
     cautionary_table(a.reports, a.out)

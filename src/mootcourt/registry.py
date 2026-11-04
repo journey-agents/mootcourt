@@ -163,6 +163,11 @@ class Registry:
         self._log(e, "second_opinion_weight", now, provider_id=provider_id, version=version, weight=float(weight), contaminated=bool(contaminated))
         self._write(doc)
 
+    def pending_refresh(self, source: str) -> str | None:
+        """The model id held as a pending refresh of the champion (a same-method fit waiting for its backtest), or None."""
+        e = self._read().get(source)
+        return e.get("pending_refresh") if e else None
+
     def register_model(self, source: str, model_id: str, backtest_summary: dict | None = None, now: dt.datetime | None = None,
                        method_id: str | None = None, fitted_at: str | None = None, data_through: str | None = None) -> str:
         """Register a fitted model. Returns ``"champion"`` or ``"challenger"``, the role it holds afterwards.
@@ -188,6 +193,7 @@ class Registry:
         elif e["champion"] == model_id:
             role = "champion"
         else:
+            self._derive_through(e, e["champion"], now)
             verdict, reason = self.decide_refresh(e, model_id)
             if verdict == "refresh":
                 self._refresh(e, model_id, now, reason)
@@ -210,6 +216,25 @@ class Registry:
         if e.get("pending_refresh") == model_id:
             e["pending_refresh"] = None
         self._log(e, "champion_refreshed", now, model_id=model_id, replaced=old, method_id=e.get("methods", {}).get(model_id), reason=reason)
+
+    def _derive_through(self, e: dict, model_id: str, now) -> None:
+        """Fill a missing ``data_through`` of a registered model from its bundle (the fit cutoff), and log that the value was derived.
+
+        A registry written before the field existed has none for its champion, and without it no refresh could ever be decided (REV-N-003).
+        A bundle that cannot be read leaves the field missing, and the decision then says the recency is unknown."""
+        if e.get("data_through", {}).get(model_id):
+            return
+        from mootcourt.bundle import load_bundle
+
+        try:
+            cutoff = load_bundle(model_id, self.models_dir).fit_cutoff
+        except Exception:
+            return
+        if cutoff is None:
+            return
+        e.setdefault("data_through", {})[model_id] = cutoff.isoformat()
+        self._log(e, "data_through_derived", now, model_id=model_id, data_through=cutoff.isoformat(),
+                  reason="read from the bundle's fit cutoff; the registry predates the field")
 
     @staticmethod
     def decide_refresh(e: dict, model_id: str) -> tuple[str, str]:
@@ -254,6 +279,7 @@ class Registry:
         e = self._entry(doc, source)
         e["summaries"][model_id] = summary
         if e.get("pending_refresh") == model_id and e.get("champion") not in (None, model_id):
+            self._derive_through(e, e["champion"], now)
             verdict, reason = self.decide_refresh(e, model_id)
             if verdict == "refresh":
                 self._refresh(e, model_id, now, reason + " (decided when the backtest summary was attached)")

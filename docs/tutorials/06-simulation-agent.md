@@ -4,7 +4,7 @@
 
 **Prerequisites:** [tutorial 1](01-first-card.md) done (the steps below repeat its setup so that this page runs by itself). The agent here is a rule of thumb, so no model call, account or key is needed. A real agent backed by a language model is attached in exactly the same way.
 
-**Time:** about 20 minutes. Running the agent over the backtest takes about 10 seconds; the rest is reading.
+**Time:** about 20 minutes. Running the agent over the backtest takes 10 to 15 seconds; the rest is reading.
 
 ## What a second opinion is
 
@@ -87,11 +87,11 @@ moot simulators run --provider my_agent --source sample --out agent.jsonl
 ```
 
 ```text output
-my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 14.9 s, wall 15.4 s
+my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 8.9 s, wall 9.3 s
 wrote agent.jsonl
 ```
 
-The runner asks the agent once for every scored row of the rolling-origin backtest, which here is 330 rows, and writes one record per request: the request digest, the provider and version, the cutoff, the result, the latency and the cost. This took about nine seconds because the agent starts as a new process for each request. Costs matter when the agent calls a language model: use `--limit 20` for a trial run first, and `--max-respondents` and `--max-seconds` to bound each call.
+The runner asks the agent once for every scored row of the rolling-origin backtest, which here is 330 rows, and writes one record per request: the request digest, the provider and version, the cutoff, the result, the latency and the cost. This took 10 to 15 seconds (the time is the sum over 330 requests; the exact figure moves with the machine) because the agent starts as a new process for each request. Costs matter when the agent calls a language model: use `--limit 20` for a trial run first, and `--max-respondents` and `--max-seconds` to bound each call.
 
 Results are cached under the data root by provider, version and request digest, so running the same command again calls the agent zero times. A **decline** (the agent printed `null`) is cached. A **failure** (a timeout, a crash, an invalid output) is recorded with its reason but not cached, so the next run asks again. The run finishes either way, so one bad call does not lose the others.
 
@@ -120,7 +120,7 @@ grep -E '^\| all \| (P2|agent) ' mootcourt-data/reports/second-opinion-my_agent/
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - Weight in force: 0.0000 (zero until earned on the backtest)
 - Rows scored by the base rung P2: 330; with an opinion: 330; declined: 0; failed calls: 0; absent from the records file: 0
-- Cost of the recorded run: 0.0000 dollars, latency 14.8733 seconds in total
+- Cost of the recorded run: 0.0000 dollars, latency 8.9498 seconds in total
  P2 | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
  P2 on agent rows | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
  agent | 330 | 0.1724 | -0.0598 | -0.1104 | 0.0000
@@ -142,7 +142,7 @@ moot earn-weight --source sample --second-opinion agent.jsonl
 ```
 
 ```text output
-my_agent 1.0 on origins from 1970-01-01 on, scores scores-sample-20261104-80131c793938.parquet, 147 judged rows (49 tests) with an opinion: 147 judged rows with an opinion from 49 tests is below the gate of 400 tests; weight stays 0
+my_agent 1.0 on origins from 1970-01-01 on, scores scores-sample-20261104-80131c793938.parquet, 147 judged rows (49 tests) with an opinion: 147 judged rows with an opinion from 49 tests is below the gate of 150 tests; weight stays 0
 ```
 
 The stacked probability is `(1 - w) p_sig + w p_AI`. The weight starts at zero. `earn-weight` puts the recorded rows in time order and cuts them between two origins. It chooses `w` on a grid from the earlier rows and **judges** it on the later rows, never on the same rows. A positive weight is stored only if, on the judged rows, the stacked Brier score beats the model's by the promotion margin (0.02) and those rows come from at least as many distinct experiments as the gate asks (counted in experiments, because rows of one experiment are not independent). Otherwise the weight stays zero, and a weight that no longer passes is reset to zero. Here it says why: 49 judged experiments is far below the gate of 400.

@@ -377,9 +377,10 @@ _AGG_GROUPS = [
     ("Bonferroni-adjusted bounds for the family of intervals of this table (descriptive intervals are the unadjusted ones above)",
      ["cell", "rung", "family_size", "brier_skill", "adjusted_lo", "adjusted_hi", "logscore", "logscore_adjusted_lo", "logscore_adjusted_hi"]),
     ("Discrimination apart from skill: AUC of p_sig for the event and of the direction probability for y > 0, and the Murphy resolution term "
-     "(mean squared deviation of the forecast from the group's own event rate)",
+     "(equal-mass forecast bins: how far the observed frequency of each bin lies from the event rate; zero for a forecast that does not separate "
+     "outcomes, however spread it is)",
      ["cell", "rung", "auc_event", "auc_event_lo", "auc_event_hi", "resolution_event", "resolution_event_lo", "resolution_event_hi",
-      "auc_direction", "auc_direction_lo", "auc_direction_hi", "resolution_direction"]),
+      "auc_direction", "auc_direction_lo", "auc_direction_hi", "resolution_direction", "resolution_direction_lo", "resolution_direction_hi"]),
     ("Sensitivity of the event definition: the same forecasts scored against y > z s_star on the planned standard error (the headline uses "
      "the realized one)",
      ["cell", "rung", "event_rate_planned", "p_sig_mean", "brier_planned", "brier_base_planned", "brier_skill_planned",

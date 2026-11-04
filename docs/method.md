@@ -772,11 +772,16 @@ the information the model had (the replay used a P0 fit on the whole current led
 
 ### Call 189: discrimination is reported apart from skill
 
-The aggregate table carries, per cell and rung, the AUC of `p_sig` for the significant-positive event and of the direction probability for `y > 0` (`auc_event`, `auc_direction`, each with a 90 percent
-interval from the same by-test resamples as the other columns), and the Murphy resolution term (`resolution_event`, `resolution_direction`, with intervals): the mean squared deviation of the
-forecast probability from the group's own event rate. The AUC is the rank statistic with ties counting one half and is None where the group has only one class. Skill (Brier against the base
-rate) mixes discrimination with calibration and with the base rate; the pair of columns lets a reader see whether a rung ranks rows better than chance (AUC above 0.5, resolution above zero)
-when its skill is zero or negative. P0's `p_sig` is constant within a cell and origin, so its AUC measures only the movement of the base rate across cells and origins.
+The aggregate table carries, per cell and rung, the AUC of `p_sig` for the significant-positive event and of the direction probability for `y > 0` (`auc_event`, `auc_direction`, each with a 90
+percent interval from the same by-test resamples as the other columns), and the Murphy resolution term of the Brier score (`resolution_event`, `resolution_direction`, with intervals). The
+resolution is computed over ten equal-mass bins of the forecast (the bins the equal-mass ECE uses): the bin-weighted mean of the squared difference between the bin's observed frequency and the
+overall event rate. It is zero for a forecast whose bins all show the base rate, however spread the forecast is, so it measures separation and not sharpness. (An earlier version of this call
+reported the spread of the forecast around the base rate under the name resolution; that quantity is sharpness plus miscalibration, put GBM first while its skill was negative, and was replaced in
+the review of chunk N, REV-N-001.) The estimate is biased upward by about `(10 - 1) / N * rate * (1 - rate)` from the sampling noise of the bin frequencies, and a percentile interval of a biased
+statistic can leave the estimate near its lower end; read the column as a ranking of rungs on the same rows, not as an absolute amount. The AUC is the rank statistic with ties counting one half
+and is None where the group has only one class. Skill (Brier against the base rate) mixes discrimination with calibration and with the base rate; an AUC above 0.5 or a resolution above what a
+noise forecast gives shows that a rung ranks rows better than chance when its skill is zero or negative. P0's `p_sig` is constant within a cell and origin, so its AUC and resolution measure only
+the movement of the base rate across cells and origins.
 
 ### Call 190: the event defined on the planned standard error is a scoring sensitivity
 
@@ -796,7 +801,42 @@ score gain over lambda 0 on the leave-one-test-out validation rows, nats), its s
 out-of-time P2 minus P1 log score on them, then the pooled realized difference over the admitted pairs with a 90 percent interval that resamples tests. The claim that in-selection gains
 do not transfer out of time is a column of this table and a pooled line, not a sentence.
 
-### Call 192: the positive control reaches the size of the cell it is used on
+### Call 192: the positive control reaches the per-cell size of the cell it is used on
 
-The sensitivity of the guard to a planted text effect adds a ledger of 3,700 tests of two variants (7,400 rows, the size of Upworthy's headline-only cell) beside 300 and 1,000, so the
-paper can state the guard's power at the size of the cell the guard works in.
+The guard works per cell, and the synthetic generator spreads tests over three cells, so a ledger of `n` tests with two variants has about `2n / 3` rows in each cell. The sensitivity of the guard
+to a planted text effect adds a ledger of 11,100 tests (about 7,400 rows in each cell, the size of Upworthy's headline-only cell) beside 300 and 1,000, so the paper can state the guard's power at the
+size of the cell the guard works in. (The first version added 3,700 tests, which is 2,440 rows per cell: a third of the size it claimed, REV-N-002.) At that size the guard admits a weight in 39 percent of cells with no planted signal; call 198 examines why.
+
+### Call 193: review of chunk N
+
+A registry written before `data_through` existed has none for its champion; `decide_refresh` is then given the value derived from the champion bundle's fit cutoff, and the history logs a `data_through_derived`
+event, so a same-method refit on newer data is a refresh and not a permanent challenger (REV-N-003). `moot fit` says a pending refresh is waiting for `moot backtest`, which decides it (REV-N-004). The P2
+neighbor search returns P1's predictive when the kernel peak is below the float32 range the fit-time validation used, not only when it is exactly zero (REV-N-005). A missing exposure in a pairwise feature space is
+filled with the exposure column's mean (REV-N-006); `list_precedents` takes an optional exposure. `moot init` writes quick gates by test at the 90 percent level with the rows per test and within-test correlation
+of base rate 0.30 (`SOURCE_DEPENDENCE`), and `gate_verdict` compares the row count, not the test count, with a per-row gates file (REV-N-007).
+
+### Call 198: why the guard admits weights on data with no planted signal as the cells grow
+
+The guard admits a weight when the candidate's in-selection gain over lambda 0 exceeds the tie tolerance and two standard errors. On synthetic ledgers with no planted text effect (12 seeds, three cells each,
+36 cells per size; `guard_gain_diagnostic`, `guard_held_out_gain` and `guard_fit_fraction_stability` in the synthetic paper extras; tables `guard-gain-diagnostic.tex`, `guard-gain-held-out.tex`,
+`guard-fit-fraction.tex`) the share of cells that admit a weight is 0.03 at 300 and at 1,000 tests, 0.67 at 3,700 and 0.39 at 11,100.
+
+The explanation tested first was a fixed selection bias: the gain is measured on the rows that chose the weight, so its upward bias would not shrink with the cell while its standard error does, and the rule
+"gain above two standard errors" would become a significance test that any fixed bias passes once the cell is large. The in-selection numbers alone look like that: the mean standard error of the best candidate's
+gain falls from 0.00442 to 0.00152, 0.00085 and 0.00059 nats per row (200, 667, 2,467 and 7,400 rows per cell) while the mean gain stays between 0.0010 and 0.0031 (0.00310, 0.00102, 0.00274, 0.00121), so its ratio
+to the standard error passes two between 1,000 and 3,700 tests. They do not separate a bias from a real small gain: the share of cells with a positive gain rising from 0.72 to 0.89 and 0.97 is predicted by both.
+
+The held-out test does separate them, and it refutes the bias as the cause at the large sizes. A random 15 percent of the tests (never rows) is held out, P2 is fit on the rest with the guard, and the gain of
+the chosen weight over lambda 0 is scored on the held-out rows. The in-selection gain minus the held-out gain, over all 36 cells, is 0.00406 nats at 300 tests, 0.00123 at 1,000, -0.00035 at 3,700 and 0.00055 at
+11,100: it does not stay at a fixed positive bias while the standard error falls; it falls with it. Over the admitted cells the held-out gain is 0.00584 at 3,700 tests (24 cells; in-selection 0.00516) and 0.00207 at
+11,100 (12 cells; in-selection 0.00276), positive and about as large as the in-selection gain. At 300 tests the single admitted cell is a pure overstatement (in-selection 0.01744, held-out -0.00443), and the
+unguarded choice overstates at the small sizes (difference 0.01267 over 22 cells at 300, 0.00628 over 15 at 1,000) and not at the large ones (-0.00063 over 24 cells at 3,700, 0.00049 over 16 at 11,100). So the
+bias exists where the cells are small and is small where they are large. At the sizes where the share admitted jumps, the admitted weights carry a real out-of-sample gain on these ledgers. A ledger without a
+planted text effect is therefore not a null for P2: the precedents capture some structure of the generator other than the planted text signal (which structure was not isolated here), and the guard, which was
+built to hold a weight at zero when nothing transfers, finds that gain once the cell is large enough to measure it. The jump in the share admitted is the power of the guard, not a rise in false admissions.
+
+The admission is unstable near the threshold, which fits a small true gain close to two standard errors. On the same 3,700-test ledgers, fitting on the first 85, 90, 95 and 100 percent of the rows in time order
+admits a weight in 0.03, 0.42, 0.00 and 0.67 of the cells, and on a random 85 percent in 0.47 (36 cells each). This was run at 3,700 tests only; at 11,100 each fit takes minutes. The readings the paper should keep
+apart: the first positive-control row (planted lift zero) measures the share of cells admitted on data with no text signal, not a false-positive rate; the guard's holding of lambda at zero on Upworthy and ASOS
+(out-of-time P2 minus P1 negative over the admitted pairs, call 191) is a separate fact. Remedies for the instability are future work: a held-out split for the gain (select the weight on one part of the history,
+test it on another) or a threshold that depends on the size of the cell.

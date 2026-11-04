@@ -78,6 +78,9 @@ First release.
 - The leakage audit wraps the construction of `GBMChallenger`, `LocalEB` and `TextLR`. Champion refresh needs strictly newer data (`data_through`), holds a same-method fit without a backtest as pending until the summary is attached, and writes the reason of every challenger in the history.
 - Smaller: exposure bound, MCP refusals as messages, the variant exposure to the simulator, neutral pair features without a reference, the learning curve on the recorded admission, row id checks, P0 variance floor, P1's predictive for a far query,
   `method_id` covering the feature space, GBM calibration subsample, relative robustness threshold, finite guardrail margins, the join's baseline from the card's own P0 (the card stores P0's variance).
+- After the review of chunk N: the `resolution_*` columns are the Murphy resolution over equal-mass forecast bins (they were forecast spread); the positive-control sensitivity point is 11,100 tests (about 7,400 rows per cell); a champion
+  without `data_through` gets it derived from its bundle; `moot fit` says a refresh is pending and that `moot backtest` decides it; the P2 search returns P1's predictive below the float32 kernel range; a missing exposure is filled with the exposure
+  column's mean and `list_precedents` takes an `exposure`; `moot init` writes quick gates by test at 0.90; `gate_verdict` compares rows with a per-row gates file.
 - Reports: AUC and the Murphy resolution term per rung (`auc_event`, `auc_direction`, `resolution_event`, `resolution_direction`, with intervals); a sensitivity of the event defined on the planned standard
   error (score columns `event_planned`, `brier_planned`, `p_base_planned`, `brier_base_planned`; aggregate columns `event_rate_planned`, `p_sig_mean`, `brier_planned`, `brier_base_planned`, `brier_skill_planned`
   with `_lo` and `_hi`); `guard_pairs` in the paper extras; the positive-control sensitivity gains a ledger of 3,700 tests.

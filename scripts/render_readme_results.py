@@ -167,7 +167,7 @@ def discrimination_table(doc: dict) -> list[str]:
     if not rows:
         return []
     out = ["Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no "
-           "discrimination); resolution is the part of the Brier score that comes from forecasts differing between rows. The last columns score the same "
+           "discrimination); resolution is the Murphy term of the Brier score: how far the observed event frequencies of equal-mass forecast bins lie from the overall event rate (zero when every bin has the overall rate, and not a measure of how much the forecasts vary). The last columns score the same "
            "forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.", "",
            "| rung | AUC of the event (90% interval) | resolution of the event | event rate, realized standard error | event rate, planned standard error | "
            "Brier skill on the planned event (90% interval) |", "|---|---|---|---|---|---|"]
@@ -398,7 +398,7 @@ def positive_control_lines(reports: Path) -> list[str]:
     doc = json.loads(found[-1].read_text(encoding="utf-8"))
     h = doc["header"]
     out = ["### Positive control, synthetic", "",
-           "The synthetic archive with no text signal shows that the guard holds the weight on precedents at zero when there is nothing to learn. This run plants "
+           "The synthetic archive with no text signal shows how often the guard admits a weight when no text signal is planted; that share is not a false-positive rate, because the ledger still has structure the precedents capture (method call 198). This run plants "
            "a text effect between headlines with and without a signal word (`moot simulate ledger --text-effect 1.0`, a 1.0 percent lift, "
            "0.33 to 0.67 prior standard deviations in the default cells) and runs the whole protocol on it. If the guard works, it should admit a weight "
            "in `headline_only`, where the effect is planted, and hold it at zero in the other cells. "

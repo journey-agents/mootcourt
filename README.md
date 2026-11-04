@@ -12,7 +12,7 @@ The ideas, in the order you meet them:
 
 - **The ledger** is the table of your concluded experiments: one row per variant, per metric, per experiment. Importing results is one command, and rows that fail an admission rule are kept and counted, never dropped.
 - **A card** is the forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how fragile that opinion is. A card can also abstain, and then it says why. Cards are frozen under a digest of their content, so nobody can edit one after the result is known.
-- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer, and each adds one thing to the one below it: P0 is the empirical base-rate forecaster of the cell, P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly; the guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests, and it is a weak one: on a synthetic ledger of the size of the Upworthy headline-only cell it admits a weight in most cells where no signal exists, and on Upworthy the weights it admitted lost out of time (the results page has the guard pairs and the sensitivity table, and shows guarded and unguarded selection side by side). A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
+- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer, and each adds one thing to the one below it: P0 is the empirical base-rate forecaster of the cell, P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly; the guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests, and it is a weak one: on a synthetic ledger of the size of the Upworthy headline-only cell it admits a weight in most cells with no planted text signal, and on Upworthy the weights it admitted lost out of time (the results page has the guard pairs and the sensitivity table, and shows guarded and unguarded selection side by side). A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
 - **The backtest** replays the ledger quarter by quarter, forecasts every past experiment using only what was final before it, and scores the forecast. It tells you whether the cards can be trusted, and how many experiments it takes to tell.
 
 A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak. The join finds a card by the ledger row it names: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`), and give `POST /card` and the MCP tool `get_card` the same `row_id`. A card without a row id is valid, but no outcome can be attached to it. The [concepts page](docs/concepts.md) has the diagram and the glossary.
@@ -37,7 +37,7 @@ moot init
 wrote ~/moot-demo/mootcourt.toml
 data root ~/moot-demo/mootcourt-data (layout created)
 sample ledger ~/moot-demo/mootcourt-data/data/sample-ledger.csv (synthetic)
-quick gates ~/moot-demo/mootcourt-data/reports/gates.json (400 replicates; run `moot simulate power` for the full simulation)
+quick gates ~/moot-demo/mootcourt-data/reports/gates.json (400 replicates; run `moot simulate gate-power` for the full simulation)
 Next, from the project folder:
   1. moot ingest --format generic --input ~/moot-demo/mootcourt-data/data/sample-ledger.csv --source-name sample
   2. moot fit --source sample && moot backtest --source sample
@@ -58,7 +58,7 @@ admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_us
 final reads from 2023-01-23 to 2025-12-29
 snapshot 20261104-80131c793938 for sample
 ledger ~/moot-demo/mootcourt-data/data/ledger/ledger.parquet: 360 rows
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 2.1 s; it is the champion for sample
+fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.7 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -69,16 +69,16 @@ moot backtest --source sample
 ```
 
 ```text output
-gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 400}
-note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
+gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
 filled the backtest summary of model 097a3bd3b39b
-scored 330 rows over 11 origins in 4.8 s (report writing 5.4 s)
+scored 330 rows over 11 origins in 4.3 s (report writing 5.0 s)
 wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
 wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
 ```
 
-The first two lines say which gates the backtest read. `moot init` wrote them with a quick simulation at one base rate, so the note advises `moot simulate gate-power`, which sizes the gates by test at the base rate of your own archive; for this walk-through you can ignore it. Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "undecidable at this n". Ignore the columns `decidable` and `decidable_research` beside it, which count rows instead of experiments and overstate. That is the right reading of a sample with no structure, and it is what the report is for.
+The first two lines say which gates the backtest read. `moot init` wrote them with a quick simulation, in tests, at one base rate (0.3). `moot simulate gate-power` sizes the gates at the base rate of your own archive; for this walk-through you can ignore it. Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "decidable at skill 0.20 only", meaning that the 110 scored tests reach the gate for a skill difference of 0.20 and not the one for 0.10. `decidable_research_by_tests` is the same reading at the power 0.80 screen. Ignore the columns `decidable` and `decidable_research`, which read "not computed" when the gates count tests, because they would compare a number of rows with a number of tests. That is the right reading of a sample with no structure, and it is what the report is for.
 
 Ask for a card (about a second). The sample is static, so `--now` issues it as of the end of its history; on a live ledger you leave `--now` out:
 
@@ -89,7 +89,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: e2e1dc1f08778be9
+- Card id: 8f5b904729f2bbd2
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
@@ -125,7 +125,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ## Skill at this n
 
 - Brier skill against the cell base rate, trailing 8 weeks: 0.093 (90 percent interval -0.227 to 0.221, by test), measured on 7 rows from 7 tests, as of 2025-12-29T00:00:00+00:00
-- Gate at this n: 7 tests: undecidable at this n (the gate needs 400 rows for a skill of 0.10 and 175 for 0.20 at base rate 0.30) (this gates file was simulated per row, which overstates what tests can decide), and its interval includes zero
+- Gate at this n: 7 tests: undecidable at this n (the gate needs 150 tests for a skill of 0.10 and 75 for 0.20 at base rate 0.30), and its interval includes zero
 - Latest gated backtest, rung P2: Brier skill 0.020 (90 percent interval -0.007 to 0.046) over 110 tests
 
 ## Abstention

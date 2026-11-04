@@ -409,12 +409,17 @@ def test_a_query_far_from_every_precedent_gives_finite_moments(imp, make_synth):
                                                           lambda_override=0.6, bandwidth_override=0.125)
     data = p2._cells["headline_only"]
     x = space.transform(ledger.head(1))[0].copy()
-    x[0] = data.X[:, 0].max() + data.h * math.sqrt(1000.0)               # the nearest precedent now has a kernel value near 1e-217
+    x[0] = data.X[:, 0].max() + data.h * math.sqrt(130.0)                # the nearest precedent now has a kernel value near 1e-28
     origin = ledger["usable_after"].max()
     st = p2.neighbor_state(x, "headline_only", origin)
     assert 0 < st.kernel.max() <= 1.0 + 1e-12
     mo = st.moments()
     assert all(np.isfinite([mo.m, mo.v_m, mo.n_eff, mo.theta_hat, mo.v]))
+    assert 0.0 <= p2.predict(x, 1.0, "headline_only", origin).p_sig(1.0) <= 1.0
+    # review N (REV-N-005): a query beyond the float32 range of the validation (here near 1e-217) gets P1's predictive, an empty state
+    x[0] = data.X[:, 0].max() + data.h * math.sqrt(1000.0)
+    far = p2.neighbor_state(x, "headline_only", origin)
+    assert len(far.row_ids) == 0 and far.lam == 0.0
     assert 0.0 <= p2.predict(x, 1.0, "headline_only", origin).p_sig(1.0) <= 1.0
 
 

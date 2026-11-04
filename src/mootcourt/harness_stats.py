@@ -7,14 +7,12 @@ never rows, because contrasts of one test share a reference arm and are not inde
 computed once, so a resample is one multinomial draw of test counts and a matrix product; 20000 rows with
 500 resamples take a few seconds.
 
-Gate rule. A rung in a cell is decidable at skill 0.20 when its scored row count reaches ``n_200`` and at
-skill 0.10 when it reaches ``n_400``; both numbers are read from gates.json (``simulate.load_gates``) and
-never hardcoded. They are the sizes at the release gate (power 0.90); the sizes at the research screen (power
-0.80) are printed beside them as ``decidable_research`` (builder call 41). The headline is the count of tests
-(``decidable_by_tests`` and ``decidable_research_by_tests``): contrasts of one test share a reference arm and the
-power simulation resamples independent rows, so applying its sizes to clustered rows overstates decidability
-(code review finding REV-003, builder call 83). The row count (``decidable``, ``decidable_research``) is printed
-beside it and labelled as the by-row figure.
+Gate rule. The gates in gates.json (``simulate.load_gates``) are sizes at the release gate (power 0.90); the sizes at the research screen
+(power 0.80) are printed beside them as ``decidable_research`` (builder call 41). The headline is the count of TESTS
+(``decidable_by_tests`` and ``decidable_research_by_tests``): contrasts of one test share a reference arm, so the gates are simulated by test
+(``gates["interval"]["by"] == "test"``) and a row count is not compared with them. The by-row columns (``decidable``, ``decidable_research``)
+apply the sizes to the scored row count only for an older per-row gates file; with gates by test they read ``BY_ROW_NOT_COMPUTED``
+(review L, REV-L-003).
 
 Round 00 additions (docs/method.md calls 170 to 176): the perfect-calibration null is clustered by test (a one-factor Gaussian copula
 whose within-test correlation is estimated from the rows, so contrasts of one test are drawn together) and the design effect is
@@ -502,32 +500,63 @@ def _bincount_ok(ts: "_TestSums", values: np.ndarray, ok: np.ndarray) -> np.ndar
     return np.bincount(ts.codes[ok], weights=np.asarray(values, float)[ok], minlength=ts.n_tests)
 
 
-def _discrimination(row: dict, g: pd.DataFrame, ts: "_TestSums", counts: np.ndarray) -> None:
-    """AUC and resolution, so discrimination is reported apart from skill (reviews R3 and R5).
+RESOLUTION_BINS = 10
 
-    For the significance event: ``p_sig`` against ``event``. For the direction: ``p_gt0`` against ``event_pos``. Resolution is the Murphy
-    decomposition term, the mean squared deviation of the forecast probabilities from the group's own event rate. Both carry the 90 percent
-    by-test bootstrap interval of the group's other statistics. A rung without the probability, or a group in which the event never or always
-    happens, gets None for the AUC (and the resolution is still defined)."""
+
+def murphy_resolution(p, event, test_codes=None, counts: np.ndarray | None = None, n_bins: int = RESOLUTION_BINS):
+    """Murphy resolution term of the Brier score: ``sum_k (n_k / N) (obar_k - obar)^2`` over ``n_bins`` equal-mass bins of the forecast ``p``
+    (the bins the equal-mass ECE uses), ``obar_k`` the observed event frequency in bin k and ``obar`` the overall event rate.
+
+    It is zero for a forecast whose bins all have the base rate, however spread the forecast is, so it measures discrimination and not sharpness.
+    The estimate is biased upward by about ``(n_bins - 1) / N * obar (1 - obar)`` from the sampling noise of the bin frequencies. With ``counts``
+    (by-test resample counts, shape (B, n_tests)) and ``test_codes`` it also returns the 90 percent interval; the bins are fixed from all rows.
+    Returns ``(estimate, lo, hi)``; the estimate is None without rows."""
+    p, e = np.asarray(p, float), np.asarray(event, float)
+    ok = np.isfinite(p) & np.isfinite(e)
+    if not ok.any():
+        return None, None, None
+    p, e = p[ok], e[ok]
+    idx = _quantile_bin_index(p, n_bins)
+    n_k = np.bincount(idx, minlength=n_bins).astype(float)
+    e_k = np.bincount(idx, weights=e, minlength=n_bins)
+
+    def term(n_k, e_k):
+        n = n_k.sum(axis=-1, keepdims=True)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            obar = e_k.sum(axis=-1, keepdims=True) / n
+            gap = np.where(n_k > 0, e_k / n_k - obar, 0.0)
+        return (n_k / n * gap**2).sum(axis=-1)
+
+    est = float(term(n_k, e_k))
+    if counts is None or test_codes is None:
+        return est, None, None
+    codes = np.asarray(test_codes)[ok]
+    n_t = counts.shape[1]
+    cell = codes * n_bins + idx
+    N = np.bincount(cell, minlength=n_t * n_bins).reshape(n_t, n_bins).astype(float)
+    E = np.bincount(cell, weights=e, minlength=n_t * n_bins).reshape(n_t, n_bins)
+    draws = term(counts @ N, counts @ E)
+    draws = draws[np.isfinite(draws)]
+    if len(draws) < 2:
+        return est, None, None
+    lo, hi = _percentile_interval(draws, LEVEL)
+    return est, lo, hi
+
+
+def _discrimination(row: dict, g: pd.DataFrame, ts: "_TestSums", counts: np.ndarray) -> None:
+    """AUC and Murphy resolution, so discrimination is reported apart from skill (reviews R3 and R5).
+
+    For the significance event: ``p_sig`` against ``event``. For the direction: ``p_gt0`` against ``event_pos``. The resolution is
+    ``murphy_resolution`` (equal-mass bins, by-test interval); the AUC carries the same by-test resamples as the group's other statistics.
+    A rung without the probability, or a group in which the event never or always happens, gets None for the AUC."""
     for key, pcol, ecol in (("event", "p_sig", "event"), ("direction", "p_gt0", "event_pos")):
         if pcol not in g.columns or ecol not in g.columns:
             continue
         p, e = g[pcol].to_numpy(float), g[ecol].to_numpy(float)
         ok = np.isfinite(p) & np.isfinite(e)
         row[f"auc_{key}"], row[f"auc_{key}_lo"], row[f"auc_{key}_hi"] = auc_by_test(p, e, ts.codes, counts) if ok.sum() >= 2 else (None, None, None)
-        if not ok.any():
-            row[f"resolution_{key}"] = row[f"resolution_{key}_lo"] = row[f"resolution_{key}_hi"] = None
-            continue
-        n_t, s_p, s_p2, s_e = (_bincount_ok(ts, v, ok) for v in (np.ones(len(p)), p, p * p, e))
-        n_all = n_t.sum()
-        ebar = s_e.sum() / n_all
-        row[f"resolution_{key}"] = float(s_p2.sum() / n_all - 2.0 * ebar * s_p.sum() / n_all + ebar * ebar)
-        den = counts @ n_t
-        den = np.where(den > 0, den, np.nan)
-        eb = (counts @ s_e) / den
-        draws = (counts @ s_p2) / den - 2.0 * eb * (counts @ s_p) / den + eb * eb
-        lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
-        row[f"resolution_{key}_lo"], row[f"resolution_{key}_hi"] = _na(lo), _na(hi)
+        est, lo, hi = murphy_resolution(p, e, ts.codes, counts)
+        row[f"resolution_{key}"], row[f"resolution_{key}_lo"], row[f"resolution_{key}_hi"] = est, _na(lo), _na(hi)
 
 
 def _planned_event_sensitivity(row: dict, g: pd.DataFrame, ts: "_TestSums", counts: np.ndarray) -> None:
@@ -546,7 +575,11 @@ def _planned_event_sensitivity(row: dict, g: pd.DataFrame, ts: "_TestSums", coun
     s_bp, s_bb, s_ev = _bincount_ok(ts, bp, ok), _bincount_ok(ts, bb, ok), _bincount_ok(ts, ev, ok)
     n_all = n_t.sum()
     row["event_rate_planned"] = float(s_ev.sum() / n_all)
-    row["p_sig_mean"] = _na(float(np.nanmean(g["p_sig"].to_numpy(float)))) if "p_sig" in g.columns else None
+    # the mean of the forecast scored in this table: a rung whose planned Brier score IS the base Brier score (P0) forecast the planned base rate
+    if "p_base_planned" in g.columns and np.allclose(bp[ok], bb[ok]):
+        row["p_sig_mean"] = _na(float(np.nanmean(g["p_base_planned"].to_numpy(float))))
+    else:
+        row["p_sig_mean"] = _na(float(np.nanmean(g["p_sig"].to_numpy(float)))) if "p_sig" in g.columns else None
     row["brier_planned"], row["brier_base_planned"] = float(s_bp.sum() / n_all), float(s_bb.sum() / n_all)
     row["brier_skill_planned"] = _na(1.0 - s_bp.sum() / s_bb.sum()) if s_bb.sum() > 0 else None
     den = counts @ s_bb

@@ -48,15 +48,18 @@ def tool_get_card(state: ServingState, source: str, headline: str, image_changed
 
 
 def tool_list_precedents(state: ServingState, source: str, headline: str, image_changed: bool, k: int = 5, origin: str | None = None,
-                         cell: str | None = None, headline_changed: bool = True, reference_headline: str = "") -> str:
-    """The ``k`` highest-weight precedents for a proposed headline, sorted by weight descending, as a JSON list."""
+                         cell: str | None = None, headline_changed: bool = True, reference_headline: str = "",
+                         exposure: float | None = None) -> str:
+    """The ``k`` highest-weight precedents for a proposed headline, sorted by weight descending, as a JSON list.
+
+    ``exposure`` is the planned exposure per arm; left out, the fit-set average of the log exposure is used."""
     if k < 1:
         raise ValueError("k must be at least 1")
     bundle = state.bundle(source)
     at = _parse_origin(origin) or state.now()
     bundle.check_origin(at)                # an origin before the fit cutoff would use parameters fitted on later rows
     cell = cell or card_mod.derive_cell(source, image_changed, headline_changed)
-    x = bundle.transform_text(headline, image_changed, cell=cell, reference=reference_headline or None)
+    x = bundle.transform_text(headline, image_changed, cell=cell, reference=reference_headline or None, exposure=exposure)
     table = bundle.p2.top_precedents(x, cell, at, k)
     return json.dumps(table.to_dict(orient="records"))
 
@@ -108,8 +111,8 @@ def build_server(models_dir, reports_dir, now=None):
     @server.tool(name="list_precedents", description="Top-k weighted precedents (row id, weight, kernel, y, s, test id) for a proposed headline.")
     @refusing
     def list_precedents(source: str, headline: str = "", image_changed: bool = False, k: int = 5, origin: str | None = None,
-                        cell: str | None = None, headline_changed: bool = True) -> str:
-        return tool_list_precedents(state, source, headline, image_changed, k, origin, cell, headline_changed)
+                        cell: str | None = None, headline_changed: bool = True, exposure: float | None = None) -> str:
+        return tool_list_precedents(state, source, headline, image_changed, k, origin, cell, headline_changed, exposure=exposure)
 
     @server.tool(name="reliability_report", description="The per-cell rolling reliability report of a source.")
     @refusing

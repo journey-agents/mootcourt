@@ -1,4 +1,5 @@
 {
+ "cautionary_deciles": null,
  "guard_admission_rates": {
   "by_multiplier": [
    {
@@ -64,6 +65,232 @@
    "variants_per_test": 2
   }
  },
+ "guard_fit_fraction_stability": {
+  "inputs": {
+   "note": "11,100 tests was not run: each fit takes minutes at that size",
+   "planted_text_effect": 0.0,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ]
+  },
+  "multiplier": 2.0,
+  "n_tests": 3700,
+  "rows": [
+   {
+    "admitted": 1,
+    "cells": 36,
+    "fit": "first_85_percent",
+    "fraction": 0.85,
+    "order": "time",
+    "share_admitted": 0.027777777777777776
+   },
+   {
+    "admitted": 15,
+    "cells": 36,
+    "fit": "first_90_percent",
+    "fraction": 0.9,
+    "order": "time",
+    "share_admitted": 0.4166666666666667
+   },
+   {
+    "admitted": 0,
+    "cells": 36,
+    "fit": "first_95_percent",
+    "fraction": 0.95,
+    "order": "time",
+    "share_admitted": 0.0
+   },
+   {
+    "admitted": 24,
+    "cells": 36,
+    "fit": "first_100_percent",
+    "fraction": 1.0,
+    "order": "time",
+    "share_admitted": 0.6666666666666666
+   },
+   {
+    "admitted": 17,
+    "cells": 36,
+    "fit": "random_85_percent",
+    "fraction": 0.85,
+    "order": "random",
+    "share_admitted": 0.4722222222222222
+   }
+  ]
+ },
+ "guard_gain_diagnostic": {
+  "inputs": {
+   "gain": "best candidate lambda above zero (the one the guard tests): mean per-row log-score gain over lambda 0, leave-one-test-out rows",
+   "planted_text_effect": 0.0,
+   "rows_per_cell": "mean visible rows of the cell at the fit",
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "variants_per_test": 2
+  },
+  "multiplier": 2.0,
+  "rows": [
+   {
+    "cells": 36,
+    "mean_gain": 0.003099596174415896,
+    "mean_gain_admitted": 0.01467443522434202,
+    "mean_gain_not_admitted": 0.002768886487275149,
+    "mean_gain_se": 0.004417072361139803,
+    "mean_ratio": 0.10076764197369342,
+    "n_tests": 300,
+    "ratio_of_means": 0.7017309025057631,
+    "rows_per_cell": 200.0,
+    "share_admitted": 0.027777777777777776,
+    "share_gain_positive": 0.7222222222222222
+   },
+   {
+    "cells": 36,
+    "mean_gain": 0.0010177871222720966,
+    "mean_gain_admitted": 0.008387806991864416,
+    "mean_gain_not_admitted": 0.0008072151259980305,
+    "mean_gain_se": 0.0015182038629337044,
+    "mean_ratio": 0.05962707799782837,
+    "n_tests": 1000,
+    "ratio_of_means": 0.670388968913156,
+    "rows_per_cell": 666.6666666666666,
+    "share_admitted": 0.027777777777777776,
+    "share_gain_positive": 0.7222222222222222
+   },
+   {
+    "cells": 36,
+    "mean_gain": 0.0027413298926273603,
+    "mean_gain_admitted": 0.0038604594670696157,
+    "mean_gain_not_admitted": 0.0005030707437428492,
+    "mean_gain_se": 0.0008546111056182541,
+    "mean_ratio": 2.1778163361327105,
+    "n_tests": 3700,
+    "ratio_of_means": 3.207692802732994,
+    "rows_per_cell": 2466.6666666666665,
+    "share_admitted": 0.6666666666666666,
+    "share_gain_positive": 0.8888888888888888
+   },
+   {
+    "cells": 36,
+    "mean_gain": 0.001213539965026766,
+    "mean_gain_admitted": 0.0024108485775066204,
+    "mean_gain_not_admitted": 0.0004516163025395855,
+    "mean_gain_se": 0.0005928886865478031,
+    "mean_ratio": 1.6344009372106214,
+    "n_tests": 11100,
+    "ratio_of_means": 2.0468259768841475,
+    "rows_per_cell": 7400.0,
+    "share_admitted": 0.3888888888888889,
+    "share_gain_positive": 0.9722222222222222
+   }
+  ]
+ },
+ "guard_held_out_gain": {
+  "held_out_share_of_tests": 0.15,
+  "inputs": {
+   "held_out": "a random share of the tests, never rows",
+   "held_out_gain": "mean per-row log score of P2 at its fitted weight minus P1 on the held-out rows (zero where the weight is zero)",
+   "planted_text_effect": 0.0,
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ]
+  },
+  "multiplier": 2.0,
+  "rows": [
+   {
+    "admitted_cells": 1,
+    "admitted_mean_difference": 0.021867129975618373,
+    "admitted_mean_held_out_gain": -0.004426459380105034,
+    "admitted_mean_in_selection_gain": 0.01744067059551334,
+    "cells": 36,
+    "mean_difference": 0.004057054866844276,
+    "mean_held_out_gain": -0.00012295720500291762,
+    "mean_in_selection_gain": 0.00393409766184136,
+    "n_tests": 300,
+    "unguarded_cells_with_weight": 22,
+    "unguarded_mean_difference": 0.012673687073607444,
+    "unguarded_mean_held_out_gain": -0.006083026730824212,
+    "unguarded_mean_in_selection_gain": 0.006590660342783233
+   },
+   {
+    "admitted_cells": 2,
+    "admitted_mean_difference": 0.0015081280288372159,
+    "admitted_mean_held_out_gain": 7.717394669457504e-05,
+    "admitted_mean_in_selection_gain": 0.001585301975531791,
+    "cells": 36,
+    "mean_difference": 0.0012282957197533395,
+    "mean_held_out_gain": 4.287441483031947e-06,
+    "mean_in_selection_gain": 0.0012325831612363712,
+    "n_tests": 1000,
+    "unguarded_cells_with_weight": 15,
+    "unguarded_mean_difference": 0.006277481749399677,
+    "unguarded_mean_held_out_gain": -0.0035200604724246313,
+    "unguarded_mean_in_selection_gain": 0.0027574212769750457
+   },
+   {
+    "admitted_cells": 24,
+    "admitted_mean_difference": -0.0006801084838084369,
+    "admitted_mean_held_out_gain": 0.0058436018424346875,
+    "admitted_mean_in_selection_gain": 0.00516349335862625,
+    "cells": 36,
+    "mean_difference": -0.0003454736484034839,
+    "mean_held_out_gain": 0.003895734561623125,
+    "mean_in_selection_gain": 0.00355026091321964,
+    "n_tests": 3700,
+    "unguarded_cells_with_weight": 24,
+    "unguarded_mean_difference": -0.0006278740576784893,
+    "unguarded_mean_held_out_gain": 0.005771013644408986,
+    "unguarded_mean_in_selection_gain": 0.005143139586730497
+   },
+   {
+    "admitted_cells": 12,
+    "admitted_mean_difference": 0.0006875379095191905,
+    "admitted_mean_held_out_gain": 0.0020687841058630537,
+    "admitted_mean_in_selection_gain": 0.0027563220153822444,
+    "cells": 36,
+    "mean_difference": 0.0005528628637060054,
+    "mean_held_out_gain": 0.0006895947019543513,
+    "mean_in_selection_gain": 0.0012424575656603564,
+    "n_tests": 11100,
+    "unguarded_cells_with_weight": 16,
+    "unguarded_mean_difference": 0.0004884269221986479,
+    "unguarded_mean_held_out_gain": 0.0015326274411706755,
+    "unguarded_mean_in_selection_gain": 0.0020210543633693233
+   }
+  ]
+ },
  "guard_pairs": {
   "inputs": {
    "in_selection_gain": "mean per-row log-score gain over lambda 0 on the leave-one-test-out validation rows of the fit",
@@ -80,7 +307,7 @@
   }
  },
  "header": {
-  "created_at": "2026-11-04T02:24:08.246561+00:00",
+  "created_at": "2026-11-04T05:52:51.126254+00:00",
   "created_by": "scripts/paper_extras.py",
   "differences_from_docs": [
    "guard_admission_rates: the one-off runs behind the documentation left no report file, so the cells are refit here on ledgers regenerated with the same generator, text effect zero, 300 tests of two variants per seed; the seeds and the settings are in inputs",
@@ -138,6 +365,7 @@
     "admitted": 1,
     "cells": 36,
     "n_tests": 300,
+    "rows_per_cell": 200,
     "share_admitted": 0.027777777777777776,
     "strength_over_prior_sd": {
      "both": 0.0,
@@ -150,6 +378,7 @@
     "admitted": 1,
     "cells": 36,
     "n_tests": 300,
+    "rows_per_cell": 200,
     "share_admitted": 0.027777777777777776,
     "strength_over_prior_sd": {
      "both": 0.25,
@@ -162,6 +391,7 @@
     "admitted": 2,
     "cells": 36,
     "n_tests": 300,
+    "rows_per_cell": 200,
     "share_admitted": 0.05555555555555555,
     "strength_over_prior_sd": {
      "both": 0.5,
@@ -174,6 +404,7 @@
     "admitted": 7,
     "cells": 36,
     "n_tests": 300,
+    "rows_per_cell": 200,
     "share_admitted": 0.19444444444444445,
     "strength_over_prior_sd": {
      "both": 1.0,
@@ -186,6 +417,7 @@
     "admitted": 31,
     "cells": 36,
     "n_tests": 300,
+    "rows_per_cell": 200,
     "share_admitted": 0.8611111111111112,
     "strength_over_prior_sd": {
      "both": 2.0,
@@ -198,6 +430,7 @@
     "admitted": 1,
     "cells": 36,
     "n_tests": 1000,
+    "rows_per_cell": 667,
     "share_admitted": 0.027777777777777776,
     "strength_over_prior_sd": {
      "both": 0.0,
@@ -210,6 +443,7 @@
     "admitted": 2,
     "cells": 36,
     "n_tests": 1000,
+    "rows_per_cell": 667,
     "share_admitted": 0.05555555555555555,
     "strength_over_prior_sd": {
      "both": 0.25,
@@ -222,6 +456,7 @@
     "admitted": 9,
     "cells": 36,
     "n_tests": 1000,
+    "rows_per_cell": 667,
     "share_admitted": 0.25,
     "strength_over_prior_sd": {
      "both": 0.5,
@@ -234,6 +469,7 @@
     "admitted": 28,
     "cells": 36,
     "n_tests": 1000,
+    "rows_per_cell": 667,
     "share_admitted": 0.7777777777777778,
     "strength_over_prior_sd": {
      "both": 1.0,
@@ -246,6 +482,7 @@
     "admitted": 36,
     "cells": 36,
     "n_tests": 1000,
+    "rows_per_cell": 667,
     "share_admitted": 1.0,
     "strength_over_prior_sd": {
      "both": 2.0,
@@ -255,10 +492,11 @@
     "text_effect_strength": 4.0
    },
    {
-    "admitted": 24,
+    "admitted": 14,
     "cells": 36,
-    "n_tests": 3700,
-    "share_admitted": 0.6666666666666666,
+    "n_tests": 11100,
+    "rows_per_cell": 7400,
+    "share_admitted": 0.3888888888888889,
     "strength_over_prior_sd": {
      "both": 0.0,
      "headline_only": 0.0,
@@ -267,10 +505,11 @@
     "text_effect_strength": 0.0
    },
    {
-    "admitted": 27,
+    "admitted": 21,
     "cells": 36,
-    "n_tests": 3700,
-    "share_admitted": 0.75,
+    "n_tests": 11100,
+    "rows_per_cell": 7400,
+    "share_admitted": 0.5833333333333334,
     "strength_over_prior_sd": {
      "both": 0.25,
      "headline_only": 0.16666666666666666,
@@ -279,10 +518,11 @@
     "text_effect_strength": 0.5
    },
    {
-    "admitted": 32,
+    "admitted": 34,
     "cells": 36,
-    "n_tests": 3700,
-    "share_admitted": 0.8888888888888888,
+    "n_tests": 11100,
+    "rows_per_cell": 7400,
+    "share_admitted": 0.9444444444444444,
     "strength_over_prior_sd": {
      "both": 0.5,
      "headline_only": 0.3333333333333333,
@@ -293,7 +533,8 @@
    {
     "admitted": 36,
     "cells": 36,
-    "n_tests": 3700,
+    "n_tests": 11100,
+    "rows_per_cell": 7400,
     "share_admitted": 1.0,
     "strength_over_prior_sd": {
      "both": 1.0,
@@ -305,7 +546,8 @@
    {
     "admitted": 36,
     "cells": 36,
-    "n_tests": 3700,
+    "n_tests": 11100,
+    "rows_per_cell": 7400,
     "share_admitted": 1.0,
     "strength_over_prior_sd": {
      "both": 2.0,
@@ -336,7 +578,7 @@
     "n_queries": 60,
     "n_query_seeds": 6,
     "n_visible_neighbors_mean": 3358.0,
-    "seconds": 9.5,
+    "seconds": 10.1,
     "share_p2_weight": {
      "mean": 0.14575952969875325,
      "p10": 0.08076789440322654,
@@ -366,7 +608,7 @@
     "n_queries": 60,
     "n_query_seeds": 6,
     "n_visible_neighbors_mean": 33648.0,
-    "seconds": 100.7,
+    "seconds": 119.7,
     "share_p2_weight": {
      "mean": 0.5185212569564698,
      "p10": 0.3475709617268045,
@@ -396,7 +638,7 @@
     "n_queries": 60,
     "n_query_seeds": 6,
     "n_visible_neighbors_mean": 99614.0,
-    "seconds": 310.8,
+    "seconds": 323.2,
     "share_p2_weight": {
      "mean": 0.6535386379196372,
      "p10": 0.4898997985837552,

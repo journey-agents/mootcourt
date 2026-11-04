@@ -16,7 +16,7 @@ pip install -e .
 moot init
 ```
 
-This writes `mootcourt.toml` (data root, the cells to forecast, the action threshold, the gate target and a place for simulators), creates the data root `mootcourt-data/` with its folders, writes a synthetic sample ledger and a quick gate file, and prints the three commands that follow.
+The command takes about 20 seconds, because it also simulates the quick gates file. It writes `mootcourt.toml` (data root, the cells to forecast, the action threshold, the gate target and a place for simulators), creates the data root `mootcourt-data/` with its folders, writes a synthetic sample ledger and a quick gate file, and prints the three commands that follow.
 
 ## 3. Import the sample ledger
 
@@ -28,6 +28,8 @@ The ledger holds 120 synthetic experiments with three metrics each. `--dry-run` 
 
 ## 4. Fit the models and back-test them
 
+**Options.** `--challenger gbm` adds a gradient-boosted comparison; `--seed` and `--bootstrap` fix the random draws and the interval resamples. See the [command guide](commands.md#moot-backtest).
+
 ```
 moot fit --source sample
 moot backtest --source sample
@@ -37,6 +39,8 @@ The backtest replays the history one quarter at a time, scores every rung of the
 
 ## 5. Ask for a card
 
+**Options.** `--row-id` names the ledger row the weekly join will attach the outcome to; `--cell` is needed for a ledger of metrics. See the [command guide](commands.md#moot-card).
+
 ```
 moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
 ```
@@ -44,6 +48,8 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 The sample ledger is static, so the card is issued as of the end of its history (`--now`); with your own live ledger leave `--now` out. The card shows the chance that the test ends significant and positive, an interval for the true effect, how fragile the opinion is, the skill measured at this n, and whether the model abstains and why. It prioritizes and sizes the test; the live test decides.
 
 ## 6. Check health
+
+**What to look at.** The last line, `status:`, and the exit code. The README and [tutorial 1](tutorials/01-first-card.md) explain each line of the output.
 
 ```
 moot doctor
@@ -53,6 +59,6 @@ It checks versions, the data root and its free space, the ledger, whether the mo
 
 ## Next
 
-- Bring your own results: `docs/ledger-format.md`.
-- Keep it current: `moot join` attaches new results to the issued cards that name their ledger row (`moot card --row-id`) and refreshes reliability (see `docs/operations.md` and [tutorial 4](tutorials/04-weekly-loop.md)).
+- Bring your own results: [Ledger format](ledger-format.md).
+- Keep it current: `moot join` attaches new results to the issued cards that name their ledger row (`moot card --row-id`) and refreshes reliability (see [Operations](operations.md) and [tutorial 4](tutorials/04-weekly-loop.md)).
 - Serve it: `moot serve` (HTTP) or `moot mcp`.

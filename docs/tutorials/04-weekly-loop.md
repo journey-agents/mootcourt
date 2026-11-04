@@ -48,9 +48,9 @@ admitted by cell: checkout_conversion 100, pages_per_session 100, revenue_per_us
 final reads from 2023-01-23 to 2025-07-02
 snapshot 20261104-12617dfc4337 for sample
 ledger ~/moot-weekly/mootcourt-data/data/ledger/ledger.parquet: 300 rows
-fitted model daff697c1c13 at snapshot 20261104-12617dfc4337 in 1.5 s; it is the champion for sample
+fitted model daff697c1c13 at snapshot 20261104-12617dfc4337 in 1.2 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-scored 270 rows over 9 origins in 3.3 s (report writing 3.8 s)
+scored 270 rows over 9 origins in 3.5 s (report writing 4.7 s)
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-12617dfc4337.md
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-12617dfc4337.json
 wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-12617dfc4337.parquet
@@ -71,18 +71,18 @@ done
 ```
 
 ```text output
-bd2e60400d15c191 issue p_sig 0.209 sample:exp-101:treatment::checkout_conversion
-2fb63fbd618e3333 issue p_sig 0.209 sample:exp-102:treatment::checkout_conversion
-e36bdea1e788708d issue p_sig 0.209 sample:exp-103:treatment::checkout_conversion
-0f5f7ef37c5ad997 issue p_sig 0.209 sample:exp-104:treatment::checkout_conversion
-3184e07e57da4741 issue p_sig 0.209 sample:exp-105:treatment::checkout_conversion
-53d11b098753f388 issue p_sig 0.209 sample:exp-106:treatment::checkout_conversion
-967cc8ea1d652ead issue p_sig 0.209 sample:exp-107:treatment::checkout_conversion
-80d55ffd1ee7d107 issue p_sig 0.209 sample:exp-108:treatment::checkout_conversion
-e57b2a2d6b9b718c issue p_sig 0.209 sample:exp-109:treatment::checkout_conversion
-444d9d217105e9da issue p_sig 0.209 sample:exp-110:treatment::checkout_conversion
-6855e285dbdf2bd0 issue p_sig 0.209 sample:exp-111:treatment::checkout_conversion
-4d938a6427563437 issue p_sig 0.209 sample:exp-112:treatment::checkout_conversion
+2e8547ee9d9b6048 issue p_sig 0.209 sample:exp-101:treatment::checkout_conversion
+df6f18660a14a53a issue p_sig 0.209 sample:exp-102:treatment::checkout_conversion
+c2eef18ad2e15151 issue p_sig 0.209 sample:exp-103:treatment::checkout_conversion
+efb08dd9f023bc46 issue p_sig 0.209 sample:exp-104:treatment::checkout_conversion
+995f836daec8df6c issue p_sig 0.209 sample:exp-105:treatment::checkout_conversion
+fa13538af2766b26 issue p_sig 0.209 sample:exp-106:treatment::checkout_conversion
+4977d4f0a4d4aff1 issue p_sig 0.209 sample:exp-107:treatment::checkout_conversion
+79f16e30a81f5788 issue p_sig 0.209 sample:exp-108:treatment::checkout_conversion
+37a76214ba56f510 issue p_sig 0.209 sample:exp-109:treatment::checkout_conversion
+fe05deb172d9a7e5 issue p_sig 0.209 sample:exp-110:treatment::checkout_conversion
+163a7cdb1e38917e issue p_sig 0.209 sample:exp-111:treatment::checkout_conversion
+75a3c03394de01dd issue p_sig 0.209 sample:exp-112:treatment::checkout_conversion
 ```
 
 Each card is frozen under `cards/` with its row id inside. `--now` is the issue time: just after the history ends. To adapt the loop to your own archive, change the source name, the cell, `--impressions` (the planned units per arm), the issue time and the experiment and variant ids, and issue one card for each experiment you are about to launch. A card without a row id is frozen and valid, but `moot join` cannot attach an outcome to it. A card requested through the MCP tool is never frozen, so freeze through `moot card` or `POST /card`.
@@ -194,8 +194,8 @@ moot promote --source sample
 ```
 
 ```text output
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.5 s; it is the challenger for sample
-no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
+fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.9 s; it is the challenger for sample
+a refresh of the champion is pending: same method, newer data; `moot backtest` decides it (no further `moot fit`)
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
 wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet

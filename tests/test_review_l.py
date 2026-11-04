@@ -650,7 +650,8 @@ def test_the_skill_line_prints_the_interval_the_test_count_and_the_gate_verdict_
     text = card_mod.to_markdown(card_mod.build_card(bundle, req, reliability=rel, now=origin.to_pydatetime(), gates=GATES))
     sec = text.split("## Skill at this n")[1].split("## Abstention")[0]
     assert "0.075" in sec and "90 percent interval -0.040 to 0.190" in sec and "from 60 tests" in sec and "265 rows" in sec
-    assert "Gate at this n: 60 tests: decidable at skill 0.20 only" in sec and "interval includes zero" in sec
+    # GATES is a per-row file: the 265 rows of the window are compared with it, not the 60 tests (review N, REV-N-007)
+    assert "Gate at this n: 265 rows:" in sec and "interval includes zero" in sec
     assert "Latest gated backtest, rung P2: Brier skill -0.004" in sec and "3797 tests" in sec
     no_gates = card_mod.to_markdown(card_mod.build_card(bundle, req, reliability=rel, now=origin.to_pydatetime()))
     assert "gate sizes are not available" in no_gates

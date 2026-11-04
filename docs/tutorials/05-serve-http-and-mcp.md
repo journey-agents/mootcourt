@@ -137,7 +137,7 @@ MCP is the protocol an AI assistant uses to call a tool. `moot mcp` speaks it ov
 | Tool | Returns |
 |---|---|
 | `get_card` | a card for a proposed change, as JSON |
-| `list_precedents` | the highest-weight precedents for the proposal with their weights, effects and experiment ids |
+| `list_precedents` | the highest-weight precedents for the proposal (optional `exposure`, default the average exposure of the fit) with their weights, effects and experiment ids |
 | `reliability_report` | the rolling reliability report of a source |
 
 To register it with an assistant that supports MCP, give the client the command `moot mcp` and make it run in the project folder, which holds `mootcourt.toml` and so tells it where the data root is. If the client cannot set a working folder, set the environment variable `MOOTCOURT_DATA_ROOT` instead. Either one is enough. The script below does the first: it runs from the project folder.

@@ -173,12 +173,12 @@ moot backtest --source mine
 ```
 
 ```text output
-fitted model adf46433a35f at snapshot 20261104-4a80e5b241d7 in 1.6 s; it is the champion for mine
+fitted model adf46433a35f at snapshot 20261104-4a80e5b241d7 in 1.7 s; it is the champion for mine
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 400}
-note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
+gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
 filled the backtest summary of model adf46433a35f
-scored 330 rows over 11 origins in 4.1 s (report writing 4.6 s)
+scored 330 rows over 11 origins in 4.2 s (report writing 5.0 s)
 wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-4a80e5b241d7.md
 wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-4a80e5b241d7.json
 wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261104-4a80e5b241d7.parquet
@@ -186,7 +186,7 @@ wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261104-4a80e5b241d7.parqu
 
 Time: about ten seconds here. It grows roughly with the number of rows times the number of origins; a ledger of a million contrasts is measured in [Scale](../scale.md).
 
-The gates came from `reports/gates.json`, which `moot init` wrote with a quick simulation at one base rate (0.3). The backtest says so in the note after the gates line. Run `moot simulate gate-power --base-rate R`, with `R` the share of your experiments that end significant and positive (the report card's Ledger section gives it), to size the gates by experiment at your own rate; it takes a few minutes, and the next backtest reads the result.
+The gates came from `reports/gates.json`, which `moot init` wrote with a quick simulation at one base rate (0.3), in tests; the backtest prints the sizes after the gates line. Run `moot simulate gate-power --base-rate R`, with `R` the share of your experiments that end significant and positive (the report card's Ledger section gives it), to size the gates by experiment at your own rate; it takes a few minutes, and the next backtest reads the result.
 
 ## 7. Read the report card
 
@@ -215,7 +215,7 @@ It writes `reports/benchmark/ledger-<snapshot>.md`. Read its sections in this or
 5. **Calibration by precision.** The scored rows in ten bands of planned exposure. In each band the mean forecast should be near the event rate. A forecaster that is right only for the most precise experiments shows here.
 6. **Limitations.** Three standing sentences: a forecast is only as good as its ledger, the gates say what is decidable and not whether the tool is useful, and a precedent forecast never replaces running the experiment.
 
-On the stand-in data every interval contains zero and every comparison is undecidable. That is the correct reading of synthetic noise. On your own archive, the first thing to look at is whether P1 or P2 has a positive skill with an interval above zero, and whether that comparison is decidable.
+On the stand-in data every interval contains zero, which is the correct reading of synthetic noise, and the decidable column says only that a skill difference of 0.20 could be told from zero at this number of experiments, not that there is one. On your own archive, the first thing to look at is whether P1 or P2 has a positive skill with an interval above zero, and whether that comparison is decidable.
 
 The card holds counts, rates and scores only. It has no row id, no experiment name, no headline and no cell name, so an organization can publish it and keep its ledger private. See [the benchmark page](../benchmark.md).
 
@@ -230,7 +230,7 @@ moot card --source mine --cell revenue_per_user --impressions 50000 --now 2025-1
 ```text output
 # Moot Court card
 
-- Card id: 7a051d7d7ecd88dc
+- Card id: 78d1c35a26f41151
 - Source: mine
 - Cell: revenue_per_user
 - Origin: 2025-12-30T00:00:00+00:00

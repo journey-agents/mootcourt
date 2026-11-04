@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Recompute the discrimination columns (AUC and the Murphy resolution term) of existing backtest reports from their stored score tables.
+
+A report's ``tables.aggregate`` rows carry ``auc_*`` and ``resolution_*`` keys. When the definition of those columns changes (review N,
+REV-N-001: the resolution is the Murphy term over equal-mass forecast bins, not the spread of the forecast) the reports can be brought up to
+date without rerunning a backtest: this script reads each ``backtest-*.json`` and the ``scores-*.parquet`` beside it, recomputes the keys for
+every (cell, rung) row with the report's own bootstrap settings (``header.bootstrap_resamples``, ``header.seed``), writes the JSON back and
+regenerates the Markdown from it. Nothing else in a report changes; the AUC values are recomputed too and must equal the stored ones
+(a mismatch aborts, which shows the score table is not the one the report was built from).
+
+Use: ``python scripts/refresh_discrimination.py REPORTS_DIR [--check]`` (REPORTS_DIR holds ``backtest-*.json``; ``ablations/`` and
+``positive-control/`` below it are visited too).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from mootcourt import harness_stats as hs
+from mootcourt.report import clean, render_markdown
+
+KEYS = (
+    "auc_event",
+    "auc_event_lo",
+    "auc_event_hi",
+    "auc_direction",
+    "auc_direction_lo",
+    "auc_direction_hi",
+    "resolution_event",
+    "resolution_event_lo",
+    "resolution_event_hi",
+    "resolution_direction",
+    "resolution_direction_lo",
+    "resolution_direction_hi",
+)
+
+
+def group_values(g: pd.DataFrame, B: int, seed: int) -> dict:
+    ts = hs._TestSums(g, {"a": np.zeros(len(g))})
+    counts = ts.resample_counts(B, np.random.default_rng(seed))
+    row: dict = {}
+    hs._discrimination(row, g, ts, counts)
+    return row
+
+
+def refresh(json_path: Path, check: bool = False) -> int:
+    scores_path = json_path.with_name(json_path.name.replace("backtest-", "scores-", 1)).with_suffix(".parquet")
+    if not scores_path.exists():
+        print(f"skipped {json_path.name}: no score table beside it", file=sys.stderr)
+        return 0
+    doc = json.loads(json_path.read_text(encoding="utf-8"))
+    rows = doc["tables"]["aggregate"]
+    if not any("resolution_event" in r for r in rows):
+        return 0
+    scores = pd.read_parquet(scores_path)
+    B, seed = int(doc["header"]["bootstrap_resamples"]), int(doc["header"]["seed"])
+    changed = 0
+    for r in rows:
+        sr = scores[scores["rung"] == r["rung"]]
+        g = sr if r["cell"] == "ALL" else sr[sr["cell"] == r["cell"]]
+        if g.empty:
+            continue
+        new = group_values(g, B, seed)
+        for k in ("auc_event", "auc_direction"):
+            old, now = r.get(k), new.get(k)
+            if (old is None) != (now is None) or (old is not None and abs(old - now) > 1e-9):
+                raise SystemExit(f"{json_path.name}: {r['cell']}/{r['rung']} {k} is {old} in the report and {now} from the score table")
+        for k in KEYS:
+            if k in new:
+                value = None if new[k] is None or (isinstance(new[k], float) and not np.isfinite(new[k])) else float(new[k])
+                if r.get(k) != value:
+                    changed += 1
+                    r[k] = value
+    if changed and not check:
+        json_path.write_text(json.dumps(clean(doc), indent=1, sort_keys=False, allow_nan=False) + "\n", encoding="utf-8")
+        json_path.with_suffix(".md").write_text(render_markdown(doc), encoding="utf-8")
+    print(f"{json_path.name}: {changed} values {'differ' if check else 'updated'}")
+    return changed
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("reports_dir")
+    ap.add_argument("--check", action="store_true", help="report what would change and write nothing")
+    args = ap.parse_args()
+    root = Path(args.reports_dir)
+    files = (
+        sorted(root.glob("backtest-*.json"))
+        + sorted((root / "ablations").glob("backtest-*.json"))
+        + sorted((root / "positive-control").glob("backtest-*.json"))
+    )
+    total = sum(refresh(f, args.check) for f in files)
+    print(f"{len(files)} reports, {total} values {'would change' if args.check else 'updated'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -615,23 +615,50 @@ def test_auc_by_test_matches_the_rank_formula_with_ties_and_is_none_for_one_clas
     assert hs.auc_by_test(p, np.ones(n), ts.codes, counts) == (None, None, None)
 
 
-def test_the_aggregate_reports_auc_and_resolution_apart_from_skill():
+def test_the_aggregate_reports_auc_and_the_murphy_resolution_apart_from_skill():
     from test_review_l import _bt
 
     from mootcourt import harness_stats as hs
 
     _, sc = _bt()
     agg = hs.aggregate_scores(sc, GATES, B=40)
-    for col in ("auc_event", "auc_event_lo", "auc_event_hi", "resolution_event", "auc_direction", "resolution_direction"):
+    for col in (
+        "auc_event",
+        "auc_event_lo",
+        "auc_event_hi",
+        "resolution_event",
+        "resolution_direction",
+        "resolution_direction_lo",
+        "resolution_direction_hi",
+    ):
         assert col in agg.columns
     g = sc[sc["rung"] == "P1"]
     row = agg[(agg["cell"] == "ALL") & (agg["rung"] == "P1")].iloc[0]
-    ebar = g["event"].astype(float).mean()
-    assert row["resolution_event"] == pytest.approx(float(((g["p_sig"] - ebar) ** 2).mean()), abs=1e-12)
-    ebar_pos = g["event_pos"].astype(float).mean()
-    assert row["resolution_direction"] == pytest.approx(float(((g["p_gt0"] - ebar_pos) ** 2).mean()), abs=1e-12)
+    want = hs.murphy_resolution(g["p_sig"], g["event"].astype(float))[0]
+    assert row["resolution_event"] == pytest.approx(want, abs=1e-12)
+    assert hs.murphy_resolution(g["p_gt0"], g["event_pos"].astype(float))[0] == pytest.approx(row["resolution_direction"], abs=1e-12)
     assert 0.0 <= row["auc_event"] <= 1.0 and row["auc_event_lo"] <= row["auc_event"] <= row["auc_event_hi"]
     assert row["resolution_event_lo"] <= row["resolution_event"] <= row["resolution_event_hi"]
+    assert row["resolution_direction_lo"] <= row["resolution_direction_hi"]  # the estimate is biased up, so it may sit below its interval
+
+
+def test_murphy_resolution_is_near_zero_for_a_noise_forecast_and_large_for_an_informative_one_whatever_the_spread():
+    from mootcourt import harness_stats as hs
+
+    rng = np.random.default_rng(0)
+    n = 20000
+    tests = rng.integers(0, 4000, n)
+    ts = hs._TestSums(pd.DataFrame({"test_id": tests}), {"a": np.zeros(n)})
+    counts = ts.resample_counts(60, np.random.default_rng(1))
+    e = (rng.uniform(0, 1, n) < 0.2).astype(float)
+    noise = rng.uniform(0.0, 0.9, n)  # very spread, unrelated to the outcome
+    informative = np.where(e == 1, 0.5, 0.05) + rng.normal(0, 0.01, n)
+    r_noise, lo, hi = hs.murphy_resolution(noise, e, ts.codes, counts)
+    r_inf = hs.murphy_resolution(informative, e)[0]
+    spread = float(((noise - e.mean()) ** 2).mean())
+    assert spread > 0.1 and r_noise < 5e-4 and lo <= r_noise <= hi  # the old quantity (spread) was 200 times larger
+    assert r_inf > 0.03
+    assert hs.murphy_resolution(np.full(n, 0.2), e)[0] == pytest.approx(0.0, abs=1e-12)
 
 
 def test_the_event_on_the_planned_standard_error_is_scored_for_every_rung_and_p0_has_zero_skill_on_it():
@@ -723,9 +750,14 @@ def test_the_guard_pair_table_lists_each_admitted_pair_with_its_realized_out_of_
     assert pe.guard_pairs(tmp_path, "upworthy", "MISSING") is None
 
 
-def test_the_positive_control_sensitivity_has_a_point_at_the_size_of_the_headline_only_cell():
+def test_the_positive_control_sensitivity_has_a_point_at_the_per_cell_size_of_the_headline_only_cell():
+    from mootcourt.sources.synthetic import SyntheticConfig, generate
+
     pe = _load_paper_extras()
-    assert 3700 in pe.SENSITIVITY_SIZES  # 3,700 tests of two variants = 7,400 rows
+    assert 11100 in pe.SENSITIVITY_SIZES  # 11,100 tests of two variants over three cells = about 7,400 rows in each cell the guard works in
+    ledger, _ = generate(SyntheticConfig(seed=0, n_tests=11100))
+    per_cell = ledger[ledger["status"] == "admitted"].groupby("cell").size()
+    assert per_cell.min() > 7000 and per_cell.max() < 7800
 
 
 def test_build_tables_writes_the_discrimination_event_definition_and_guard_pair_tables(tmp_path):
@@ -865,3 +897,159 @@ def test_build_tables_writes_the_walltime_table_from_the_run_log_and_states_the_
     bt.walltime_table(str(tmp_path), str(tmp_path))
     text = (tmp_path / "walltime.tex").read_text()
     assert "checksum verification (5.2 s), nothing downloaded" in text and "data & 6.0" in text and "total & 12.5" in text
+
+
+# ============================================================================ the review of chunk N (T-057)
+def test_a_champion_from_a_registry_written_before_data_through_is_refreshed_by_a_same_method_refit(tmp_path):
+    from mootcourt.registry import Registry, fit_command
+
+    ledger = upworthy_like(170, seed=5)
+    ledger = ledger[ledger["status"] == "admitted"].sort_values("usable_after").reset_index(drop=True)
+    first = ledger.iloc[: int(len(ledger) * 0.85)].reset_index(drop=True)
+    ldir, mdir, rdir = tmp_path / "ledger", tmp_path / "models", tmp_path / "reports"
+    for d in (ldir, mdir, rdir):
+        d.mkdir()
+    m1, _, _, _ = fit_command("upworthy", first, ldir, mdir, rdir)
+    doc = json.loads((mdir / "registry.json").read_text())  # the registry as chunk L wrote it: no data_through anywhere
+    doc["upworthy"].pop("data_through")
+    (mdir / "registry.json").write_text(json.dumps(doc))
+    m2, _, role, _ = fit_command("upworthy", ledger, ldir, mdir, rdir)
+    assert role == "challenger" and Registry(mdir).pending_refresh("upworthy") == m2
+    Registry(mdir).attach_summary("upworthy", m2, {"brier_skill": 0.01, "brier_skill_lo": -0.01, "brier_skill_hi": 0.03, "n": 100})
+    after = Registry(mdir)._read()["upworthy"]
+    assert after["champion"] == m2
+    derived = [h for h in after["history"] if h["event"] == "data_through_derived"]
+    assert derived and derived[0]["model_id"] == m1 and "predates the field" in derived[0]["reason"]
+    assert after["data_through"][m1] < after["data_through"][m2]
+
+
+def test_moot_fit_says_a_refresh_is_pending_and_that_the_backtest_decides_it(tmp_path, monkeypatch):
+    from mootcourt import registry as reg
+    from mootcourt.cli import app
+
+    monkeypatch.setenv("MOOTCOURT_DATA_ROOT", str(tmp_path / "root"))
+    monkeypatch.setattr("mootcourt.cli._load_source_ledger", lambda *a, **k: pd.DataFrame())
+    monkeypatch.setattr(reg, "fit_command", lambda *a, **k: ("m2", "snap", "challenger", None))
+    monkeypatch.setattr(reg.Registry, "pending_refresh", lambda self, source: "m2")
+    res = CliRunner().invoke(app, ["fit", "--source", "upworthy"])
+    assert res.exit_code == 0, res.output
+    assert "refresh of the champion is pending" in res.output and "`moot backtest` decides it" in res.output
+    assert "then `moot fit`" not in res.output
+
+
+def test_a_query_between_the_float32_and_float64_underflow_gets_p1s_predictive():
+    from test_review_l import _p2_fit
+
+    from mootcourt.features import sq_dists
+    from mootcourt.ledger import timestamp_ns
+    from mootcourt.predictors.p2 import P2Predictor
+
+    adm, space, p1, _ = _p2_fit()
+    p2 = P2Predictor().fit(adm, space, p1, lambda_override=0.5)
+    origin = adm["usable_after"].max() + pd.Timedelta(days=1)
+    base = space.transform_text(["a plain headline about dogs"], False, reference="www", exposure=20000)[0]
+    data = p2._cells["headline_only"]
+    k = data.prefix(timestamp_ns(origin))
+    band = None
+    for off in np.arange(1.0, 40.0, 0.5):
+        x = base + off
+        peak = float(
+            np.exp(sq_dists(np.asarray(x, dtype=data.X.dtype), data.X[:k], data.sq[:k]).astype(np.float64) * (-1.0 / (2.0 * data.h**2))).max()
+        )
+        if 1e-300 < peak < 1e-46:
+            band = x
+            break
+    assert band is not None, "no offset lands in the band between the float32 and the float64 underflow"
+    st = p2.neighbor_state(band, "headline_only", origin)
+    assert st.lam == 0.0 and len(st.row_ids) == 0
+
+
+def test_a_missing_exposure_is_filled_with_the_exposure_column_mean_in_a_pairwise_space_and_list_precedents_takes_one():
+    import inspect
+
+    from mootcourt.features import FeatureSpace
+    from mootcourt.mcp_server import tool_list_precedents
+
+    adm = upworthy_like(120, seed=8)
+    adm = adm[adm["status"] == "admitted"]
+    space = FeatureSpace.fit(adm, pairwise=True) if "pairwise" in inspect.signature(FeatureSpace.fit).parameters else FeatureSpace.fit(adm)
+    if not space.pairwise:
+        pytest.skip("this fixture builds no pairwise space")
+    exp_col = len(space.mean) - 1 - 3
+    with_none = space.transform_text(["a headline"], False, reference="another headline")[0]
+    assert abs(with_none[exp_col]) < 1e-9  # the fit mean standardizes to zero in the exposure column
+    assert "exposure" in inspect.signature(tool_list_precedents).parameters
+
+
+def test_init_writes_quick_gates_by_test_and_gate_verdict_compares_rows_with_a_per_row_file(tmp_path):
+    from mootcourt.card import gate_verdict
+    from mootcourt.onboarding import init_project
+
+    out = init_project(tmp_path / "proj", None, None, None, False)
+    from mootcourt.simulate import load_gates
+
+    gates = load_gates(Path(out["gates"]))
+    assert gates["interval"]["by"] == "test" and gates["interval"]["level"] == 0.9
+    assert gates["interval"]["rows_per_test"] == 3.5 and gates["interval"]["icc"] == 0.13
+    per_row = {"base_rate": 0.3, "n_200": 175, "n_400": 400, "interval": {"by": "row", "level": 0.95}, "target_power": 0.9}
+    text = gate_verdict(7, None, None, per_row, 0.3, n_rows=500)
+    assert text.startswith("500 rows:") and "decidable" in text and "numbers of rows" in text
+    assert gate_verdict(7, None, None, per_row, 0.3, n_rows=100).startswith("100 rows: undecidable")
+    by_test = gate_verdict(7, None, None, gates, 0.3, n_rows=500)
+    assert by_test.startswith("7 tests:") and "overstates" not in by_test
+
+
+def test_skill_interval_keeps_a_test_named_none_and_the_planned_table_reports_the_scored_forecast_mean():
+    from test_review_l import _bt
+
+    from mootcourt import harness_stats as hs
+    from mootcourt.reliability import skill_interval
+
+    b = np.array([0.1, 0.2, 0.15, 0.3, 0.25, 0.05] * 5)
+    ids = np.array(["None", "a", "b", "c", "d", "e"] * 5, dtype=object)
+    assert skill_interval(b, np.full(len(b), 0.2), ids, B=50)[2] == 6  # the literal id "None" is a test, not a missing id
+    _, sc = _bt()
+    agg = hs.aggregate_scores(sc, GATES, B=30).query("cell == 'ALL'").set_index("rung")
+    p0 = sc[sc["rung"] == "P0"]
+    assert agg.loc["P0", "p_sig_mean"] == pytest.approx(float(p0["p_base_planned"].mean()), abs=1e-12)
+    p1 = sc[sc["rung"] == "P1"]
+    assert agg.loc["P1", "p_sig_mean"] == pytest.approx(float(p1["p_sig"].mean()), abs=1e-12)
+
+
+def test_the_guard_gain_diagnostic_reports_gain_standard_error_ratio_and_share_admitted_per_size_and_has_a_table(tmp_path):
+    import importlib.util
+
+    pe = _load_paper_extras()
+    got = pe.guard_gain_diagnostic(sizes=(120,), seeds=range(2))
+    row = got["rows"][0]
+    assert row["n_tests"] == 120 and row["cells"] > 0 and row["mean_gain_se"] > 0
+    assert 0.0 <= row["share_admitted"] <= 1.0 and 0.0 <= row["share_gain_positive"] <= 1.0
+    assert row["ratio_of_means"] == pytest.approx(row["mean_gain"] / row["mean_gain_se"])
+    spec = importlib.util.spec_from_file_location("build_tables_g", Path(__file__).resolve().parents[1] / "paper" / "build_tables.py")
+    bt = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bt)
+    (tmp_path / "paper-extras-synthetic-SID.json").write_text(json.dumps({"guard_gain_diagnostic": got}))
+    bt.guard_gain_table(str(tmp_path), str(tmp_path))
+    assert "120 &" in (tmp_path / "guard-gain-diagnostic.tex").read_text()
+
+
+def test_the_held_out_gain_and_fit_fraction_diagnostics_hold_out_tests_and_have_tables(tmp_path):
+    import importlib.util
+
+    pe = _load_paper_extras()
+    ho = pe.guard_held_out_gain(sizes=(120,), seeds=range(2))
+    row = ho["rows"][0]
+    assert row["n_tests"] == 120 and row["cells"] > 0
+    assert row["mean_difference"] == pytest.approx(row["mean_in_selection_gain"] - row["mean_held_out_gain"])
+    assert row["admitted_cells"] <= row["cells"] and ho["held_out_share_of_tests"] == 0.15
+    fs = pe.guard_fit_fraction_stability(n_tests=120, seeds=range(2))
+    assert [r["fit"] for r in fs["rows"]] == ["first_85_percent", "first_90_percent", "first_95_percent", "first_100_percent", "random_85_percent"]
+    assert all(r["cells"] > 0 and 0.0 <= r["share_admitted"] <= 1.0 for r in fs["rows"])
+    spec = importlib.util.spec_from_file_location("build_tables_h", Path(__file__).resolve().parents[1] / "paper" / "build_tables.py")
+    bt = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bt)
+    (tmp_path / "paper-extras-synthetic-SID.json").write_text(json.dumps({"guard_held_out_gain": ho, "guard_fit_fraction_stability": fs}))
+    bt.guard_held_out_table(str(tmp_path), str(tmp_path))
+    assert (
+        "120 &" in (tmp_path / "guard-gain-held-out.tex").read_text() and "random\\_85\\_percent" in (tmp_path / "guard-fit-fraction.tex").read_text()
+    )
