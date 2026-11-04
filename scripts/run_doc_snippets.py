@@ -223,6 +223,8 @@ _MASKS = [
     (re.compile(r"\b\d+\.\d+\.\d+\b"), "<version>"),
     (re.compile(r"\b\d+(\.\d+)? (s|seconds)\b"), "<time>"),
     (re.compile(r"\b\d+(\.\d+)? (KB|MB|GB|TB)\b"), "<size>"),
+    (re.compile(r"usable at \d{4}-\d\d-\d\dT[\d:.]+\+00:00"), "usable at <clock>"),   # the fit clock is the time of the run
+    (re.compile(r"^(progress: |.*: still running, ).*\n?", re.M), ""),                          # progress lines: their number depends on the machine
     (re.compile(r"\b\d+ days old\b"), "<n> days old"),     # only the age: a limit such as "limit 14 days" is part of the claim and is not masked
 ]
 

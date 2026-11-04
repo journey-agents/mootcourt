@@ -179,3 +179,41 @@ def test_the_renderer_checks_every_marker_before_it_writes_anything(tmp_path):
     done = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
     assert done.returncode == 2 and "lacks the" in done.stderr
     assert "old" in page.read_text(encoding="utf-8"), "the page was rewritten although the other file lacks its markers"
+
+
+# T6-plan row 4 (R6 minor 13, call 253): the verification script says what is missing in one line
+def _verify(tmp_path, *args, env_root=None):
+    import os
+    import subprocess
+    import sys
+
+    env = {k: v for k, v in os.environ.items() if k != "MOOTCOURT_DATA_ROOT"}
+    if env_root is not None:
+        env["MOOTCOURT_DATA_ROOT"] = str(env_root)
+    return subprocess.run([sys.executable, "-I", str(ROOT / "scripts" / "verify_readme_numbers.py"), *args], capture_output=True, text=True,
+                          env=env, cwd=tmp_path, timeout=120)
+
+
+def test_the_verification_script_names_the_missing_report_in_one_line(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "backtest-synthetic-20000101-000000000000.json").write_text("{}")      # a report exists, the page's own is absent
+    res = _verify(tmp_path, "--reports", str(reports))
+    assert res.returncode != 0 and "Traceback" not in res.stderr, res.stderr
+    lines = [ln for ln in res.stderr.splitlines() if ln.strip()]
+    assert len(lines) == 1 and "backtest-upworthy" in lines[0] and "--reports" in lines[0], res.stderr
+
+
+def test_the_verification_script_names_a_missing_data_root_in_one_line(tmp_path):
+    res = _verify(tmp_path, env_root=tmp_path / "no-such-root")
+    lines = [ln for ln in res.stderr.splitlines() if ln.strip()]
+    assert res.returncode != 0 and len(lines) == 1 and "Traceback" not in res.stderr and "--reports" in lines[0], res.stderr
+
+
+def test_the_verification_script_names_a_missing_page_in_one_line(tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "backtest-x-1.json").write_text("{}")
+    res = _verify(tmp_path, "--reports", str(reports), "--page", str(tmp_path / "gone.md"))
+    lines = [ln for ln in res.stderr.splitlines() if ln.strip()]
+    assert res.returncode != 0 and len(lines) == 1 and "gone.md" in lines[0] and "Traceback" not in res.stderr, res.stderr

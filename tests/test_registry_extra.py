@@ -20,19 +20,24 @@ def test_attach_backtest_fills_manifest_and_registry_and_the_bundle_still_loads(
     assert bundle_mod.load_bundle(b.model_id, tmp_path).backtest_summary["n"] == 321
 
 
+PAIRED = {"skill_diff": 0.05, "lo": 0.02, "hi": 0.08, "n_tests": 900, "n_rows": 2700, "level": 0.9, "resamples": 200,
+          "champion_rung": "P2", "challenger_rung": "P2"}
+
+
 def test_promotion_is_logged_and_clears_the_challenger(imp, tmp_path):
     reg = imp("mootcourt.registry").Registry(tmp_path)
     reg.register_model("s", "a", {"brier_skill": 0.05, "n": 900})
     reg.register_model("s", "b", {"brier_skill": 0.12, "n": 900})
-    assert reg.promote("s", GATES).promoted
+    assert reg.promote("s", GATES, paired=PAIRED).promoted
     doc = json.loads((tmp_path / "registry.json").read_text())["s"]
     assert doc["champion"] == "b" and doc["challenger"] is None
-    assert [h["event"] for h in doc["history"]][-1] == "promoted"
-    assert not reg.promote("s", GATES).promoted           # nothing left to promote
+    assert [h["event"] for h in doc["history"]][-1] == "promoted" and doc["history"][-1]["paired"] == PAIRED
+    assert not reg.promote("s", GATES, paired=PAIRED).promoted           # nothing left to promote
 
 
-def test_exact_margin_is_accepted_despite_float_noise(imp, tmp_path):
+def test_a_lower_bound_equal_to_the_margin_does_not_clear_it(imp, tmp_path):
     reg = imp("mootcourt.registry").Registry(tmp_path)
     reg.register_model("s", "a", {"brier_skill": 0.10, "n": 900})
     reg.register_model("s", "b", {"brier_skill": 0.12, "n": 900})
-    assert reg.promote("s", GATES, margin=0.02).promoted
+    assert not reg.promote("s", GATES, paired=PAIRED, margin=0.02).promoted
+    assert reg.promote("s", GATES, paired={**PAIRED, "lo": 0.0200001}, margin=0.02).promoted

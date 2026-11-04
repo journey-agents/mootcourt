@@ -1,6 +1,19 @@
-"""P2 weighted precedents with an out-of-origin lambda.
+"""The precedent rung, P2: P1's predictive family with its location and scale moved by weighted precedents, behind an admission guard.
 
-For a query ``x`` in a cell, with kernel ``k_i = k(x, x_i)`` over the cell's rows visible at the origin
+What the rung is (round 01, R3 nit 2). For a query in a cell, P2 issues the same Student-t predictive as P1, with the cell's fitted
+degrees of freedom, and changes two things only: the location moves from P1's cell mean toward the kernel-weighted mean of the cell's
+visible precedents, and the scale comes from the precedents' variance plus a residual term, both through a per-cell weight ``lam``.
+``lam = 0`` returns P1's predictive object to the last bit (the lambda-zero identity, pinned in tests), so a weight above zero changes
+the location and the scale and never the family. The weight, the kernel bandwidth and, when switched on, the recency half-life are
+chosen per cell and origin on validation rows: by the leave-one-TEST-out log score (``selection="loto"``) or by forward
+chaining at inner time cuts (``selection="forward"``, the default since run 6). The admission guard keeps ``lam`` at zero unless the best
+candidate's gain over
+``lam = 0`` on those validation rows clears a tie tolerance and ``guard`` cluster-robust standard errors. The guard measures the gain on
+the validation rows of the fit, not on the rows the backtest scores afterwards; whether an admitted weight transfers out of time is what
+the backtest measures, and the paper reports the two apart (docs/method.md calls 191 and 233: on the headline archive the admitted
+pairs lose a little out of time, through the scale term, with a small realized out-of-time gain in the location).
+
+Formulas. For a query ``x`` in a cell, with kernel ``k_i = k(x, x_i)`` over the cell's rows visible at the origin
 (status admitted and ``usable_after <= origin``) and the P1 cell prior ``(mu_c, tau_c)``:
 
     w_i     = k_i / (s_i^2 + tau_c^2)
@@ -38,8 +51,9 @@ the loss on the next origin was 0.025 to 0.11 nats. A candidate with lam above z
 its mean per-row log-score gain over lam 0 exceeds the tie tolerance and minus ``guard`` standard errors is above zero, the standard error being
 cluster-robust over tests (rows of one test share a reference arm and are not independent). Among admissible
 candidates the best gain wins (gains within the tie tolerance resolve to the smaller lam). With none admissible lam is 0
-for that cell and origin and P2 equals P1. A rung is used only when it beats the rung below out of sample by more than
-noise. The multiplier is ``config.P2_GUARD_MULT`` (2.0; one standard error admitted 39 percent of cells on data with no
+for that cell and origin and P2 equals P1. A candidate weight is admitted only when it beats ``lam = 0`` on the validation rows by
+more than noise; what transfers out of time is the backtest's to say. The multiplier is ``config.P2_GUARD_MULT`` (2.0; one standard
+error admitted 39 percent of cells on data with no
 precedent signal, see the comment there). ``guard=None`` switches the guard off and restores the earlier rule; ``lambda_override`` also bypasses it.
 
 Bandwidth (documented builder call). The kernel bandwidth is the median heuristic ``h0`` times a multiplier
@@ -329,7 +343,7 @@ class P2Predictor:
         ``"row"``; ``top_m`` is the neighbor truncation, or None for all neighbors.
 
         ``selection`` picks how lam, the bandwidth multiplier and the half-life are chosen: ``"loto"`` (leave one
-        test out, time order ignored; the default of ``config.P2_SELECTION_DEFAULT``) or ``"forward"`` (forward
+        test out, time order ignored) or ``"forward"`` (the default of ``config.P2_SELECTION_DEFAULT``; forward
         chaining at inner cuts, see ``_cv_cell``). ``recency`` is None (no time kernel), a half-life in days, or
         ``"select"`` (the half-life is chosen with lam and the bandwidth from ``config.HALF_LIFE_DAYS``).
         ``bandwidth_override`` fixes the bandwidth multiplier for every cell. ``guard`` is the admission guard multiplier

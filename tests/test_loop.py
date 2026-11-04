@@ -130,7 +130,7 @@ def _setup(imp, tmp_path, make_synth, reliability_factory):
     now0 = origin + dt.timedelta(days=1)
     report = reliability_factory(as_of=now0 - dt.timedelta(days=1), n=500)
     cards = []
-    for r in new.head(5).itertuples():
+    for r in new[new["started_at"] > now0].head(5).itertuples():  # issued before the test starts (call 220)
         req = card_mod.CardRequest(source="synthetic", headline=json.loads(r.features_json)["headline"],
                                    image_changed=False, impressions=20000, origin=origin, row_id=r.row_id)
         c = card_mod.build_card(bundle, req, reliability=report, now=now0)
@@ -197,3 +197,77 @@ def test_stale_reliability_report_makes_cards_abstain(imp, make_synth, reliabili
     drifted = reliability_factory(as_of=now - dt.timedelta(days=1), drifted=True, n=500)
     c2 = card_mod.build_card(bundle, req, reliability=drifted, now=now)
     assert "reliability" in c2.abstention.reasons and "drift" in c2.abstention.details["reliability"].lower()
+
+
+# T6-plan row 2 (R2 nit 1, call 249): the ledger snapshot that holds the outcome row
+def test_the_outcome_names_the_ledger_snapshot_that_holds_its_row(imp, tmp_path, make_synth, reliability_factory):
+    loop, ledger_mod = imp("mootcourt.loop"), imp("mootcourt.ledger")
+    dirs, new, cards, now0 = _setup(imp, tmp_path, make_synth, reliability_factory)
+    res = loop.join_new_rows(lambda: new, ledger_dir=dirs["ledger"], cards_dir=dirs["cards"], reports_dir=dirs["reports"], source="synthetic",
+                             now=new["usable_after"].max().to_pydatetime() + dt.timedelta(days=1))
+    outcomes = [json.loads(p.read_text()) for p in sorted((dirs["cards"] / "outcomes").glob("*.json"))]
+    assert len(outcomes) == len(cards) and res.snapshot_id
+    for o in outcomes:
+        assert o["ledger_snapshot_id"] == res.snapshot_id and o["snapshot_id"] != o["ledger_snapshot_id"], "the card's own snapshot stays apart"
+        held = ledger_mod.read_ledger(dirs["ledger"] / "snapshots" / o["ledger_snapshot_id"] / "ledger.parquet")
+        assert o["row_id"] in set(held["row_id"])
+
+
+def test_an_outcome_attached_by_a_join_that_added_no_rows_names_the_snapshot_of_the_ledger_it_read(imp, tmp_path, make_synth, reliability_factory):
+    loop = imp("mootcourt.loop")
+    dirs, new, cards, now0 = _setup(imp, tmp_path, make_synth, reliability_factory)
+    kw = dict(ledger_dir=dirs["ledger"], cards_dir=dirs["cards"], reports_dir=dirs["reports"], source="synthetic")
+    last = new["usable_after"].max().to_pydatetime()
+    first = loop.join_new_rows(lambda: new, now=now0 + dt.timedelta(days=1), **kw)         # rows appended, no horizon passed yet
+    assert first.n_outcomes == 0 and first.snapshot_id
+    later = loop.join_new_rows(lambda: new.iloc[0:0], now=last + dt.timedelta(days=1), **kw)
+    assert later.n_new_rows == 0 and later.n_outcomes == len(cards)
+    ids = {json.loads(p.read_text())["ledger_snapshot_id"] for p in (dirs["cards"] / "outcomes").glob("*.json")}
+    assert ids == {first.snapshot_id}, "the snapshot of the unchanged ledger is reused, not written again"
+    assert len(list((dirs["ledger"] / "snapshots").iterdir())) == 1
+
+
+# T6-plan row 3 (R2 nit 3, call 250): a join that brings outcomes older than the window says so
+def _expected_outside(dirs, now):
+    import pandas as pd
+
+    limit = pd.Timestamp(now) - pd.Timedelta(weeks=8)
+    return sum(1 for p in (dirs["cards"] / "outcomes").glob("*.json") if pd.Timestamp(json.loads(p.read_text())["at"]) <= limit)
+
+
+def test_a_join_counts_the_outcomes_that_fall_before_the_trailing_window(imp, tmp_path, make_synth, reliability_factory):
+    loop = imp("mootcourt.loop")
+    dirs, new, cards, now0 = _setup(imp, tmp_path, make_synth, reliability_factory)
+    late = new["usable_after"].max().to_pydatetime() + dt.timedelta(days=200)
+    kw = dict(ledger_dir=dirs["ledger"], cards_dir=dirs["cards"], reports_dir=dirs["reports"], source="synthetic")
+    res = loop.join_new_rows(lambda: new, now=late, **kw)
+    assert res.n_outcomes == len(cards) and res.n_outside_window == len(cards) == _expected_outside(dirs, late)
+
+
+def test_a_join_inside_the_window_counts_none_outside_it(imp, tmp_path, make_synth, reliability_factory):
+    import pandas as pd
+
+    loop = imp("mootcourt.loop")
+    dirs, new, cards, now0 = _setup(imp, tmp_path, make_synth, reliability_factory)
+    ids = [json.loads(p.read_text())["request"]["row_id"] for p in dirs["cards"].glob("*.json")]
+    first_at = new.set_index("row_id").loc[ids, "usable_after"].min()
+    res = loop.join_new_rows(lambda: new, ledger_dir=dirs["ledger"], cards_dir=dirs["cards"], reports_dir=dirs["reports"], source="synthetic",
+                             now=pd.Timestamp(first_at).to_pydatetime() + dt.timedelta(days=1))
+    assert res.n_outcomes >= 1 and res.n_outside_window == 0
+
+
+def test_moot_join_prints_one_line_when_outcomes_predate_the_window(imp, tmp_path, make_synth, reliability_factory):
+    from typer.testing import CliRunner
+
+    dirs, new, cards, now0 = _setup(imp, tmp_path, make_synth, reliability_factory)
+    rows = tmp_path / "new.parquet"
+    imp("mootcourt.ledger").write_ledger(new, rows)
+    late = (new["usable_after"].max().to_pydatetime() + dt.timedelta(days=200)).isoformat()
+    args = ["join", "--source", "synthetic", "--ledger", str(dirs["ledger"] / "ledger.parquet"), "--cards-dir", str(dirs["cards"]),
+            "--reports-dir", str(dirs["reports"]), "--new-rows", str(rows), "--now", late]
+    res = CliRunner().invoke(imp("mootcourt.cli").app, args)
+    assert res.exit_code == 0, res.output
+    lines = [ln for ln in res.output.splitlines() if "trailing 8 weeks" in ln]
+    assert len(lines) == 1 and f"{len(cards)} of the {len(cards)} attached outcomes" in lines[0], res.output
+    again = CliRunner().invoke(imp("mootcourt.cli").app, args)
+    assert "trailing 8 weeks" not in again.output, "a join that attaches nothing says nothing about the window"

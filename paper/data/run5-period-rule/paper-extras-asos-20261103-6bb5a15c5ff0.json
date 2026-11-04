@@ -16,6 +16,30 @@
    "pairs_with_negative_realized": 0
   }
  },
+ "guard_pairs_rows": {
+  "decomposition": {
+   "defined": false,
+   "reason": "no admitted pair"
+  },
+  "inputs": {
+   "bootstrap_resamples": 500,
+   "decisive": "the row's own realized |y| above z times its realized standard error (the harness's decisive rows)",
+   "difference": "P2 log score minus P1 log score on the same row, nats; P2 better = difference above zero",
+   "event": "the row's own realized y above z times its realized standard error (the significant-positive event)",
+   "intervals": "percentile intervals by test from one set of resamples per pair (and one for the pooled rows); medians by weighted median",
+   "level": 0.9,
+   "refit": "P1 and P2 refit at each admitted origin with harness.default_rungs on ledger.visible_rows, the report's p2_guard",
+   "scores": "scores-asos-20261103-6bb5a15c5ff0.parquet",
+   "seed": 0,
+   "selection": "backtest-asos-20261103-6bb5a15c5ff0.json tables.p2_selection (rung P2, lambda > 0)"
+  },
+  "pooled": null,
+  "rows": [],
+  "summary": {
+   "pairs_admitted": 0,
+   "pairs_in_selection": 28
+  }
+ },
  "header": {
   "created_at": "2026-11-04T03:36:13.565800+00:00",
   "created_by": "scripts/paper_extras.py",

@@ -48,9 +48,10 @@ TOP_M_NEIGHBORS = 1000
 SVD_DIMS = 64
 
 # P2 selection of lambda and bandwidth. "loto" is leave-one-test-out inside the fit set (time order ignored);
-# "forward" is forward chaining: precedents are the rows usable at an inner cut, validation rows come after it.
+# "forward" is forward chaining: precedents are the rows usable at an inner cut, validation rows come after it. The default is "forward" since run 6:
+# call 66 of docs/method.md, re-applied after the guard (call 202), found its advantage on the log score clears zero in the 90 percent interval.
 P2_SELECTIONS = ("loto", "forward")
-P2_SELECTION_DEFAULT = "loto"
+P2_SELECTION_DEFAULT = "forward"
 FORWARD_CUT_QUANTILES = (0.5, 0.67, 0.83)
 # Admission guard (builder call 86): lambda above zero is admitted for a cell and origin only when its out-of-sample log-score gain
 # over lambda 0, minus this many standard errors (across tests), is above zero. None switches the guard off (--p2-guard off).
@@ -70,8 +71,12 @@ GBM_ITER_MAX = 120
 GBM_CONFIGS = ((0.05, 7), (0.05, 15), (0.1, 7), (0.1, 15))
 GBM_VALIDATION_FRACTION = 0.2
 
-# Gate margin used by promotion and second-opinion earning (Brier skill).
-PROMOTION_MARGIN = 0.02
+# Promotion (round 01, docs/method.md call 224): the lower bound of the paired Brier skill difference's 90 percent by-test interval must
+# clear this margin. Zero: the interval decides. A fixed margin above zero has no reason in the gates (the gates size a skill, not a
+# difference), and the earlier 0.02 was reached by no rung on either archive. `moot promote --margin` sets a team's own.
+PROMOTION_MARGIN = 0.0
+# Second-opinion earning keeps its own margin on the stacked Brier skill (Brier skill units).
+EARN_WEIGHT_MARGIN = 0.02
 
 BOUNDARY_SENTENCE = (
     "The card prioritizes and sizes the test. The live test decides. "

@@ -4,11 +4,13 @@ This takes a fresh folder to a card on a small synthetic ledger. It needs no net
 
 ## 1. Install
 
+Keep the clone and its environment on your internal disk: an exFAT or other external volume breaks both install paths (see [troubleshooting](troubleshooting.md#working-from-a-clone-on-an-exfat-volume)).
+
 ```
 pip install -e .
 ```
 
-(or `uv sync`). The command `moot` is then on your path. Python 3.11 or newer.
+(or `uv sync --all-extras`, with `UV_PROJECT_ENVIRONMENT` set to an internal-disk path on an external volume; `uv run moot ...` works only inside the clone, so outside it activate the environment or write `uv run --project /path/to/clone moot ...`, as [tutorial 1](tutorials/01-first-card.md) explains). The command `moot` is then on your path. Python 3.11 or newer.
 
 ## 2. Create the project
 

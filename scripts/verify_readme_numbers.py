@@ -8,6 +8,7 @@ backtest tables, from the per-row score tables next to them), and compares each 
 printed precision. It exits 1 when a number disagrees or when a table has fewer than three numbers checked.
 
 Usage: MOOTCOURT_DATA_ROOT=/path/to/root python scripts/verify_readme_numbers.py [--page docs/results.md] [--reports DIR]
+Without either it looks in reports/ of the working folder and, finding no backtest report, ends in one line naming both.
 """
 from __future__ import annotations
 
@@ -77,9 +78,24 @@ def split_sections(text: str) -> dict[str, list[str]]:
     return sections
 
 
+class MissingInput(Exception):
+    """A report the page cites is not under the reports folder; ``main`` turns it into one line naming the folder flag."""
+
+
 def jload(path: str) -> dict:
-    with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except FileNotFoundError:
+        raise MissingInput(path) from None
+
+
+def newest(pattern: str) -> str:
+    """The last file that matches the glob pattern, in name order; ``MissingInput`` when none does."""
+    found = sorted(glob.glob(pattern))
+    if not found:
+        raise MissingInput(pattern)
+    return found[-1]
 
 
 def agg(report: dict) -> dict:
@@ -132,6 +148,17 @@ def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
     for head, rows in parse_tables(lines):
         if head[:3] == ["cell", "rung", "n"]:
             label = "main table"
+            col = {h: k for k, h in enumerate(head)}
+
+            def find(prefix, col=col):
+                return next((k for h, k in col.items() if h.startswith(prefix)), None)
+
+            c_cov, c_abs, c_gbr = col["coverage 80% / 90%"], col["abstention rate"], col["gate base rate"]
+            c_near = find("decidable by tests (0.90 gate, at the cell")
+            c_03, c_rows = find("decidable by tests (0.90 gate, base rate 0.3)"), find("decidable by rows")
+            c_res = next(k for h, k in col.items() if h.startswith("decidable by tests (") and h.endswith("screen)"))
+            short = {"decidable at skill 0.20 and 0.10": "yes, both skills", "decidable at skill 0.20 only": "skill 0.20 only",
+                     "decidable at skill 0.10 only": "skill 0.10 only", "undecidable at this n": "undecidable"}
             for r in rows:
                 cell, rung = r[0], r[1]
                 j = a[(cell, rung)]
@@ -140,20 +167,27 @@ def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
                     check(sec, f"{label} {cell}/{rung} logscore", r[3], j["logscore"])
                     check_triple(sec, f"{label} {cell}/{rung} brier skill", r[4], skill(j),
                                  j["brier_skill_lo"], j["brier_skill_hi"])
-                    c = tri(r[10])
+                    c = tri(r[c_cov])
                     check(sec, f"{label} {cell}/{rung} cov80", c[0], j["coverage_80"])
                     check(sec, f"{label} {cell}/{rung} cov90", c[1], j["coverage_90"])
-                check(sec, f"{label} {cell}/{rung} gate base rate", r[6], j["gate_base_rate"])
-                for col, key in ((5, "decidable_by_tests"), (7, "decidable_by_tests_base_0.3"), (8, "decidable"), (9, "decidable_research_by_tests")):
-                    short = {"decidable at skill 0.20 and 0.10": "yes, both skills", "decidable at skill 0.20 only": "skill 0.20 only",
-                             "decidable at skill 0.10 only": "skill 0.10 only", "undecidable at this n": "undecidable"}.get(j[key], j[key])
-                    RESULTS.append((sec, f"{label} {cell}/{rung} {key}", r[col], short, r[col] == short))
-                check(sec, f"{label} {cell}/{rung} abstention", r[11], j["abstention_rate"])
+                check(sec, f"{label} {cell}/{rung} gate base rate", r[c_gbr], j["gate_base_rate"])
+                for col_i, key in ((c_near, "decidable_by_tests"), (c_03, "decidable_by_tests_base_0.3"), (c_rows, "decidable"),
+                                   (c_res, "decidable_research_by_tests")):
+                    if col_i is not None:
+                        want = short.get(j[key], j[key])
+                        RESULTS.append((sec, f"{label} {cell}/{rung} {key}", r[col_i], want, r[col_i] == want))
+                if c_03 is None:          # a column that is left out must be redundant: the verdict at base rate 0.3 equals the nearest one
+                    RESULTS.append((sec, f"{label} {cell}/{rung} base 0.3 column omitted", j["decidable_by_tests_base_0.3"], j["decidable_by_tests"],
+                                    j["decidable_by_tests_base_0.3"] == j["decidable_by_tests"]))
+                if c_rows is None:
+                    RESULTS.append((sec, f"{label} {cell}/{rung} by-row column omitted", j["decidable"], "not computed",
+                                    str(j["decidable"]).startswith("not computed")))
+                check(sec, f"{label} {cell}/{rung} abstention", r[c_abs], j["abstention_rate"])
                 if sc is not None and rung in ("P0", "P1", "P2"):
                     s = sc[sc["rung"] == rung] if cell == "ALL" else sc[(sc["rung"] == rung) & (sc["cell"] == cell)]
                     check(sec, f"scores parquet {cell}/{rung} n", r[2], len(s))
                     check(sec, f"scores parquet {cell}/{rung} logscore", r[3], s["logscore"].mean())
-                    check(sec, f"scores parquet {cell}/{rung} abstention", r[11], s["abstain"].mean())
+                    check(sec, f"scores parquet {cell}/{rung} abstention", r[c_abs], s["abstain"].mean())
                     inside90 = ((s["y"] >= s["lo90"]) & (s["y"] <= s["hi90"])).mean()
                     check(sec, f"scores parquet {cell}/{rung} cov90", c[1], inside90)
         elif head[:2] == ["rung", "tests"]:
@@ -326,7 +360,7 @@ def verify_runtime(sec, lines, reports):
 
 
 def latest_snapshot(reports: Path, source: str) -> str:
-    name = Path(sorted(glob.glob(str(reports / f"backtest-{source}-*.json")))[-1]).name
+    name = Path(newest(str(reports / f"backtest-{source}-*.json"))).name
     return name[len(f"backtest-{source}-"):-len(".json")]
 
 
@@ -431,7 +465,7 @@ def verify_cautionary(sec, lines, reports):
 
 
 def verify_learning(sec, lines, reports, source):
-    f = sorted(glob.glob(str(reports / f"learning-curve-{source}-*.json")))[-1]
+    f = newest(str(reports / f"learning-curve-{source}-*.json"))
     j = jload(f)
     text = "\n".join(lines)
     m = re.search(r"Final origin ([\d-]+), (\d+) held-out rows in (\d+) tests", text)
@@ -455,9 +489,9 @@ def verify_learning(sec, lines, reports, source):
 
 
 def verify_positive_control(sec, lines, reports):
-    rep = jload(sorted(glob.glob(str(reports / "positive-control" / "backtest-synthetic-*.json")))[-1])
+    rep = jload(newest(str(reports / "positive-control" / "backtest-synthetic-*.json")))
     a = agg(rep)
-    sens = jload(sorted(glob.glob(str(reports / "paper-extras-synthetic-*.json")))[-1])["positive_control_sensitivity"]
+    sens = jload(newest(str(reports / "paper-extras-synthetic-*.json")))["positive_control_sensitivity"]
     text = "\n".join(lines)
     m = re.search(r"(\d+) rows scored over (\d+) origins", text)
     check(sec, "header", m.group(1), rep["header"]["scored_rows"])
@@ -490,7 +524,7 @@ def verify_proxy(sec, lines, reports):
     for _head, rows in parse_tables(lines):
         for r in rows:
             src = {"Upworthy": "upworthy", "ASOS": "asos"}[r[0]]
-            c = jload(sorted(glob.glob(str(reports / f"paper-extras-{src}-*.json")))[-1])["impressions_effect_correlation"]
+            c = jload(newest(str(reports / f"paper-extras-{src}-*.json")))["impressions_effect_correlation"]
             check(sec, f"{r[0]} rows", r[1], c["n_rows"])
             check(sec, f"{r[0]} corr abs z", r[2], c["corr_log_impressions_abs_z"])
             check(sec, f"{r[0]} corr event", r[3], c["corr_log_impressions_event"])
@@ -501,7 +535,7 @@ def verify_replay(sec, lines, reports):
     for _head, rows in parse_tables(lines):
         for r in rows:
             src = {"Upworthy": "upworthy", "ASOS": "asos"}[r[0]]
-            d = jload(sorted(glob.glob(str(reports / f"replay-{src}-*.json")))[-1])
+            d = jload(newest(str(reports / f"replay-{src}-*.json")))
             t, m = d["totals"], d["totals"]["miss_counts"]
             cov, n = re.match(r"([\d.]+) \((\d+)\)", r[6]).groups()
             check(sec, f"{r[0]} weeks", r[1], d["header"]["n_weeks"])
@@ -516,7 +550,7 @@ def verify_replay(sec, lines, reports):
 
 
 def verify_guard_pairs(sec, lines, reports, source):
-    g = jload(sorted(glob.glob(str(reports / f"paper-extras-{source}-*.json")))[-1])["guard_pairs"]
+    g = jload(newest(str(reports / f"paper-extras-{source}-*.json")))["guard_pairs"]
     for head, rows in parse_tables(lines):
         if head[0] == "cell":
             for r in rows:
@@ -543,7 +577,14 @@ def main() -> int:
     args = ap.parse_args()
     root = os.environ.get("MOOTCOURT_DATA_ROOT")
     reports = Path(args.reports) if args.reports else (Path(root) / "reports" if root else here / "reports")
-    sections = split_sections(Path(args.readme).read_text(encoding="utf-8"))
+    if not reports.is_dir() or not list(reports.glob("backtest-*.json")):
+        sys.exit(f"no backtest reports in {reports}: set MOOTCOURT_DATA_ROOT to a data root that holds them, or pass --reports DIR "
+                 "(for the published reports of the paper, --reports paper/data/run6-forward-chaining)")
+    try:
+        page_text = Path(args.readme).read_text(encoding="utf-8")
+    except OSError as exc:
+        sys.exit(f"cannot read the page {args.readme}: {exc.strerror or exc}; pass --page FILE")
+    sections = split_sections(page_text)
     handlers = {
         "Upworthy backtest": lambda s, ln: verify_backtest(s, ln, reports, "upworthy"),
         "ASOS backtest": lambda s, ln: verify_backtest(s, ln, reports, "asos"),
@@ -569,7 +610,11 @@ def main() -> int:
         if name not in sections:
             RESULTS.append((name, "section missing in the page", "", "", False))
             continue
-        fn(name, sections[name])
+        try:
+            fn(name, sections[name])
+        except MissingInput as exc:
+            sys.exit(f"missing under {reports}: {Path(str(exc)).name} (needed by the section {name!r}); pass --reports DIR with the reports the page "
+                     "was written from (for the published reports of the paper, --reports paper/data/run6-forward-chaining)")
     bad = [r for r in RESULTS if not r[4]]
     print(f"page: {args.readme}\nreports: {reports}\n")
     print(f"{'section':<52}{'checked':>9}{'mismatch':>10}")

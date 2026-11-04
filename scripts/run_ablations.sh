@@ -1,8 +1,8 @@
 #!/bin/bash
 # Run the ablation backtests of one source, several at a time. Every run writes its own report under reports/ablations.
 # Usage: scripts/run_ablations.sh SOURCE [JOBS]      (or: scripts/run_ablations.sh SOURCE JOBS --list, which prints the settings and runs nothing)
-#   upworthy  P2 selection rule, recency, feature sets, bandwidth, lambda, kappa, prior, P2 admission guard (off, 1.0), the single-headline
-#             feature space (--pairwise off), admission on exposure only (--admission prelaunch); the feature, bandwidth, selection, recency and
+#   upworthy  P2 selection rule (leave-one-test-out, the counterfactual of the forward-chaining default), recency, feature sets, bandwidth, lambda, kappa, prior, P2 admission guard (off, 1.0), the single-headline
+#             feature space (--pairwise off), admission on exposure only (--admission prelaunch), one contrast per test (--contrasts one); the feature, bandwidth, selection, recency and
 #             pairwise ablations are run twice, with the guard on and with --p2-guard off, because behind the guard the ablated setting rarely
 #             reaches a forecast (round 00, R3); the off runs are named like `features-text+p2-guard-off`
 #   asos      kappa, prior and the P2 admission guard (the other switches change only P2, which equals P1 on a cell-only space)
@@ -18,9 +18,9 @@ export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}" OPENBLAS_NUM_THREADS="${OPENBLAS_
 case "$SOURCE" in
   upworthy)
     GUARDED=(
-      "--p2-selection forward"
+      "--p2-selection loto"
       "--recency select"
-      "--p2-selection forward --recency select"
+      "--p2-selection loto --recency select"
       "--features text" "--features structured"
       "--bandwidth-mult 1" "--bandwidth-mult 0.5" "--bandwidth-mult 0.25" "--bandwidth-mult 0.125"
       "--pairwise off"
@@ -33,6 +33,7 @@ case "$SOURCE" in
       "--prior normal"
       "--p2-guard off" "--p2-guard 1.0"
       "--admission prelaunch"
+      "--contrasts one"
       "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;
   asos)

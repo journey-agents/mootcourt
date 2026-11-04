@@ -103,8 +103,8 @@ def test_leave_one_test_out_blocks_same_test_leakage(imp, make_synth):
     kw = dict(seed=57, n_tests=300, variants_per_test=4, test_effect_sd=2.0, text_effect_strength=0.0,
               cell_params={"headline_only": (0.0, 0.3)}, s_scale=0.5)
     ledger, _ = make_synth(**kw)
-    _, _, honest = _fit_pair(imp, ledger)
-    _, _, leaky = _fit_pair(imp, ledger, leave_out="row")
+    _, _, honest = _fit_pair(imp, ledger, selection="loto")
+    _, _, leaky = _fit_pair(imp, ledger, selection="loto", leave_out="row")
     assert leaky.lambda_by_cell["headline_only"] > honest.lambda_by_cell["headline_only"]
 
 

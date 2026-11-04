@@ -22,6 +22,17 @@ CONFIG_FILE = "mootcourt.toml"
 README_FIGURES = "reports/figures"
 LOW_SPACE_BYTES = 10 * 1024**3
 
+
+class SidecarEnvironmentError(RuntimeError):
+    """The Python environment holds macOS ``._`` sidecar files (an install on an exFAT volume), which break the plotting library."""
+
+
+def sidecar_message(detail: str) -> str:
+    """One line for a sidecar failure: what it is, what it breaks and the cure (round 01, R6; docs/method.md call 226)."""
+    return ("the Python environment holds macOS `._` sidecar files, which an install on an exFAT volume leaves beside every file, and the "
+            f"plotting library cannot read one of them ({detail}); make the environment on the internal disk and install there, or delete "
+            "the sidecars (find <site-packages> -name '._*' -type f -delete); `moot doctor` reports this condition")
+
 # Names under the root (or under the working directory when there is no root).
 LAYOUT = {
     "data": "data",
@@ -101,6 +112,15 @@ def visible_glob(directory, pattern: str) -> list[Path]:
     if not directory.is_dir():
         return []
     return sorted(p for p in directory.glob(pattern) if not any(part.startswith(".") for part in p.relative_to(directory).parts))
+
+
+def sidecar_files(directory) -> list[Path]:
+    """The macOS ``._name`` sidecar files directly inside ``directory`` (an install or a copy on an exFAT volume leaves one beside every
+    file), sorted; empty when the directory does not exist. The one listing in the package that looks for dot files on purpose (call 226)."""
+    d = Path(directory)
+    if not d.is_dir():
+        return []
+    return sorted(p for p in d.iterdir() if p.name.startswith("._") and p.is_file())
 
 
 def visible_iterdir(directory) -> list[Path]:

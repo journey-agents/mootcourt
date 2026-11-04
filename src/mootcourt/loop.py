@@ -28,6 +28,13 @@ no forecast to score. The baseline log score is P0 (the empirical base-rate fore
 origin. Brier compares ``p_sig`` with the event ``y > z s``; the Brier baseline is the cell's significant-positive base rate stored on
 the card.
 
+Timing and one card per row (round 01, reviewer R2, docs/method.md calls 220 and 222). A card is pre-launch evidence only when both its
+origin and its issue time are at or before the row's ``started_at``; a card that stood later is ``in_flight`` (before ``usable_after``) or
+``after_result`` (at or after it), is recorded with the reason (``post_hoc: true``) and is never scored: no log score, no Brier, no miss
+type, no reliability evidence. One card per row is scored, the earliest pre-launch card by issue time (the card id breaks a tie, and a row
+already scored keeps its card); every other pre-launch card for the row is recorded as a reissue (``reissue: true``, ``superseded_by``) and
+not scored. The replay issues one card per row at the week start on or before ``started_at``, so this rule changes none of its numbers.
+
 Units: ``y``, ``s`` and the point estimate are in the source's unit (percentage points for Upworthy); probabilities
 are unitless; log scores are per unit of y.
 """
@@ -47,7 +54,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from mootcourt.config import Z
+from mootcourt.config import TRAILING_WEEKS, Z
 from mootcourt.ledger import ADMITTED, append_rows, ensure_snapshot, read_ledger, write_ledger
 from mootcourt.predictors.base import Predictive, build_grid
 from mootcourt.predictors.p0 import P0Predictor
@@ -57,6 +64,7 @@ from mootcourt.storage import safe_chmod, visible_glob
 P_CONFIDENT_HIGH = 0.6
 P_CONFIDENT_LOW = 0.1
 MISS_TYPES = ("abstained_but_clear", "confident_but_wrong", "direction_miss", "magnitude_miss", "hit")
+TIMINGS = ("pre_launch", "in_flight", "after_result")
 _Z90 = float(stats.norm.ppf(0.95))
 LOG = logging.getLogger("mootcourt.loop")
 
@@ -118,15 +126,65 @@ def card_forecast(card: dict) -> dict | None:
             "predictive": src.get("predictive")}
 
 
+def card_timing(card: dict, row) -> tuple[str, str | None]:
+    """``(timing, reason)`` of a card against its ledger row (round 01, R2, docs/method.md call 220).
+
+    ``pre_launch`` when the later of the card's origin and issue time is at or before the row's ``started_at`` (at the start instant the
+    test has produced nothing yet, and the replay issues at the week start, which on the ASOS archive is the start instant of 44 of 337
+    rows); ``in_flight`` when it is after the start and before ``usable_after``; ``after_result`` when it is at or after ``usable_after``.
+    The reason is None for a pre-launch card and names the times otherwise.
+    """
+    issued, origin = pd.Timestamp(card["issued_at"]), pd.Timestamp(card["origin"])
+    stood = max(issued, origin)
+    started, usable = pd.Timestamp(row["started_at"]), pd.Timestamp(row["usable_after"])
+    if stood <= started:
+        return "pre_launch", None
+    how = f"issued at {issued.isoformat()}" if issued >= origin else f"standing at an origin of {origin.isoformat()}"
+    if stood < usable:
+        return "in_flight", (f"card {how}, after the test started at {started.isoformat()} and before its result was usable at "
+                             f"{usable.isoformat()}: in flight, not pre-launch evidence")
+    return "after_result", (f"card {how}, at or after the result was usable at {usable.isoformat()} (the test started at "
+                            f"{started.isoformat()}): post-hoc, not pre-launch evidence")
+
+
+def _record(card: dict, row, now: dt.datetime) -> dict:
+    """The part of an outcome record that describes the card and the row without scoring anything: every score null."""
+    pred, issued = card["prediction"], card["abstention"]["status"] == "issue"
+    iv = list(pred["interval_90"]) if issued and pred.get("interval_90") else None
+    iv_y = list(pred["interval_90_y"]) if issued and pred.get("interval_90_y") else None
+    return {
+        "card_id": card["card_id"], "row_id": card["request"].get("row_id"),
+        "test_id": row.get("test_id") if hasattr(row, "get") else None,
+        "source": card["source"], "cell": card["cell"], "model_id": card["model_id"], "snapshot_id": card["snapshot_id"],
+        "y": None, "s": None, "event": None, "abstained": not issued,
+        "p_sig": pred.get("p_sig") if issued else None, "point": pred.get("point") if issued else None,
+        "interval_90": iv, "interval_90_y": iv_y, "miss_type": None, "logscore": None, "p0_logscore": None, "scored_forecast": None,
+        "legacy_normal": False, "covered_90": None, "brier": None, "p0_brier": None,
+        "at": pd.Timestamp(row["usable_after"]).isoformat(), "joined_at": now.isoformat(),
+        "card_issued_at": card["issued_at"], "card_origin": card["origin"], "row_started_at": pd.Timestamp(row["started_at"]).isoformat(),
+        "timing": None, "post_hoc": False, "post_hoc_reason": None, "reissue": False, "superseded_by": None, "scored": False,
+        "ledger_snapshot_id": None,     # the snapshot that holds the outcome row, filled by the join that writes the record (call 249)
+    }
+
+
+def reissue_outcome(card: dict, row, superseded_by: str, now: dt.datetime) -> dict:
+    """The record of a pre-launch card for a row that another card already scores: not scored, pointing at the card that is."""
+    return {**_record(card, row, now), "timing": "pre_launch", "reissue": True, "superseded_by": superseded_by}
+
+
 def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime) -> dict | None:
     """The outcome of one card given its ledger row, or None while the row's registered horizon has not passed at ``now``.
 
-    ``card`` is the frozen card JSON, ``row`` the admitted ledger row (a mapping with ``y``, ``s``, ``usable_after`` and, for the
-    reliability interval, ``test_id``), ``p0`` the baseline fitted on the ledger. The miss type always follows the card as issued; the
-    scores follow ``card_forecast``, so an abstained card is scored on the forecast it withheld.
+    ``card`` is the frozen card JSON, ``row`` the admitted ledger row (a mapping with ``y``, ``s``, ``started_at``, ``usable_after`` and,
+    for the reliability interval, ``test_id``), ``p0`` the baseline fitted on the ledger. The miss type always follows the card as issued;
+    the scores follow ``card_forecast``, so an abstained card is scored on the forecast it withheld. A card that is not pre-launch
+    evidence (``card_timing``) gets a record with ``post_hoc: true``, the reason and no score at all: nothing of the result is credited to it.
     """
     if pd.Timestamp(row["usable_after"]) > pd.Timestamp(now):      # horizon guard: no outcome before its registered horizon
         return None
+    timing, why = card_timing(card, row)
+    if timing != "pre_launch":
+        return {**_record(card, row, now), "timing": timing, "post_hoc": True, "post_hoc_reason": why}
     y, s = float(row["y"]), float(row["s"])
     star = card["request"].get("s_star")
     has_star = star is not None and math.isfinite(float(star)) and float(star) > 0
@@ -163,13 +221,9 @@ def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime) -> dic
         cover90 = None if not look else bool(look[0] <= y <= look[1])
     interval_for_miss = iv_y if iv_y is not None else iv
     return {
-        "card_id": card["card_id"],
-        "row_id": card["request"].get("row_id"),
-        "test_id": row.get("test_id") if hasattr(row, "get") else None,
-        "source": card["source"],
-        "cell": card["cell"],
-        "model_id": card["model_id"],
-        "snapshot_id": card["snapshot_id"],
+        **_record(card, row, now),
+        "timing": "pre_launch",
+        "scored": True,
         "y": y,
         "s": s,
         "event": bool(event),
@@ -193,43 +247,79 @@ def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime) -> dic
         "covered_90": cover90,
         "brier": float((p_scored - event) ** 2) if p_scored is not None else None,
         "p0_brier": float((base - event) ** 2) if base is not None else None,
-        "at": pd.Timestamp(row["usable_after"]).isoformat(),
-        "joined_at": now.isoformat(),
     }
 
 
-def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.datetime, p0: P0Predictor | None = None) -> list[dict]:
+def _scored_by_row(out_dir: Path, source: str) -> dict[str, str]:
+    """``row_id -> card_id`` of the outcome that scores each row (a file written before the flag existed is a scored one)."""
+    found: dict[str, str] = {}
+    for path in visible_glob(out_dir, "*.json"):
+        try:
+            o = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if o.get("source") == source and o.get("row_id") and o.get("scored", True):
+            found[o["row_id"]] = o["card_id"]
+    return found
+
+
+def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.datetime, p0: P0Predictor | None = None,
+                    ledger_snapshot: Callable[[], str] | None = None) -> list[dict]:
     """Write ``cards/outcomes/<card_id>.json`` for each card of ``source``, abstained or issued, whose row is now in the ledger.
 
-    Existing outcome files are left alone (they are written once). Returns the outcomes written. Card files are
-    only read. Rows that are not admitted (excluded from scoring) get no outcome. Horizon guard (builder call 42):
-    a row whose ``usable_after`` is after ``now`` gets no outcome yet; it is attached by the first later join whose
-    ``now`` is at or after ``usable_after``.
+    Existing outcome files are left alone (they are written once). Returns the records written: scored outcomes, post-hoc records and
+    reissues (see the module docstring). Card files are only read. Rows that are not admitted (excluded from scoring) get no outcome.
+    Horizon guard (builder call 42): a row whose ``usable_after`` is after ``now`` gets no outcome yet; it is attached by the first later
+    join whose ``now`` is at or after ``usable_after``. One card per row (call 222): the candidates of a row are taken in issue order, the
+    first pre-launch one is scored unless an earlier join already scored the row, the other pre-launch ones are reissues of it, and a card
+    that is not pre-launch is recorded post-hoc whatever its place in the order.
+
+    ``ledger_snapshot`` returns the id of the snapshot that holds the rows read here; it is called once, and only when a record is written,
+    and each record carries it as ``ledger_snapshot_id`` (call 249), beside the card's own ``snapshot_id``.
     """
     cards_dir = Path(cards_dir)
+    out_dir = cards_dir / "outcomes"
     adm = ledger.loc[ledger["status"] == ADMITTED].set_index("row_id")
     p0 = p0 or P0Predictor().fit(ledger.loc[(ledger["status"] == ADMITTED) & (ledger["source"] == source)])
-    written = []
+    pending: dict[str, list[tuple[pd.Timestamp, str, dict]]] = {}
     for path in visible_glob(cards_dir, "*.json"):
         card = json.loads(path.read_text(encoding="utf-8"))
-        out_path = cards_dir / "outcomes" / f"{card['card_id']}.json"
         row_id = card["request"].get("row_id")
-        if card["source"] != source or not row_id or row_id not in adm.index or out_path.exists():
+        if card["source"] != source or not row_id or row_id not in adm.index or (out_dir / f"{card['card_id']}.json").exists():
             continue
-        outcome = outcome_from_card(card, adm.loc[row_id], p0, now)
-        if outcome is None:
+        if pd.Timestamp(adm.loc[row_id, "usable_after"]) > pd.Timestamp(now):
             continue
-        _atomic_write(out_path, json.dumps(outcome, indent=1, sort_keys=True) + "\n", read_only=True)
-        written.append(outcome)
+        pending.setdefault(row_id, []).append((pd.Timestamp(card["issued_at"]), card["card_id"], card))
+    written = []
+    scored_before = _scored_by_row(out_dir, source) if pending else {}
+    ledger_sid = None
+    for row_id in sorted(pending):
+        row = adm.loc[row_id]
+        winner = scored_before.get(row_id)
+        for _issued, card_id, card in sorted(pending[row_id], key=lambda c: (c[0], c[1])):
+            timing, _why = card_timing(card, row)
+            if timing != "pre_launch":
+                outcome = outcome_from_card(card, row, p0, now)
+            elif winner is None:
+                outcome = outcome_from_card(card, row, p0, now)
+                winner = card_id
+            else:
+                outcome = reissue_outcome(card, row, winner, now)
+            if ledger_snapshot is not None:
+                ledger_sid = ledger_sid or ledger_snapshot()
+                outcome["ledger_snapshot_id"] = ledger_sid
+            _atomic_write(out_dir / f"{card_id}.json", json.dumps(outcome, indent=1, sort_keys=True) + "\n", read_only=True)
+            written.append(outcome)
     return written
 
 
 def reliability_row(o: dict) -> dict | None:
-    """One outcome in the reliability schema (``cell``, ``at``, the four scores, ``test_id``), or None while a score is missing.
+    """One outcome in the reliability schema (``cell``, ``at``, the four scores, ``test_id``), or None while a score is missing or the
+    record is not a scored one (a post-hoc card or a reissue; a file written before the flag existed is scored).
 
     The one function the weekly join and the replay both use to turn outcomes into reliability evidence, abstained cards included.
     """
-    if None in (o["logscore"], o["p0_logscore"], o["brier"], o["p0_brier"]):
+    if not o.get("scored", True) or None in (o["logscore"], o["p0_logscore"], o["brier"], o["p0_brier"]):
         return None
     return {"cell": o["cell"], "at": o["at"], "logscore": o["logscore"], "p0_logscore": o["p0_logscore"], "brier": o["brier"],
             "p0_brier": o["p0_brier"], "test_id": o.get("test_id")}
@@ -254,10 +344,14 @@ class JoinResult:
     """What a join did."""
 
     n_new_rows: int
-    n_outcomes: int
+    n_outcomes: int                 # scored outcomes written
     snapshot_id: str | None
     reliability_path: Path
     miss_counts: dict
+    n_post_hoc: int = 0             # cards recorded post-hoc at this join, never scored
+    n_reissues: int = 0             # pre-launch cards for a row another card scores
+    post_hoc: tuple = ()            # (card id, reason) of each post-hoc record written
+    n_outside_window: int = 0       # scored outcomes dated before the trailing window of this join: they date no reliability entry (call 250)
 
 
 def join_new_rows(loader: Callable[[], pd.DataFrame], *, ledger_dir, cards_dir, reports_dir, source: str,
@@ -265,7 +359,8 @@ def join_new_rows(loader: Callable[[], pd.DataFrame], *, ledger_dir, cards_dir, 
     """One weekly join. ``loader()`` returns the concluded rows to add (a ledger frame, possibly empty).
 
     Idempotent: with the same inputs a second call finds no new rows and no new outcomes and changes nothing
-    except the reliability ``as_of`` stamp (which is the same ``now`` in a repeated call).
+    except the reliability ``as_of`` stamp (which is the same ``now`` in a repeated call). ``n_outcomes`` counts scored outcomes;
+    post-hoc records and reissues are counted apart and never reach the reliability report.
     """
     now = now or dt.datetime.now(dt.timezone.utc)
     ledger_path = Path(ledger_dir) / "ledger.parquet"
@@ -273,19 +368,25 @@ def join_new_rows(loader: Callable[[], pd.DataFrame], *, ledger_dir, cards_dir, 
     merged = append_rows(existing, loader())
     n_new = len(merged) - len(existing)
     snapshot = None
+    of_source = merged[merged["source"] == source].reset_index(drop=True)
     if n_new > 0:
         write_ledger(merged, ledger_path)
-        snapshot = ensure_snapshot(merged[merged["source"] == source].reset_index(drop=True), ledger_dir)
-    written = attach_outcomes(cards_dir, merged, source, now)
+        snapshot = ensure_snapshot(of_source, ledger_dir)
+    written = attach_outcomes(cards_dir, merged, source, now, ledger_snapshot=lambda: snapshot or ensure_snapshot(of_source, ledger_dir))
+    scored = [o for o in written if o.get("scored")]
+    post_hoc = tuple((o["card_id"], o["post_hoc_reason"]) for o in written if o.get("post_hoc"))
+    n_reissues = sum(1 for o in written if o.get("reissue"))
     reports_dir = Path(reports_dir)
     path = reports_dir / f"reliability-{source}.json"
     prev = json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
-    report = update_reliability(prev, load_outcomes(cards_dir, source), now, advance=bool(written), source=source)
+    report = update_reliability(prev, load_outcomes(cards_dir, source), now, advance=bool(scored), source=source)
     _atomic_write(path, json.dumps(report, indent=1, sort_keys=True) + "\n")
     counts: dict[str, int] = {}
-    for o in written:
+    for o in scored:
         counts[o["miss_type"]] = counts.get(o["miss_type"], 0) + 1
-    return JoinResult(n_new, len(written), snapshot, path, counts)
+    edge = pd.Timestamp(now) - pd.Timedelta(weeks=TRAILING_WEEKS)
+    outside = sum(1 for o in scored if pd.Timestamp(o["at"]) <= edge)
+    return JoinResult(n_new, len(scored), snapshot, path, counts, len(post_hoc), n_reissues, post_hoc, outside)
 
 
 def join_command(source: str, ledger_dir, cards_dir, reports_dir, new_rows_path=None, now: dt.datetime | None = None) -> JoinResult:

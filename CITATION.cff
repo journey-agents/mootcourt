@@ -1,0 +1,32 @@
+# Citation metadata for the software (Citation File Format 1.2.0). Fill in the authors and the release date at release; add the arXiv
+# identifier of the paper and the Zenodo DOI of the release under identifiers once they exist.
+cff-version: 1.2.0
+message: "If you use Moot Court in your work, please cite it as below."
+type: software
+title: "Moot Court: scored, gated pre-launch forecasts of A/B test outcomes from a ledger of precedents"
+abstract: >-
+  A benchmark and protocol for asking what a ledger of concluded online experiments says about a proposed test before it launches:
+  a ledger with admission as a status, a rolling-origin backtest over versioned snapshots, proper scores with floors and ceilings,
+  calibration against a clustered null, sample-size gates, abstention, a frozen card and a weekly join that scores every card.
+version: 1.0.0
+date-released: "YYYY-MM-DD"
+repository-code: "https://github.com/journey-agents/mootcourt"
+url: "https://github.com/journey-agents/mootcourt"
+license: MIT
+authors:
+  - name: "<author: replace with family-names and given-names at release>"
+keywords:
+  - online controlled experiments
+  - A/B testing
+  - forecasting
+  - calibration
+  - empirical Bayes
+  - benchmark
+  - abstention
+# identifiers:
+#   - type: doi
+#     value: "10.5281/zenodo.XXXXXXX"
+#     description: "The Zenodo record of release 1.0.0"
+#   - type: other
+#     value: "arXiv:YYMM.NNNNN"
+#     description: "The paper"

@@ -1,4 +1,4 @@
-% $RUN5 = paper/data/run5-period-rule
+% $RUN6 = paper/data/run6-forward-chaining
 \appendix
 % Float limits for the appendix only: it is tables without text, so several floats per page must be allowed; the two-column
 % floats come last because the class flushes pending floats in strict source order with the float-page fraction as the
@@ -6,58 +6,60 @@
 % (without it the class drops pending single-column floats).
 \setcounter{topnumber}{8}\setcounter{bottomnumber}{8}\setcounter{dbltopnumber}{6}\setcounter{totalnumber}{16}
 \renewcommand{\topfraction}{1}\renewcommand{\bottomfraction}{1}\renewcommand{\dbltopfraction}{1}\renewcommand{\textfraction}{0}\renewcommand{\floatpagefraction}{0.1}\renewcommand{\dblfloatpagefraction}{0.1}
-% src: paper/figures/reliability-upworthy.pdf from $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json tables.reliability_bins (rung, bin, n, mean_p, freq); tables.aggregate design_effect 1.13 (GBM) to 1.50 (text_lr) on the headline archive and 3.82 (P1) on the deployment-shaped one (tables/ece-upworthy.tex, tables/ece-asos.tex)
+% src: paper/figures/reliability-upworthy.pdf from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.reliability_bins (rung, bin, n, mean_p, freq); tables.aggregate design_effect 1.13 (GBM) to 1.50 (text_lr) on the headline archive and 3.82 (P1) on the deployment-shaped one (tables/ece-upworthy.tex, tables/ece-asos.tex)
 \begin{figure*}[t]\centering
 \includegraphics[width=\textwidth]{figures/reliability-upworthy.pdf}
 \caption{Reliability by rung on the headline archive, ten equal-width probability bins, empty bins dropped. Points are the observed frequency; light bars are the central 90 percent range of the frequency expected under perfect calibration given the bin count, treating rows as independent, so they understate the spread where tests contribute several rows (design effects of 1.1 to 1.5 on this archive, 3.8 on the deployment-shaped one, Tables~\ref{tab:ece-upworthy} and~\ref{tab:ece-asos}). Dashed grey is the diagonal.}
 \label{fig:reliability}
 \end{figure*}
-% src: paper/figures/coverage-exposure-upworthy.pdf from $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json tables.calibration_by_precision (rung, decile, coverage_90) and tables.aggregate coverage_90
+% src: paper/figures/coverage-exposure-upworthy.pdf from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.calibration_by_precision (rung, decile, coverage_90) and tables.aggregate coverage_90
 \begin{figure}[t]\centering
 \includegraphics[width=0.7\columnwidth]{figures/coverage-exposure-upworthy.pdf}
 \caption{Coverage of the 90 percent interval by decile of planned exposure, low to high, headline archive, P0, P1 and P2 (Table~\ref{tab:calibration-upworthy}); the 80 percent level is not drawn because the table by exposure carries the 90 percent level only. Dashed grey is the nominal level; open markers are the pooled coverage.}
 \label{fig:coverage-exposure}
 \end{figure}
-% src: paper/figures/cautionary-upworthy.pdf from paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[rung=P1] brier_skill, brier_skill_lo, brier_skill_hi by cell
+% src: paper/figures/cautionary-upworthy.pdf from paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[rung=P1] brier_skill, brier_skill_lo, brier_skill_hi by cell
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{figures/cautionary-upworthy.pdf}
 \caption{P1 Brier skill by cell with 90 percent intervals: left the relative-lift run at realized precision (Section~\ref{sec:cautionary}), right the pre-launch-clean run. The figure shows the Brier skill because the relative-lift run has no table by the ratio of realized to planned standard error and its log score is on another scale. Dashed grey is zero skill.}
 \label{fig:cautionary}
 \end{figure}
-% src: paper/figures/learning-curve-upworthy.pdf from $RUN5/learning-curve-upworthy-20261103-4bfb354b87e3.json rows (rung, fraction, skill, skill_lo, skill_hi), seeds 20
+% src: paper/figures/learning-curve-upworthy.pdf from $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json rows (rung, fraction, skill, skill_lo, skill_hi; skill against base_brier_full, call 204), seeds 20
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{figures/learning-curve-upworthy.pdf}
-\caption{Brier skill against P0 by share of the visible ledger at the final origin, headline archive, mean over 20 seeds with the bootstrap band (Table~\ref{tab:learning-upworthy}); the boosted model's band is clipped at the axis. Dashed grey is zero skill. No learning curve exists for the synthetic archive.}
+\caption{Brier skill against the base rate of the full history at the final origin, by share of the visible ledger, headline archive, mean over 20 seeds with the bootstrap band (Tables~\ref{tab:learning-upworthy} and~\ref{tab:learning-detail}); the boosted model's band is clipped at the axis. Dashed grey is zero skill. No learning curve exists for the synthetic archive.}
 \label{fig:learning}
 \end{figure}
 
 \section{The Deployment-Shaped Archive in Detail}
 \label{app:asos}
 Every table of the headline archive is produced for the deployment-shaped archive as well (Tables~\ref{tab:main-asos}, \ref{tab:ablations-asos}, \ref{tab:abstention-asos}, \ref{tab:calibration-asos}, \ref{tab:ece-asos}, \ref{tab:decision-intervals-asos}, \ref{tab:drift-asos}, \ref{tab:replay-asos}, \ref{tab:learning-asos} and \ref{tab:trigger-released-asos}); with 68 scored experiments and a nominal calendar none of them decides anything, and this appendix records what they show.
-% src: $RUN5/backtest-asos-20261103-6bb5a15c5ff0.json tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells; $RUN5/ablations/p2-guard-asos.json unguarded.logscore 4.7320 against guarded.logscore 4.7088 (0.023 nats), difference.logscore -0.0232 (-0.0681, 0.0103); tables.aggregate[cell=ALL] rung=GBM brier_skill -0.7184, rung=local_eb -0.3832, rung=GBM+cal -0.0090 (-0.0756, 0.0446), rung=local_eb+cal 0.0150 (-0.0351, 0.0691); tables.decision_value origin=ALL budget=0.25 diff_random GBM 0.0420 (-0.0243, 0.1352), local_eb 0.0044 (-0.0660, 0.0934); $RUN5/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation corr_log_impressions_abs_z 0.2152; $RUN5/paper-extras-upworthy-20261103-4bfb354b87e3.json corr_log_impressions_abs_z 0.0994
-P2 equals P1, as expected for a feature space of metric and number of variants only (the guard holds $\lambda$ at zero everywhere; without it the rung gains 0.023 nats with an interval that spans zero). The two challengers that run without text are far below the base rate raw (minus 0.718 and minus 0.383) and at it recalibrated (minus 0.009 and 0.015, intervals spanning zero), and their decision value against random order (plus 0.042 and plus 0.004) spans zero too. The exposure stand-in is worse here: the user count at the final checkpoint of a run of varying length correlates 0.215 with the absolute standardized effect, against 0.099 on the headline archive.
-% src: $RUN5/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows cell=ALL n 81, n_tests 19, brier_skill -0.1371 (-0.4231, 0.0637), logscore 5.2467 against issued 4.6041, direction_accuracy 0.6296 against 0.5269; $RUN5/paper-extras-asos-20261103-6bb5a15c5ff0.json trigger_ablation_released_rows runs[support] issued_in_main.abstention_rate 0.4481, issued_in_ablation.abstention_rate 0.2077 (tables/trigger-released-asos.tex)
-On the deployment-shaped archive only the support trigger matters: switching it off lowers the abstention rate from 0.448 to 0.208, and the 81 released rows score better than the issued ones on the logarithmic score and on direction while their Brier skill, minus 0.137 (minus 0.423 to 0.064), spans zero; with 19 tests the reading is that the threshold of 30 rows is a convention this archive is too small to test.
-% src: $RUN5/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[cell=ALL,rung=P1] 2019 brier_skill -0.1082 (-0.4039, 0.1539) n_tests 29, 2020 -0.1067 (-0.1769, -0.0336) n_tests 39; $RUN5/replay-asos-20261103-6bb5a15c5ff0.json header.n_weeks 101, header.n_cards 337, totals.abstained 132, totals.n_flagged_weeks 2, totals.coverage_90_all 0.8146 (n 205) (tables/drift-asos.tex, tables/replay-asos.tex)
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells; $RUN6/ablations/p2-guard-asos.json unguarded.share_lambda_zero 0.5357 (13 of 28 pairs admitted), unguarded.logscore 4.7172 against guarded.logscore 4.7088 (0.008 nats), difference.logscore -0.0083 (-0.0233, 0.0029); tables.aggregate[cell=ALL] rung=GBM brier_skill -0.7184, rung=local_eb -0.3832, rung=GBM+cal -0.0090 (-0.0756, 0.0446), rung=local_eb+cal 0.0150 (-0.0351, 0.0691); tables.decision_value origin=ALL budget=0.25 diff_random GBM 0.0420 (-0.0243, 0.1352), local_eb 0.0044 (-0.0660, 0.0934); $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation corr_log_impressions_abs_z 0.2152; $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json corr_log_impressions_abs_z 0.0994
+P2 equals P1, as expected for a feature space of metric and number of variants only (the guard holds $\lambda$ at zero everywhere; without it the rung admits a weight in 13 of 28 pairs and gains 0.008 nats, an interval that spans zero). The two challengers that run without text are far below the base rate raw (minus 0.718 and minus 0.383) and at it recalibrated (minus 0.009 and 0.015, intervals spanning zero), and their decision value against random order (plus 0.042 and plus 0.004) spans zero too. The exposure stand-in is worse here: the user count at the final checkpoint of a run of varying length correlates 0.215 with the absolute standardized effect, against 0.099 on the headline archive.
+% src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows cell=ALL n 81, n_tests 19, brier_skill -0.1371 (-0.4231, 0.0637), logscore 5.2467 against issued_in_main.logscore_nonabstained 4.6029, direction_accuracy 0.6296 against 0.5301; $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json trigger_ablation_released_rows runs[support] issued_in_main.abstention_rate 0.4570, issued_in_ablation.abstention_rate 0.2166 (tables/trigger-released-asos.tex)
+On the deployment-shaped archive only the support trigger matters: switching it off lowers the abstention rate from 0.457 to 0.217, and the 81 released rows score better than the issued ones on the logarithmic score and on direction while their Brier skill, minus 0.137 (minus 0.423 to 0.064), spans zero; with 19 tests the reading is that the threshold of 30 rows is a convention this archive is too small to test.
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[cell=ALL,rung=P1] 2019 brier_skill -0.1082 (-0.4039, 0.1539) n_tests 29, 2020 -0.1067 (-0.1769, -0.0336) n_tests 39; $RUN6/replay-asos-20261103-6bb5a15c5ff0.json header.n_weeks 101, header.n_cards 337, totals.abstained 132, totals.n_flagged_weeks 2, totals.coverage_90_all 0.8146 (n 205) (tables/drift-asos.tex, tables/replay-asos.tex)
 On the deployment-shaped archive the same two tables are produced for completeness: the prior's skill is minus 0.108 (minus 0.404 to 0.154) over the 29 experiments of the first nominal year and minus 0.107 (minus 0.177 to minus 0.034) over the 39 of the second, and the replay over 101 weeks and 337 cards abstained on 132, flagged 2 weeks and covered 0.815 of 205 joined outcomes; with a nominal calendar this says only that the loop runs, not when or whether these experiments drifted.
-% src: $RUN5/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json P1 logscore 4.3318 against main 4.7088 (0.377 nats), brier_skill -0.3678 (-0.7027, -0.1344); $RUN5/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-0.0.json 4.6927, $RUN5/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-80.0.json 4.7162 (range 0.024, under 0.03) (tables/ablations-asos.tex)
+% src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json P1 logscore 4.3318 against main 4.7088 (0.377 nats), brier_skill -0.3678 (-0.7027, -0.1344); $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-0.0.json 4.6927, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-80.0.json 4.7162 (range 0.024, under 0.03) (tables/ablations-asos.tex)
 The same two findings hold on the deployment-shaped archive (Table~\ref{tab:ablations-asos}): the normal prior loses 0.377 nats and falls to a Brier skill of minus 0.368, and $\kappa$ moves the score by under 0.03 nats.
-% src: $RUN5/learning-curve-asos-20261103-6bb5a15c5ff0.json heldout_rows 56, heldout_tests 9, seeds 20, skipped_runs {0.05: 17}; rows rung=P1 skill -0.1457 (-0.2734, 0.0451) at fraction 0.05 and -0.1824 (-0.5001, -0.0368) at 1.00 (tables/learning-asos.tex)
-On the deployment-shaped archive the final origin holds 56 rows in 9 tests, 17 of the 20 five-percent subsamples cannot be fit, and every interval is wide (P1 from minus 0.146, minus 0.273 to 0.045, to minus 0.182, minus 0.500 to minus 0.037); the curve is produced for completeness (Table~\ref{tab:learning-asos}) and decides nothing.
+% src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json heldout_rows 56, heldout_tests 9, seeds 20, skipped_runs {0.05: 17}, bootstrap_resamples 500; rows rung=P1 skill -0.3600 (-1.0437, -0.1331) at fraction 0.05 and -0.1824 (-0.5172, -0.0472) at 1.00 (tables/learning-asos.tex)
+On the deployment-shaped archive the final origin holds 56 rows in 9 tests, 17 of the 20 five-percent subsamples cannot be fit, and every interval is wide (P1 from minus 0.360, minus 1.044 to minus 0.133, to minus 0.182, minus 0.517 to minus 0.047); the curve is produced for completeness (Tables~\ref{tab:learning-asos} and~\ref{tab:learning-detail-asos}) and decides nothing.
 
 \section{Synthetic Truth}
 \label{app:synthetic}
-% src: src/mootcourt/sources/synthetic.py _DEFAULT_CELLS headline_only (2.0, 3.0), image_only (-1.0, 1.5), both (0.5, 2.0); text_effect_strength 0.0; $RUN5/backtest-synthetic-20261103-bf4fd286e2b2.json header.admitted_rows 2000, header.scored_rows 1814, header.tests_scored 907, header.origins_scored 8, header.tests_in_ledger 1000
+% src: src/mootcourt/sources/synthetic.py _DEFAULT_CELLS headline_only (2.0, 3.0), image_only (-1.0, 1.5), both (0.5, 2.0); text_effect_strength 0.0; $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json header.admitted_rows 2000, header.scored_rows 1814, header.tests_scored 907, header.origins_scored 8, header.tests_in_ledger 1000
 The synthetic archive has 2,000 contrasts in 1,000 two-arm tests from three cells with known means and spreads (2.0 and 3.0, minus 1.0 and 1.5, 0.5 and 2.0 percent lift) and no text signal; 1,814 contrasts from 907 tests are scored over eight origins.
-% src: $RUN5/backtest-synthetic-20261103-bf4fd286e2b2.json tables.split_half n_odd/n_even 292/312, 302/278, 280/284 (mean 291, about 290 rows per half); cell=headline_only mu_odd 2.02 mu_even 1.86 tau_odd 2.97 tau_even 3.10; cell=image_only mu -0.86 and -0.97, tau 1.25 and 1.34; cell=both mu 0.43 and 0.46, tau 1.74 and 1.81
+% src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.split_half n_odd/n_even 292/312, 302/278, 280/284 (mean 291, about 290 rows per half); cell=headline_only mu_odd 2.02 mu_even 1.86 tau_odd 2.97 tau_even 3.10; cell=image_only mu -0.86 and -0.97, tau 1.25 and 1.34; cell=both mu 0.43 and 0.46, tau 1.74 and 1.81
 The pooled prior recovers the generator: fit on odd and even tests separately, the cell means come back as 2.02 and 1.86, minus 0.86 and minus 0.97, and 0.43 and 0.46, and the spreads as 2.97 and 3.10, 1.25 and 1.34, and 1.74 and 1.81, each within a few tenths of its true value; with about 290 rows per half the standard error of a cell mean is of the order of a tenth to two tenths, so the gaps are inside sampling noise.
-% src: $RUN5/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.7834, coverage_90 0.8908, ece 0.0265, ece_percentile 95.2, ece_percentile_independent 97.8, brier_skill 0.0023 (-0.0128, 0.0168), gate_base_rate 0.14, decidable_by_tests "decidable at skill 0.20 and 0.10"; rung=GBM brier_skill -0.0573, rung=local_eb -0.0097, rung=text_lr -0.0359; tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells (tables/main-synthetic.tex, tables/selection-synthetic.tex)
+% src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.7834, coverage_90 0.8908, ece 0.0265, ece_percentile 95.2, ece_percentile_independent 97.8, brier_skill 0.0023 (-0.0128, 0.0168), gate_base_rate 0.14, decidable_by_tests "decidable at skill 0.20 and 0.10"; rung=GBM brier_skill -0.0573, rung=local_eb -0.0097, rung=text_lr -0.0359; tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells (tables/main-synthetic.tex, tables/selection-synthetic.tex)
 Its intervals cover 78 and 89 percent, its expected calibration error of 0.027 sits at the 95th percentile of the clustered null (98th independent), on the rejection line of Section~\ref{sec:protocol}, its Brier skill is 0.002 (minus 0.013 to 0.017) and decidable at both targets at the gate for base rate 0.14, and P2 equals P1 at every origin because the guard correctly finds no text signal to admit; the challengers, with nothing to learn, score below the base rate (the boosted model minus 0.057, the local comparison set minus 0.010, the text classifier minus 0.036).
-% src: $RUN5/backtest-synthetic-20261103-bf4fd286e2b2.json tables.decision_value origin=ALL budget=0.25 captured_fraction random 0.2502, P1 0.4453, diff_random 0.1951 (0.1732, 0.2156), oracle 0.6104 (tables/decision-intervals-synthetic.tex)
+% src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.decision_value origin=ALL budget=0.25 captured_fraction random 0.2502, P1 0.4453, diff_random 0.1951 (0.1732, 0.2156), oracle 0.6104 (tables/decision-intervals-synthetic.tex)
 Here, unlike on the headline archive, ranking by $\pwin$ has decision value for the prior itself, 0.445 of the positive lift against 0.250 for random order (plus 0.195, 0.173 to 0.216) and 0.610 for the oracle, because the three cells differ in their means and the cell is known before launch: the measure responds to between-cell differences the ledger can see as well as to within-cell differences a rung can rank.
 
-% src: $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows (multiplier 2.0, 12 seeds, 36 cells): n_tests 300 share_admitted 0.028, 0.028, 0.056, 0.194, 0.861 for text_effect_strength 0, 0.5, 1, 2, 4; n_tests 1000 share_admitted 0.028, 0.056, 0.250, 0.778, 1.000; n_tests 11100 rows_per_cell 7400 share_admitted 0.000, 0.278, 0.889, 1.000, 1.000 (tables/positive-control-sensitivity.tex); strength_over_prior_sd headline_only 0 to 1.33, image_only 0 to 2.67; $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=headline_only] n_tests 2280
-Sensitivity by planted strength and ledger size (Table~\ref{tab:positive-control-sensitivity}) gives the guard's admission curve: with 300 tests per ledger it admits a weight in 3, 3, 6, 19 and 86 percent of cells for planted lifts of 0, 0.5, 1, 2 and 4 percent (0 to 2.7 prior standard deviations, by cell), with 1,000 tests (667 rows per cell) in 3, 6, 25, 78 and 100 percent, and with 11,100 tests (7,400 rows per cell, the size of the headline-only cell, because the generator spreads tests over three cells) in 0, 28, 89, 100 and 100 percent. The guard finds a planted two-percent effect, two thirds of a prior standard deviation in the headline-only cell, reliably at a thousand tests, and a one-percent effect at the size of the real cell, where it admits no weight with nothing planted once P1's period rule is the last complete quarter (Section~\ref{sec:limitations}; an earlier version of this table exposed the defect); the realized out-of-time difference on the real archive (Table~\ref{tab:guard-pairs}) is the evidence that counts.
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows (multiplier 2.0, 12 seeds, 36 cells per point, held_out_share_of_tests 0.15, bootstrap_resamples 500; docs/method.md call 230): share_admitted n_tests 300: 0.028, 0.028, 0.056, 0.083, 0.500 for text_effect_strength 0, 0.5, 1, 2, 4; n_tests 1000: 0.056, 0.056, 0.194, 0.583, 1.000; n_tests 11100 rows_per_cell 7400: 0.000, 0.167, 0.972, 1.000, 1.000; recovered_fraction n_tests 11100: 0.000 at 0.5 (share_admitted_fit_split 0.000), 0.180 (0.164, 0.197) at 1.0, 0.274 at 2.0, 0.254 at 4.0; n_tests 1000 text_effect_strength 2.0 0.077 (0.049, 0.104), 4.0 0.166; n_tests 300 text_effect_strength 4.0 0.019 (-0.003, 0.041); n_tests 11100 text_effect_strength 1.0 brier_skill_p1 0.0174, brier_skill_p2 0.0199, brier_skill_oracle 0.0338, by_cell headline_only recovered_fraction 0.099 (strength_over_prior_sd 0.333), both 0.187, image_only 0.210 (tables/positive-control-gain.tex)
+Table~\ref{tab:positive-control-gain} gives the guard's admission curve and the rung's recovery curve side by side, the latter on a random 15 percent of each ledger's tests held out by test. The admission share rises with the planted lift and the ledger: with 300 tests per ledger the guard admits a weight in 3, 3, 6, 8 and 50 percent of cells for planted lifts of 0, 0.5, 1, 2 and 4 percent, with 1,000 tests in 6, 6, 19, 58 and 100 percent, and with 11,100 tests (7,400 rows per cell, the size of the headline-only cell, because the generator spreads tests over three cells) in 0, 17, 97, 100 and 100 percent. The recovered fraction is the rung's held-out gain over P1 divided by the gain of the oracle, P1 refit with the planted term removed and shifted back row by row, the forecaster that knows the effect and nothing else in P1's family. At 11,100 tests it is zero at half a percent (the held-out fit admits nothing there), 0.18 (0.16 to 0.20) at 1 percent, 0.27 at 2 and 0.25 at 4; at 1,000 tests 0.08 (0.05 to 0.10) at 2 percent and 0.17 at 4; at 300 tests 0.02 (minus 0.00 to 0.04) at 4 percent and zero below. In Brier skill at 11,100 tests and 1 percent the same point reads P1 0.017, P2 0.020 and the oracle 0.034; by cell the rung recovers 0.10 in the headline-only cell, where the lift is a third of a prior standard deviation, and 0.19 and 0.21 in the other two. The rung never recovers more than about a quarter of the planted information at any size or strength: the kernel weights precedents by the whole feature vector, and one signal word among random fillers is a small part of it.
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs (planted lift 1.0, seed 0; docs/method.md call 231): n_tests 2000 (snapshot 20261104-8cc34d3af720, scored_rows 3576, rows_per_cell_scored 1192, share_pairs_admitted 0.083): by_cell ALL oracle gain_logscore_vs_p1 0.0155 (0.0099, 0.0206); P2 diff_logscore_vs_p1 0.0000 (-0.0002, 0.0003); cell=headline_only GBM diff_brier_vs_p1 -0.0044 (-0.0078, -0.0005) against oracle gain_brier_vs_p1 -0.0026 (recovered_fraction_brier 1.68), text_lr brier_skill -0.0137 (ALL) and auc_event 0.5366 against P1 0.5858 (headline_only); n_tests 11100 (snapshot 20261104-c7ca82ca15a6, scored_rows 19766, rows_per_cell_scored 6589, share_pairs_admitted 0.583): ALL oracle 0.0197 (0.0177, 0.0219), P2 0.0018 (0.0014, 0.0023), recovered_fraction_logscore 0.092, diff_brier_vs_p1 -0.0001; GBM diff_brier_vs_p1 cell=ALL 0.0005 and cell=headline_only 0.0010, diff_logscore_vs_p1 negative everywhere; text_lr brier_skill -0.0168 (ALL), auc_event 0.5259 against P1 0.5912 (headline_only) (tables/positive-control-rungs.tex)
+Table~\ref{tab:positive-control-rungs} backtests the planted ledger with every rung at 2,000 tests (the published control's own ledger, 1,192 scored rows per cell, where the guard admits a weight in 2 of 24 cell-origin pairs) and at 11,100 (6,589 per cell, 14 of 24 pairs), with the oracle refit at every origin. Pooled, the oracle gains 0.0155 nats (0.0099 to 0.0206) over P1 at 2,000 tests and 0.0197 (0.0177 to 0.0219) at 11,100; P2 gains 0.0000 (minus 0.0002 to 0.0003) and 0.0018 (0.0014 to 0.0023), a recovered fraction of zero and 0.09, less than in the end-of-ledger split because the early origins fit on short histories. The text classifier, the one challenger built for a text signal, scores below the base rate at both sizes (Brier skill minus 0.014 and minus 0.017 pooled, raw; its event AUC in the headline-only cell is 0.537 and 0.526 against P1's 0.586 and 0.591), so the one rung whose skill interval lies above zero on the real archive is the one that fails the control: a winner classifier on TF-IDF that ignores the planned precision does not see a one-percent location shift under this noise. The boosted model recovers the oracle's Brier gain in the headline-only cell at 2,000 tests (minus 0.0044 against minus 0.0026, 1.7 times, on intervals that overlap) and falls below P1 there and pooled at 11,100; its log score is below P1 everywhere, as its normal predictive is not P1's. At 11,100 tests P2 is the only rung above P1 on both scores.
 
 \section{Tooling Landscape}
 \label{app:landscape}
@@ -65,26 +67,30 @@ A fetch-verified survey of thirteen commercial experimentation platforms, sevent
 
 \section{Weekly Replay Detail}
 \label{app:replay}
-% src: $RUN5/replay-upworthy-20261103-4bfb354b87e3.json drift_onsets (both 2015-04-20), weeks[].flagged (2015-04-20, 2015-04-27, 2015-05-04, 2015-05-11, cell both), weeks[].coverage_90 (minimum 0.7048 at 2013-09-30, maximum 0.9726 at 2014-10-13); totals.abstained_by_trigger {novelty 976, reliability 106, support 304, instability 0}
-In the weekly replay of the headline archive (Table~\ref{tab:replay}) the drift rule marks one cell, the smallest, which changed both headline and image, for the four weeks from 20 April 2015 to the end of the archive, and no cell before that. The rolling 90 percent coverage against the card's interval for the observed estimate reaches its low of 0.70 on 30 September 2013 and its high of 0.97 on 13 October 2014. The abstentions split 976 novelty, 106 reliability and 304 support, a card counting under every trigger it fired; the reliability trigger fires only until the first report of a cell exists.
+% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json drift_onsets (both 2015-04-20), weeks[].flagged (2015-04-20, 2015-04-27, 2015-05-04, 2015-05-11, cell both), weeks[].coverage_90 (minimum 0.7075 at 2013-09-30, maximum 0.9670 at 2014-10-13); totals.abstained_by_trigger {novelty 1100, reliability 106, support 304, instability 0}
+In the weekly replay of the headline archive (Table~\ref{tab:replay}) the drift rule marks one cell, the smallest, which changed both headline and image, for the four weeks from 20 April 2015 to the end of the archive, and no cell before that. The rolling 90 percent coverage against the card's interval for the observed estimate reaches its low of 0.71 on 30 September 2013 and its high of 0.97 on 13 October 2014. The abstentions split 1,100 novelty, 106 reliability and 304 support, a card counting under every trigger it fired; the reliability trigger fires only until the first report of a cell exists.
 
 \section{Wall Time, Latency and Scale}
 \label{app:walltime}
-% src: $RUN5/run-log.json total_seconds 1469.2, main_pipeline_seconds 1098.2, stages[stage=power].seconds 730.8, stages[stage=challenger-gbm].seconds 342.9, stages[stage=data].seconds 69.1, data_stage_kind "download", downloaded_files 3, downloaded_bytes 15470807 (15.5 MB), download_seconds 17.3; data/CHECKSUMS.json (every file checked against its pinned checksum)
-Table~\ref{tab:walltime} gives the stages of the timed run: 1,469 seconds in all, of which the main pipeline took 1,098 (731 of them the by-test gate simulation at three base rates with within-test dependence) and the gradient-boosted challenger in its own folder 343; the data stage took 69 seconds, 17.3 of them downloading the three archive files (15.5 MB) from the OSF API, each checked against its pinned checksum. Ablations, learning curves, replays and the positive control are not in the timed run.
-% src: cli_fresh_process_ms p50 1460.0 = 1.46 s; $RUN5/card-latency.json impressions 20000, in_process_ms p50 30.1 p95 31.9 max 42.6 n 30, statuses issue 30, in_process_lambda_0.5_ms p50 30.2 max 32.4, statuses_lambda_0.5 issue 30, service_ms p50 33.5 max 44.9, bundle_load_ms 56.9
-A card for a headline test at 20,000 impressions per arm takes 30.1 milliseconds at the median (42.6 at most) in process with the bundle preloaded (30 cards, all issued), 30.2 (32.4) with the weight on precedents forced to 0.5 so that the dismissal walk and the instability bootstrap run, 33.5 (44.9) through the loopback service, and 1.46 seconds in a fresh process, 57 milliseconds of which load the bundle.
-% src: $RUN5/scale/scale-100000.json stages.fit.seconds 109.33, wall_seconds 371.9, card_latency_ms.p50_ms 27.707, peak_rss_gb 1.24; $RUN5/scale/scale-1000000.json stages.fit.seconds 1343.69, wall_seconds 3168.31, card_latency_ms.p50_ms 37.419, peak_rss_gb 4.99 (created_at 2026-11-04, the final run4 code; $RUN5/scale/README.md)
-On synthetic ledgers of one hundred thousand and one million contrasts, with the final code, the fit took 109 and 1,344 seconds, the median card 27.7 and 37.4 milliseconds, and peak memory was 1.24 and 4.99 GiB.
+% src: $RUN6/run-log.json total_seconds 2052.0, main_pipeline_seconds 1430.6, stages[stage=power].seconds 963.5, stages[stage=challenger-gbm].seconds 584.5, stages[stage=data].seconds 69.2, data_stage_kind "download", downloaded_files 3, downloaded_bytes 15470807 (15.5 MB), download_seconds 15.6, all_exit_codes_zero true; $RUN6/README.md (the timed run's paragraph: a one-minute load average of 13 to 16 at the start and 7.6 at the end, other sessions' jobs); data/CHECKSUMS.json (every file checked against its pinned checksum)
+Table~\ref{tab:walltime} gives the stages of the timed run at the final commit: 2,052 seconds in all, of which the main pipeline took 1,431 (964 of them the by-test gate simulation at three base rates with within-test dependence) and the gradient-boosted challenger in its own folder 585; the data stage took 69 seconds, 15.6 of them downloading the three archive files (15.5 MB) from the OSF API, each checked against its pinned checksum. The wall time is an upper bound, not a quiet timing: the machine carried other jobs throughout, with a one-minute load average of 13 to 16 at the start and 7.6 at the end, as the run folder's README records. Ablations, learning curves, replays and the positive control are not in the timed run.
+% src: cli_fresh_process_ms p50 1049.6 = 1.05 s; $RUN6/card-latency.json impressions 20000, in_process_ms p50 27.1 p95 28.0 max 44.9 n 30, statuses issue 30, in_process_lambda_0.5_ms p50 27.1 max 28.4, statuses_lambda_0.5 issue 30, service_ms p50 29.2 max 55.8, bundle_load_ms 59.4
+A card for a headline test at 20,000 impressions per arm takes 27.1 milliseconds at the median (44.9 at most) in process with the bundle preloaded (30 cards, all issued), 27.1 (28.4) with the weight on precedents forced to 0.5 so that the dismissal walk and the instability bootstrap run, 29.2 (55.8) through the loopback service, and 1.05 seconds in a fresh process, 59 milliseconds of which load the bundle.
+% src: $RUN6/scale/scale-100000.json stages.fit.seconds 109.33, wall_seconds 371.9, card_latency_ms.p50_ms 27.707, peak_rss_gb 1.24; $RUN6/scale/scale-1000000.json stages.fit.seconds 1343.69, wall_seconds 3168.31, card_latency_ms.p50_ms 37.419, peak_rss_gb 4.99 (created_at 2026-11-04, measured on the run 4 code and carried into run 6 unchanged; $RUN6/scale/README.md)
+On synthetic ledgers of one hundred thousand and one million contrasts the fit took 109 and 1,344 seconds, the median card 27.7 and 37.4 milliseconds, and peak memory was 1.24 and 4.99 GiB.
 \paragraph{The rerun's lesson in full.} The first rerun after the round-00 fixes left the challengers blind to the cell while the ladder fits each cell apart; on the synthetic archive, whose cells differ by three points of mean, the recalibrated challengers sat at a Brier skill near minus 0.10 for that reason alone. The boosted model and the text classifier now receive one indicator column per cell, and every stage that scores a challenger was rerun before any number in the paper was read.
 
 \paragraph{Versions.}
-% src: $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json header.bootstrap_resamples 500; $RUN5/gates.json seed 20261102; $RUN5/run-log.json meta.python "Python 3.13.9", meta.uv "uv 0.10.5", meta.machine "Apple M1, 8 cores", meta.files 460, meta.tree_sha256_16 b005ad1d7fd0f02a
-Every backtest used 500 bootstrap resamples and the gate simulation seed 20261102. The timed run used Python 3.13.9 and uv 0.10.5 on an Apple M1 laptop, from a clean copy of the 460 files git would commit (tree digest \texttt{b005ad1d7fd0f02a}), with the Python environment from the uv cache rather than a cold install.
+% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json header.bootstrap_resamples 500; $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--effect-scale-relative+s-star-realized.json header.bootstrap_resamples 500; $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json bootstrap_resamples 500; $RUN6/gates.json seed 20261102, seconds 870.3; $RUN6/run-log.json meta.python "Python 3.13.9", meta.uv "uv 0.10.5", meta.machine "Apple M1, 8 cores", meta.files 656, meta.tree_sha256_16 8b7092bb04f4d961, meta.commit "85ae973 plus uncommitted changes"; $RUN6/README.md (one code state; scale/ carried from run 5)
+Every backtest, ablation, learning curve and replay of the run folder used 500 bootstrap resamples and was produced by one code state in one run, the gate simulation included (seed 20261102, 870 seconds). The timed run used Python 3.13.9 and uv 0.10.5 on an Apple M1 laptop, from a clean copy of the 656 files git would commit at that state (tree digest \texttt{8b7092bb04f4d961}), with the Python environment from the uv cache rather than a cold install; the scale measurements are carried from run 5 and predate the period rule of Section~\ref{sec:limitations}, which moves no backtest number.
+% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json header.snapshot_id 20261103-4bfb354b87e3, header.model_id dd73c75e92bd, header.feature_hash b4b031b2f77e, header.seed 0; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.model_id d3e813b146ce, header.feature_hash 2ebc076477be; $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json header.model_id 6377324df73a, header.feature_hash 125c086c013f; $RUN6/positive-control/backtest-synthetic-20261104-8cc34d3af720.json header.model_id 5cb5a874bbab, header.snapshot_id 20261104-8cc34d3af720; $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs n_tests 11100 snapshot_id 20261104-c7ca82ca15a6, model_id 2843ac2cc287
+The snapshots behind this paper are dated \texttt{20261103} (the positive control \texttt{20261104}) and end in \texttt{4bfb354b87e3} (headline archive; model \texttt{dd73c75e92bd}, feature hash \texttt{b4b031b2f77e}), \texttt{6bb5a15c5ff0} (deployment-shaped; model \texttt{d3e813b146ce}, feature hash \texttt{2ebc076477be}), \texttt{bf4fd286e2b2} (synthetic; model \texttt{6377324df73a}, feature hash \texttt{125c086c013f}) and \texttt{8cc34d3af720} (positive control; model \texttt{5cb5a874bbab}); the planted ledger of 11,100 tests is snapshot \texttt{c7ca82ca15a6} (model \texttt{2843ac2cc287}). The model ids are dated identifiers of our artifacts, because the bundle hashes the snapshot id and the snapshot id carries the ingest date; the content digests and every score are what a reader matches.
 
 \paragraph{The precedent rung at scale.}
-% src: $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json top_m_tail_share.by_size share_p2_weight mean (p10 to p90 over 60 queries, six query seeds): 10000 contrasts 0.146 (0.081 to 0.208); 100000: 0.519 (0.348 to 0.650); 300000: 0.654 (0.490 to 0.782); $RUN5/scale/scale-1000000.json stages.fit.seconds 1343.69 (22 minutes), peak_rss_gb 4.99
-A query lists its 1,000 highest-weight precedents and keeps the rest as aggregate sums; the forecast uses all precedents, but the instability bootstrap and the dismissal list use only the listed ones. On synthetic ledgers the share of kernel weight beyond the top 1,000 averaged 0.15 at ten thousand contrasts (0.08 to 0.21 across the 10th to 90th percentile of queries), 0.52 at one hundred thousand (0.35 to 0.65) and 0.65 at three hundred thousand (0.49 to 0.78), so on a large ledger the instability check is a lower bound on the uncertainty of the precedent rung. The fit grows in proportion to the rows (22 minutes and 5.0 GiB at a million contrasts).
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json top_m_tail_share.by_size share_p2_weight mean (p10 to p90 over 60 queries, six query seeds): 10000 contrasts 0.565 (0.536 to 0.587); 100000: 0.519 (0.348 to 0.650); 300000: 0.654 (0.490 to 0.782); $RUN6/scale/scale-1000000.json stages.fit.seconds 1343.69 (22 minutes), peak_rss_gb 4.99
+A query lists its 1,000 highest-weight precedents and keeps the rest as aggregate sums; the forecast uses all precedents, but the instability bootstrap and the dismissal list use only the listed ones. On synthetic ledgers the share of kernel weight beyond the top 1,000 averaged 0.56 at ten thousand contrasts (0.54 to 0.59 across the 10th to 90th percentile of queries), 0.52 at one hundred thousand (0.35 to 0.65) and 0.65 at three hundred thousand (0.49 to 0.78), so on a large ledger the instability check is a lower bound on the uncertainty of the precedent rung. The fit grows in proportion to the rows (22 minutes and 5.0 GiB at a million contrasts).
+
+\paragraph{Design calls.} The method notes (\texttt{docs/method.md}) number every design decision. Calls 1 to 198 are the design through round 00; calls 199 to 206 the period rule of P1 and the round-01 analyses (the adjusted and arm-count-matched decision value, discrimination within strata, the learning curve against the full-history base rate, the report columns, and call 206, which makes forward chaining the default selection; Sections~\ref{sec:method}, \ref{sec:ladder-results}, \ref{sec:decision-results}, \ref{sec:ablations} and~\ref{sec:limitations}); calls 207 to 210 and 220 to 229 the released loop and the command line (the pre-launch rule of the join, one scored card per row, the fit clock, paired promotion, the card's own cell, the doctor's checks, the gate wording and the reliability command; Section~\ref{sec:method}); calls 211 to 219 the notes of run 6; and calls 230 to 247 the positive control's recovered gain and the planted ledger with every rung, the decomposition of the admitted pairs, the caption test, the sample ledger's base rate, the continuous-integration score report, and the packaging and release (Sections~\ref{sec:synthetic-results} and~\ref{sec:repro}, Appendix~\ref{app:synthetic}).
 
 \section{Additional Tables}
 \label{app:tables}
@@ -108,6 +114,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \end{tabular}}
 \end{table}
 
+% src: docs/landscape.md, the tooling survey (fetch-verified entries; paper/related-work.md); the only digits are the year of the three cited 2026 systems, no run number
 \begin{table}[tp]
 \centering\small
 \caption{Capabilities against tools (Y yes, P partial, N no). Columns: pre-launch outcome distribution; calibrated win probability; abstention; precedent retrieval; scoring against live results; learned prior from the organization's own archive; experiment memory; open source. The screening row is the three 2026 systems of Section~\ref{sec:related} \cite{lee2026offline,hu2026experimentation,mazzanti2026backtesting}.}
@@ -151,12 +158,6 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \resizebox{\columnwidth}{!}{\input{tables/ece-upworthy}}
 \end{table}
 
-\begin{table}[tp]\centering\scriptsize
-\caption{Decision value on the headline archive at budgets of 10, 25 and 50 percent of each period's tests: captured share of the realized positive lift, its difference from the exact random-order share and the regret against the oracle, each with a 90 percent interval by test within each origin; \emph{const.\ in cell} marks rungs whose win probability is one number per cell. Figure~\ref{fig:decision} draws the 25 percent rows.}
-\label{tab:decision-intervals-upworthy}
-\resizebox{\columnwidth}{!}{\input{tables/decision-intervals-upworthy}}
-\end{table}
-
 \begin{table}[tp]\centering\small
 \caption{Captured share of positive lift at a quarter of each period's tests, averaged over the nine origins (headline archive).}
 \label{tab:decision-upworthy}
@@ -194,15 +195,10 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{Skill by calendar year of the test's start (headline archive), all cells pooled; the Bonferroni family of this table has 132 intervals.}
+% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.score_by_year family_size 156
+\caption{Skill by calendar year of the test's start (headline archive), all cells pooled; the Bonferroni family of this table has 156 intervals.}
 \label{tab:drift}
 \resizebox{\columnwidth}{!}{\input{tables/drift-upworthy}}
-\end{table}
-
-\begin{table}[tp]\centering\scriptsize
-\caption{Ablations on the headline archive, one setting changed per row, same origins and rows; pooled scores of the precedent rung with the admission guard on and, where the guard can hold the setting back, off. P1 scores minus 0.881 in every row except \emph{prior-normal} (minus 0.957), \emph{admission-prelaunch} (minus 0.856, on 14,235 rows) and the three $\kappa$ rows (minus 0.882, minus 0.880, minus 0.879). The \emph{effect-scale-relative} row is the cautionary run of Section~\ref{sec:cautionary} and is on a different effect scale.}
-\label{tab:ablations-upworthy}
-\resizebox{\columnwidth}{!}{\input{tables/ablations-upworthy}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
@@ -212,68 +208,62 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
+% src: $RUN6/positive-control/backtest-synthetic-20261104-8cc34d3af720.json header.command (text_effect_strength 1.0) (tables/positive-control.tex)
 \caption{The positive control: a synthetic archive with a planted text lift of 1.0 percent, scored by the full protocol; mean weight on precedents and the share of origins with the weight at zero, per cell.}
 \label{tab:positive-control}
 \resizebox{\columnwidth}{!}{\input{tables/positive-control}}
 \end{table}
 
-% src: tables/positive-control-sensitivity.tex from $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity
-\begin{table}[tp]\centering\scriptsize
-\caption{Share of synthetic cell fits in which the two-standard-error guard admits a weight above zero, by planted lift and ledger size, counted in rows per cell because the guard works per cell (12 seeds, 36 cells per row); 7,400 rows per cell is the size of the headline-only cell.}
-\label{tab:positive-control-sensitivity}
-\resizebox{\columnwidth}{!}{\input{tables/positive-control-sensitivity}}
-\end{table}
-
-% src: tables/guard-period-control.tex from $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows
+% src: tables/guard-period-control.tex from $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows
 \begin{table}[tp]\centering\scriptsize
 \caption{The control arm behind P1's period rule: synthetic ledgers with no planted text effect (12 seeds, 36 cells per size), the guard's mean in-selection gain, its standard error, their ratio and the share of cells admitted when P1 takes its period level from the latest period (the old rule, where that period is the thin tail of the quarter the ledger ends in), from no period at all, or from the last complete quarter (the rule now in force); the last column is the number of rows in the period whose level P1 adds.}
 \label{tab:guard-period-control}
 \resizebox{\columnwidth}{!}{\input{tables/guard-period-control}}
 \end{table}
 
-% src: tables/guard-gain-diagnostic.tex from $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_gain_diagnostic.rows
+% src: tables/guard-gain-diagnostic.tex from $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_gain_diagnostic.rows
 \begin{table}[tp]\centering\scriptsize
 \caption{The admission guard on synthetic ledgers with no planted text effect, by size (12 seeds, 36 cells per row): the mean in-selection gain of the best candidate weight over weight zero (nats per row), its mean clustered standard error, their ratio, the share of cells with a positive gain and the share the two-standard-error rule admits.}
 \label{tab:guard-gain-diagnostic}
 \resizebox{\columnwidth}{!}{\input{tables/guard-gain-diagnostic}}
 \end{table}
 
-% src: tables/guard-gain-held-out.tex from $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_held_out_gain
-\begin{table}[tp]\centering\scriptsize
-\caption{The selection bias of the guard on the same synthetic ledgers (a random 15 percent of tests held out, by test; no planted text effect; nats per row): the in-selection gain of the best candidate, the held-out gain of that candidate refit alone (clustered standard error), their difference (the bias), the held-out gain of the chosen weight, and the bias over the admitted cells and over the cells an unguarded rule would admit (count in parentheses).}
-\label{tab:guard-gain-held-out}
-\resizebox{\columnwidth}{!}{\input{tables/guard-gain-held-out}}
-\end{table}
-
-% src: tables/guard-fit-fraction.tex from $RUN5/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_fit_fraction_stability
+% src: tables/guard-fit-fraction.tex from $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_fit_fraction_stability
 \begin{table}[tp]\centering\scriptsize
 \caption{Stability of the admission decision at 3,700 tests (36 cells, no planted text effect): the share of cells admitted when the fit uses the first 85, 90, 95 or 100 percent of rows in time order, or a random 85 percent.}
 \label{tab:guard-fit-fraction}
 \resizebox{0.8\columnwidth}{!}{\input{tables/guard-fit-fraction}}
 \end{table}
 
-% src: tables/guard-pairs-upworthy.tex from $RUN5/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs
+% src: tables/guard-pairs-upworthy.tex from $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs
 \begin{table}[tp]\centering\scriptsize
-\caption{The nine cell-origin pairs in which the guard admitted a weight on the headline archive: the chosen weight, the in-selection gain over weight zero on the validation rows (nats per row, with its clustered standard error), the rows and tests scored out of time, and the realized out-of-time P2 minus P1 log score; the pooled line carries a 90 percent interval by test.}
+\caption{The eight cell-origin pairs in which the guard admitted a weight on the headline archive: the chosen weight, the in-selection gain over weight zero on the validation rows (nats per row, with its clustered standard error), the rows and tests scored out of time, and the realized out-of-time P2 minus P1 log score; the pooled line carries a 90 percent interval by test.}
 \label{tab:guard-pairs}
 \resizebox{\columnwidth}{!}{\input{tables/guard-pairs-upworthy}}
 \end{table}
 
-% src: tables/discrimination-upworthy.tex from $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate auc_event, resolution_event, auc_direction, resolution_direction
+% src: tables/discrimination-upworthy.tex from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate auc_event, resolution_event, auc_direction, resolution_direction
 \begin{table}[tp]\centering\scriptsize
 \caption{Discrimination apart from skill, headline archive: AUC of $\psig$ against the significant-positive event and of the direction probability against the sign, with 90 percent intervals by test, and the Murphy resolution term of each over ten equal-mass bins (the bin-weighted squared gap between a bin's observed frequency and the event rate), whose estimate is biased upward by about $9/N$ times the rate times one minus the rate and is read as a ranking of rungs on the same rows.}
 \label{tab:discrimination}
 \resizebox{\columnwidth}{!}{\input{tables/discrimination-upworthy}}
 \end{table}
 
-% src: tables/event-definition-upworthy.tex from $RUN5/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate brier_skill, brier_skill_planned, p_sig_mean, event_rate_planned
+% src: tables/discrimination-within-upworthy.tex from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate auc_event_within, resolution_event_within, auc_direction_within (cell ALL and headline_only; docs/method.md call 203)
+\begin{table}[tp]\centering\scriptsize
+\caption{Discrimination within strata, headline archive: the AUC for the event and for the direction and the Murphy resolution term computed inside each origin and cell stratum and averaged with weights by stratum size, with 90 percent intervals by test; the last column is the event AUC within the origins of the headline-only cell. P0 is one half by construction.}
+\label{tab:discrimination-within}
+\resizebox{\columnwidth}{!}{\input{tables/discrimination-within-upworthy}}
+\end{table}
+
+% src: tables/event-definition-upworthy.tex from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate brier_skill, brier_skill_planned, p_sig_mean, event_rate_planned
 \begin{table}[tp]\centering\scriptsize
 \caption{The significance event defined on the realized standard error (the headline) and on the planned one (planned event rate 0.081 against 0.091 realized), headline archive: Brier skill against the base rate under each definition, with 90 percent intervals by test.}
 \label{tab:event-definition}
 \resizebox{\columnwidth}{!}{\input{tables/event-definition-upworthy}}
 \end{table}
 
-% src: tables/discrimination-asos.tex, tables/discrimination-synthetic.tex, tables/event-definition-asos.tex, tables/event-definition-synthetic.tex from $RUN5/backtest-asos-20261103-6bb5a15c5ff0.json and $RUN5/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate, same keys
+% src: tables/discrimination-asos.tex, tables/discrimination-synthetic.tex, tables/event-definition-asos.tex, tables/event-definition-synthetic.tex from $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json and $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate, same keys
 \begin{table}[tp]\centering\scriptsize
 \caption{Discrimination on the deployment-shaped archive, columns as in Table~\ref{tab:discrimination}.}
 \label{tab:discrimination-asos}
@@ -296,12 +286,13 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Gate sizes in tests from the by-test power simulation (synthetic, calibrated forecasts with the stated Brier skill, 3.5 rows per test, a 90 percent by-test interval), at three base rates.}
+% src: $RUN6/gates.json by_base_rate 0.09 rows_per_test 3.5 icc 0.13, 0.14 rows_per_test 5.0 icc 0.67, 0.30 rows_per_test 3.5 icc 0.13; interval.level 0.9 by test; by_target 0.90 and 0.80
+\caption{Gate sizes in tests from the by-test power simulation (synthetic, calibrated forecasts with the stated Brier skill, a 90 percent by-test interval) at three base rates, each drawn with the rows per test and within-test correlation measured at that rate (3.5 rows and 0.13 at 0.09 and 0.30; 5.0 rows and 0.67 at 0.14).}
 \label{tab:gates}
 \resizebox{\columnwidth}{!}{\input{tables/gates}}
 \end{table}
 
-% src: tables/walltime.tex, written by build_tables.py from $RUN5/run-log.json stages[].stage and .seconds, main_pipeline_seconds 1098.2, total_seconds 1469.2
+% src: tables/walltime.tex, written by build_tables.py from $RUN6/run-log.json stages[].stage and .seconds, main_pipeline_seconds, total_seconds stages[].stage and .seconds, main_pipeline_seconds 1098.2, total_seconds 1469.2
 \begin{table}[tp]\centering\scriptsize
 \caption{Stages of the timed run (\texttt{reports/run-log.json}), seconds; all exit codes zero; the data stage downloaded the three archive files and verified their checksums.}
 \label{tab:walltime}
@@ -312,12 +303,6 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \caption{Calibration by decile of planned exposure per arm (synthetic archive).}
 \label{tab:calibration-synthetic}
 \resizebox{\columnwidth}{!}{\input{tables/calibration-synthetic}}
-\end{table}
-
-\begin{table}[tp]\centering\scriptsize
-\caption{Decision value with intervals (synthetic archive); columns as in Table~\ref{tab:decision-intervals-upworthy}.}
-\label{tab:decision-intervals-synthetic}
-\resizebox{\columnwidth}{!}{\input{tables/decision-intervals-synthetic}}
 \end{table}
 
 \begin{table}[tp]\centering\small
@@ -339,7 +324,8 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Ablations on the deployment-shaped archive, one setting changed per row; pooled scores of the precedent rung. P1 scores 4.610 in every row except \emph{prior-normal} (4.332) and the $\kappa$ rows (4.589, 4.602, 4.617).}
+% src: tables.aggregate[cell=ALL,rung=P1] logscore of $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--p2-guard-off.json 4.7088 (and every other unchanged file of the folder), $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json 4.3318, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-0.0.json 4.6927, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-5.0.json 4.7007, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-80.0.json 4.7162
+\caption{Ablations on the deployment-shaped archive, one setting changed per row; pooled scores of the precedent rung. P1 scores 4.709 in every row except \emph{prior-normal} (4.332) and the $\kappa$ rows (4.693, 4.701, 4.716).}
 \label{tab:ablations-asos}
 \resizebox{\columnwidth}{!}{\input{tables/ablations-asos}}
 \end{table}
@@ -351,6 +337,7 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.scored_rows 337 over ten deciles (about 34 rows each)
 \caption{Calibration by decile of planned exposure per arm (deployment-shaped archive; about 34 rows per decile).}
 \label{tab:calibration-asos}
 \resizebox{\columnwidth}{!}{\input{tables/calibration-asos}}
@@ -363,13 +350,8 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{Decision value with intervals (deployment-shaped archive; the primary metric only); columns as in Table~\ref{tab:decision-intervals-upworthy}.}
-\label{tab:decision-intervals-asos}
-\resizebox{\columnwidth}{!}{\input{tables/decision-intervals-asos}}
-\end{table}
-
-\begin{table}[tp]\centering\scriptsize
-\caption{Skill by nominal year (deployment-shaped archive; the calendar is nominal; the Bonferroni family has 90 intervals).}
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year family_size 110
+\caption{Skill by nominal year (deployment-shaped archive; the calendar is nominal; the Bonferroni family has 110 intervals).}
 \label{tab:drift-asos}
 \resizebox{\columnwidth}{!}{\input{tables/drift-asos}}
 \end{table}
@@ -391,28 +373,37 @@ admission on exposure only (Table~\ref{tab:admission}) & \texttt{moot backtest -
 guard comparison & \texttt{python scripts/compare\_guard.py} \\
 learning curve (Tables~\ref{tab:learning-upworthy} and~\ref{tab:learning-asos}) & \texttt{make learning-curve SOURCE=S} \\
 trigger ablation and released rows (Tables~\ref{tab:trigger-ablation} to~\ref{tab:trigger-released-asos}) & \texttt{moot backtest -{}-source S -{}-origins quarterly -{}-drop-trigger T -{}-seed 0} \\
-positive control (Table~\ref{tab:positive-control}) & \texttt{moot simulate ledger -{}-text-effect 1.0}, then \texttt{moot backtest -{}-source synthetic} \\
-paper extras (released rows, guard rates, tail shares, exposure correlations, sensitivity) & \texttt{python scripts/paper\_extras.py} \\
+positive control (Tables~\ref{tab:positive-control} and~\ref{tab:positive-control-rungs}) & \texttt{moot simulate ledger -{}-text-effect 1.0}, then \texttt{moot backtest -{}-source synthetic} \\
+paper extras (released rows, guard rates, tail shares, exposure correlations, the planted-lift gains and rungs) & \texttt{python scripts/paper\_extras.py} \\
 weekly replay (Tables~\ref{tab:replay} and~\ref{tab:replay-asos}) & \texttt{make replay SOURCE=S} \\
 leakage audit & \texttt{make audit SOURCE=S} \\
 card latency & \texttt{python scripts/card\_latency.py -{}-source upworthy} \\
 timed run (Table~\ref{tab:walltime}) & \texttt{scripts/timed\_run.sh} \\
 scale runs & \texttt{moot benchmark -{}-scale 100000}, \texttt{-{}-scale 1000000} \\
-LaTeX tables & \texttt{python paper/build\_tables.py -{}-reports \$ROOT/reports -{}-out paper/tables} \\
+LaTeX tables and figures & \texttt{make tables}, \texttt{make paper-figures} (both run by \texttt{make paper}) \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate gate_base_rate 0.14 (tables/main-asos.tex)
 \caption{Deployment-shaped archive, pooled over origins and metric cells; gates read at base rate 0.14. Logarithmic scores are positive because the standardized effects and their standard errors are small numbers.}
 \label{tab:main-asos}
 \resizebox{\textwidth}{!}{\input{tables/main-asos}}
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
-\caption{Brier skill against the base rate by fraction of the visible ledger at the final origin (headline archive); 90 percent bootstrap intervals by held-out test of the skill averaged over twenty seeds. P0 is zero by construction.}
+% src: $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json seeds 20, bootstrap_resamples 500; each rung's skill is against base_brier_full, the P0 Brier score of the full history at the final origin (call 204)
+\caption{Brier skill against the base rate of the full history at the final origin, by fraction of the visible ledger (headline archive); 90 percent bootstrap intervals (500 resamples) by held-out test of the skill averaged over twenty seeds. P0's row is the subsampled base rate scored against the full one.}
 \label{tab:learning-upworthy}
 \resizebox{\textwidth}{!}{\input{tables/learning-upworthy}}
+\end{table*}
+
+% src: tables/learning-detail-upworthy.tex from $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json rows (n_fit_rows, n_history_tests, n_scored_tests 318 at every fraction, skill against base_brier_full, skill_own_base; bootstrap_resamples 500; docs/method.md call 204)
+\begin{table*}[t]\centering\scriptsize
+\caption{The learning curve in detail (headline archive): history rows and tests at each fraction, the scored tests (the same 318 at every point), P1's Brier skill against the full-history base rate beside its skill against the subsample's own base rate, and the local comparison set against the full-history base rate; the own-base column is the reading of the first round, which rose as the history shrank because the subsampled base rate is itself a poor forecaster.}
+\label{tab:learning-detail}
+\resizebox{\textwidth}{!}{\input{tables/learning-detail-upworthy}}
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
@@ -441,14 +432,81 @@ file under \texttt{data/raw/} & bytes & sha256 \\
 \label{tab:main-synthetic}
 \resizebox{\textwidth}{!}{\input{tables/main-synthetic}}
 \end{table*}
+% A second \clearpage here: with the four two-column floats added in pass 7 the class cannot flush twelve pending
+% two-column floats at the final \clearpage (an output loop of dead cycles); flushing the first group here is enough.
+\clearpage
 
 \begin{table*}[t]\centering\scriptsize
-\caption{Brier skill against the base rate by fraction of the visible ledger at the final origin (deployment-shaped archive; 56 held-out rows in 9 tests; 17 of the 20 five-percent subsamples could not be fit).}
+% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL n_tests 3799 against header.tests_scored 3797 (two tests have contrasts starting in two quarters and are counted in both origins); family_size 6
+\caption{Decision value on the headline archive at budgets of 10, 25 and 50 percent of each period's tests: captured share of the realized positive lift, its difference from the exact random-order share and from a random order matched on the arm-count composition of the chosen set, each with Bonferroni-adjusted bounds over the six rungs of the budget, and the regret against the oracle, each with a 90 percent interval by test within each origin; \emph{const.\ in cell} marks rungs whose win probability is one number per cell. The pooled rows count 3,799 test-origin pairs from 3,797 tests, two tests having contrasts that started in two quarters. Figure~\ref{fig:decision} draws the 25 percent rows.}
+\label{tab:decision-intervals-upworthy}
+\resizebox{\textwidth}{!}{\input{tables/decision-intervals-upworthy}}
+\end{table*}
+
+\begin{table*}[t]\centering\scriptsize
+\caption{Decision value with intervals (deployment-shaped archive; the primary metric only); columns as in Table~\ref{tab:decision-intervals-upworthy}.}
+\label{tab:decision-intervals-asos}
+\resizebox{\textwidth}{!}{\input{tables/decision-intervals-asos}}
+\end{table*}
+
+\begin{table*}[t]\centering\scriptsize
+\caption{Decision value with intervals (synthetic archive); columns as in Table~\ref{tab:decision-intervals-upworthy}.}
+\label{tab:decision-intervals-synthetic}
+\resizebox{\textwidth}{!}{\input{tables/decision-intervals-synthetic}}
+\end{table*}
+
+% src: tables/guard-pairs-rows.tex from $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs_rows (rows and pooled; bootstrap_resamples 500; docs/method.md call 233)
+\begin{table*}[t]\centering\scriptsize
+\caption{The admitted pairs row by row (headline archive): per pair and pooled, the share of rows on which P2's log score exceeds P1's, the median and mean difference (nats per row, 90 percent intervals by test), the decisive rows (the realized estimate beyond 1.96 standard errors) and the rest, and the location and scale parts of the mean difference, the two one-parameter-at-a-time paths averaged, which sum to it row by row.}
+\label{tab:guard-pairs-rows}
+\resizebox{\textwidth}{!}{\input{tables/guard-pairs-rows}}
+\end{table*}
+
+\clearpage
+
+\begin{table*}[t]\centering\small
+% src: tables.aggregate[cell=ALL,rung=P1] logscore of $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--lambda-0.0.json -0.8566 (and every other unchanged file of the folder), $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--prior-normal.json -0.9566, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--admission-prelaunch.json -0.8322 (header.scored_rows 14235), $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--contrasts-one.json -0.8710 (header.scored_rows 3797), $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--kappa-0.0.json -0.8599, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--kappa-5.0.json -0.8588, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--kappa-80.0.json -0.8553, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--effect-scale-relative+s-star-realized.json -4.9650 (every file header.bootstrap_resamples 500) (tables/ablations-upworthy.tex)
+\caption{Ablations on the headline archive, one setting changed per row, same origins and rows; pooled scores of the precedent rung with the admission guard on and, where the guard can hold the setting back, off; \emph{p2-selection-loto} is leave-one-test-out selection, the rule of the first round, and \emph{contrasts-one} keeps one contrast per test. P1 scores minus 0.857 in every row except \emph{prior-normal} (minus 0.957), \emph{admission-prelaunch} (minus 0.832, on 14,235 rows), \emph{contrasts-one} (minus 0.871, on 3,797 rows) and the three $\kappa$ rows (minus 0.860, minus 0.859, minus 0.855). The \emph{effect-scale-relative} row is the cautionary run of Section~\ref{sec:cautionary}, on a different effect scale.}
+\label{tab:ablations-upworthy}
+\input{tables/ablations-upworthy}
+\end{table*}
+
+% src: tables/guard-gain-held-out.tex from $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_held_out_gain (held_out_share_of_tests 0.15)
+\begin{table*}[t]\centering\scriptsize
+\caption{The selection bias of the guard on the same synthetic ledgers (a random 15 percent of tests held out, by test; no planted text effect; nats per row): the in-selection gain of the best candidate, the held-out gain of that candidate refit alone (clustered standard error), their difference (the bias), the held-out gain of the chosen weight, and the bias over the admitted cells and over the cells an unguarded rule would admit (count in parentheses).}
+\label{tab:guard-gain-held-out}
+\resizebox{\textwidth}{!}{\input{tables/guard-gain-held-out}}
+\end{table*}
+
+\begin{table*}[t]\centering\scriptsize
+% src: tables/positive-control-gain.tex from $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity (12 seeds, 36 cells per point, held_out_share_of_tests 0.15, bootstrap_resamples 500, rows_per_cell 7400 at n_tests 11100; docs/method.md call 230)
+\caption{The positive control by planted lift and ledger size (12 seeds, 36 cells per row; 7,400 rows per cell is the size of the headline-only cell): the share of cell fits in which the two-standard-error guard admits a weight above zero, and, on a random 15 percent of each ledger's tests held out by test, the precedent rung's gain over P1 in log score (nats per row, 90 percent interval by test), the gain of the oracle that knows the planted term in P1's family, the recovered fraction (the ratio, with the interval of the paired draws) and the Brier skill of P1 and P2 against the base rate.}
+\label{tab:positive-control-gain}
+\resizebox{\textwidth}{!}{\input{tables/positive-control-gain}}
+\end{table*}
+
+\begin{table*}[t]\centering\scriptsize
+% src: tables/positive-control-rungs.tex from $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs (planted lift 1.0 percent; n_tests 2000 and 11100; docs/method.md call 231; reports under $RUN6/positive-control/rungs/)
+\caption{Every rung on the planted ledger (lift 1.0 percent) at 2,000 tests, the published control's own ledger, and at 11,100 tests, the size of the headline-only cell: the report's log score and Brier skill, the per-row difference from P1 in log score (nats) and in Brier score (negative is better) with 90 percent intervals by test, and each as a fraction of the oracle's difference; the oracle is P1 refit at every origin with the planted term removed. Rungs that issue a probability only have no log score.}
+\label{tab:positive-control-rungs}
+\resizebox{\textwidth}{!}{\input{tables/positive-control-rungs}}
+\end{table*}
+
+\begin{table*}[t]\centering\scriptsize
+% src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json heldout_rows 56, heldout_tests 9, seeds 20, skipped_runs 0.05: 17, bootstrap_resamples 500
+\caption{Brier skill against the base rate of the full history by fraction of the visible ledger at the final origin (deployment-shaped archive; 56 held-out rows in 9 tests; 17 of the 20 five-percent subsamples could not be fit; 500 resamples).}
 \label{tab:learning-asos}
 \resizebox{\textwidth}{!}{\input{tables/learning-asos}}
 \vspace{1.5em}
 \caption{Weekly replay (deployment-shaped archive, nominal calendar); columns as in Table~\ref{tab:replay}.}
 \label{tab:replay-asos}
 \resizebox{\textwidth}{!}{\input{tables/replay-asos}}
+\end{table*}
+
+% src: tables/learning-detail-asos.tex from $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows (n_fit_rows, n_history_tests, n_scored_tests 9 at every fraction, skill against base_brier_full, skill_own_base; bootstrap_resamples 500; the 0.05 fraction has 3 of 20 seeds)
+\begin{table*}[t]\centering\scriptsize
+\caption{The learning curve in detail (deployment-shaped archive), columns as in Table~\ref{tab:learning-detail}; 9 scored tests at every point, and the five-percent fraction rests on the 3 of 20 seeds that could be fit.}
+\label{tab:learning-detail-asos}
+\resizebox{\textwidth}{!}{\input{tables/learning-detail-asos}}
 \end{table*}
 \clearpage

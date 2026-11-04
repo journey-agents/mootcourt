@@ -57,20 +57,31 @@ def _ladder(doc: dict) -> list[dict]:
     return [r for r in doc["tables"]["aggregate"] if r.get("kind", "ladder") == "ladder"]
 
 
+def _dec(r: dict, key: str) -> str:
+    return SHORT.get(r.get(key), r.get(key) or "n/a")
+
+
 def results_table(doc: dict) -> list[str]:
+    """The main table. The verdict at base rate 0.3 is shown only when it differs from the verdict at the cell's own nearest rate, and the by-row verdict
+    only when the gates count rows (when they count tests it reads "not computed" on every row and says nothing)."""
     gate = doc["header"].get("gate_decision_target")
     gate_txt = f"{gate:.2f}" if gate is not None else "release"
     research = min(doc["header"].get("gate_by_target") or {"0.80": 0}, key=float)
-    out = [f"| cell | rung | n | log score | Brier skill (90% interval) | decidable by tests ({gate_txt} gate, at the cell's base rate) | "
-           f"gate base rate | decidable by tests ({gate_txt} gate, base rate 0.3) | decidable by rows ({gate_txt} gate, overstates) | "
-           f"decidable by tests ({research} screen) | coverage 80% / 90% | abstention rate |", "|---|---|---|---|---|---|---|---|---|---|---|---|"]
-    for r in _ladder(doc):
-        out.append(f"| {r['cell']} | {r['rung']} | {r['n']} | {_f(r['logscore'])} | {_ci(r, 'brier_skill')} | "
-                   f"{SHORT.get(r.get('decidable_by_tests'), r.get('decidable_by_tests') or 'n/a')} | {_f(r.get('gate_base_rate'), 2)} | "
-                   f"{SHORT.get(r.get('decidable_by_tests_base_0.3'), r.get('decidable_by_tests_base_0.3') or 'n/a')} | "
-                   f"{SHORT.get(r['decidable'], r['decidable'])} | "
-                   f"{SHORT.get(r.get('decidable_research_by_tests'), r.get('decidable_research_by_tests') or 'n/a')} | "
-                   f"{_f(r['coverage_80'])} / {_f(r['coverage_90'])} | {_f(r['abstention_rate'])} |")
+    rows = _ladder(doc)
+    show_03 = any(r.get("decidable_by_tests_base_0.3") != r.get("decidable_by_tests") for r in rows)
+    show_rows = any(not str(r.get("decidable", "")).startswith("not computed") for r in rows)
+    cols = [("cell", lambda r: r["cell"]), ("rung", lambda r: r["rung"]), ("n", lambda r: r["n"]), ("log score", lambda r: _f(r["logscore"])),
+            ("Brier skill (90% interval)", lambda r: _ci(r, "brier_skill")),
+            (f"decidable by tests ({gate_txt} gate, at the cell's base rate)", lambda r: _dec(r, "decidable_by_tests")),
+            ("gate base rate", lambda r: _f(r.get("gate_base_rate"), 2))]
+    if show_03:
+        cols.append((f"decidable by tests ({gate_txt} gate, base rate 0.3)", lambda r: _dec(r, "decidable_by_tests_base_0.3")))
+    if show_rows:
+        cols.append((f"decidable by rows ({gate_txt} gate, overstates)", lambda r: SHORT.get(r["decidable"], r["decidable"])))
+    cols += [(f"decidable by tests ({research} screen)", lambda r: _dec(r, "decidable_research_by_tests")),
+             ("coverage 80% / 90%", lambda r: f"{_f(r['coverage_80'])} / {_f(r['coverage_90'])}"), ("abstention rate", lambda r: _f(r["abstention_rate"]))]
+    out = ["| " + " | ".join(h for h, _ in cols) + " |", "|" + "---|" * len(cols)]
+    out += ["| " + " | ".join(str(g(r)) for _, g in cols) + " |" for r in rows]
     return out
 
 
@@ -560,8 +571,8 @@ def render_block(reports_dir) -> str:
         out += counts_lines(h)
         out += results_table(doc) + [""]
         out += ["P0 is the empirical base-rate forecaster, so its Brier skill is zero by construction and its interval has no width. "
-                "The gate columns read the number of scored tests against the gate sized at the base rate nearest the cell's own; the column for "
-                "base rate 0.3 is the earlier convention, kept for comparison.", ""]
+                "The gate columns read the number of scored tests against the gate sized at the base rate nearest the cell's own. A column for the "
+                "earlier convention (base rate 0.3) or for the by-row verdict appears only when it says something the first column does not.", ""]
         out += [sentence_skill(doc), "", bins_sentence(doc), "", sentence_rungs(doc), ""]
         out += adjusted_table(doc) + [""]
         out += calibration_table(doc) + [""]

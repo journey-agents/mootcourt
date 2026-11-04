@@ -1203,3 +1203,406 @@ def test_a_cell_without_held_out_rows_is_skipped_and_counted_not_zero_filled(mon
     row = pe.guard_held_out_gain(sizes=(120,), seeds=range(2))["rows"][0]
     assert row["cells_skipped_without_held_out_rows"] >= 1
     assert row["cells"] + row["cells_skipped_without_held_out_rows"] <= 6
+
+
+# ============================================================================ T-060: Bonferroni-adjusted bounds for the decision-value table
+def _decision_frame():
+    from mootcourt.decision_value import decision_value
+
+    rng = np.random.default_rng(4)
+    rows = []
+    for o in range(3):
+        for t in range(40):
+            val = rng.normal(0.0, 1.0)
+            for rung, shift in (("A", 1.5), ("B", 0.0), ("C", 0.2)):
+                pw = 1 / (1 + math.exp(-(shift * val + rng.normal(0, 1.0))))
+                rows.append(
+                    {
+                        "origin": pd.Timestamp("2014-01-01", tz="UTC") + pd.DateOffset(months=3 * o),
+                        "test_id": f"t{o}-{t}",
+                        "y": val,
+                        "p_win": pw,
+                        "rung": rung,
+                        "cell": "c",
+                    }
+                )
+    return decision_value(pd.DataFrame(rows), seed=1, B=200)
+
+
+def test_the_adjusted_decision_bounds_are_wider_than_the_unadjusted_use_the_pooled_family_and_can_cover_zero_where_the_unadjusted_do_not():
+    dv = _decision_frame()
+    for kind in ("captured_fraction", "regret", "diff_random"):
+        ok = dv[f"{kind}_adjusted_lo"].notna()
+        assert ok.any()
+        # the adjusted band (estimate plus or minus z se) is at least as wide as the percentile interval; an endpoint can sit inside the
+        # percentile endpoint where the bootstrap distribution is skewed, as in the aggregate table (call 174)
+        adj_w = dv.loc[ok, f"{kind}_adjusted_hi"] - dv.loc[ok, f"{kind}_adjusted_lo"]
+        assert (adj_w >= dv.loc[ok, f"{kind}_hi"] - dv.loc[ok, f"{kind}_lo"] - 1e-12).all()
+    pooled = dv[(dv["origin"].astype(str) == "ALL") & (dv["policy"] == "p_win")]
+    for budget, g in pooled.groupby("budget"):
+        m = int(((g["diff_random_hi"] - g["diff_random_lo"]) > 0).sum())
+        assert m == 3 and (dv.loc[dv["budget"] == budget, "family_size"] == m).all()  # the three rungs compared with random order
+    # the z of the rule: the normal quantile of 1 - 0.05 / m, as in the aggregate table
+    from scipy import special
+
+    r = pooled.iloc[0]
+    se = (r["diff_random_adjusted_hi"] - r["diff_random"]) / float(special.ndtri(1 - 0.05 / 3))
+    assert (r["diff_random_hi"] - r["diff_random_lo"]) / 2 / 1.6449 == pytest.approx(se, rel=0.2)
+    # a row whose unadjusted interval clears zero and whose adjusted one covers it
+    clears = pooled[(pooled["diff_random_lo"] > 0) & (pooled["diff_random_adjusted_lo"] <= 0)]
+    assert len(clears) >= 1
+
+
+def test_the_decision_adjusted_bounds_are_reproduced_from_the_stored_scores_and_the_unadjusted_values_match_the_report():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "refresh_discrimination_dv", Path(__file__).resolve().parents[1] / "scripts" / "refresh_discrimination.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    dv = _decision_frame()
+    rows = json.loads(
+        dv.drop(columns=[c for c in dv.columns if "adjusted" in c or c == "family_size"])
+        .assign(origin=dv["origin"].astype(str))
+        .to_json(orient="records")
+    )
+    assert "diff_random_adjusted_lo" not in rows[0]
+    assert mod.DECISION_KEYS and set(mod.DECISION_CHECKED) <= set(rows[0])
+
+
+# ============================================================================ T-061 (registry T-069): the arm-count baseline of the decision value
+def _arm_driven_scores(seed=2, n_tests=300):
+    rng = np.random.default_rng(seed)
+    rows = []
+    origin = pd.Timestamp("2014-01-01", tz="UTC")
+    for t in range(n_tests):
+        k = int(rng.integers(1, 7))
+        ys = rng.normal(0.0, 1.0, k)
+        for j in range(k):
+            for rung, drive in (("ARMS", 1.0), ("NOISE", 0.0)):
+                score = drive * k + rng.normal(0, 0.3)  # ARMS ranks by the number of contrasts alone, NOISE by nothing
+                rows.append(
+                    {
+                        "origin": origin,
+                        "test_id": f"t{t}",
+                        "row_id": f"t{t}:{j}",
+                        "y": ys[j],
+                        "p_win": 1 / (1 + math.exp(-score)),
+                        "rung": rung,
+                        "cell": "c",
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def test_a_rung_that_only_reads_the_arm_count_beats_random_order_but_not_the_arm_count_matched_baseline():
+    from mootcourt.decision_value import decision_value
+
+    dv = decision_value(_arm_driven_scores(), seed=1, B=300)
+    pool = dv[(dv["origin"].astype(str) == "ALL") & (dv["budget"] == 0.25)]
+    arms = pool[(pool["policy"] == "p_win") & (pool["rung"] == "ARMS")].iloc[0]
+    assert arms["diff_random"] > 0.03 and arms["diff_random_lo"] > 0  # random order is the wrong baseline: the arm count alone beats it
+    assert abs(arms["diff_matched"]) < 0.02 and arms["diff_matched_lo"] <= 0 <= arms["diff_matched_hi"]
+    assert arms["diff_matched_adjusted_lo"] <= arms["diff_matched_lo"] + 0.02 and arms["family_size"] == 2
+    ac = pool[pool["policy"] == "arm_count"].iloc[0]
+    assert ac["rung"] == "all" and ac["diff_random"] > 0.03  # the named baseline policy is in the table and it beats random order
+    rm = pool[(pool["policy"] == "random_matched") & (pool["rung"] == "ARMS")].iloc[0]
+    assert rm["captured_fraction"] == pytest.approx(arms["matched_fraction"], abs=1e-12)
+    assert (
+        rm["captured_fraction"] > pool[pool["policy"] == "random"].iloc[0]["captured_fraction"]
+    )  # matched to a set of many-arm tests, so above plain random
+    noise = pool[(pool["policy"] == "p_win") & (pool["rung"] == "NOISE")].iloc[0]
+    assert abs(noise["diff_matched"]) < 0.04
+
+
+def test_the_matched_baseline_is_the_stratum_mean_times_the_number_chosen_and_the_existing_rows_are_unchanged():
+    from mootcourt.decision_value import _matched_value
+
+    values = np.array([0.0, 1.0, 3.0, 5.0, 7.0, 9.0])
+    arms = np.array([1.0, 1.0, 2.0, 2.0, 2.0, 2.0])
+    score = np.array([0.1, 0.2, 0.9, 0.8, 0.7, 0.3])  # top 3: tests 2, 3, 4 (all in the arm-count-2 stratum, mean value 6)
+    assert _matched_value(score, values, arms, 3) == pytest.approx(3 * 6.0)
+    tied = np.array([0.5, 0.5, 0.5, 0.5, 0.5, 0.5])  # all tied: each test has weight 3 / 6, so the sum is the stratum means times half
+    assert _matched_value(tied, values, arms, 3) == pytest.approx(0.5 * (2 * 0.5 + 4 * 6.0))
+
+
+# ============================================================================ T-062 (registry T-070): the learning curve's reference base rate
+def test_the_learning_curve_scores_every_point_against_the_full_history_base_rate_and_keeps_the_own_base_column(imp, tmp_path, make_synth):
+    from test_challengers_ablations import GATES as LC_GATES
+    from test_challengers_ablations import _cli, _synth
+
+    root = tmp_path / "lcroot"
+    imp("mootcourt.ledger").write_ledger(_synth(make_synth, seed=71, n_tests=700), root / "data" / "ledger" / "ledger.parquet")
+    (root / "reports").mkdir(parents=True)
+    (root / "reports" / "gates.json").write_text(json.dumps(LC_GATES))
+    res = _cli(imp, ["backtest", "--source", "synthetic", "--learning-curve", "0.05,1", "--seeds", "3", "--bootstrap", "60", "--no-baselines"], root)
+    assert res.exit_code == 0, res.output
+    js = json.loads(next((root / "reports").glob("learning-curve-synthetic-*.json")).read_text())
+    assert js["bootstrap_resamples"] == 60 and "FULL history" in js["skill_reference"]
+    rows = pd.DataFrame(js["rows"])
+    for col in (
+        "skill",
+        "skill_own_base",
+        "skill_own_base_lo",
+        "skill_own_base_hi",
+        "n_scored_tests",
+        "n_history_tests",
+        "base_brier_full",
+        "base_brier_own",
+    ):
+        assert col in rows.columns
+    assert rows["n_scored_tests"].nunique() == 1 and rows["n_scored_tests"].iloc[0] == js["heldout_tests"]  # the same tests at every point
+    full = rows[rows["fraction"] == 1.0].set_index("rung")
+    thin = rows[rows["fraction"] == 0.05].set_index("rung")
+    assert full.loc["P0", "skill"] == pytest.approx(0.0, abs=1e-12) and full.loc["P0", "skill_own_base"] == pytest.approx(0.0, abs=1e-12)
+    assert (full["base_brier_full"] - full["base_brier_own"]).abs().max() < 1e-12  # at the full history the two references coincide
+    assert (thin["base_brier_full"] == full["base_brier_full"].reindex(thin.index)).all()  # the same reference at every point
+    assert abs(thin.loc["P1", "skill"] - thin.loc["P1", "skill_own_base"]) > 1e-9  # different quantities on a thin history
+    assert full.loc["P1", "skill"] >= thin.loc["P1", "skill"] - 1e-9  # skill against a fixed reference does not fall with history
+    assert next((root / "reports").glob("learning-curve-synthetic-*.md")).read_text().count("skill, own base") >= 2
+
+
+# ============================================================================ T-065 (registry T-072): discrimination within strata
+def test_within_strata_auc_removes_the_base_rate_movement_between_strata_that_the_pooled_auc_credits():
+    from mootcourt import harness_stats as hs
+
+    rng = np.random.default_rng(5)
+    rows = []
+    for stratum, rate in enumerate((0.05, 0.30, 0.60)):  # the base rate moves between strata; the forecast knows only the stratum
+        for i in range(400):
+            rows.append({"stratum": str(stratum), "test_id": f"t{stratum}-{i}", "p": rate, "e": float(rng.uniform() < rate)})
+    d = pd.DataFrame(rows)
+    ts = hs._TestSums(d.assign(test_id=d["test_id"]), {"a": np.zeros(len(d))})
+    counts = ts.resample_counts(80, np.random.default_rng(0))
+    pooled = hs.auc_by_test(d["p"], d["e"], ts.codes, counts)[0]
+    within = hs.within_strata(d["p"], d["e"], d["stratum"].to_numpy(), ts.codes, counts)
+    assert pooled > 0.62  # the pooled AUC credits the stratum-level base rates
+    assert within[0] == pytest.approx(0.5, abs=1e-12) and within[3] == pytest.approx(
+        0.0, abs=1e-12
+    )  # constant forecasts within strata: chance, no resolution
+    assert within[1] <= within[0] <= within[2]
+
+
+def test_within_strata_auc_is_the_size_weighted_mean_of_the_stratum_aucs_and_finds_a_forecast_that_ranks_inside_strata():
+    from sklearn.metrics import roc_auc_score
+
+    from mootcourt import harness_stats as hs
+
+    rng = np.random.default_rng(6)
+    parts, aucs, sizes = [], [], []
+    for stratum, n in enumerate((120, 300, 80)):
+        e = (rng.uniform(size=n) < 0.3).astype(float)
+        p = np.clip(0.3 + 0.2 * (e - 0.3) + rng.normal(0, 0.15, n), 0.01, 0.99)  # informative inside the stratum
+        parts.append(pd.DataFrame({"stratum": str(stratum), "test_id": [f"s{stratum}-{i}" for i in range(n)], "p": p, "e": e}))
+        aucs.append(roc_auc_score(e, p))
+        sizes.append(n)
+    d = pd.concat(parts, ignore_index=True)
+    ts = hs._TestSums(d, {"a": np.zeros(len(d))})
+    got = hs.within_strata(d["p"], d["e"], d["stratum"].to_numpy(), ts.codes, None)
+    assert got[0] == pytest.approx(float(np.average(aucs, weights=sizes)), abs=1e-12) and got[0] > 0.55
+    assert got[3] > 0.0
+
+
+def test_the_aggregate_rows_carry_the_within_strata_discrimination_keys_and_the_report_lists_them():
+    from test_review_l import _bt
+
+    from mootcourt import harness_stats as hs
+    from mootcourt import report
+
+    _, sc = _bt()
+    agg = hs.aggregate_scores(sc, GATES, B=30).query("cell == 'ALL'").set_index("rung")
+    for col in ("auc_event_within", "auc_event_within_lo", "auc_event_within_hi", "resolution_event_within", "auc_direction_within"):
+        assert col in agg.columns
+    assert agg.loc["P0", "auc_event_within"] == pytest.approx(0.5, abs=1e-9)  # P0 is constant within an (origin, cell) stratum
+    assert {c for _, cols in report._AGG_GROUPS for c in cols} >= {"auc_event_within", "resolution_event_within"}
+
+
+def test_the_fit_clock_is_the_data_end_of_the_period_rule_on_the_card_path_and_a_fit_without_a_clock_uses_the_newest_result():
+    from mootcourt.bundle import fit_bundle
+
+    ledger = upworthy_like(260, seed=5)
+    adm = ledger[ledger["status"] == "admitted"]
+    last = pd.Timestamp(adm["usable_after"].max()).tz_convert("UTC")
+    tail_quarter = f"{last.year}Q{(last.month - 1) // 3 + 1}"
+    no_clock = fit_bundle(ledger, "upworthy", "snap")  # data end: the newest usable_after, inside the tail quarter
+    live_late = fit_bundle(
+        ledger, "upworthy", "snap", as_of=last + pd.Timedelta(days=400)
+    )  # a clock long after the ledger: every quarter is complete
+    assert tail_quarter not in no_clock.p1._period and tail_quarter in live_late.p1._period
+    assert no_clock.p1.global_params()["n"] == live_late.p1.global_params()["n"] == len(adm)  # the tail rows enter the global fit either way
+    assert fit_bundle(ledger, "upworthy", "snap", as_of=last).p1.last_period() == no_clock.p1.last_period()
+
+
+# ============================================================================ T-074 (registry T-077): report columns for the round 01 response
+def test_the_year_table_carries_the_event_rate_of_each_year():
+    from test_review_l import _bt
+
+    from mootcourt import harness_stats as hs
+
+    _, sc = _bt()
+    years = pd.to_datetime(sc["origin"], utc=True).dt.year
+    by = hs.by_year(sc, years, GATES, B=20)
+    p1 = sc[sc["rung"] == "P1"].assign(year=years[sc["rung"] == "P1"])
+    for y, g in p1.groupby("year"):
+        row = by[(by["year"] == y) & (by["cell"] == "ALL") & (by["rung"] == "P1")].iloc[0]
+        assert row["event_rate"] == pytest.approx(float(g["event"].astype(float).mean()), abs=1e-12) and row["n"] == len(g)
+
+
+def test_the_aggregate_carries_the_paired_log_score_difference_from_p1_with_a_by_test_interval_and_adjusted_bounds():
+    from test_review_l import _bt
+
+    from mootcourt import harness_stats as hs
+
+    _, sc = _bt()
+    agg = hs.aggregate_scores(sc, GATES, B=60).query("cell == 'ALL'").set_index("rung")
+    p1 = sc[sc["rung"] == "P1"].set_index("row_id")["logscore"]
+    p2 = sc[sc["rung"] == "P2"].set_index("row_id")["logscore"]
+    want = float((p2 - p1.reindex(p2.index)).mean())
+    assert agg.loc["P2", "logscore_vs_p1"] == pytest.approx(want, abs=1e-12) and agg.loc["P2", "n_paired"] == len(p2)
+    assert agg.loc["P2", "logscore_vs_p1_lo"] <= agg.loc["P2", "logscore_vs_p1_hi"]
+    assert (
+        agg.loc["P1", "logscore_vs_p1"] == 0.0 and agg.loc["P1", "logscore_vs_p1_lo"] == 0.0 and pd.isna(agg.loc["P1", "logscore_vs_p1_adjusted_lo"])
+    )
+    lo, hi, alo, ahi = (
+        agg.loc["P0", c] for c in ("logscore_vs_p1_lo", "logscore_vs_p1_hi", "logscore_vs_p1_adjusted_lo", "logscore_vs_p1_adjusted_hi")
+    )
+    assert ahi - alo >= hi - lo - 1e-9
+    assert not agg.columns.str.startswith("_se").any()
+
+
+def test_the_gate_read_records_the_cells_own_dependence_and_scales_the_nearest_gate_by_the_information_per_test():
+    from mootcourt import harness_stats as hs
+
+    rng = np.random.default_rng(3)
+    rows = []
+    for t in range(300):
+        k = 2 if t % 2 else 5
+        for j in range(k):
+            rows.append({"test_id": f"t{t}", "row_id": f"t{t}:{j}", "y": rng.normal(0, 1), "s": 1.0, "cell": "c"})
+    g = pd.DataFrame(rows)
+    ev = (g["y"] > 1.96 * g["s"]).to_numpy(float)
+    sel = {"n_200": 100, "n_400": 200, "rows_per_test": 3.5, "icc": 0.13, "base_rate": 0.09}
+    out = hs._cell_gate_read(g, ev, g["test_id"].nunique(), sel)
+    assert out["gate_cell_rows_per_test"] == pytest.approx(len(g) / 300)
+    assert out["gate_assumed_rows_per_test"] == 3.5 and out["gate_assumed_icc"] == 0.13
+    info = lambda r, c: r / (1 + (r - 1) * c)  # noqa: E731
+    factor = info(3.5, 0.13) / info(out["gate_cell_rows_per_test"], out["gate_cell_icc"])
+    assert out["gate_cell_n_200"] == int(np.ceil(100 * factor)) and out["gate_cell_n_400"] == int(np.ceil(200 * factor))
+    same = hs._cell_gate_read(g, ev, 300, {**sel, "rows_per_test": out["gate_cell_rows_per_test"], "icc": out["gate_cell_icc"]})
+    assert same["gate_cell_n_200"] == 100 and same["gate_cell_n_400"] == 200  # the assumed and the cell's dependence agree
+    none = hs._cell_gate_read(g, ev, 300, {"n_200": 100, "n_400": 200})
+    assert none["gate_cell_n_200"] is None and none["decidable_by_tests_cell"] is None  # a per-row gates file has no assumption to compare
+
+
+def test_the_one_contrast_per_test_view_keeps_the_lowest_row_id_of_each_test_and_the_variant_is_named():
+    from mootcourt.cli import _variant_flags, _variant_name, _variant_settings
+    from mootcourt.scale import one_contrast_per_test_ledger
+
+    ledger = upworthy_like(60, seed=2)
+    view = one_contrast_per_test_ledger(ledger)
+    adm = view[view["status"] == "admitted"]
+    assert adm["test_id"].is_unique and set(adm["test_id"]) == set(ledger.loc[ledger["status"] == "admitted", "test_id"])
+    first = ledger[ledger["status"] == "admitted"].sort_values("row_id").drop_duplicates("test_id")
+    assert set(adm["row_id"]) == set(first["row_id"])
+    assert (view["status"] != "admitted").sum() == (ledger["status"] != "admitted").sum()  # rows that were not admitted stay
+    v = _variant_settings("both", None, None, None, "t", None, None, contrasts="one")
+    assert v == {"contrasts": "one"} and _variant_name(v) == "contrasts-one" and _variant_flags(v) == " --contrasts one"
+    assert _variant_settings("both", None, None, None, "t", None, None) == {}
+
+
+def test_assemble_run_folder_copies_the_old_run_replaces_what_the_reports_have_and_lists_new_changed_identical_and_removed(tmp_path):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("assemble_run_folder", Path(__file__).resolve().parents[1] / "scripts" / "assemble_run_folder.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    reports, old, new = tmp_path / "reports", tmp_path / "old", tmp_path / "new"
+    for d in (reports / "ablations", old / "ablations", old / "scale"):
+        d.mkdir(parents=True)
+    (old / "gates.json").write_text("g")
+    (old / "scale" / "scale-1.json").write_text("s")
+    (old / "README.md").write_text("old")
+    (old / "backtest-x-1.json").write_text("old")
+    (old / "ablations" / "backtest-x-1--gone.json").write_text("old")
+    (old / "ablations" / "backtest-x-1--same.json").write_text("same")
+    (reports / "gates.json").write_text("g")  # gates.json and run-log.json are regenerated in the reports now
+    (reports / "backtest-x-1.json").write_text("new")
+    (reports / "ablations" / "backtest-x-1--same.json").write_text("same")
+    (reports / "ablations" / "backtest-x-1--fresh.json").write_text("fresh")
+    rep = mod.assemble(reports, old, new)
+    assert rep["changed"] == ["backtest-x-1.json"] and rep["new"] == ["ablations/backtest-x-1--fresh.json"]
+    assert "ablations/backtest-x-1--same.json" in rep["identical"] and "gates.json" in rep["identical"]
+    assert rep["removed"] == ["ablations/backtest-x-1--gone.json"] and not (new / "ablations" / "backtest-x-1--gone.json").exists()
+    assert (new / "scale" / "scale-1.json").read_text() == "s" and (new / "README.md").read_text() == "old"
+
+
+def test_the_leakage_audit_writes_a_small_json_with_the_counts_per_rung(tmp_path):
+    import subprocess
+    import sys
+
+    from conftest import AMBIENT_ROOT
+
+    root = Path(AMBIENT_ROOT or "")
+    scores = sorted((root / "reports").glob("scores-asos-*.parquet"))
+    if not scores:
+        pytest.skip("no ASOS score table on the data root")
+    out = tmp_path / "leak.json"
+    script = Path(__file__).resolve().parents[1] / "scripts" / "leakage_audit.py"
+    subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--ledger",
+            str(root / "data" / "ledger" / "ledger.parquet"),
+            "--scores",
+            str(scores[-1]),
+            "--json-out",
+            str(out),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    doc = json.loads(out.read_text())
+    assert doc["pass"] is True and doc["total_violations"] == 0 and doc["source"] == "asos"
+    assert {"P0", "P1", "P2"} <= {r["rung"] for r in doc["rungs"]} and all(r["fit_and_scored"] == 0 for r in doc["rungs"])
+
+
+def test_aggregate_scores_without_a_row_id_column_pairs_by_position_within_the_test_and_does_not_raise():
+    from mootcourt import harness_stats as hs
+
+    rng = np.random.default_rng(1)
+    rows = []
+    for t in range(40):
+        for j in range(2):
+            y = rng.normal()
+            for rung, shift in (("P0", 0.3), ("P1", 0.0), ("P2", 0.1)):
+                rows.append(
+                    dict(
+                        test_id=f"t{t}",
+                        cell="c",
+                        rung=rung,
+                        y=y,
+                        s=1.0,
+                        logscore=-1.0 - shift,
+                        crps=0.5,
+                        p_sig=0.1,
+                        p_win=0.5,
+                        brier_event=0.1,
+                        event=False,
+                        direction_correct=1.0,
+                        lo80=-1.0,
+                        hi80=1.0,
+                        lo90=-2.0,
+                        hi90=2.0,
+                        abstain=False,
+                        brier_base=0.1,
+                        origin=pd.Timestamp("2014-01-01", tz="UTC"),
+                    )
+                )
+    frame = pd.DataFrame(rows)
+    with_id = frame.assign(row_id=frame["test_id"] + frame.groupby(["test_id", "rung"]).cumcount().astype(str))
+    a = hs.aggregate_scores(frame, GATES, B=20).query("cell == 'ALL'").set_index("rung")
+    b = hs.aggregate_scores(with_id, GATES, B=20).query("cell == 'ALL'").set_index("rung")
+    assert a.loc["P2", "logscore_vs_p1"] == pytest.approx(-0.1) and a.loc["P0", "logscore_vs_p1"] == pytest.approx(-0.3)
+    assert a.loc["P2", "logscore_vs_p1"] == b.loc["P2", "logscore_vs_p1"] and a.loc["P2", "n_paired"] == 80

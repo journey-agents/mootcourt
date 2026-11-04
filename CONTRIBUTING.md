@@ -6,12 +6,12 @@ cannot. Contributions that keep that honesty are the ones that fit.
 ## Set up
 
 ```
-uv sync --extra dev
+uv sync --all-extras
 uv run pytest -q
 uv run ruff check src tests scripts
 ```
 
-Python 3.11 or newer. The tests need no network and no data of your own. Tests that need the downloaded archives are
+Python 3.11 or newer. Keep the clone and its environment on your internal disk: on an exFAT or other external volume macOS `._` sidecar files break the install, and `UV_PROJECT_ENVIRONMENT` set to a path on the internal disk is the cure (see `docs/troubleshooting.md`). The tests need no network and no data of your own. Tests that need the downloaded archives are
 marked `realdata` and skip when the raw data folder is absent. Put large files, reports and caches under the data root
 (`MOOTCOURT_DATA_ROOT`), never inside the repository.
 

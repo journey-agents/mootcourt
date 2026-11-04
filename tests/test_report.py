@@ -53,11 +53,11 @@ def test_json_and_markdown_carry_the_same_numbers(imp, scores, tmp_path):
     for row in agg:
         for key, v in row.items():
             if isinstance(v, float) and np.isfinite(v):
-                assert f"{v:.4f}" in md, f"{key}={v} from JSON missing in Markdown"
+                assert f"{v:.4f}".replace("-0.0000", "0.0000") in md, f"{key}={v} from JSON missing in Markdown"  # no signed zero
     for row in data["tables"]["decision_value"]:
         for key, v in row.items():
             if isinstance(v, float) and np.isfinite(v):
-                assert f"{v:.4f}" in md
+                assert f"{v:.4f}".replace("-0.0000", "0.0000") in md           # the renderer prints no signed zero
 
 
 def test_header_carries_provenance_and_synthetic_label(imp, scores, tmp_path):
@@ -118,3 +118,14 @@ def test_backtest_cli_end_to_end(imp, tmp_path, monkeypatch):
     assert list((tmp_path / "reports").glob("backtest-synthetic-*.md"))
     assert list((tmp_path / "reports").glob("backtest-synthetic-*.json"))
     assert (tmp_path / "reports" / "reliability-synthetic.json").exists()
+
+
+def test_the_reliability_seed_records_the_last_result_it_is_dated_at(imp, scores, tmp_path):
+    """T6-plan row 1 (call 248): the fit can tell a seed from a report a join wrote; a join's rewrite drops the marker."""
+    ledger, sc = scores
+    path = imp("mootcourt.report").write_reliability(sc, source="synthetic", out_dir=tmp_path)
+    rep = json.loads(path.read_text())
+    last = sc.loc[sc["rung"] == "P2" if (sc["rung"] == "P2").any() else sc["rung"] == "P1", "usable_after"].max()
+    assert pd.Timestamp(rep["seed"]["last_result"]) == last and rep["as_of"] == rep["seed"]["last_result"]
+    rewritten = imp("mootcourt.loop").update_reliability(rep, [], pd.Timestamp(last).to_pydatetime(), advance=False, source="synthetic")
+    assert "seed" not in rewritten

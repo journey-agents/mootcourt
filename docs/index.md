@@ -12,7 +12,7 @@ The card prioritizes and sizes the test. The live test decides. Moot Court never
 
 | If you want to | Read |
 |---|---|
-| Get a first card in five minutes | [Tutorial 1: your first card](tutorials/01-first-card.md) |
+| Get a first card in about ten minutes, install included | [Tutorial 1: your first card](tutorials/01-first-card.md) |
 | Use your own archive | [Tutorial 2: your own archive](tutorials/02-your-own-archive.md) |
 | Learn the vocabulary | [Concepts](concepts.md) and its glossary |
 | Reproduce the published study | [Tutorial 3](tutorials/03-reproduce-upworthy.md) and the [Results](results.md) |
@@ -34,8 +34,8 @@ The card prioritizes and sizes the test. The live test decides. Moot Court never
 ## Install
 
 ```
-pip install .
+pip install -e .
 moot --version
 ```
 
-Python 3.11 or newer. The package makes no network call and no model call in any default code path.
+Python 3.11 or newer. Install from a clone on your internal disk; an external exFAT volume breaks the environment (see [troubleshooting](troubleshooting.md#working-from-a-clone-on-an-exfat-volume)). The package makes no network call and no model call in any default code path.

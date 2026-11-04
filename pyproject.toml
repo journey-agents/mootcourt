@@ -68,6 +68,11 @@ moot = "mootcourt.cli:app"
 [tool.hatch.build.targets.wheel]
 packages = ["src/mootcourt"]
 
+# The source distribution carries the package, its examples and its tests; the paper's run folders, the documentation, the scripts
+# and the repository files stay in the repository (round 01, R4: the sdist held 48 MB of paper/data).
+[tool.hatch.build.targets.sdist]
+only-include = ["src", "tests", "examples", "README.md", "LICENSE", "pyproject.toml"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

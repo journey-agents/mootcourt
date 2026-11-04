@@ -4,6 +4,52 @@ This project follows [semantic versioning](https://semver.org). Before 1.0.0 a m
 schema, the card schema or a command line option; the change is listed here and the schema versions are bumped.
 The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [Unreleased]
+
+Release notes for 1.0.0, drafted from the two review rounds of the paper (round 00 and round 01); the heading becomes `## [1.0.0] - <date>`
+at the version bump.
+
+### Changed
+
+- P0 is the empirical base-rate forecaster: its significant-positive probability is the visible event rate, so its Brier skill is zero by
+  construction and every other rung's skill is read against it.
+- P2 issues P1's own Student-t predictive with the location and the scale moved by the admitted precedents; weight zero returns P1's
+  predictive exactly, and a two-standard-error admission guard on the validation gain keeps the weight at zero when nothing transfers.
+- P1 takes its period level from the last complete calendar quarter; a partial trailing quarter sets no level.
+- The feature space is pairwise where the rows carry a reference headline (variant, reference, difference and pair features), and a card
+  issued without a reference headline says so.
+- Every score is the analytic Student-t marginal; the calibration null is clustered by test; coverage is reported within deciles of the
+  ratio of realized to planned standard error; the gates are counted in tests at the archive's base rate with within-test dependence.
+- Decision value is measured against an exact random order with by-test intervals and Bonferroni-adjusted bounds, at three budgets.
+- Abstained cards keep their forecast sealed, are scored by the weekly join and feed the reliability report; a card issued at or after its
+  test's start is recorded as post-hoc and never scored; one card per row is scored, the earliest pre-launch one.
+- The card's skill line prints the cell's own gated figure when the cell is decidable, and the pooled one otherwise, saying so.
+- The sample ledger of `moot init` has a significant-positive rate near the headline archive's (0.09) and the quick gates are simulated at
+  that rate; the Request line of a card without text prints no headline fields.
+- The source distribution holds the package, its examples and its tests; the paper's run folders stay in the repository.
+
+### Added
+
+- The challengers (a precision-weighted tuned boosted model, a local empirical-Bayes comparison set, a pairwise TF-IDF classifier), each
+  raw and Platt-recalibrated on visible rows, scored on identical rows and tests as the ladder.
+- The positive control: a planted text lift on the synthetic archive, with the guard's admission by size and lift and the realized
+  held-out gain of the precedent rung against the oracle that knows the lift; the text classifier and the boosted model on the same ledger.
+- The admitted guard pairs row by row, with the realized difference split into a location part and a scale part.
+- The learning curve, the weekly replay of each archive, the leakage audit, the guard comparison, the trigger-removal ablations and the
+  paper extras, each written as a report JSON that the paper's tables trace to.
+- Response simulators attached over stdio or HTTP, recorded and replayed, with a stacking weight that is earned out of time.
+- `make tables`, `make paper` and `make arxiv`: the tables, the figures, the PDF and the arXiv source package from the run folder, with
+  provenance lines relative to it; a per-platform score report from the continuous-integration job; a test that every caption number
+  traces to a source.
+
+### Fixed
+
+- A first run that scored relative lift at the realized standard error let post-launch information into a pre-launch forecast; the
+  protocol scores the absolute effect at the planned standard error, and the first run is kept as the cautionary table.
+- A ledger ending inside a quarter gave P1 a period level from a few days of data, which the guard then read as a precedent gain.
+- The log score on the grid dropped the Student-t mass beyond the grid edge; the analytic marginal replaces it.
+- Storage: every heavy read goes through the data root; a run folder is read as a data root with the standard layout.
+
 ## [0.1.0] - unreleased
 
 First release.
@@ -78,6 +124,9 @@ First release.
 - The leakage audit wraps the construction of `GBMChallenger`, `LocalEB` and `TextLR`. Champion refresh needs strictly newer data (`data_through`), holds a same-method fit without a backtest as pending until the summary is attached, and writes the reason of every challenger in the history.
 - Smaller: exposure bound, MCP refusals as messages, the variant exposure to the simulator, neutral pair features without a reference, the learning curve on the recorded admission, row id checks, P0 variance floor, P1's predictive for a far query,
   `method_id` covering the feature space, GBM calibration subsample, relative robustness threshold, finite guardrail margins, the join's baseline from the card's own P0 (the card stores P0's variance).
+- Learning curve: every point is scored against the full-history P0 (`skill`), the subsample base rate is kept as `skill_own_base`, the rows carry `n_history_tests` and `n_scored_tests`, and the bootstrap uses the `--bootstrap` setting (500) instead of 200 (docs/method.md call 204). Aggregate rows: `auc_*_within` and `resolution_*_within`, discrimination within (origin, cell) strata (call 203).
+- Decision-value table: the policies `arm_count` and `random_matched` and, for every `p_win` rung, `diff_matched` (difference from random order matched on the number of contrasts) with unadjusted and adjusted bounds; a test of H5 reads against it (docs/method.md call 201).
+- Decision-value table: Bonferroni-adjusted bounds for the captured fraction, the regret and the difference from random order, with `family_size` (the rungs compared with random order in the pooled rows; docs/method.md call 200).
 - After the review of chunk N2: P1's period level comes from the last complete quarter (a quarter whose end is after the fit's data end sets no level; `P1Predictor.fit(rows, data_end=None)`); fits at other dates change (the bundles of `moot fit`, hence the card path), the quarterly backtests do not. The synthetic guard diagnostics are rerun: with no planted signal the guard admits at 0.00 to 0.06 of cells at every size (it was 0.67 at 3,700 tests and 0.39 at 11,100), and `guard_period_control` records the mechanism. `guard_held_out_gain` scores the best candidate's own held-out gain with clustered standard errors. `scripts/refresh_discrimination.py` counts skipped reports and handles the multi-metric blocks. `make paper-figures` defaults to `paper/data/run5-period-rule`.
 - After the review of chunk N: the `resolution_*` columns are the Murphy resolution over equal-mass forecast bins (they were forecast spread); the positive-control sensitivity point is 11,100 tests (about 7,400 rows per cell); a champion
   without `data_through` gets it derived from its bundle; `moot fit` says a refresh is pending and that `moot backtest` decides it; the P2 search returns P1's predictive below the float32 kernel range; a missing exposure is filled with the exposure

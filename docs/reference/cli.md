@@ -20,13 +20,14 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--lambda` | float |  | Ablation: fix the P2 weight on precedents. |
 | `--kappa` | float |  | Ablation: P1 pooling strength. |
 | `--prior` | str | `t` | Ablation: P1 prior family, t or normal. |
-| `--p2-selection` | str |  | How P2 chooses lambda and bandwidth: loto or forward. |
+| `--p2-selection` | str |  | How P2 chooses lambda and bandwidth: forward (default) or loto (leave one test out). |
 | `--recency` | str |  | Time kernel for P2: select, or a half-life in days. |
 | `--p2-guard` | str |  | Ablation: P2 admission guard multiplier, or off. |
 | `--effect-scale` | str | `absolute` | absolute (default) or relative: the cautionary first run (Upworthy only). |
 | `--drop-trigger` | str |  | Ablation: switch an abstention trigger off (support, novelty, reliability or instability); repeatable. |
 | `--s-star` | str | `prelaunch` | prelaunch (default) or realized: feed the realized standard error (cautionary run). |
 | `--admission` | str | `realized` | realized (default: the ledger's statuses, including the minimum-clicks rule on realized clicks) or prelaunch: admit on exposure only, every contrast with a finite standard error (ablation). |
+| `--contrasts` | str | `all` | all (default) or one: keep one admitted contrast per test (the lowest row id), so a test has one headline against its reference (ablation of the arm-count structure, round 01 R3 minor 6). |
 | `--pairwise` | str | `on` | on (default): the feature space and the challengers read the reference headline where the ledger has one; off: the variant headline only. |
 | `--recalibrate`, `--no-recalibrate` | flag | `True` | Add a recalibrated rung (+cal) for every challenger, fit on visible rows only. |
 | `--recalibration` | str | `platt` | Map of the recalibrated rungs: platt or isotonic. |
@@ -39,6 +40,7 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--reports-dir` | path |  | Default: the storage root. |
 | `--models-dir` | path |  | Default: the storage root. |
 | `--verbose` | flag |  | Print one line per origin to standard error. |
+| `--progress-after` | float | `10.0` | Seconds after which progress lines go to standard error. |
 
 ## `moot benchmark`
 
@@ -66,7 +68,7 @@ Issue a card for a proposed experiment and freeze it under the cards directory.
 | `--source` | str |  | Data source: upworthy, asos or synthetic. |
 | `--headline` | str | `` | Proposed headline (text sources; leave out for ledgers without headline text). |
 | `--image-changed` | str | `false` | true or false. |
-| `--impressions` | int |  | Planned exposures (units) per arm (the reference arm's when --impressions-variant is given). |
+| `--impressions` | int |  | Planned units per arm; the reference arm's when --impressions-variant is given. |
 | `--impressions-variant` | int |  | Planned exposures of the variant arm; default: the same as --impressions. |
 | `--origin` | str |  | ISO-8601 time with offset; default now. |
 | `--models-dir` | path |  | Default: the storage root. |
@@ -108,7 +110,7 @@ Fit the second-opinion weight; it stays 0 until a provider earns it (the default
 
 ## `moot fit`
 
-Fit P0, P1 and P2 at the current ledger snapshot, save the bundle and register it.
+Fit P0, P1 and P2 on the rows usable at the fit clock, at the current ledger snapshot; save the bundle and register it.
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
@@ -116,6 +118,7 @@ Fit P0, P1 and P2 at the current ledger snapshot, save the bundle and register i
 | `--ledger` | path |  | Default: the storage root. |
 | `--models-dir` | path |  | Default: the storage root. |
 | `--reports-dir` | path |  | Default: the storage root. |
+| `--now` | str |  | Fit clock (ISO-8601 with offset): only rows usable at this instant enter the fit; default now. |
 
 ## `moot ingest`
 
@@ -157,6 +160,7 @@ Create mootcourt.toml, the data root layout, a sample ledger and quick gates; pr
 | `--cells` | str |  | Comma-separated cell names the program forecasts; default the sample ledger's metrics. |
 | `--name` | str |  | Project name; default the folder name. |
 | `--force` | flag |  | Overwrite an existing mootcourt.toml. |
+| `--progress-after` | float | `10.0` | Seconds after which the quick gate simulation reports progress. |
 
 ## `moot join`
 
@@ -198,14 +202,27 @@ Start the read-only MCP server on stdio (get_card, list_precedents, reliability_
 
 ## `moot promote`
 
-Promote the challenger to champion only if it beats the champion by the margin at the gate's n.
+Promote the challenger only if the paired comparison on common rows clears the margin at the gate's n (tests).
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
 | `--source` | str |  |  |
 | `--models-dir` | path |  | Default: the storage root. |
 | `--reports-dir` | path |  | Default: the storage root. |
-| `--margin` | float | `0.02` | Required Brier skill gain over the champion. |
+| `--margin` | float | `0.0` | The lower bound of the paired Brier skill difference's 90 percent interval must clear this; default 0 (the interval decides). |
+| `--challenger-scores` | path |  | Per-row score table of a backtest of the challenger's method (scores-<source>-<snapshot>[--variant].parquet); default: the table of the challenger's own summary. |
+| `--challenger-rung` | str |  | Rung of that table to pair; default the summary's rung (P2). |
+| `--bootstrap` | int | `500` | Resamples (whole tests) of the paired difference, as in the backtest. |
+
+## `moot reliability`
+
+Print the weekly reliability report of a source: one line per cell, or the JSON (call 208).
+
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `--source` | str |  |  |
+| `--reports-dir` | path |  | Default: the storage root. |
+| `--json` | flag |  | Print the report as JSON instead of the table. |
 
 ## `moot serve`
 
@@ -225,7 +242,7 @@ Synthetic data and gate power. Everything here is synthetic.
 
 ### `moot simulate gate-power`
 
-Simulate the gates by test, at the base rates of the archives, and write reports/gates.json (synthetic data only).
+Simulate the gates by test at the base rates of the archives, or at your ledger's, and write reports/gates.json (synthetic data only).
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|
@@ -238,6 +255,10 @@ Simulate the gates by test, at the base rates of the archives, and write reports
 | `--rows-per-test` | float |  | Mean rows per test; default: the measured value of each base rate (Upworthy 3.5, ASOS 5); sizes are numbers of tests. |
 | `--icc` | float |  | Binary within-test correlation of the event; default: the measured value of each base rate (Upworthy 0.13, ASOS 0.67). |
 | `--level` | float | `0.9` | Interval whose lower end must clear zero (the harness reports 90 percent by test). |
+| `--source` | str |  | Measure rows per test, the base rate and the within-test correlation on this source's ledger instead of a public archive's values. |
+| `--ledger` | path |  | Default: the storage root. |
+| `--table`, `--no-table` | flag | `True` | Also simulate the power table (the slow part; the sizes do not need it). |
+| `--progress-after` | float | `10.0` | Seconds after which progress lines go to standard error. |
 
 ### `moot simulate ledger`
 

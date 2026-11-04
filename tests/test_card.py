@@ -267,3 +267,24 @@ def test_issue_latency_p95_under_one_second_on_20000_rows(imp, make_synth, froze
         card.build_card(bundle, req, reliability=report, now=frozen_clock())
         times.append(time.perf_counter() - t)
     assert np.percentile(times, 95) < 1.0
+
+
+# T6-plan row 4 (R2 minor 10, call 251): the window of one test says why it has no interval
+def _skill_text(imp, **kw):
+    card = imp("mootcourt.card")
+    base = dict(available=True, brier_skill=0.12, n=40, as_of="2025-12-30T00:00:00+00:00", window_weeks=8)
+    return "\n".join(card._skill_lines(card.Skill(**{**base, **kw})))
+
+
+def test_a_window_of_one_test_says_fewer_than_two_tests_and_not_that_no_interval_is_recorded(imp):
+    text = _skill_text(imp, n_tests=1)
+    assert "fewer than two tests in the window" in text and "no interval is recorded" not in text
+
+
+def test_a_report_without_test_ids_still_says_no_interval_is_recorded(imp):
+    assert "no interval is recorded" in _skill_text(imp, n_tests=None)
+
+
+def test_a_window_with_an_interval_prints_it(imp):
+    text = _skill_text(imp, n_tests=9, brier_skill_lo=0.01, brier_skill_hi=0.2)
+    assert "90 percent interval" in text and "fewer than two" not in text

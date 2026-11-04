@@ -20,7 +20,7 @@ def _world(imp, tmp_path, make_synth, reliability_factory, n_cards=6):
     origin = old["usable_after"].max().to_pydatetime()
     now0 = origin + dt.timedelta(days=1)
     report = reliability_factory(as_of=now0 - dt.timedelta(days=1), n=500)
-    for r in new.head(n_cards).itertuples():
+    for r in new[new["started_at"] > now0].head(n_cards).itertuples():  # issued before the test starts (call 220)
         req = card_mod.CardRequest(source="synthetic", headline=json.loads(r.features_json)["headline"], image_changed=False,
                                    impressions=20000, origin=origin, row_id=r.row_id)
         card_mod.freeze_card(card_mod.build_card(bundle, req, reliability=report, now=now0), dirs["cards"])

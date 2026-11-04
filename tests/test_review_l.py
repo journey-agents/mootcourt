@@ -600,7 +600,10 @@ def test_a_refit_of_the_same_method_on_a_newer_fit_replaces_the_champion_without
     # another method needs the margin
     assert reg.register_model("s", "m3", skill(0.50), method_id="B", fitted_at=t2, data_through=d2) == "challenger"
     assert reg.get_champion("s") == "m2" and reg.get_challenger("s") == "m3"
-    res = reg.promote("s", {"n_200": 10, "n_400": 20}, margin=0.02)
+    paired = {"skill_diff": 0.45, "lo": 0.40, "hi": 0.50, "n_tests": 100, "n_rows": 100, "level": 0.9, "resamples": 200,
+              "champion_rung": "P2", "challenger_rung": "P2"}        # round 01, R2, call 224: the paired interval clears zero at the gate
+    assert not reg.promote("s", {"n_200": 10, "n_400": 20}).promoted, "without paired evidence nothing is promoted"
+    res = reg.promote("s", {"n_200": 10, "n_400": 20}, paired=paired)
     assert res.promoted and reg.get_champion("s") == "m3"
 
 
@@ -652,7 +655,8 @@ def test_the_skill_line_prints_the_interval_the_test_count_and_the_gate_verdict_
     assert "0.075" in sec and "90 percent interval -0.040 to 0.190" in sec and "from 60 tests" in sec and "265 rows" in sec
     # GATES is a per-row file: the 265 rows of the window are compared with it, not the 60 tests (review N, REV-N-007)
     assert "Gate at this n: 265 rows:" in sec and "interval includes zero" in sec
-    assert "Latest gated backtest, rung P2: Brier skill -0.004" in sec and "3797 tests" in sec
+    # a summary without per-cell rows prints the pooled figure and says it is pooled (round 01, R2, call 225)
+    assert "Latest gated backtest, pooled over all cells" in sec and "rung P2: Brier skill -0.004" in sec and "3797 tests" in sec
     no_gates = card_mod.to_markdown(card_mod.build_card(bundle, req, reliability=rel, now=origin.to_pydatetime()))
     assert "gate sizes are not available" in no_gates
     old = card_mod.to_markdown(
@@ -878,9 +882,9 @@ def test_the_ablation_script_runs_every_guarded_ablation_a_second_time_with_the_
         "--bandwidth-mult 0.5",
         "--bandwidth-mult 0.25",
         "--bandwidth-mult 0.125",
-        "--p2-selection forward",
+        "--p2-selection loto",
         "--recency select",
-        "--p2-selection forward --recency select",
+        "--p2-selection loto --recency select",
         "--pairwise off",
     ):
         assert flag in guarded

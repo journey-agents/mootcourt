@@ -5,6 +5,7 @@ import datetime as dt
 import json
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import typer
 import typer.core
 
 from mootcourt import __version__
-from mootcourt.config import BOOTSTRAP_RESAMPLES, BY_ORIGIN_RESAMPLES, PROMOTION_MARGIN
+from mootcourt.config import BOOTSTRAP_RESAMPLES, EARN_WEIGHT_MARGIN, PROMOTION_MARGIN
 from mootcourt.storage import storage_paths, visible_glob
 
 DEFAULT_SERVE_HOST = "127.0.0.1"
@@ -25,8 +26,47 @@ def _user_error_types() -> tuple[type, ...]:
     from mootcourt.harness import LeakageError
     from mootcourt.service import UnknownSourceError
     from mootcourt.simulate import PowerBudgetExceeded
+    from mootcourt.storage import SidecarEnvironmentError
 
-    return (ValueError, OSError, BundleIntegrityError, LeakageError, PowerBudgetExceeded, UnknownSourceError)
+    return (ValueError, OSError, BundleIntegrityError, LeakageError, PowerBudgetExceeded, UnknownSourceError, SidecarEnvironmentError)
+
+
+class Heartbeat:
+    """Prints "<what>: still running, N s elapsed" to standard error after ``delay`` seconds and every ``every`` seconds until the block
+    ends, so a command that takes long on a slow volume is never silent (round 01, R6; call 207). ``echo`` replaces the printer."""
+
+    def __init__(self, what: str, delay: float = 10.0, every: float = 10.0, echo=None):
+        self.what, self.delay, self.every = what, float(delay), float(every)
+        self.echo = echo or (lambda line: typer.echo(line, err=True))
+        self._stop = threading.Event()
+        self._t0 = time.perf_counter()
+        self._thread: threading.Thread | None = None
+
+    def elapsed(self) -> float:
+        return time.perf_counter() - self._t0
+
+    def past_delay(self) -> bool:
+        return self.elapsed() >= self.delay
+
+    def _run(self) -> None:
+        if self._stop.wait(self.delay):
+            return
+        while True:
+            self.echo(f"{self.what}: still running, {self.elapsed():.0f} s elapsed")
+            if self._stop.wait(self.every):
+                return
+
+    def __enter__(self):
+        self._t0 = time.perf_counter()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc):
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+        return False
 
 
 def _describe_error(exc: BaseException) -> str:
@@ -131,7 +171,7 @@ def card(
     headline: str = typer.Option("", "--headline", help="Proposed headline (text sources; leave out for ledgers without headline text)."),
     image_changed: str = typer.Option("false", "--image-changed", help="true or false."),
     impressions: int = typer.Option(
-        ..., "--impressions", help="Planned exposures (units) per arm (the reference arm's when --impressions-variant is given)."
+        ..., "--impressions", help="Planned units per arm; the reference arm's when --impressions-variant is given."
     ),
     impressions_variant: int | None = typer.Option(
         None, "--impressions-variant", help="Planned exposures of the variant arm; default: the same as --impressions."
@@ -317,7 +357,7 @@ def _parse_guard(value: str | None):
 
 
 def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale="absolute", s_star="prelaunch",
-                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on") -> dict:
+                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all") -> dict:
     """The ablation settings that differ from the defaults, as a dict; empty for the main run."""
     from mootcourt.config import KAPPA, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 
@@ -348,6 +388,8 @@ def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection,
         v["admission"] = admission
     if pairwise != "on":
         v["pairwise"] = pairwise
+    if contrasts != "all":
+        v["contrasts"] = contrasts
     if "p2_guard" in v:                      # last, so a run with the guard off is always named `<ablation>+p2-guard-off` (call 176)
         v["p2_guard"] = v.pop("p2_guard")
     return v
@@ -378,7 +420,9 @@ def backtest(
     lam: float | None = typer.Option(None, "--lambda", help="Ablation: fix the P2 weight on precedents."),
     kappa: float | None = typer.Option(None, "--kappa", help="Ablation: P1 pooling strength."),
     prior: str = typer.Option("t", "--prior", help="Ablation: P1 prior family, t or normal."),
-    p2_selection: str | None = typer.Option(None, "--p2-selection", help="How P2 chooses lambda and bandwidth: loto or forward."),
+    p2_selection: str | None = typer.Option(
+        None, "--p2-selection", help="How P2 chooses lambda and bandwidth: forward (default) or loto (leave one test out)."
+    ),
     recency: str | None = typer.Option(None, "--recency", help="Time kernel for P2: select, or a half-life in days."),
     p2_guard: str | None = typer.Option(None, "--p2-guard", help="Ablation: P2 admission guard multiplier, or off."),
     effect_scale: str = typer.Option("absolute", "--effect-scale", help="absolute (default) or relative: the cautionary first run (Upworthy only)."),
@@ -391,6 +435,12 @@ def backtest(
         "--admission",
         help="realized (default: the ledger's statuses, including the minimum-clicks rule on realized clicks) "
         "or prelaunch: admit on exposure only, every contrast with a finite standard error (ablation).",
+    ),
+    contrasts: str = typer.Option(
+        "all",
+        "--contrasts",
+        help="all (default) or one: keep one admitted contrast per test (the lowest row id), so a test has one headline against its reference "
+        "(ablation of the arm-count structure, round 01 R3 minor 6).",
     ),
     pairwise: str = typer.Option(
         "on",
@@ -411,6 +461,7 @@ def backtest(
     reports_dir: Path | None = typer.Option(None, "--reports-dir", help="Default: the storage root."),
     models_dir: Path | None = typer.Option(None, "--models-dir", help="Default: the storage root."),
     verbose: bool = typer.Option(False, "--verbose", help="Print one line per origin to standard error."),
+    progress_after: float = typer.Option(10.0, "--progress-after", help="Seconds after which progress lines go to standard error."),
 ) -> None:
     """Rolling-origin backtest at calendar quarter starts; writes the report, figures and score table."""
     paths = storage_paths()
@@ -422,7 +473,7 @@ def backtest(
     from mootcourt.features import FEATURE_SETS
     from mootcourt.harness import PRIOR_KINDS, default_rungs, parse_challengers, quarterly_origins, rolling_origin
     from mootcourt.ledger import ensure_snapshot
-    from mootcourt.registry import attach_backtest
+    from mootcourt.registry import attach_backtest, date_seed_at_champion_fit
     from mootcourt.report import write_report
 
     if origins != "quarterly":
@@ -446,7 +497,7 @@ def backtest(
         raise typer.BadParameter(str(exc)) from None
     for name, value, allowed in (("--effect-scale", effect_scale, ("absolute", "relative")), ("--s-star", s_star, ("prelaunch", "realized")),
                                  ("--admission", admission, ("realized", "prelaunch")), ("--recalibration", recalibration, ("platt", "isotonic")),
-                                 ("--pairwise", pairwise, ("on", "off"))):
+                                 ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one"))):
         if value not in allowed:
             raise typer.BadParameter(f"{name} must be one of {', '.join(allowed)}")
     if effect_scale == "relative" and source != "upworthy":
@@ -458,7 +509,7 @@ def backtest(
         if name not in TRIGGERS:
             raise typer.BadParameter(f"--drop-trigger must be one of {', '.join(TRIGGERS)}; got {name!r}")
     variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg,
-                                tuple(drop_trigger or ()), admission, pairwise)
+                                tuple(drop_trigger or ()), admission, pairwise, contrasts)
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
     sid = ensure_snapshot(df, ledger_path.parent)
@@ -511,6 +562,12 @@ def backtest(
         df = prelaunch_admission_ledger(df)         # a view, like the cautionary run: the snapshot id above is the stored ledger's
         typer.echo(f"admission on exposure only: {int((df['status'] == 'admitted').sum()) - before} contrasts admitted "
                    "that the realized-clicks rule excluded")
+    if contrasts == "one":
+        from mootcourt.scale import one_contrast_per_test_ledger
+
+        n_before = int((df["status"] == "admitted").sum())
+        df = one_contrast_per_test_ledger(df)         # a view: the snapshot id above is the stored ledger's
+        typer.echo(f"one contrast per test: {int((df['status'] == 'admitted').sum())} of {n_before} admitted contrasts kept")
     if learning_curve is not None:
         from mootcourt.learning_curve import parse_fractions, run_learning_curve, write_learning_curve
 
@@ -518,7 +575,7 @@ def backtest(
             fractions = parse_fractions(learning_curve)
         except ValueError as exc:
             raise typer.BadParameter(str(exc)) from None
-        doc = run_learning_curve(df, source, make_rungs, fractions, seeds, gates, B=min(bootstrap, BY_ORIGIN_RESAMPLES), seed=seed, verbose=verbose)
+        doc = run_learning_curve(df, source, make_rungs, fractions, seeds, gates, B=bootstrap, seed=seed, verbose=verbose)
         doc["command"] = command + f" --learning-curve {learning_curve} --seeds {seeds}"
         wrote = write_learning_curve(doc, reports_dir, sid)
         typer.echo(f"learning curve over {len(fractions)} fractions, {seeds} seeds, final origin {doc['final_origin']}, "
@@ -534,8 +591,10 @@ def backtest(
         typer.echo("cautionary run: y is the relative lift in percent and s its standard error")
     if s_star == "realized":
         typer.echo("cautionary run: the forecaster is given each row's realized standard error")
-    scores = rolling_origin(df, make_rungs(df), quarterly_origins(df), source=source, verbose=verbose, s_star_mode=s_star,
-                            drop_triggers=tuple(drop_trigger or ()))
+    with Heartbeat(f"backtest of {source}", delay=progress_after) as beat:
+        scores = rolling_origin(df, make_rungs(df), quarterly_origins(df), source=source, verbose=verbose, s_star_mode=s_star,
+                                drop_triggers=tuple(drop_trigger or ()),
+                                progress=lambda line: typer.echo(f"progress: {line}", err=True) if beat.past_delay() and not verbose else None)
     t_scored = time.perf_counter() - t0
     if scores.empty:
         from mootcourt.harness import MIN_FIT_ROWS as _MIN
@@ -588,8 +647,9 @@ def backtest(
         attached = attach_backtest(models_dir, source, sid, json.loads(paths.json.read_text(encoding="utf-8")), paths.json.name)
         if attached:
             typer.echo(f"filled the backtest summary of model {', '.join(attached)}")
+        date_seed_at_champion_fit(models_dir, out_dir, source)
     typer.echo(f"scored {scores['row_id'].nunique()} rows over {scores['origin'].nunique()} origins in {t_scored:.1f} s "
-               f"(report writing {time.perf_counter() - t0 - t_scored:.1f} s)")
+               f"(report writing {time.perf_counter() - t0 - t_scored:.1f} s; the whole run {time.perf_counter() - t0:.1f} s)")
     typer.echo(f"wrote {paths.md}\nwrote {paths.json}\nwrote {paths.scores}")
 
 
@@ -599,18 +659,24 @@ def fit(
     ledger_path: Path | None = typer.Option(None, "--ledger", help="Default: the storage root."),
     models_dir: Path | None = typer.Option(None, "--models-dir", help="Default: the storage root."),
     reports_dir: Path | None = typer.Option(None, "--reports-dir", help="Default: the storage root."),
+    now: str | None = typer.Option(None, "--now", help="Fit clock (ISO-8601 with offset): only rows usable at this instant enter the fit; "
+                                                       "default now."),
 ) -> None:
-    """Fit P0, P1 and P2 at the current ledger snapshot, save the bundle and register it."""
+    """Fit P0, P1 and P2 on the rows usable at the fit clock, at the current ledger snapshot; save the bundle and register it."""
     paths = storage_paths()
     ledger_path = ledger_path if ledger_path is not None else paths.ledger_path
     models_dir = models_dir if models_dir is not None else paths.models
     reports_dir = reports_dir if reports_dir is not None else paths.reports
+    from mootcourt.ledger import visible_rows
     from mootcourt.registry import fit_command
 
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
-    model_id, sid, role, summary = fit_command(source, df, ledger_path.parent, models_dir, reports_dir)
-    typer.echo(f"fitted model {model_id} at snapshot {sid} in {time.perf_counter() - t0:.1f} s; it is the {role} for {source}")
+    clock = _parse_time(now, "--now") or dt.datetime.now(dt.timezone.utc)
+    n_usable = len(visible_rows(df, clock)) if "status" in getattr(df, "columns", ()) else None
+    model_id, sid, role, summary = fit_command(source, df, ledger_path.parent, models_dir, reports_dir, now=clock)
+    usable = f" on {n_usable} rows usable at {clock.isoformat()}" if n_usable is not None else ""
+    typer.echo(f"fitted model {model_id} at snapshot {sid}{usable} in {time.perf_counter() - t0:.1f} s; it is the {role} for {source}")
     from mootcourt.registry import Registry
 
     if summary is None and Registry(models_dir).pending_refresh(source) == model_id:
@@ -768,20 +834,25 @@ def promote(
     source: str = typer.Option(..., "--source"),
     models_dir: Path | None = typer.Option(None, "--models-dir", help="Default: the storage root."),
     reports_dir: Path | None = typer.Option(None, "--reports-dir", help="Default: the storage root."),
-    margin: float = typer.Option(PROMOTION_MARGIN, "--margin", help="Required Brier skill gain over the champion."),
+    margin: float = typer.Option(PROMOTION_MARGIN, "--margin", help="The lower bound of the paired Brier skill difference's 90 percent "
+                                                                    "interval must clear this; default 0 (the interval decides)."),
+    challenger_scores: Path | None = typer.Option(None, "--challenger-scores", help="Per-row score table of a backtest of the challenger's "
+                                                  "method (scores-<source>-<snapshot>[--variant].parquet); default: the table of the "
+                                                  "challenger's own summary."),
+    challenger_rung: str | None = typer.Option(None, "--challenger-rung", help="Rung of that table to pair; default the summary's rung (P2)."),
+    bootstrap: int = typer.Option(500, "--bootstrap", help="Resamples (whole tests) of the paired difference, as in the backtest."),
 ) -> None:
-    """Promote the challenger to champion only if it beats the champion by the margin at the gate's n."""
+    """Promote the challenger only if the paired comparison on common rows clears the margin at the gate's n (tests)."""
     paths = storage_paths()
     models_dir = models_dir if models_dir is not None else paths.models
     reports_dir = reports_dir if reports_dir is not None else paths.reports
-    from mootcourt import simulate
-    from mootcourt.registry import Registry
+    from mootcourt.registry import promote_command
 
     try:
-        gates = simulate.load_gates(reports_dir / "gates.json")
+        res = promote_command(models_dir, reports_dir, source, margin=margin, challenger_scores=challenger_scores,
+                              challenger_rung=challenger_rung, B=bootstrap)
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    res = Registry(models_dir).promote(source, gates, margin=margin)
     typer.echo(res.reason if res.promoted else f"not promoted: {res.reason}")
 
 
@@ -819,8 +890,8 @@ def earn_weight_cmd(
             if found is not None:
                 scored = pd.read_parquet(found)
                 scored = scored[scored["rung"] == "P2"] if (scored["rung"] == "P2").any() else scored
-        res = earn_weight(NullProvider(), scored, n_gate=n_gate, margin=PROMOTION_MARGIN)
-        typer.echo(f"{res.message}. The weight stays 0 until a provider earns it at the gate's n with the margin {PROMOTION_MARGIN}.")
+        res = earn_weight(NullProvider(), scored, n_gate=n_gate, margin=EARN_WEIGHT_MARGIN)
+        typer.echo(f"{res.message}. The weight stays 0 until a provider earns it at the gate's n with the margin {EARN_WEIGHT_MARGIN}.")
         return
     if source is None:
         raise typer.BadParameter("--source is required with --second-opinion")
@@ -838,11 +909,11 @@ def earn_weight_cmd(
         frame = earn_frame(pd.read_parquet(found), df, data, include_contaminated=include_contaminated)
     except SimulatorError as exc:
         raise typer.BadParameter(str(exc)) from None
-    res = earn_weight(RecordedProvider(data), frame, n_gate=n_gate, margin=PROMOTION_MARGIN)
+    res = earn_weight(RecordedProvider(data), frame, n_gate=n_gate, margin=EARN_WEIGHT_MARGIN)
     contaminated = include_contaminated and uses_contaminated(frame, data)
     evidence = {"message": res.message, "n_rows": res.n, "n_tests": res.n_tests, "n_chosen": res.n_chosen, "cut": res.cut,
                 "brier_p_sig": res.brier_base,
-                "brier_stacked": res.brier_stacked, "n_gate": None if n_gate == sys.maxsize else n_gate, "margin": PROMOTION_MARGIN,
+                "brier_stacked": res.brier_stacked, "n_gate": None if n_gate == sys.maxsize else n_gate, "margin": EARN_WEIGHT_MARGIN,
                 "scores_file": found.name, "snapshot_id": sid, "knowledge_cutoff": data.knowledge_cutoff, "cutoff_unknown": data.cutoff_unknown,
                 "included_contaminated": include_contaminated, "contaminated": contaminated, "records_file": second_opinion.name}
     reg = Registry(models_dir)
@@ -882,8 +953,18 @@ def join(
 
     res = join_command(source, ledger_path.parent, cards_dir, reports_dir, new_rows_path=new_rows,
                        now=_parse_time(now, "--now") or dt.datetime.now(dt.timezone.utc))
+    extra = ""
+    if res.n_post_hoc:
+        extra += f"; {res.n_post_hoc} post-hoc card{'s' if res.n_post_hoc != 1 else ''} recorded, not scored (issued after the test started)"
+    if res.n_reissues:
+        extra += f"; {res.n_reissues} reissue{'s' if res.n_reissues != 1 else ''} recorded, not scored (a row is scored once)"
     typer.echo(f"appended {res.n_new_rows} rows" + (f", snapshot {res.snapshot_id}" if res.snapshot_id else "")
-               + f"; attached {res.n_outcomes} outcomes {json.dumps(res.miss_counts, sort_keys=True)}; reliability in {res.reliability_path}")
+               + f"; attached {res.n_outcomes} outcomes {json.dumps(res.miss_counts, sort_keys=True)}{extra}; reliability in {res.reliability_path}")
+    if res.n_outside_window:
+        from mootcourt.config import TRAILING_WEEKS
+
+        typer.echo(f"{res.n_outside_window} of the {res.n_outcomes} attached outcomes are older than the trailing {TRAILING_WEEKS} weeks "
+                   "at this join, so they do not date a reliability entry; a cell with no outcome inside the window keeps its old date and ages")
 
 
 @app.command()
@@ -1009,12 +1090,15 @@ def init(
     cells: str | None = typer.Option(None, "--cells", help="Comma-separated cell names the program forecasts; default the sample ledger's metrics."),
     name: str | None = typer.Option(None, "--name", help="Project name; default the folder name."),
     force: bool = typer.Option(False, "--force", help="Overwrite an existing mootcourt.toml."),
+    progress_after: float = typer.Option(10.0, "--progress-after", help="Seconds after which the quick gate simulation reports progress."),
 ) -> None:
     """Create mootcourt.toml, the data root layout, a sample ledger and quick gates; print the three commands that follow."""
     from mootcourt.onboarding import init_project
 
     try:
-        res = init_project(directory, data_root, [c.strip() for c in cells.split(",") if c.strip()] if cells else None, name, force)
+        with Heartbeat("the quick gates simulation (synthetic data)", delay=progress_after) as beat:
+            res = init_project(directory, data_root, [c.strip() for c in cells.split(",") if c.strip()] if cells else None, name, force,
+                               progress=lambda line: typer.echo(line, err=True) if beat.past_delay() else None)
     except FileExistsError as exc:
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(code=1) from None
@@ -1183,8 +1267,13 @@ def simulate_gate_power(
     icc: float | None = typer.Option(None, "--icc", help="Binary within-test correlation of the event; default: the measured value of each base rate "
                                      "(Upworthy 0.13, ASOS 0.67)."),
     level: float = typer.Option(0.90, "--level", help="Interval whose lower end must clear zero (the harness reports 90 percent by test)."),
+    source: str | None = typer.Option(None, "--source", help="Measure rows per test, the base rate and the within-test correlation on this "
+                                                             "source's ledger instead of a public archive's values."),
+    ledger_path: Path | None = typer.Option(None, "--ledger", help="Default: the storage root."),
+    table: bool = typer.Option(True, "--table/--no-table", help="Also simulate the power table (the slow part; the sizes do not need it)."),
+    progress_after: float = typer.Option(10.0, "--progress-after", help="Seconds after which progress lines go to standard error."),
 ) -> None:
-    """Simulate the gates by test, at the base rates of the archives, and write reports/gates.json (synthetic data only)."""
+    """Simulate the gates by test at the base rates of the archives, or at your ledger's, and write reports/gates.json (synthetic data only)."""
     paths = storage_paths()
     out = out if out is not None else paths.gates_path
     from mootcourt import simulate
@@ -1192,11 +1281,59 @@ def simulate_gate_power(
 
     power = target if target is not None else load_settings()["gate"]["target_power"]
     rates = list(base_rate) if base_rate else list(simulate.RELEASE_BASE_RATES)
-    doc = simulate.write_gates(out, base=rates[0], base_rates=rates, target=power, reps=reps, B=bootstrap, seed=seed,
-                               rows_per_test={b: v[0] for b, v in simulate.SOURCE_DEPENDENCE.items()} if rows_per_test is None else rows_per_test,
-                               icc={b: v[1] for b, v in simulate.SOURCE_DEPENDENCE.items()} if icc is None else icc,
-                               level=level, max_seconds=900.0)
+    rpt = {b: v[0] for b, v in simulate.SOURCE_DEPENDENCE.items()} if rows_per_test is None else rows_per_test
+    corr = {b: v[1] for b, v in simulate.SOURCE_DEPENDENCE.items()} if icc is None else icc
+    where = "given on the command line" if (rows_per_test is not None and icc is not None) else "the public archive nearest this base rate"
+    if source is not None:
+        dep = simulate.ledger_dependence(_load_source_ledger(ledger_path if ledger_path is not None else paths.ledger_path, source))
+        rpt = dep["rows_per_test"] if rows_per_test is None else rows_per_test
+        corr = dep["icc"] if icc is None else icc
+        if not base_rate:
+            rates = [dep["base_rate"]]
+        where = (f"measured on the {source} ledger ({dep['n_rows']} admitted rows in {dep['n_tests']} tests; event rate {dep['base_rate']:.3f})"
+                 + ("" if rows_per_test is None and icc is None else "; the value given on the command line wins"))
+    for b in rates:
+        typer.echo(f"assumptions at base rate {b:.2f}: rows per test {simulate._at(rpt, b):.1f}, within-test correlation {simulate._at(corr, b):.2f} "
+                   f"({where}" + ("" if source is not None or (rows_per_test is not None and icc is not None)
+                                  else "; pass --source NAME to measure them on your own ledger") + ")")
+    with Heartbeat("gate power simulation (synthetic data)", delay=progress_after) as beat:
+        doc = simulate.write_gates(out, base=rates[0], base_rates=rates, target=power, reps=reps, B=bootstrap, seed=seed, rows_per_test=rpt,
+                                   icc=corr, level=level, max_seconds=900.0, with_table=table, dependence_source=where,
+                                   progress=lambda line: typer.echo(line, err=True) if beat.past_delay() else None)
     _print_gates(doc, simulate, reps, bootstrap, out)
+
+
+@app.command()
+def reliability(
+    source: str = typer.Option(..., "--source"),
+    reports_dir: Path | None = typer.Option(None, "--reports-dir", help="Default: the storage root."),
+    as_json: bool = typer.Option(False, "--json", help="Print the report as JSON instead of the table."),
+) -> None:
+    """Print the weekly reliability report of a source: one line per cell, or the JSON (call 208)."""
+    paths = storage_paths()
+    reports_dir = reports_dir if reports_dir is not None else paths.reports
+    from mootcourt.card import load_reliability_report
+
+    report = load_reliability_report(reports_dir, source)
+    if report is None:
+        raise typer.BadParameter(f"no reliability report for source {source} under {reports_dir}; `moot backtest` seeds one and `moot join` "
+                                 "keeps it current")
+    if as_json:
+        typer.echo(json.dumps(report, indent=1, sort_keys=True))
+        return
+
+    def num(v, nd=3):
+        return "n/a" if v is None else f"{v:.{nd}f}"
+
+    typer.echo(f"report as of {report['as_of']}")
+    typer.echo(f"{'cell':22} {'as of':12} {'rows':>5} {'tests':>5} {'brier skill':>12} {'interval':>18} {'log score':>10} {'P0 log score':>13} "
+               f"{'below':>6} drifted")
+    for cell, e in sorted((report.get("cells") or {}).items()):
+        interval = f"{num(e.get('brier_skill_lo'))} to {num(e.get('brier_skill_hi'))}" if e.get("brier_skill_lo") is not None else "n/a"
+        tests = e.get("n_tests") if e.get("n_tests") is not None else "n/a"
+        typer.echo(f"{cell:22} {str(e.get('as_of', ''))[:10]:12} {e.get('n', 'n/a'):>5} {tests:>5} "
+                   f"{num(e.get('brier_skill')):>12} {interval:>18} {num(e.get('rolling_logscore')):>10} {num(e.get('p0_rolling_logscore')):>13} "
+                   f"{e.get('consecutive_below', 0):>6} {e.get('drifted', False)}")
 
 
 if __name__ == "__main__":  # pragma: no cover

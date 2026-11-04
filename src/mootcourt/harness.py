@@ -799,8 +799,11 @@ def rolling_origin(
     verbose: bool = False,
     s_star_mode: str = "prelaunch",
     drop_triggers=(),
+    progress: Callable[[str], None] | None = None,
 ) -> pd.DataFrame:
     """Score every admitted row once per rung, at the origin whose quarter it starts in.
+
+    ``progress`` (a callable taking one line) is told of each origin as it is fitted, whatever ``verbose`` says (call 207).
 
     ``predictors`` maps a rung name to ``factory(rows, origin)`` returning a fitted model with
     ``predict(x, s_star, cell, origin)`` (and a ``space`` attribute when it needs features), or
@@ -841,8 +844,11 @@ def rolling_origin(
         spying = _audit_fits(t) if audit_fit_rows else contextlib.nullcontext()
         with spying:
             models = {name: factory(visible, t) for name, factory in predictors.items()}
+        line = f"origin {t.date()}: fitted {list(models)} on {len(visible)} rows, scoring {len(scored)}"
         if verbose:
-            print(f"origin {t.date()}: fitted {list(models)} on {len(visible)} rows, scoring {len(scored)}", file=sys.stderr)
+            print(line, file=sys.stderr)
+        if progress is not None:
+            progress(line)
         for name, m in models.items():
             if hasattr(m, "selection_summary"):
                 selections += [{"origin": t.isoformat(), "rung": name, **rec} for rec in m.selection_summary()]

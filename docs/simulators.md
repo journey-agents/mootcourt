@@ -9,7 +9,7 @@ decides.
 ## What goes in and what comes out
 
 The request holds aggregate, non-personal inputs only: the source, the cell, the origin, the reference and variant
-headlines, whether the image or the headline changed, the planned exposures per arm, the standard error known before
+headlines, whether the image or the headline changed, the planned units per arm, the standard error known before
 launch, the action threshold and a budget (simulated respondents and seconds). There is no user-level field, and an
 unknown key is refused.
 

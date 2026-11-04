@@ -45,3 +45,6 @@ paper/*.log
 paper/*.bbl
 paper/*.blg
 paper/*.out
+# the arXiv package: the notes under paper/dist are committed, the tarballs are not (make arxiv rebuilds them)
+!paper/dist/
+paper/dist/*.tar.gz

@@ -25,7 +25,7 @@ SETUP := uv sync --extra dev --extra docs
 endif
 MOOT := $(PY) -m mootcourt.cli
 
-.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check paper-figures paper
+.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check quick-check selfcheck paper-figures tables paper arxiv arxiv-check
 
 setup:
 	$(SETUP)
@@ -72,7 +72,7 @@ serve:
 	$(MOOT) serve
 
 test:
-	$(PY) -m pytest -q
+	$(PY) -m pytest
 
 lint:
 	$(PY) -m ruff check .
@@ -104,14 +104,41 @@ docker-check:
 release-check:
 	$(PY) scripts/release_check.py
 
+# Tier B: regenerates the sample ledger's backtest in a temporary project and diffs it against tests/fixtures/quick-check/backtest-sample.json, apart
+# from model ids, creation times, seconds fields and the date of a snapshot id. Exit 1 when a number moved. About two minutes.
+quick-check:
+	$(PY) scripts/quick_check.py
+
+# The gate before a review round: pending markers, number audit, source resolution, writing rules, forbidden terms, the paper build, the tables,
+# the generated docs, the claims register and the release checks, all run; exit 1 if any fails. Writes .claude/fleet/selfcheck-<date>.md.
+selfcheck:
+	$(PY) scripts/review_selfcheck.py
+
 # Regenerates the paper's figures (vector PDFs and figures.json) from a run folder; no data root or network needed.
-# Usage: make paper-figures [RUN=paper/data/run5-period-rule] [FIGURES=paper/figures]
-RUN ?= paper/data/run5-period-rule
+# Usage: make paper-figures [RUN=paper/data/run6-forward-chaining] [FIGURES=paper/figures]
+RUN ?= paper/data/run6-forward-chaining
 FIGURES ?= paper/figures
 paper-figures:
 	$(PY) scripts/paper_figures.py --run $(RUN) --out $(FIGURES)
 
-# The whole paper PDF in one command: figures from the run folder, then tectonic (as the writer builds it; a first run on a clean
-# machine lets tectonic fetch its LaTeX bundle). Writes paper/main.pdf, which git ignores. RUN= selects the run folder for both targets.
-paper: paper-figures
+# Rebuilds every LaTeX table of the paper from the run folder (no data root needed); each table's first line names its source relative
+# to that folder. Usage: make tables [RUN=paper/data/run6-forward-chaining]
+tables:
+	$(PY) paper/build_tables.py --reports $(RUN) --out paper/tables
+
+# The whole paper PDF in one command: figures and tables from the run folder, then tectonic (as the writer builds it; a first run on a
+# clean machine lets tectonic fetch its LaTeX bundle). Writes paper/main.pdf, which git ignores. RUN= selects the run folder for all
+# three targets; nothing here reads the data root.
+paper: paper-figures tables
 	cd paper && tectonic -X compile main.tex
+
+# The arXiv source package: paper/dist/arxiv-<date>.tar.gz holds main.tex, the sections, the tables, the figure PDFs and the precompiled
+# main.bbl (with references.bib beside it), nothing else; the paper is built first with tectonic keeping its intermediates so the .bbl and the
+# figures are current. arxiv-check unpacks the tarball into a temporary folder and compiles it as arXiv does (pdflatex where installed,
+# otherwise tectonic in TeX-only passes), requiring the page count of the ordinary build and no undefined reference. See paper/dist/README-arxiv.md.
+arxiv: paper-figures tables
+	cd paper && tectonic -X compile --keep-intermediates --keep-logs main.tex
+	$(PY) scripts/arxiv_package.py --paper paper --out paper/dist
+
+arxiv-check: arxiv
+	$(PY) scripts/arxiv_package.py --paper paper --out paper/dist --check

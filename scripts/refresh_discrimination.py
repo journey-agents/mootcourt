@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recompute the discrimination and planned-event columns of existing backtest reports from their stored score tables.
+"""Recompute the discrimination, planned-event and decision-value adjusted-bound columns of existing backtest reports from their stored score tables.
 
 A report's ``tables.aggregate`` rows carry ``auc_*`` and ``resolution_*`` keys. When the definition of those columns changes (review N,
 REV-N-001: the resolution is the Murphy term over equal-mass forecast bins, not the spread of the forecast) the reports can be brought up to
@@ -41,6 +41,7 @@ KEYS = (
     "resolution_direction",
     "resolution_direction_lo",
     "resolution_direction_hi",
+    *(f"{q}_{k}_within{s}" for q in ("auc", "resolution") for k in ("event", "direction") for s in ("", "_lo", "_hi")),
     "event_rate_planned",
     "p_sig_mean",
     "brier_planned",
@@ -81,6 +82,74 @@ def _refresh_rows(json_path: Path, rows: list, scores: pd.DataFrame, B: int, see
     return changed
 
 
+DECISION_KEYS = (
+    "captured_fraction_adjusted_lo",
+    "captured_fraction_adjusted_hi",
+    "regret_adjusted_lo",
+    "regret_adjusted_hi",
+    "diff_random_adjusted_lo",
+    "diff_random_adjusted_hi",
+    "family_size",
+)
+DECISION_CHECKED = (
+    "K",
+    "n_tests",
+    "total",
+    "captured",
+    "captured_fraction",
+    "captured_fraction_lo",
+    "captured_fraction_hi",
+    "regret",
+    "regret_lo",
+    "regret_hi",
+    "random_fraction",
+    "diff_random",
+    "diff_random_lo",
+    "diff_random_hi",
+)
+
+
+def _origin_key(o) -> str:
+    return "ALL" if str(o) == "ALL" else pd.Timestamp(o).tz_convert("UTC").isoformat()
+
+
+def _refresh_decision(json_path: Path, doc: dict, scores: pd.DataFrame) -> int:
+    """Recompute ``tables.decision_value`` from the score table with the report's seed and settings and replace the table with it.
+
+    Every unadjusted value of every stored row must reproduce (an abort otherwise); the rows the stored table lacks (the arm-count policies
+    and the matched differences of method call 201) and the Bonferroni-adjusted bounds (call 200) come from the recomputation. Returns the number
+    of values that differ from the stored table (a new row counts all its values)."""
+    from mootcourt.decision_value import decision_value
+    from mootcourt.report import DECISION_BOOTSTRAP
+
+    rows = doc["tables"].get("decision_value")
+    if not rows:
+        return 0
+    h = doc["header"]
+    pm = h.get("primary_metric")
+    part = scores[scores["metric"].astype(str) == str(pm)] if pm is not None and "metric" in scores.columns else scores
+    fresh = decision_value(part, seed=int(h["seed"]), B=min(int(h["bootstrap_resamples"]), DECISION_BOOTSTRAP))
+    new_rows = clean(fresh)
+    stored = {(_origin_key(r["origin"]), r["policy"], r["rung"], float(r["budget"])): r for r in rows}
+    changed = 0
+    for r in new_rows:
+        old = stored.get((_origin_key(r["origin"]), r["policy"], r["rung"], float(r["budget"])))
+        if old is None:
+            changed += len(r)
+            continue
+        for k in DECISION_CHECKED:
+            a, b = old.get(k), r.get(k)
+            if (a is None) != (b is None) or (a is not None and abs(float(a) - float(b)) > 1e-9):
+                raise SystemExit(
+                    f"{json_path.name}: decision value {k} of {r['origin']}/{r['policy']}/{r['rung']} is {a} in the report and {b} from the scores"
+                )
+        changed += sum(1 for k, v in r.items() if k not in old or old[k] != v)
+    if len(new_rows) < len(rows):
+        raise SystemExit(f"{json_path.name}: the recomputed decision table has fewer rows than the report")
+    doc["tables"]["decision_value"] = new_rows
+    return changed
+
+
 def refresh(json_path: Path, check: bool = False) -> tuple[int, int]:
     """Returns ``(values changed, 1 if the report was skipped else 0)``."""
     scores_path = json_path.with_name(json_path.name.replace("backtest-", "scores-", 1)).with_suffix(".parquet")
@@ -99,6 +168,7 @@ def refresh(json_path: Path, check: bool = False) -> tuple[int, int]:
     ]
     for block_rows, block_scores, block_B in blocks:
         changed += _refresh_rows(json_path, block_rows, block_scores, block_B, seed)
+    changed += _refresh_decision(json_path, doc, scores)
     if changed and not check:
         json_path.write_text(json.dumps(clean(doc), indent=1, sort_keys=False, allow_nan=False) + "\n", encoding="utf-8")
         json_path.with_suffix(".md").write_text(render_markdown(doc), encoding="utf-8")

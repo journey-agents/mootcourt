@@ -30,7 +30,7 @@ The service binds to the loopback address `127.0.0.1` on port 8000 by default. T
 moot serve --port 8731 > serve.log 2>&1 &
 SERVER=$!
 for i in $(seq 1 60); do curl -sf http://127.0.0.1:8731/health > /dev/null && break; sleep 0.5; done
-curl -s http://127.0.0.1:8731/health | python -m json.tool
+curl -s http://127.0.0.1:8731/health | python3 -m json.tool
 ```
 
 ```text output
@@ -54,7 +54,7 @@ The request also carries `row_id`, the ledger row that the weekly join will atta
 ```bash run
 curl -s -X POST http://127.0.0.1:8731/card -H 'content-type: application/json' \
   -d '{"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00", "row_id": "sample:exp-101:treatment::checkout_conversion"}' \
-  | python -c "
+  | python3 -c "
 import json, sys
 card = json.load(sys.stdin)
 print('cell      ', card['cell'])
@@ -72,7 +72,7 @@ row id     sample:exp-101:treatment::checkout_conversion
 origin     2025-12-30T00:00:00+00:00
 status     abstain ['reliability']
 detail     reliability report is older than 14 days
-rung       P0 p_sig 0.275
+rung       P0 p_sig 0.042
 ```
 
 This card **abstains**, and the reason is on the card: `reliability report is older than 14 days`. The `origin` you send says which rows the forecaster may see. The check on the age of the reliability report uses the real clock of the machine the service runs on, and the sample ledger's reliability report is dated 2025. A real ledger that you join weekly ([tutorial 4](04-weekly-loop.md)) has a fresh report, and its cards carry the full prediction. The abstained card still carries the base-rate forecast (`rung P0`) so that a tool has something to show, with the reasons beside it.
@@ -86,7 +86,7 @@ What to look at in a card from the service:
 The reliability report of a source:
 
 ```bash run
-curl -s http://127.0.0.1:8731/reliability/sample | python -c "
+curl -s http://127.0.0.1:8731/reliability/sample | python3 -c "
 import json, sys
 r = json.load(sys.stdin)
 print('as of', r['as_of'])
@@ -171,15 +171,15 @@ async def main():
 
 asyncio.run(main())
 PY
-python mcp_demo.py
+python3 mcp_demo.py
 ```
 
 ```text output
 tools: ['get_card', 'list_precedents', 'reliability_report']
 card: abstain ['reliability'] rung P0 row id sample:exp-101:treatment::checkout_conversion
-precedent: exp-003 weight 0.009 effect 0.015169 se 0.008696
-precedent: exp-105 weight 0.009 effect -0.013988 se 0.008751
-precedent: exp-115 weight 0.009 effect -0.040743 se 0.008771
+precedent: exp-003 weight 0.009 effect -0.015361 se 0.008696
+precedent: exp-105 weight 0.009 effect -0.044518 se 0.008751
+precedent: exp-115 weight 0.009 effect -0.071273 se 0.008771
 ```
 
 The `origin` is optional (default now). An origin earlier than the end of the history the model was fitted on is refused, because its parameters were fitted on rows that the origin should not see. A refused request shows up in the client as a tool error whose message is one line naming the cause.

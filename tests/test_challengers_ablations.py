@@ -232,7 +232,7 @@ def _fit_p2(imp, led, **kw):
 def test_forward_selection_distrusts_precedents_under_drift_and_recency_finds_a_half_life(imp):
     syn = imp("mootcourt.sources.synthetic")
     drifting, stable = _drift(syn, json, 5, True), _drift(syn, json, 5, False)
-    loto, fwd = _fit_p2(imp, drifting), _fit_p2(imp, drifting, selection="forward")
+    loto, fwd = _fit_p2(imp, drifting, selection="loto"), _fit_p2(imp, drifting, selection="forward")
     rec = _fit_p2(imp, drifting, selection="forward", recency="select")
     assert fwd.lambda_by_cell["headline_only"] < loto.lambda_by_cell["headline_only"]          # time order exposes the flip
     assert math.isfinite(rec.half_life_by_cell["headline_only"]) and rec.half_life_by_cell["headline_only"] <= 180
@@ -298,8 +298,8 @@ def root(imp, tmp_path, make_synth):
 def test_each_ablation_flag_writes_its_own_named_report(imp, root):
     runs = {"features-text": ["--features", "text"], "features-structured": ["--features", "structured"],
             "bandwidth-mult-0.25": ["--bandwidth-mult", "0.25"], "lambda-0.0": ["--lambda", "0"], "kappa-5.0": ["--kappa", "5"],
-            "prior-normal": ["--prior", "normal"], "p2-selection-forward": ["--p2-selection", "forward"], "recency-select": ["--recency", "select"],
-            "p2-selection-forward+recency-90": ["--p2-selection", "forward", "--recency", "90"]}
+            "prior-normal": ["--prior", "normal"], "p2-selection-loto": ["--p2-selection", "loto"], "recency-select": ["--recency", "select"],
+            "p2-selection-loto+recency-90": ["--p2-selection", "loto", "--recency", "90"]}
     for name, flags in runs.items():
         res = _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", *flags], root)
         assert res.exit_code == 0, (name, res.output)
@@ -310,7 +310,7 @@ def test_each_ablation_flag_writes_its_own_named_report(imp, root):
     lam0 = json.loads(next((root / "reports" / "ablations").glob("*--lambda-0.0.json")).read_text())
     agg = {r["rung"]: r for r in lam0["tables"]["aggregate"] if r["cell"] == "ALL"}
     assert agg["P2"]["logscore"] == pytest.approx(agg["P1"]["logscore"], abs=1e-9)              # lambda 0 is P1
-    main = _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--p2-selection", "loto", "--kappa", "20"], root)
+    main = _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--p2-selection", "forward", "--kappa", "20"], root)
     assert main.exit_code == 0 and list((root / "reports").glob("backtest-synthetic-*.json")), "defaults give the main report"
     for bad in (["--features", "images"], ["--prior", "cauchy"], ["--recency", "never"], ["--challenger", "xgboost"], ["--p2-selection", "x"]):
         assert _cli(imp, ["backtest", "--source", "synthetic", *bad], root).exit_code != 0
@@ -385,11 +385,11 @@ def test_readme_ablation_and_learning_curve_blocks_regenerate_from_report_json(i
     reports = root / "reports"
     assert mod.ablation_lines(reports) == [] and mod.learning_curve_lines(reports) == [] and mod.challenger_lines(reports) == []
     assert _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20"], root).exit_code == 0
-    assert _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--p2-selection", "forward"], root).exit_code == 0
+    assert _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--p2-selection", "loto"], root).exit_code == 0
     assert _cli(imp, ["backtest", "--source", "synthetic", "--bootstrap", "20", "--features", "text"], root).exit_code == 0
     assert _cli(imp, ["backtest", "--source", "synthetic", "--learning-curve", "0.5,1", "--seeds", "2", "--bootstrap", "20"], root).exit_code == 0
     lines = "\n".join(mod.ablation_lines(reports, "synthetic"))
-    for name in ("p2-selection-forward", "features-text"):
+    for name in ("p2-selection-loto", "features-text"):
         assert name in lines
     main = json.loads(next(p for p in reports.glob("backtest-synthetic-*.json")).read_text())
     p2 = next(r for r in main["tables"]["aggregate"] if r["cell"] == "ALL" and r["rung"] == "P2")

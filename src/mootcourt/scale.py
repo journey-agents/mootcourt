@@ -217,3 +217,13 @@ def prelaunch_admission_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
 def planned_exposure(rows: pd.DataFrame) -> np.ndarray:
     """Planned exposures per arm of ledger rows: the mean of the two arms' impressions."""
     return 0.5 * (rows["n_ref"].to_numpy(float) + rows["n_var"].to_numpy(float))
+
+
+def one_contrast_per_test_ledger(ledger):
+    """A view of the ledger with one admitted contrast per test: the admitted row with the lowest ``row_id`` of each test is kept, the other
+    admitted rows are dropped (not relabelled), so every test has one headline against its reference and the number of arms plays no part.
+    Rows that are not admitted are kept as they are. The stored ledger is not changed."""
+    adm = ledger["status"] == "admitted"
+    first = ledger.loc[adm].sort_values("row_id", kind="stable").drop_duplicates("test_id", keep="first").index
+    return ledger.loc[~adm | ledger.index.isin(first)].reset_index(drop=True)
+

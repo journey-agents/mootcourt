@@ -198,3 +198,71 @@ def test_quickstart_runs_end_to_end_in_a_subprocess_without_network(tmp_path):
     assert "No usable prediction" not in card, "the first card on the sample ledger must be an issued card"
     assert "P(significant and positive)" in card
     assert wall < 600, f"the quickstart took {wall:.0f} s"
+
+
+# T6-plan row 4 (R2 minor 8, call 252): the doctor counts the cards no join will score
+def _doctor_world(tmp_path, monkeypatch):
+    """The sample ledger of ``moot init`` with one row made unadmitted, a data root, and the doctor's config pointing at it."""
+    from mootcourt import onboarding
+    from mootcourt.importers.ingest import import_file
+    from mootcourt.importers.sample import sample_exchange
+    from mootcourt.ledger import write_ledger
+    from mootcourt.storage import storage_paths
+
+    root = tmp_path / "mootcourt-data"
+    layout = storage_paths(root=root)
+    for folder in layout.named().values():
+        folder.mkdir(parents=True, exist_ok=True)
+    csv = tmp_path / "sample.csv"
+    sample_exchange().to_csv(csv, index=False)
+    ledger, _ = import_file("generic", csv, "sample")
+    ledger = ledger.sort_values("usable_after").reset_index(drop=True)
+    ids = ledger["row_id"].tolist()
+    unadmitted = ids[5]
+    ledger.loc[ledger["row_id"] == unadmitted, "status"] = "low_exposure"
+    write_ledger(ledger, layout.ledger_path)
+    (tmp_path / "mootcourt.toml").write_text(onboarding.config_text(data_root=Path(layout.root), cells=["checkout_conversion"], name="t6"))
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("MOOTCOURT_DATA_ROOT", raising=False)
+    now = pd.Timestamp(ledger["usable_after"].iloc[20]).to_pydatetime()
+    past = [r for r in ids[:20] if r != unadmitted]
+    future = ids[40]
+    return layout, ledger, now, past, future, unadmitted
+
+
+def _card_file(layout, card_id, row_id, source="sample"):
+    (layout.cards).mkdir(parents=True, exist_ok=True)
+    (layout.cards / f"{card_id}.json").write_text(json.dumps({"card_id": card_id, "source": source, "request": {"row_id": row_id}}))
+
+
+def test_the_doctor_counts_cards_with_no_row_id_an_unknown_row_a_passed_horizon_and_an_unadmitted_test(tmp_path, monkeypatch):
+    from mootcourt import onboarding
+
+    layout, ledger, now, past, future, unadmitted = _doctor_world(tmp_path, monkeypatch)
+    _card_file(layout, "c-norow", None)
+    _card_file(layout, "c-unknown", "sample:exp-999:treatment::checkout_conversion")
+    _card_file(layout, "c-due1", past[0])
+    _card_file(layout, "c-due2", past[1])
+    _card_file(layout, "c-done", past[2])
+    (layout.cards / "outcomes").mkdir()
+    (layout.cards / "outcomes" / "c-done.json").write_text(json.dumps({"card_id": "c-done", "source": "sample", "scored": True}))
+    _card_file(layout, "c-open", future)
+    _card_file(layout, "c-unadmitted", unadmitted)
+    _card_file(layout, "c-other", None, source="elsewhere")
+    doc = onboarding.run_doctor(now=now, write=False)
+    check = next(c for c in doc["checks"] if c["name"] == "cards sample")
+    assert check["status"] == "warn"
+    for part in ("cards with no row id: 1", "cards with a row id absent from the ledger: 1", "cards past their horizon with no outcome: 2",
+                 "cards on an unadmitted test: 1"):
+        assert part in check["detail"], check["detail"]
+    other = next(c for c in doc["checks"] if c["name"] == "cards elsewhere")
+    assert "cards with no row id: 1" in other["detail"] and "absent from the ledger" not in other["detail"]
+
+
+def test_the_doctor_adds_no_card_counts_when_every_card_can_be_scored(tmp_path, monkeypatch):
+    from mootcourt import onboarding
+
+    layout, ledger, now, past, future, unadmitted = _doctor_world(tmp_path, monkeypatch)
+    _card_file(layout, "c-open", future)
+    doc = onboarding.run_doctor(now=now, write=False)
+    assert not [c for c in doc["checks"] if c["name"] == "cards sample"], "a card whose horizon has not passed is not a finding"

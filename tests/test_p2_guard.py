@@ -70,7 +70,7 @@ def test_the_guard_is_what_removes_the_false_admissions():
 
 def test_a_planted_strong_text_signal_selects_lambda_above_zero(imp):
     for seed in range(3):
-        for r in _fit(imp, seed, STRONG, n_tests=500).selection_summary():
+        for r in _fit(imp, seed, STRONG, n_tests=500, selection="loto").selection_summary():
             assert r["lambda"] > 0.0 and r["guard_held"] is False
             assert r["gain"] - r["guard"] * r["gain_se"] > 0
 

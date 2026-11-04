@@ -27,6 +27,21 @@ a sealed ``withheld`` block of the frozen file: the join scores it for reliabili
 renderer, no response of the service and no tool shows it (``public_json`` drops it). The skill line carries the trailing Brier skill
 with its by-test bootstrap interval, the number of tests, the gate verdict at that n and the latest gated backtest figure. The
 precedent robustness numbers read "not applicable" where the weight on precedents is zero and are omitted on an abstained card.
+
+Round 01 (reviewer R2, docs/method.md calls 221 and 225). The origin of a card is never after its issue time: ``build_card`` refuses an
+origin after ``now`` on every interface, so a frozen card cannot stand on rows that became usable after it was issued. The backtest line
+of the skill section prints the card's own cell figure (with its interval and the gate verdict of that cell) when the cell is decidable in
+the bundle's backtest, and the pooled figure, said to be pooled and why, otherwise.
+
+Round 01 (reviewer R6, calls 227 and 228). The frozen request stores ``headline_changed`` false when the request has no headline, so a
+ledger without text never records a changed headline, and the rendered Request line prints the headline and the image flag only when the
+request carries a headline or a reference headline; the exposure is called what the exchange format calls it, planned units per arm
+(``impressions`` keeps its field name). The gate verdict names the nearest simulated base rate of the gates file and the cell's own rate.
+
+Round 01 (reviewer R2, question 2; docs/method.md call 238). The frozen request records ``reference_defaulted``: true when the bundle's
+feature space is pairwise (it reads a reference headline) and the request gave none, so the pair features were the fit-set mean reference
+vector (call 187) and the request sat at the center of the pairwise space rather than at a real pair; the Markdown card then prints a line
+under the Request line saying so. A space without references, and a request that gave a reference, record false and print nothing.
 """
 from __future__ import annotations
 
@@ -129,6 +144,7 @@ class RequestEcho:
     row_id: str | None
     reference_headline: str = ""
     impressions_variant: int | None = None
+    reference_defaulted: bool = False   # a pairwise space and no reference headline given: the fit-set mean reference stood in (call 238)
 
 
 @dataclass(frozen=True)
@@ -177,7 +193,8 @@ class Skill:
 
     ``brier_skill_lo`` and ``brier_skill_hi`` are the 90 percent by-test bootstrap interval of the window, ``n_tests`` the tests in it,
     ``verdict`` says whether that many tests can decide a skill at the gate, and ``backtest`` is the latest gated figure from the
-    bundle's backtest (skill, interval, tests, rung) when the bundle has one.
+    bundle's backtest (skill, interval, tests, rung) when the bundle has one: the card's own cell (``scope`` ``cell``, with the cell's
+    ``decidable`` verdict) when that cell is decidable in the backtest, else the pooled figure (``scope`` ``pooled``) with the ``reason``.
     """
 
     available: bool
@@ -341,16 +358,23 @@ def build_card(
     cfg = config or AbstainConfig()
     now = now or dt.datetime.now(dt.timezone.utc)
     origin = request.origin or now
-    cell = request.cell or derive_cell(request.source, request.image_changed, request.headline_changed)
+    if origin.tzinfo is None or now.tzinfo is None:
+        raise ValueError("the origin and the issue time must be timezone-aware")
+    if origin > now:          # a card never stands on rows that become usable after it is issued (round 01, R2, call 221)
+        raise ValueError(f"the origin {_iso(origin)} is after the issue time {_iso(now)}: a card cannot stand on rows that become usable "
+                         "after it is issued; give an origin at or before the issue time")
+    headline_changed = bool(request.headline_changed) if request.headline else False     # no headline: nothing changed (call 228)
+    cell = request.cell or derive_cell(request.source, request.image_changed, headline_changed)
     known = bundle.cells()
     if request.cell is None and known and cell not in known and not set(known) & {"headline_only", "image_only", "both"}:
         # a ledger keyed by metric (or any other cell) has no kind-of-change cells: forecasting a cell that does not exist would be silent nonsense
         raise ValueError(f"this ledger's cells are {', '.join(known)}; the card needs --cell (or the cell field) to name one of them")
     n_var = request.impressions_variant if request.impressions_variant is not None else request.impressions
     s_star = bundle.s_star(cell, request.impressions, n_var)
-    echo = RequestEcho(request.headline, bool(request.image_changed), bool(request.headline_changed),
+    defaulted = bool(getattr(bundle.space, "pairwise", False)) and not request.reference_headline
+    echo = RequestEcho(request.headline, bool(request.image_changed), headline_changed,
                        int(request.impressions), s_star, request.row_id, request.reference_headline or "",
-                       None if request.impressions_variant is None else int(request.impressions_variant))
+                       None if request.impressions_variant is None else int(request.impressions_variant), reference_defaulted=defaulted)
     bundle.check_origin(origin)
     n_cell = bundle.n_visible(cell, origin)
     if n_cell == 0:
@@ -452,7 +476,10 @@ def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: flo
     unit = (gates.get("interval") or {}).get("by")
     per_row = unit != "test" and n_rows is not None
     st = hs.gate_status(int(n_rows if per_row else n_tests), sel)      # a per-row gates file counts rows: compare rows with it (REV-N-007)
-    where = f" at base rate {sel['base_rate']:.2f}" if sel.get("base_rate") is not None else ""
+    where = ""
+    if sel.get("base_rate") is not None:        # the gates file's simulated rate nearest the cell's own, named as such (call 227)
+        own = f" (this cell's own rate is {base_rate:.3f})" if base_rate is not None and math.isfinite(float(base_rate)) else ""
+        where = f" at the nearest simulated base rate, {sel['base_rate']:.2f}{own}"
     side = ""
     if lo is not None and hi is not None:
         side = (
@@ -467,12 +494,36 @@ def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: flo
     return f"{counted}: {st['label']}{need}{side}"
 
 
+_BACKTEST_KEYS = ("rung", "brier_skill", "brier_skill_lo", "brier_skill_hi", "n_tests", "n", "snapshot_id")
+
+
+def backtest_view(summary: dict | None, cell: str) -> dict | None:
+    """The backtest figure a card of ``cell`` prints: the cell's own row when the backtest finds it decidable, else the pooled row and why.
+
+    ``summary`` is the bundle's backtest summary (``registry.backtest_summary``): the pooled ``ALL`` figure of the card rung and, when it
+    was written with them, the per-cell rows under ``cells`` with their gate verdict (``decidable_by_tests``). None without a summary.
+    """
+    if not summary or summary.get("brier_skill") is None:
+        return None
+    pooled = {k: summary.get(k) for k in _BACKTEST_KEYS}
+    cells = summary.get("cells")
+    own = (cells or {}).get(cell)
+    if own is None or own.get("brier_skill") is None:
+        reason = ("the backtest summary has no row for this cell (it was written before per-cell figures were stored)" if cells is None
+                  else "the backtest has no row for this cell")
+        return {**pooled, "scope": "pooled", "cell": cell, "decidable": None, "reason": reason}
+    label = own.get("decidable_by_tests")
+    if label and str(label).startswith("decidable"):
+        return {"rung": summary.get("rung"), "brier_skill": own.get("brier_skill"), "brier_skill_lo": own.get("brier_skill_lo"),
+                "brier_skill_hi": own.get("brier_skill_hi"), "n_tests": own.get("n_tests"), "n": own.get("n"),
+                "snapshot_id": summary.get("snapshot_id"), "scope": "cell", "cell": cell, "decidable": str(label), "reason": None}
+    return {**pooled, "scope": "pooled", "cell": cell, "decidable": label,
+            "reason": f"this cell's own figure is {label}" if label else "this cell's own figure has no gate verdict"}
+
+
 def _skill(reliability: dict | None, cell: str, bundle=None, gates: dict | None = None, origin=None) -> Skill:
     entry = (reliability or {}).get("cells", {}).get(cell)
-    backtest = None
-    summary = getattr(bundle, "backtest_summary", None) if bundle is not None else None
-    if summary and summary.get("brier_skill") is not None:
-        backtest = {k: summary.get(k) for k in ("rung", "brier_skill", "brier_skill_lo", "brier_skill_hi", "n_tests", "n", "snapshot_id")}
+    backtest = backtest_view(getattr(bundle, "backtest_summary", None) if bundle is not None else None, cell)
     if not entry:
         return Skill(False, None, None, None, backtest=backtest)
     lo, hi, n_tests = entry.get("brier_skill_lo"), entry.get("brier_skill_hi"), entry.get("n_tests")
@@ -513,7 +564,10 @@ def _unit(source: str) -> str:
 
 
 def _num(v, nd=3) -> str:
-    return "n/a" if v is None else f"{v:.{nd}f}"
+    if v is None:
+        return "n/a"
+    text = f"{v:.{nd}f}"
+    return text[1:] if text.startswith("-") and float(text) == 0.0 else text      # a zero at this precision has no sign (call 209)
 
 
 def to_json(card: Card) -> dict:
@@ -599,6 +653,8 @@ def _skill_lines(sk: Skill) -> list[str]:
     if sk.available:
         if sk.brier_skill_lo is not None and sk.brier_skill_hi is not None:
             iv = f" (90 percent interval {_num(sk.brier_skill_lo)} to {_num(sk.brier_skill_hi)}, by test)"
+        elif sk.n_tests is not None and sk.n_tests < 2:
+            iv = " (fewer than two tests in the window, so no interval can be computed and this number cannot be judged)"
         else:
             iv = " (no interval is recorded in this reliability report, so this number cannot be judged)"
         win = f"trailing {sk.window_weeks} weeks" if sk.window_weeks else "trailing window"
@@ -609,11 +665,33 @@ def _skill_lines(sk: Skill) -> list[str]:
         out += ["- Not measured: the reliability report has no entry for this cell."]
     if sk.backtest:
         b = sk.backtest
-        iv = (f" (90 percent interval {_num(b.get('brier_skill_lo'))} to {_num(b.get('brier_skill_hi'))})"
-              if b.get("brier_skill_lo") is not None else "")
-        out += [f"- Latest gated backtest, rung {b.get('rung')}: Brier skill {_num(b.get('brier_skill'))}{iv} over {b.get('n_tests') or b.get('n')} "
-                f"{'tests' if b.get('n_tests') else 'rows'}"]
+        lo, hi = b.get("brier_skill_lo"), b.get("brier_skill_hi")
+        iv = f" (90 percent interval {_num(lo)} to {_num(hi)})" if lo is not None else ""
+        count = f"over {b.get('n_tests') or b.get('n')} {'tests' if b.get('n_tests') else 'rows'}"
+        figure = f"rung {b.get('rung')}: Brier skill {_num(b.get('brier_skill'))}{iv} {count}"
+        if b.get("scope") == "cell":
+            side = ""
+            if lo is not None and hi is not None:
+                side = "; the interval " + ("includes zero" if lo <= 0.0 <= hi else ("is above zero" if lo > 0 else "is below zero"))
+            out += [f"- Latest gated backtest for this cell ({b.get('cell')}), {figure}, {b.get('decidable')}{side}"]
+        else:
+            why = f" because {b['reason']}" if b.get("reason") else ""
+            out += [f"- Latest gated backtest, pooled over all cells{why}, {figure}"]
     return out
+
+
+def _request_text(r: RequestEcho) -> str:
+    """The text part of the Request line: present only when the request carries a headline or a reference headline (call 228)."""
+    if not (r.headline or r.reference_headline):
+        return ""
+    return f"headline \"{r.headline}\", image changed: {'yes' if r.image_changed else 'no'}, "
+
+
+def _request_units(r: RequestEcho) -> str:
+    """The planned units of the request, the exchange format's term: per arm, or per arm by name when the arms differ (call 228)."""
+    if r.impressions_variant is None or int(r.impressions_variant) == int(r.impressions):
+        return f"planned units per arm: {r.impressions}"
+    return f"planned units: {r.impressions} reference, {r.impressions_variant} variant"
 
 
 def to_markdown(card: Card) -> str:
@@ -630,8 +708,9 @@ def to_markdown(card: Card) -> str:
         f"- Model: {card.model_id}",
         f"- Feature hash: {card.feature_hash}",
         f"- Issued at: {card.issued_at}",
-        f"- Request: headline \"{r.headline}\", image changed: {'yes' if r.image_changed else 'no'}, "
-        f"exposures per arm: {r.impressions}, standard error of the future estimate: {r.s_star:.3f} {u}",
+        f"- Request: {_request_text(r)}{_request_units(r)}, standard error of the future estimate: {r.s_star:.3f} {u}",
+        *(["- Reference headline: not supplied; the pair features use the fit-set mean reference vector (the center of the pairwise space), "
+           "not a real pair"] if r.reference_defaulted else []),
         "", "## Evidence", "",
         f"- Admitted rows in the cell visible at the origin: {e.n_cell}",
         f"- Effective number of precedents: {e.n_eff:.1f}",

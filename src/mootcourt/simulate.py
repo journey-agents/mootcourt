@@ -208,12 +208,21 @@ RELEASE_BASE_RATES = (0.09, 0.14, 0.30)     # the Upworthy archive (event rate a
 
 
 def _entry(base: float, target: float, reps: int, B: int, seed: int, grid, with_table: bool, deadline: float, rows_per_test: float,
-           level: float, icc: float = 0.0) -> dict:
-    """The gate sizes at one base rate: ``n_200``, ``n_400`` and ``by_target`` (both power targets) and the optional power table."""
+           level: float, icc: float = 0.0, progress=None, t0: float | None = None) -> dict:
+    """The gate sizes at one base rate: ``n_200``, ``n_400`` and ``by_target`` (both power targets) and the optional power table.
+
+    ``progress`` (a callable taking one line) is told each size as it is found, with the elapsed seconds since ``t0``."""
     targets = sorted({RESEARCH_TARGET, float(target)})
     memo: dict = {}
-    by_target = {f"{t:.2f}": {key: n_for_power(skill, t, base, reps, B, seed, grid, deadline, memo, rows_per_test, level, icc)
-                              for key, skill in GATE_SKILLS.items()} for t in targets}
+    t0 = time.monotonic() if t0 is None else t0
+    by_target: dict = {}
+    for t in targets:
+        by_target[f"{t:.2f}"] = {}
+        for key, skill in GATE_SKILLS.items():
+            by_target[f"{t:.2f}"][key] = n_for_power(skill, t, base, reps, B, seed, grid, deadline, memo, rows_per_test, level, icc)
+            if progress is not None:
+                progress(f"progress: base rate {base:.2f}, power {t:.2f}, skill {skill:.2f}: n = {by_target[f'{t:.2f}'][key]} "
+                         f"({time.monotonic() - t0:.0f} s elapsed)")
     out = {**by_target[f"{float(target):.2f}"], "base_rate": float(base), "by_target": by_target, "rows_per_test": float(rows_per_test),
            "icc": float(icc), "latent_rho": latent_rho_for_icc(base, icc) if rows_per_test > 1.0 else 0.0}
     if with_table:
@@ -234,8 +243,11 @@ def _at(value, base: float) -> float:
 def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_TARGET, reps: int = DEFAULT_REPS,
                 B: int = DEFAULT_BOOTSTRAP, seed: int = DEFAULT_SEED, grid=None, with_table: bool = True,
                 max_seconds: float = MAX_SECONDS, base_rates=None, rows_per_test=1.0, level: float = LEGACY_LEVEL,
-                table_all: bool = False, icc=0.0) -> dict:
+                table_all: bool = False, icc=0.0, progress=None, dependence_source: str | None = None) -> dict:
     """Run the power simulation and write ``gates.json``; returns the document.
+
+    ``progress`` (a callable taking one line) is told each size as it is found; ``dependence_source`` says where ``rows_per_test`` and
+    ``icc`` came from and is recorded in the file (round 01, R6; call 207).
 
     Two power targets are read from one simulated power curve: the research screen (``RESEARCH_TARGET``) and the
     decision target ``target`` (the release gate, ``DEFAULT_TARGET``). ``by_target`` holds ``n_200`` (skill 0.20)
@@ -256,7 +268,7 @@ def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_T
     for i, b in enumerate(rates):
         # the power table is the slow part (n up to 2000 at every skill) and is printed for the first base rate only; the sizes are at every rate
         entries[f"{b:.2f}"] = _entry(b, target, reps, B, seed, grid, with_table and (i == 0 or table_all), time.monotonic() + max_seconds,
-                                     _at(rows_per_test, b), level, _at(icc, b))
+                                     _at(rows_per_test, b), level, _at(icc, b), progress=progress, t0=start)
     first = entries[f"{rates[0]:.2f}"]
     doc = {
         **{k: v for k, v in first.items() if k != "table"}, "target_power": float(target), "decision_target": float(target),
@@ -269,6 +281,8 @@ def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_T
                 "targets, which read the same power curve at different levels. Nothing downstream hardcodes any of these sizes. "
                 "by_base_rate holds the same sizes at each simulated base rate; the top level is the first of them.",
     }
+    if dependence_source:
+        doc["dependence_source"] = str(dependence_source)
     if "table" in first:
         doc["table"] = first["table"]
     if len(rates) > 1 or base_rates is not None:
@@ -284,12 +298,37 @@ def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_T
     return doc
 
 
+def ledger_dependence(ledger) -> dict:
+    """Rows per test, base rate and within-test correlation of the significant-positive event, measured on a ledger's admitted rows.
+
+    The event is ``y > Z s`` per row; the correlation is the ``icc`` of ``harness_stats.design_effect`` with the base rate as the forecast,
+    the rule the clustered null and the released gates use (call 207). Raises ValueError for a ledger without admitted rows.
+    """
+    from mootcourt.config import Z
+    from mootcourt.harness_stats import design_effect
+
+    adm = ledger.loc[ledger["status"] == "admitted"]
+    if adm.empty:
+        raise ValueError("the ledger has no admitted rows to measure the dependence on")
+    event = (adm["y"].to_numpy(float) > Z * adm["s"].to_numpy(float)).astype(float)
+    base = float(event.mean())
+    n_tests = int(adm["test_id"].nunique())
+    rows_per_test = float(len(adm)) / n_tests
+    icc = 0.0
+    if 0.0 < base < 1.0 and rows_per_test > 1.0:
+        icc = float(design_effect(np.full(len(adm), base), event, adm["test_id"].to_numpy())["icc"])
+    return {"base_rate": base, "rows_per_test": rows_per_test, "icc": icc, "n_tests": n_tests, "n_rows": int(len(adm))}
+
+
 def _entry_ints(e: dict) -> dict:
     out = {"n_200": int(e["n_200"]), "n_400": int(e["n_400"])}
     if "base_rate" in e:
         out["base_rate"] = float(e["base_rate"])
     if "by_target" in e:
         out["by_target"] = {k: {kk: int(vv) for kk, vv in v.items()} for k, v in e["by_target"].items()}
+    for key in ("rows_per_test", "icc"):                     # the dependence the sizes were simulated with, for the per-cell gate read (call 205)
+        if e.get(key) is not None:
+            out[key] = float(e[key])
     return out
 
 

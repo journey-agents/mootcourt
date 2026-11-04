@@ -9,7 +9,7 @@ import pytest
 from scipy.stats import binom
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / "paper" / "data" / "run5-period-rule"
+RUN = ROOT / "paper" / "data" / "run6-forward-chaining"
 CAUTIONARY = ROOT / "paper" / "data" / "run1-relative-lift"
 EXPECTED = (
     [

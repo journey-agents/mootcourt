@@ -4,7 +4,7 @@
   {
    "derived": [],
    "file": "cautionary-upworthy.pdf",
-   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.aggregate.brier_skill",
     "tables.aggregate.brier_skill_hi",
@@ -134,7 +134,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.0014727895194049934,
      "where": {
@@ -144,7 +144,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.0018181929301026689,
      "where": {
@@ -154,7 +154,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.0047984950480917865,
      "where": {
@@ -164,7 +164,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.004322710955801279,
      "where": {
@@ -174,7 +174,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.00851689747163049,
      "where": {
@@ -184,7 +184,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.0006249615331614182,
      "where": {
@@ -194,7 +194,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.009246036693207671,
      "where": {
@@ -204,7 +204,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.0025228637306292877,
      "where": {
@@ -214,7 +214,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.015389575792331658,
      "where": {
@@ -224,7 +224,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.020920236845146878,
      "where": {
@@ -234,7 +234,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.000340434805731005,
      "where": {
@@ -244,7 +244,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.04194632233182697,
      "where": {
@@ -257,7 +257,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-asos.pdf",
-   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run6-forward-chaining/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -566,7 +566,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-synthetic.pdf",
-   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run6-forward-chaining/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -875,7 +875,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-upworthy.pdf",
-   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -1083,7 +1083,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8783987915407855,
+     "value": 0.8693353474320241,
      "where": {
       "decile": 1,
       "rung": "P2"
@@ -1092,7 +1092,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8641509433962264,
+     "value": 0.8603773584905661,
      "where": {
       "decile": 2,
       "rung": "P2"
@@ -1101,7 +1101,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8323262839879154,
+     "value": 0.8270392749244713,
      "where": {
       "decile": 3,
       "rung": "P2"
@@ -1110,7 +1110,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8946969696969697,
+     "value": 0.8825757575757576,
      "where": {
       "decile": 4,
       "rung": "P2"
@@ -1119,7 +1119,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9187358916478555,
+     "value": 0.9059443190368698,
      "where": {
       "decile": 5,
       "rung": "P2"
@@ -1128,7 +1128,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8981132075471698,
+     "value": 0.8920754716981132,
      "where": {
       "decile": 6,
       "rung": "P2"
@@ -1137,7 +1137,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9223227752639518,
+     "value": 0.9147812971342383,
      "where": {
       "decile": 7,
       "rung": "P2"
@@ -1146,7 +1146,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9138321995464853,
+     "value": 0.907785336356765,
      "where": {
       "decile": 8,
       "rung": "P2"
@@ -1155,7 +1155,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9366515837104072,
+     "value": 0.9306184012066365,
      "where": {
       "decile": 9,
       "rung": "P2"
@@ -1164,7 +1164,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9449056603773585,
+     "value": 0.9418867924528301,
      "where": {
       "decile": 10,
       "rung": "P2"
@@ -1173,7 +1173,7 @@
     {
      "field": "coverage_90",
      "table": "tables.aggregate",
-     "value": 0.9004302861025137,
+     "value": 0.8932588510606175,
      "where": {
       "cell": "ALL",
       "rung": "P2"
@@ -1184,7 +1184,7 @@
   {
    "derived": [],
    "file": "coverage-se-asos.pdf",
-   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run6-forward-chaining/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1792,7 +1792,7 @@
   {
    "derived": [],
    "file": "coverage-se-synthetic.pdf",
-   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run6-forward-chaining/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1914,7 +1914,7 @@
   {
    "derived": [],
    "file": "coverage-se-upworthy.pdf",
-   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -2133,7 +2133,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9826415094339622,
+     "value": 0.9781132075471698,
      "where": {
       "decile": 2,
       "rung": "P2"
@@ -2142,7 +2142,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9607250755287009,
+     "value": 0.9433534743202417,
      "where": {
       "decile": 3,
       "rung": "P2"
@@ -2151,7 +2151,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.900377358490566,
+     "value": 0.8815094339622641,
      "where": {
       "decile": 4,
       "rung": "P2"
@@ -2160,7 +2160,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8738670694864048,
+     "value": 0.8512084592145015,
      "where": {
       "decile": 5,
       "rung": "P2"
@@ -2169,7 +2169,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8339622641509434,
+     "value": 0.8211320754716981,
      "where": {
       "decile": 6,
       "rung": "P2"
@@ -2178,7 +2178,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.759245283018868,
+     "value": 0.7388679245283019,
      "where": {
       "decile": 7,
       "rung": "P2"
@@ -2187,7 +2187,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7341389728096677,
+     "value": 0.7175226586102719,
      "where": {
       "decile": 8,
       "rung": "P2"
@@ -2196,7 +2196,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6581132075471698,
+     "value": 0.6490566037735849,
      "where": {
       "decile": 9,
       "rung": "P2"
@@ -2205,7 +2205,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.5350943396226415,
+     "value": 0.5283018867924528,
      "where": {
       "decile": 10,
       "rung": "P2"
@@ -2214,7 +2214,7 @@
     {
      "field": "coverage_80",
      "table": "tables.aggregate",
-     "value": 0.823733675549181,
+     "value": 0.8108250924737677,
      "where": {
       "cell": "ALL",
       "rung": "P2"
@@ -2439,7 +2439,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9947129909365559,
+     "value": 0.993202416918429,
      "where": {
       "decile": 3,
       "rung": "P2"
@@ -2448,7 +2448,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9720754716981133,
+     "value": 0.9690566037735849,
      "where": {
       "decile": 4,
       "rung": "P2"
@@ -2457,7 +2457,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9539274924471299,
+     "value": 0.9448640483383686,
      "where": {
       "decile": 5,
       "rung": "P2"
@@ -2466,7 +2466,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9245283018867925,
+     "value": 0.9162264150943397,
      "where": {
       "decile": 6,
       "rung": "P2"
@@ -2475,7 +2475,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8777358490566037,
+     "value": 0.859622641509434,
      "where": {
       "decile": 7,
       "rung": "P2"
@@ -2484,7 +2484,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8496978851963746,
+     "value": 0.8338368580060423,
      "where": {
       "decile": 8,
       "rung": "P2"
@@ -2493,7 +2493,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7743396226415095,
+     "value": 0.7630188679245283,
      "where": {
       "decile": 9,
       "rung": "P2"
@@ -2502,7 +2502,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6588679245283019,
+     "value": 0.6543396226415095,
      "where": {
       "decile": 10,
       "rung": "P2"
@@ -2511,7 +2511,7 @@
     {
      "field": "coverage_90",
      "table": "tables.aggregate",
-     "value": 0.9004302861025137,
+     "value": 0.8932588510606175,
      "where": {
       "cell": "ALL",
       "rung": "P2"
@@ -2522,7 +2522,7 @@
   {
    "derived": [],
    "file": "decision-value-asos.pdf",
-   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run6-forward-chaining/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3096,7 +3096,7 @@
   {
    "derived": [],
    "file": "decision-value-synthetic.pdf",
-   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run6-forward-chaining/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3769,7 +3769,7 @@
   {
    "derived": [],
    "file": "decision-value-upworthy.pdf",
-   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3868,7 +3868,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.11585751068991515,
+     "value": 0.11870561446895309,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3879,7 +3879,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.1083942516618438,
+     "value": 0.11072322614866463,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3890,7 +3890,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.1226903805410573,
+     "value": 0.1272777579824863,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -4088,7 +4088,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.26481795054932317,
+     "value": 0.2703849099034805,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4099,7 +4099,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.25306496628327935,
+     "value": 0.2576805579979761,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4110,7 +4110,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.2775056218983756,
+     "value": 0.284118467024567,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4308,7 +4308,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.5183313489399884,
+     "value": 0.513992291102942,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4319,7 +4319,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.5027175234347566,
+     "value": 0.49787713583570475,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4330,7 +4330,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.5347090091059009,
+     "value": 0.5299058388431482,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4442,7 +4442,7 @@
   {
    "derived": [],
    "file": "learning-curve-asos.pdf",
-   "json": "paper/data/run5-period-rule/learning-curve-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run6-forward-chaining/learning-curve-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "rows.skill",
     "rows.skill_hi",
@@ -4453,7 +4453,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.145699383263816,
+     "value": -0.35995676412989014,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -4462,7 +4462,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.2734133175235884,
+     "value": -1.0436500466834173,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -4471,7 +4471,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.04514254800236314,
+     "value": -0.13311903893266178,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -4480,7 +4480,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.12074987667748545,
+     "value": -0.19455625268108623,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -4489,7 +4489,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.28080033656512954,
+     "value": -0.3918496163126618,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -4498,7 +4498,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.02795419126063452,
+     "value": -0.10328486685021941,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -4507,7 +4507,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.11667536126533921,
+     "value": -0.16181698878405673,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -4516,7 +4516,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.21417761692805204,
+     "value": -0.2577156609239337,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -4525,7 +4525,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.014284601399785024,
+     "value": -0.06732533054322583,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -4534,7 +4534,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.14201615185145627,
+     "value": -0.1575665846460979,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -4543,7 +4543,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.2712096919646794,
+     "value": -0.2954907790256926,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -4552,7 +4552,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.0264265122190513,
+     "value": -0.061707226284095446,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -4570,7 +4570,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.5000806030047102,
+     "value": -0.5172294930547693,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -4579,7 +4579,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.03682913737813248,
+     "value": -0.04721753991058144,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -4588,7 +4588,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.14569938326381585,
+     "value": -0.35995676412989,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -4597,7 +4597,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.27341331752358833,
+     "value": -1.043650046683417,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -4606,7 +4606,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.04514254800236322,
+     "value": -0.13311903893266164,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -4615,7 +4615,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.12074987667748541,
+     "value": -0.19466668640933737,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -4624,7 +4624,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.28080033656512954,
+     "value": -0.38967144693606826,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -4633,7 +4633,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.02795419126063453,
+     "value": -0.10369348312446194,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -4642,7 +4642,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.11691457569873916,
+     "value": -0.16122001979223102,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -4651,7 +4651,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.21184492908869784,
+     "value": -0.256645427741942,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -4660,7 +4660,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.019077224882183073,
+     "value": -0.06479164408579022,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -4669,7 +4669,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.14201615185145627,
+     "value": -0.15786640246030093,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -4678,7 +4678,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.2712096919646794,
+     "value": -0.29491727532327267,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -4687,7 +4687,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.026426512219051276,
+     "value": -0.06204055623111275,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -4705,7 +4705,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.5000806030047106,
+     "value": -0.5172294930547693,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -4714,7 +4714,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.036829137378132475,
+     "value": -0.04721753991058165,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -4723,7 +4723,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.23450809676602533,
+     "value": -0.4213406561531919,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -4732,7 +4732,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.8031698069767798,
+     "value": -1.5924533042740465,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -4741,7 +4741,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.018589739621484594,
+     "value": -0.06144202989914371,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -4750,7 +4750,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.19769172616760544,
+     "value": -0.2738209400458095,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -4759,7 +4759,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.6728724047678358,
+     "value": -0.8457529262142572,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -4768,7 +4768,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.009529703742736307,
+     "value": -0.08784436862219674,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -4777,7 +4777,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.21176540968298277,
+     "value": -0.25855969447654914,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -4786,7 +4786,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.7521944501935155,
+     "value": -0.8084587261263756,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -4795,7 +4795,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.01143494140281305,
+     "value": -0.07023230308244298,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -4804,7 +4804,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.24919763770613743,
+     "value": -0.2656116841122439,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -4813,7 +4813,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.9105580104978861,
+     "value": -0.9865586431400069,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -4822,7 +4822,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.004852641645878641,
+     "value": -0.025738123546296,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -4840,7 +4840,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.6585296349073311,
+     "value": -0.6696754747552506,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -4849,7 +4849,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.0649583859513001,
+     "value": 0.053934275242782916,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -4858,7 +4858,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.20242513420167726,
+     "value": -0.38989999879088094,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -4867,7 +4867,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -1.4536897365024894,
+     "value": -2.147224270182874,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -4876,7 +4876,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.1700807779478165,
+     "value": 0.16037870211512864,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -4885,7 +4885,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.26815195498015265,
+     "value": -0.3502176822453073,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -4894,7 +4894,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -2.0049257208158506,
+     "value": -1.9796640617146992,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -4903,7 +4903,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.19201048737013568,
+     "value": 0.16242952825754095,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -4912,7 +4912,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.2950770463332452,
+     "value": -0.34669113485204067,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -4921,7 +4921,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -2.15509557386563,
+     "value": -1.9905498257352745,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -4930,7 +4930,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.19071483550107227,
+     "value": 0.16892461760525904,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -4939,7 +4939,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.3454448489666635,
+     "value": -0.363503097887047,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -4948,7 +4948,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -2.1525224183517255,
+     "value": -2.0371786380525823,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -4957,7 +4957,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.15267197427511195,
+     "value": 0.16207457981862045,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -4975,7 +4975,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -2.2332536742143505,
+     "value": -2.032323394333253,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -4984,7 +4984,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.15483255768365276,
+     "value": 0.16623713094177575,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -4995,7 +4995,7 @@
   {
    "derived": [],
    "file": "learning-curve-upworthy.pdf",
-   "json": "paper/data/run5-period-rule/learning-curve-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run6-forward-chaining/learning-curve-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "rows.skill",
     "rows.skill_hi",
@@ -5006,7 +5006,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.06785234375612127,
+     "value": 0.0007109001937496029,
      "where": {
       "fraction": 0.01,
       "rung": "P1"
@@ -5015,7 +5015,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.04643426890219471,
+     "value": -0.01685089683572418,
      "where": {
       "fraction": 0.01,
       "rung": "P1"
@@ -5024,7 +5024,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.09374592306727002,
+     "value": 0.023505374278940238,
      "where": {
       "fraction": 0.01,
       "rung": "P1"
@@ -5033,7 +5033,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.03661817940532874,
+     "value": 0.019053749381829927,
      "where": {
       "fraction": 0.02,
       "rung": "P1"
@@ -5042,7 +5042,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.021749578711131194,
+     "value": -0.0018466096852583112,
      "where": {
       "fraction": 0.02,
       "rung": "P1"
@@ -5051,7 +5051,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05538128073242574,
+     "value": 0.04804879868000314,
      "where": {
       "fraction": 0.02,
       "rung": "P1"
@@ -5060,7 +5060,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.03522373605012518,
+     "value": 0.02290758609834757,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -5069,7 +5069,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.016625977928845997,
+     "value": 0.00860059090726101,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -5078,7 +5078,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05766539089694491,
+     "value": 0.04295080790874369,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -5087,7 +5087,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.031629605904373734,
+     "value": 0.027304733386222357,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -5096,7 +5096,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.01533093076592352,
+     "value": 0.010800925490387156,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -5105,7 +5105,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.0533382229993973,
+     "value": 0.05049948556370173,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -5114,7 +5114,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.029953078970644635,
+     "value": 0.028599964936961913,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -5123,7 +5123,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.014623535287335529,
+     "value": 0.012811898347225579,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -5132,7 +5132,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05019046961835704,
+     "value": 0.050692307822114674,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -5141,7 +5141,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.030655028458027173,
+     "value": 0.02876484161715992,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -5150,7 +5150,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.014874674631060071,
+     "value": 0.013661642733008857,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -5159,7 +5159,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.050609490869806345,
+     "value": 0.0501912602118459,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -5177,7 +5177,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.014113957196257949,
+     "value": 0.013950575009283607,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -5186,7 +5186,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.04919447753953642,
+     "value": 0.05095343032813097,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -5195,7 +5195,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.06775697255101734,
+     "value": 0.0034910924479822415,
      "where": {
       "fraction": 0.01,
       "rung": "P2"
@@ -5204,7 +5204,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.046260771018324966,
+     "value": -0.014389985898089264,
      "where": {
       "fraction": 0.01,
       "rung": "P2"
@@ -5213,7 +5213,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.0936431868780984,
+     "value": 0.027203276127220236,
      "where": {
       "fraction": 0.01,
       "rung": "P2"
@@ -5222,7 +5222,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.036393709006513224,
+     "value": 0.016365321376415942,
      "where": {
       "fraction": 0.02,
       "rung": "P2"
@@ -5231,7 +5231,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.02169222987139861,
+     "value": -0.0024216086164079295,
      "where": {
       "fraction": 0.02,
       "rung": "P2"
@@ -5240,7 +5240,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.054772520414954014,
+     "value": 0.042569463643363066,
      "where": {
       "fraction": 0.02,
       "rung": "P2"
@@ -5249,7 +5249,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.03514410766958245,
+     "value": 0.023053423999735385,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -5258,7 +5258,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.01664427593294594,
+     "value": 0.00873785999215985,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -5267,7 +5267,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05762644731125854,
+     "value": 0.04335590476502504,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -5276,7 +5276,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.03182332742986743,
+     "value": 0.027512238755659762,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -5285,7 +5285,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.01595188947936758,
+     "value": 0.009569259168180813,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -5294,7 +5294,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.052806390797966916,
+     "value": 0.05201172928578557,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -5303,7 +5303,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.029373687949762917,
+     "value": 0.02985571597168684,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -5312,7 +5312,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.014760321614294997,
+     "value": 0.012721905694614448,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -5321,7 +5321,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.0470674567376897,
+     "value": 0.05455967672362457,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -5330,7 +5330,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.030243341330587637,
+     "value": 0.03167043956621018,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -5339,7 +5339,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.015612676647473596,
+     "value": 0.014327947502844543,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -5348,7 +5348,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.04756482976867823,
+     "value": 0.05606598744043853,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -5357,7 +5357,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.031149209098764175,
+     "value": 0.03532741519239013,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -5366,7 +5366,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.017349089290079684,
+     "value": 0.01697235993566612,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -5375,7 +5375,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05106814998929577,
+     "value": 0.06129161110299311,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -5384,7 +5384,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.018418306770864527,
+     "value": -0.0575279549915839,
      "where": {
       "fraction": 0.01,
       "rung": "local_eb"
@@ -5393,7 +5393,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.0075364131134735635,
+     "value": -0.08040593870292125,
      "where": {
       "fraction": 0.01,
       "rung": "local_eb"
@@ -5402,7 +5402,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.0328119320849341,
+     "value": -0.0405549188648058,
      "where": {
       "fraction": 0.01,
       "rung": "local_eb"
@@ -5411,7 +5411,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.017062338264365894,
+     "value": -0.001404235902840345,
      "where": {
       "fraction": 0.02,
       "rung": "local_eb"
@@ -5420,7 +5420,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.00600563016122587,
+     "value": -0.01746656276827173,
      "where": {
       "fraction": 0.02,
       "rung": "local_eb"
@@ -5429,7 +5429,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.035301111552779554,
+     "value": 0.018929550824440648,
      "where": {
       "fraction": 0.02,
       "rung": "local_eb"
@@ -5438,7 +5438,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.027425921819221995,
+     "value": 0.015156682575886293,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -5447,7 +5447,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.014117603617630831,
+     "value": 0.0009935189957160338,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -5456,7 +5456,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.048741369538735965,
+     "value": 0.03250309975201717,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -5465,7 +5465,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.016326203368258924,
+     "value": 0.011895118010763883,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -5474,7 +5474,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.0055226877670362965,
+     "value": 0.0008593077421375217,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -5483,7 +5483,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.03151964910547596,
+     "value": 0.026700370624544972,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -5492,7 +5492,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.020224608365941393,
+     "value": 0.018845061727798106,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -5501,7 +5501,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.006025939579879802,
+     "value": 0.003572379663861474,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -5510,7 +5510,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.039497282422942585,
+     "value": 0.03860227644447775,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -5519,7 +5519,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.026935720692120385,
+     "value": 0.02505060938196747,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -5528,7 +5528,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.009103042212819634,
+     "value": 0.007347243750080691,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -5537,7 +5537,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.050684697584550104,
+     "value": 0.04749882289967345,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -5555,7 +5555,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.006204927055531025,
+     "value": 0.00962879364317408,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -5564,7 +5564,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.07337437338315794,
+     "value": 0.0682657286708393,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -5573,7 +5573,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.12323138848430368,
+     "value": -0.20167489436775954,
      "where": {
       "fraction": 0.01,
       "rung": "GBM"
@@ -5582,7 +5582,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.1975329008232404,
+     "value": -0.2899013308080384,
      "where": {
       "fraction": 0.01,
       "rung": "GBM"
@@ -5591,7 +5591,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.06859363391606953,
+     "value": -0.14211177744410716,
      "where": {
       "fraction": 0.01,
       "rung": "GBM"
@@ -5600,7 +5600,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.0759160380434805,
+     "value": -0.09649298785960266,
      "where": {
       "fraction": 0.02,
       "rung": "GBM"
@@ -5609,7 +5609,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.13794894513715036,
+     "value": -0.1472928274944211,
      "where": {
       "fraction": 0.02,
       "rung": "GBM"
@@ -5618,7 +5618,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.03220328312423837,
+     "value": -0.060520080841889846,
      "where": {
       "fraction": 0.02,
       "rung": "GBM"
@@ -5627,7 +5627,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.06598228983950599,
+     "value": -0.0796471766651864,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -5636,7 +5636,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.11074309877901868,
+     "value": -0.1303766865517019,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -5645,7 +5645,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.028419692600654144,
+     "value": -0.04242075387507558,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -5654,7 +5654,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.08261895954081429,
+     "value": -0.0876640305366521,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -5663,7 +5663,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.13960339307826952,
+     "value": -0.14358914682151358,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -5672,7 +5672,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.037110209591288065,
+     "value": -0.04723992844738494,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -5681,7 +5681,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.06789367260930079,
+     "value": -0.06948392124044397,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -5690,7 +5690,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.11803002330123105,
+     "value": -0.11905586837643273,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -5699,7 +5699,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.028182467188353842,
+     "value": -0.03317884954654372,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -5708,7 +5708,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.06655957802502774,
+     "value": -0.06867469371285297,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -5717,7 +5717,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.11744942265038912,
+     "value": -0.11830709949537331,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -5726,7 +5726,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.02735164023997713,
+     "value": -0.031416483005401924,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -5744,7 +5744,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.12208301248032301,
+     "value": -0.12323946009472866,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -5753,7 +5753,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.020744140572936488,
+     "value": -0.025563086863237255,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -5762,7 +5762,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.04533742187533051,
+     "value": -0.024282499842640005,
      "where": {
       "fraction": 0.01,
       "rung": "text_lr"
@@ -5771,7 +5771,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.033064160454603024,
+     "value": -0.02949179805008344,
      "where": {
       "fraction": 0.01,
       "rung": "text_lr"
@@ -5780,7 +5780,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05882431668046939,
+     "value": -0.018415523980200365,
      "where": {
       "fraction": 0.01,
       "rung": "text_lr"
@@ -5789,7 +5789,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.006250746827723247,
+     "value": -0.0131396029176007,
      "where": {
       "fraction": 0.02,
       "rung": "text_lr"
@@ -5798,7 +5798,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.0013591537888933676,
+     "value": -0.022731796388396473,
      "where": {
       "fraction": 0.02,
       "rung": "text_lr"
@@ -5807,7 +5807,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.012816804150060207,
+     "value": -0.0013881431292797303,
      "where": {
       "fraction": 0.02,
       "rung": "text_lr"
@@ -5816,7 +5816,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.004016171240398003,
+     "value": -0.009072273849712037,
      "where": {
       "fraction": 0.05,
       "rung": "text_lr"
@@ -5825,7 +5825,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.006047615913849814,
+     "value": -0.016176626269422324,
      "where": {
       "fraction": 0.05,
       "rung": "text_lr"
@@ -5834,7 +5834,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.014383359459417603,
+     "value": -0.0020514135643545308,
      "where": {
       "fraction": 0.05,
       "rung": "text_lr"
@@ -5843,7 +5843,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.004526066355812003,
+     "value": 1.14988561414342e-06,
      "where": {
       "fraction": 0.1,
       "rung": "text_lr"
@@ -5852,7 +5852,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0038616111373256656,
+     "value": -0.009314668060065048,
      "where": {
       "fraction": 0.1,
       "rung": "text_lr"
@@ -5861,7 +5861,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.013960802479164548,
+     "value": 0.010925549972474689,
      "where": {
       "fraction": 0.1,
       "rung": "text_lr"
@@ -5870,7 +5870,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.005554883399868199,
+     "value": 0.0041076067253305705,
      "where": {
       "fraction": 0.25,
       "rung": "text_lr"
@@ -5879,7 +5879,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.006460887364299158,
+     "value": -0.007393686367245253,
      "where": {
       "fraction": 0.25,
       "rung": "text_lr"
@@ -5888,7 +5888,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.016870464335128857,
+     "value": 0.015126777482099056,
      "where": {
       "fraction": 0.25,
       "rung": "text_lr"
@@ -5897,7 +5897,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.0065944213830632535,
+     "value": 0.0046464119221528155,
      "where": {
       "fraction": 0.5,
       "rung": "text_lr"
@@ -5906,7 +5906,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.011181447076528328,
+     "value": -0.012721821907040319,
      "where": {
       "fraction": 0.5,
       "rung": "text_lr"
@@ -5915,7 +5915,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.02399910286859493,
+     "value": 0.020637055237828016,
      "where": {
       "fraction": 0.5,
       "rung": "text_lr"
@@ -5933,7 +5933,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.019869024162471646,
+     "value": -0.018230939979950834,
      "where": {
       "fraction": 1.0,
       "rung": "text_lr"
@@ -5942,7 +5942,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.034066289659348804,
+     "value": 0.035488899531641825,
      "where": {
       "fraction": 1.0,
       "rung": "text_lr"
@@ -6163,7 +6163,7 @@
     }
    ],
    "file": "reliability-asos.pdf",
-   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run6-forward-chaining/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -6866,7 +6866,7 @@
     }
    ],
    "file": "reliability-synthetic.pdf",
-   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run6-forward-chaining/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -7371,8 +7371,8 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.08767027593433462,
-     "lo": 0.07579462102689487,
+     "hi": 0.08312709273547823,
+     "lo": 0.07249963604600379,
      "rung": "P2",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     },
@@ -7382,8 +7382,8 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.13533631073216945,
-     "lo": 0.12261469752334551,
+     "hi": 0.13362773961400065,
+     "lo": 0.11956166175989533,
      "rung": "P2",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     },
@@ -7393,14 +7393,14 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.2727272727272727,
-     "lo": 0.1590909090909091,
+     "hi": 0.26136363636363635,
+     "lo": 0.17803030303030304,
      "rung": "P2",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     }
    ],
    "file": "reliability-upworthy.pdf",
-   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run6-forward-chaining/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -7546,7 +7546,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 5726,
+     "value": 6869,
      "where": {
       "bin": 0,
       "rung": "P2"
@@ -7555,7 +7555,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.08174265935907168,
+     "value": 0.07780099657011619,
      "where": {
       "bin": 0,
       "rung": "P2"
@@ -7564,7 +7564,7 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.0745721271393643,
+     "value": 0.07919638957635755,
      "where": {
       "bin": 0,
       "rung": "P2"
@@ -7573,7 +7573,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 7389,
+     "value": 6114,
      "where": {
       "bin": 1,
       "rung": "P2"
@@ -7582,7 +7582,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.128951951066804,
+     "value": 0.12658631434627096,
      "where": {
       "bin": 1,
       "rung": "P2"
@@ -7591,7 +7591,7 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.10285559615644878,
+     "value": 0.10255152109911678,
      "where": {
       "bin": 1,
       "rung": "P2"
@@ -7600,7 +7600,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 132,
+     "value": 264,
      "where": {
       "bin": 2,
       "rung": "P2"
@@ -7609,7 +7609,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.21264987769383062,
+     "value": 0.21809602672042633,
      "where": {
       "bin": 2,
       "rung": "P2"
@@ -7618,7 +7618,7 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.14393939393939395,
+     "value": 0.13257575757575757,
      "where": {
       "bin": 2,
       "rung": "P2"
@@ -7628,11 +7628,11 @@
   }
  ],
  "generated_by": "scripts/paper_figures.py",
- "run_folder": "paper/data/run5-period-rule",
+ "run_folder": "paper/data/run6-forward-chaining",
  "skipped": [
   {
    "file": "learning-curve-synthetic.pdf",
-   "reason": "no learning-curve-synthetic-*.json in paper/data/run5-period-rule"
+   "reason": "no learning-curve-synthetic-*.json in paper/data/run6-forward-chaining"
   }
  ]
 }

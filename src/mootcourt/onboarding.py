@@ -1,12 +1,15 @@
 """``moot init`` and ``moot doctor``: set a project up in one command and check that it stays healthy.
 
-``init_project`` writes ``mootcourt.toml``, creates the data root layout, writes the sample ledger (synthetic, exchange format) and a quick
-gate file, and returns the three commands that follow. ``run_doctor`` runs the checks below, writes a report to the reports directory
+``init_project`` writes ``mootcourt.toml``, creates the data root layout, writes the sample ledger (synthetic, exchange format, base
+rate ``SAMPLE_BASE_RATE``) and a quick gate file simulated at that base rate (``QUICK_GATE_BASE``), and returns the three commands that
+follow. ``run_doctor`` runs the checks below, writes a report to the reports directory
 and returns it; ``exit_code`` maps the worst status to 0 (healthy), 1 (warnings) or 2 (failures).
 
-Doctor checks: Python and dependency versions against the minimums in pyproject.toml, the data root and the free space of its volume
+Doctor checks: Python and dependency versions against the minimums in pyproject.toml, sidecar files in the environment (an install on
+an exFAT volume; a failure, since `moot backtest` dies on them), the data root and the free space of its volume
 (warning under 10 GB), the ledger against the schema, model freshness (the champion of each source was fit on the newest snapshot),
-the age of each reliability report (warning past the staleness limit), the configured cells, and the service when ``[service] url`` is set.
+the age of each reliability report (warning past the staleness limit), the configured cells, the card records (post-hoc cards, which the
+join recorded and never scored, are a warning; reissues are counted), and the service when ``[service] url`` is set.
 """
 from __future__ import annotations
 
@@ -16,14 +19,16 @@ import json
 import shlex
 import shutil
 import sys
+import sysconfig
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
 from mootcourt.config import RELIABILITY_MAX_AGE_DAYS
+from mootcourt.importers.sample import SAMPLE_BASE_RATE
 from mootcourt.settings import CONFIG_FILE, load_settings
-from mootcourt.storage import LOW_SPACE_BYTES, human_bytes, storage_paths, visible_glob
+from mootcourt.storage import LOW_SPACE_BYTES, human_bytes, sidecar_files, storage_paths, visible_glob
 
 MIN_PYTHON = (3, 11)
 MIN_VERSIONS = {"numpy": "1.26", "scipy": "1.11", "pandas": "2.1", "pyarrow": "14", "scikit-learn": "1.4", "joblib": "1.3", "typer": "0.12",
@@ -31,6 +36,7 @@ MIN_VERSIONS = {"numpy": "1.26", "scipy": "1.11", "pandas": "2.1", "pyarrow": "1
 OK, WARN, FAIL = "ok", "warn", "fail"
 SAMPLE_NAME = "sample-ledger.csv"
 QUICK_GATE = {"reps": 400, "B": 300}
+QUICK_GATE_BASE = SAMPLE_BASE_RATE  # the quick gates are simulated at the sample ledger's base rate, the headline archive's (round 01, R6 question 5)
 
 
 def _ver(v: str) -> tuple:
@@ -88,8 +94,10 @@ target_power = 0.90
 
 
 def init_project(directory: Path | str, data_root: Path | str | None = None, cells: list[str] | None = None, name: str | None = None,
-                 force: bool = False) -> dict:
-    """Create the project files in ``directory``. Raises FileExistsError when mootcourt.toml exists and ``force`` is false."""
+                 force: bool = False, progress=None) -> dict:
+    """Create the project files in ``directory``. Raises FileExistsError when mootcourt.toml exists and ``force`` is false.
+
+    ``progress`` (a callable taking one line) receives the quick gate simulation's progress lines (call 207)."""
     from mootcourt import simulate
     from mootcourt.importers.sample import METRICS, sample_exchange
 
@@ -109,9 +117,11 @@ def init_project(directory: Path | str, data_root: Path | str | None = None, cel
     sample_exchange().to_csv(sample, index=False)
     gates = layout.gates_path
     if not gates.exists():
-        rows_per_test, icc = simulate.SOURCE_DEPENDENCE[0.30]
-        simulate.write_gates(gates, base=0.30, base_rates=[0.30], target=load_settings(d)["gate"]["target_power"], reps=QUICK_GATE["reps"],
-                             B=QUICK_GATE["B"], with_table=False, rows_per_test=rows_per_test, icc=icc, level=simulate.DEFAULT_LEVEL)
+        rows_per_test, icc = simulate.SOURCE_DEPENDENCE[QUICK_GATE_BASE]
+        simulate.write_gates(gates, base=QUICK_GATE_BASE, base_rates=[QUICK_GATE_BASE], target=load_settings(d)["gate"]["target_power"],
+                             reps=QUICK_GATE["reps"], B=QUICK_GATE["B"], with_table=False, rows_per_test=rows_per_test, icc=icc,
+                             level=simulate.DEFAULT_LEVEL, progress=progress,
+                             dependence_source=f"the public archive at base rate {QUICK_GATE_BASE:.2f} (SOURCE_DEPENDENCE)")
     commands = [f"moot ingest --format generic --input {shlex.quote(str(sample))} --source-name sample",
                 "moot fit --source sample && moot backtest --source sample",
                 "moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00"]
@@ -136,6 +146,28 @@ def check_versions() -> list[dict]:
             continue
         out.append(_check(f"package {pkg}", OK if _ver(have) >= _ver(minimum) else FAIL, f"{have} (needs {minimum} or newer)"))
     return out
+
+
+def check_environment(site_packages: Path | None = None, prefix: Path | None = None) -> list[dict]:
+    """Sidecar files (``._name``, which macOS writes beside every file on an exFAT volume) in the active environment (round 01, R6; call 226).
+
+    Looks at the top level of the interpreter's site-packages and under the plotting library's style directory, the two places where they
+    first break ``moot backtest``; an environment whose prefix lies on an external volume is a warning before any sidecar appears.
+    """
+    site = Path(site_packages) if site_packages is not None else Path(sysconfig.get_paths()["purelib"])
+    prefix = Path(prefix) if prefix is not None else Path(sys.prefix)
+    found = sidecar_files(site) + sidecar_files(site / "matplotlib" / "mpl-data" / "stylelib")
+    if found:
+        n = len(found)
+        return [_check("environment", FAIL, f"{n} sidecar file{'s' if n != 1 else ''} (`._name`) under {site}, for example {found[0].name}: "
+                                            "an install on an exFAT volume leaves one beside every file, and `moot backtest` fails on them "
+                                            "(the plotting library cannot read its style directory); make the environment on the internal "
+                                            f"disk and install there, or delete them: find {site} -name '._*' -type f -delete")]
+    if str(prefix).startswith("/Volumes/"):
+        return [_check("environment", WARN, f"the environment {prefix} lives on an external volume; if the volume is exFAT, macOS writes `._` "
+                                            "sidecar files beside its files and `moot backtest` fails on them; keep the environment on the "
+                                            "internal disk")]
+    return [_check("environment", OK, f"no sidecar files under {site}")]
 
 
 def check_storage(paths) -> list[dict]:
@@ -229,6 +261,75 @@ def check_reliability(paths, now: dt.datetime) -> list[dict]:
     return out or [_check("reliability", WARN, "no reliability report; `moot backtest` seeds one and `moot join` keeps it current")]
 
 
+def _card_problems(paths, now: dt.datetime) -> dict[str, dict[str, int]]:
+    """Per source, the frozen cards no join will score: no row id, a row id absent from the ledger, a row id of an unadmitted test, and a
+    horizon that has passed at ``now`` with no outcome file yet (call 252). A card whose row has not concluded is not a finding."""
+    import pandas as pd
+
+    from mootcourt.ledger import ADMITTED, read_ledger
+
+    ledger = None
+    if paths.ledger_path.exists():
+        try:
+            ledger = read_ledger(paths.ledger_path).set_index("row_id")
+        except Exception:  # noqa: BLE001  (check_ledger reports the cause)
+            ledger = None
+    out: dict[str, dict[str, int]] = {}
+    for f in visible_glob(paths.cards, "*.json"):
+        try:
+            card = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        c = out.setdefault(str(card.get("source", "unknown")), {"no_row_id": 0, "unknown_row": 0, "past_horizon": 0, "unadmitted": 0})
+        row_id = (card.get("request") or {}).get("row_id")
+        if not row_id:
+            c["no_row_id"] += 1
+        elif ledger is None:
+            continue
+        elif row_id not in ledger.index:
+            c["unknown_row"] += 1
+        elif ledger.loc[row_id, "status"] != ADMITTED:
+            c["unadmitted"] += 1
+        elif pd.Timestamp(ledger.loc[row_id, "usable_after"]) <= pd.Timestamp(now) and not (paths.cards / "outcomes" / f"{f.stem}.json").exists():
+            c["past_horizon"] += 1
+    return out
+
+
+def check_cards(paths, now: dt.datetime | None = None) -> list[dict]:
+    """Per source: scored outcomes, post-hoc cards (issued after their test started, recorded and never scored; a warning, since the record
+    was filled after the fact), reissues (a later card for a row another card scores), and the cards no join will score (no row id, a row id
+    absent from the ledger, a passed horizon with no outcome, an unadmitted test; each a warning). A source with none of these is not listed."""
+    now = now or dt.datetime.now(dt.timezone.utc)
+    out_dir = paths.cards / "outcomes"
+    counts: dict[str, dict[str, int]] = {}
+    for f in visible_glob(out_dir, "*.json"):
+        try:
+            o = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        c = counts.setdefault(str(o.get("source", "unknown")), {"scored": 0, "post_hoc": 0, "reissue": 0})
+        if o.get("post_hoc"):
+            c["post_hoc"] += 1
+        elif o.get("reissue"):
+            c["reissue"] += 1
+        elif o.get("scored", True):
+            c["scored"] += 1
+    problems = {src: p for src, p in _card_problems(paths, now).items() if any(p.values())}
+    out = []
+    for src in sorted(set(counts) | set(problems)):
+        c = counts.get(src, {"scored": 0, "post_hoc": 0, "reissue": 0})
+        p = problems.get(src, {})
+        detail = (f"{c['scored']} scored outcomes, {c['post_hoc']} post-hoc cards (issued after their test started: recorded, never scored), "
+                  f"{c['reissue']} reissues (a later card for a row another card scores)")
+        labels = (("no_row_id", "cards with no row id"), ("unknown_row", "cards with a row id absent from the ledger"),
+                  ("past_horizon", "cards past their horizon with no outcome"), ("unadmitted", "cards on an unadmitted test"))
+        found = [f"{label}: {p[key]}" for key, label in labels if p.get(key)]
+        if found:
+            detail += "; no join scores these as they stand, " + ", ".join(found)
+        out.append(_check(f"cards {src}", WARN if (c["post_hoc"] or found) else OK, detail))
+    return out
+
+
 def check_service(url: str | None, timeout: float = 2.0) -> list[dict]:
     if not url:
         return []
@@ -267,11 +368,11 @@ def run_doctor(now: dt.datetime | None = None, write: bool = True) -> dict:
     now = now or dt.datetime.now(dt.timezone.utc)
     settings = load_settings()
     paths = storage_paths()
-    checks = check_versions() + check_storage(paths)
+    checks = check_versions() + check_environment() + check_storage(paths)
     ledger_checks, snaps = check_ledger(paths) if (paths.root is None or paths.root.exists()) else ([], {})
     checks += ledger_checks
     if paths.root is None or paths.root.exists():
-        checks += check_models(paths, snaps) + check_reliability(paths, now) + check_cells(settings["cells"], paths)
+        checks += check_models(paths, snaps) + check_reliability(paths, now) + check_cells(settings["cells"], paths) + check_cards(paths, now)
     checks += check_service(settings["service"].get("url"))
     def status_of(items):
         return FAIL if any(c["status"] == FAIL for c in items) else (WARN if any(c["status"] == WARN for c in items) else OK)

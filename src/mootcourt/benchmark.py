@@ -223,7 +223,14 @@ def _replicates(path: Path) -> str:
 def _num(v, nd: int = 3) -> str:
     if v is None or (isinstance(v, float) and v != v):
         return "n/a"
-    return f"{v:.{nd}f}"
+    text = f"{v:.{nd}f}"
+    return text[1:] if text.startswith("-") and float(text) == 0.0 else text      # a zero at this precision has no sign (call 209)
+
+
+def gates_heading(card: dict) -> str:
+    """The Gates heading of the report card, in the unit its gates count: tests (every gates file written now) or rows (call 229)."""
+    unit = "Rows" if card.get("gates_unit") == "row" else "Tests"
+    return f"{unit} needed before a skill difference is decidable ({card['gates_source']})."
 
 
 def _research_target(gates: dict) -> float | None:
@@ -277,6 +284,7 @@ def build_report_card(doc: dict, scores: pd.DataFrame, *, ledger_stem: str, snap
                    "base_rate": float(events.mean()), "synthetic": bool(h["synthetic"])},
         "gates": {k: {kk: int(vv) for kk, vv in v.items()} for k, v in (gates.get("by_target") or {}).items()},
         "gates_source": gates_source, "decision_target": gates.get("decision_target"), "research_target": _research_target(gates),
+        "gates_unit": "test" if (gates.get("interval") or {}).get("by") == "test" else "row",
         "interval_level": LEVEL,
         "ladder_primary": primary, "ladder": ladder,
         "abstention": {"rate": prim["abstention_rate"], "support": ab.get("support"), "novelty": ab.get("novelty"),
@@ -297,7 +305,7 @@ def card_markdown(card: dict) -> str:
               f"- Scored rows: {led['n_scored']} over {led['origins_scored']} quarterly origins, "
               f"{str(led['first_origin'])[:10]} to {str(led['last_origin'])[:10]}",
               f"- Base rate of a significant positive result: {_num(led['base_rate'])}", ""]
-    lines += ["## Gates", "", f"Rows needed before a skill difference is decidable ({card['gates_source']}).", "",
+    lines += ["## Gates", "", gates_heading(card), "",
               "| power target | n at skill 0.20 | n at skill 0.10 |", "|---|---|---|"]
     for target, g in sorted(card["gates"].items()):
         lines.append(f"| {target} | {g.get('n_200', 'n/a')} | {g.get('n_400', 'n/a')} |")

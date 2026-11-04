@@ -52,7 +52,7 @@ from mootcourt.config import (
     TOP_M_NEIGHBORS,
 )
 from mootcourt.features import FeatureSpace, feature_hash, use_cell_only
-from mootcourt.ledger import ADMITTED, series_ns, visible_rows
+from mootcourt.ledger import ADMITTED, series_ns, to_utc, visible_rows
 from mootcourt.predictors.base import Predictive
 from mootcourt.predictors.p0 import P0Predictor
 from mootcourt.predictors.p1 import P1Predictor
@@ -92,6 +92,7 @@ class ModelBundle:
     n_rows: int = 0
     backtest_summary: dict | None = None
     method_id: str = ""
+    fit_as_of: str = ""           # the fit clock: only rows usable at this instant entered the fit ("" for a fit on every admitted row)
 
     # --------------------------------------------------------------- cutoff
     @property
@@ -247,6 +248,8 @@ def fit_bundle(ledger: pd.DataFrame, source: str, snapshot_id: str, as_of=None, 
     rows = ledger if as_of is None else visible_rows(ledger, as_of)
     adm = rows.loc[rows["status"] == ADMITTED]
     if len(adm) == 0:
+        if as_of is not None:
+            raise ValueError(f"no admitted row is usable at the fit clock {to_utc(as_of).isoformat()}: cannot fit a bundle there")
         raise ValueError("cannot fit a bundle without admitted rows")
     space = FeatureSpace.fit(adm, cell_only=use_cell_only(source, adm) if cell_only is None else cell_only)
     p0 = P0Predictor().fit(adm)
@@ -271,6 +274,7 @@ def fit_bundle(ledger: pd.DataFrame, source: str, snapshot_id: str, as_of=None, 
         model_id=model_id, snapshot_id=snapshot_id, feature_hash=fh, source=source, space=space, p0=p0, p1=p1, p2=p2,
         parameters=parameters, cell_stats=_cell_stats(adm), p0_rows=p0_rows,
         fit_time=dt.datetime.now(dt.timezone.utc).isoformat(), n_rows=int(len(adm)), method_id=method_id(space),
+        fit_as_of=to_utc(as_of).isoformat() if as_of is not None else "",
     )
 
 
@@ -324,7 +328,8 @@ def save_bundle(bundle: ModelBundle, models_dir) -> Path:
             "parameters": {
                 k: v for k, v in bundle.parameters.items() if k != "p1"
             } | {"p1_global": bundle.p1.to_state()["global"]},
-            "fit_time": bundle.fit_time, "backtest_summary": bundle.backtest_summary, "method_id": bundle.method_id, "artifacts": artifacts,
+            "fit_time": bundle.fit_time, "fit_as_of": bundle.fit_as_of, "backtest_summary": bundle.backtest_summary,
+            "method_id": bundle.method_id, "artifacts": artifacts,
         }
         (tmp / "manifest.json").write_text(json.dumps(manifest, indent=1, sort_keys=True), encoding="utf-8")
         old = None
@@ -407,4 +412,5 @@ def load_bundle(model_id: str, models_dir) -> ModelBundle:
         source=manifest["source"], space=space, p0=p0, p1=p1, p2=p2, parameters=parameters,
         cell_stats=meta["cell_stats"], p0_rows=p0_rows, fit_time=manifest["fit_time"], n_rows=meta["n_rows"],
         backtest_summary=manifest["backtest_summary"], method_id=str(manifest.get("method_id", "")),
+        fit_as_of=str(manifest.get("fit_as_of", "") or ""),
     )

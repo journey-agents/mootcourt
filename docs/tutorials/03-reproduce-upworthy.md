@@ -4,7 +4,7 @@
 
 **Prerequisites:** a clone of this repository with the package installed (this tutorial uses the scripts in `scripts/`), Python 3.11 or newer and a network connection for the download. About 15 MB of disk for the archives and a few hundred MB for everything that grows from them.
 
-**Time:** about 10 minutes of compute: 5 seconds to build the ledger, 15 seconds to fit, a minute to simulate the gates the first time, and 3 to 4 minutes for the backtest. The download takes as long as your connection needs for 15 MB.
+**Time:** about 10 minutes of compute: 5 seconds to build the ledger, 15 to 30 seconds to fit, a minute to simulate the gates the first time, and 3 to 4 minutes for the backtest. The download takes as long as your connection needs for 15 MB.
 
 **Why do this.** The reference results of the project are produced by exactly these commands on two public archives. Running them yourself shows that the numbers are not a one-off, and it is the best preparation for running the same commands on your own archive ([tutorial 2](02-your-own-archive.md)). The Upworthy archive is a set of headline and image tests run by one publisher (Matias et al., Scientific Data 8, 195, 2021, CC BY 4.0).
 
@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (3.4 s)
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (5.4 s)
 snapshot 20261104-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 3.7 s
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 5.8 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,11 +59,11 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 380a643333cc at snapshot 20261104-4bfb354b87e3 in 15.0 s; it is the champion for upworthy
+fitted model 97f42709799d at snapshot 20261104-4bfb354b87e3 on 13453 rows usable at 2026-11-04T21:45:45.964913+00:00 in 26.0 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
-The model id is a digest of the snapshot id and the fitted parameters. The snapshot id begins with the date of the import, so the model id you get on another day differs from the one in the header of the published backtest report, and the last digits of the parameters can differ on another platform (see [troubleshooting](../troubleshooting.md#ids-differ-between-machines)). The card id in step 6 is a digest of the card's content, which includes the model id and the snapshot id, so it differs for the same reason. A different id is not a failure. The scores below are the check.
+The model id is a digest of the snapshot id and the fitted parameters. The snapshot id begins with the date of the import, so the model id you get on another day differs from the one in the header of the published backtest report, and the last digits of the parameters can differ on another platform (see [troubleshooting](../troubleshooting.md#ids-differ-between-machines)). The card id in step 6 is a digest of the card's content, which includes the model id and the snapshot id, so it differs for the same reason. It also covers the gates file in force, which the skill line of the card (below the lines shown) reads: a card made after the quick gates of the first backtest and a card made after `moot simulate gate-power` have different ids even when every prediction number is equal. A different id is not a failure. The scores below are the check.
 
 ## 4. Back-test
 
@@ -73,10 +73,41 @@ moot backtest --source upworthy
 
 ```text output
 ~/mootcourt-data/reports/gates.json is missing; running the gate power simulation first (synthetic data, same as `moot simulate power`)
-gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 375}
+gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "icc": 0.0, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 375, "rows_per_test": 1.0}
 note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
-filled the backtest summary of model 380a643333cc
-scored 13247 rows over 9 origins in 225.7 s (report writing 24.1 s)
+backtest of upworthy: still running, 10 s elapsed
+backtest of upworthy: still running, 20 s elapsed
+progress: origin 2013-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 2158 rows, scoring 1096
+backtest of upworthy: still running, 30 s elapsed
+progress: origin 2014-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 3335 rows, scoring 1315
+backtest of upworthy: still running, 40 s elapsed
+backtest of upworthy: still running, 50 s elapsed
+progress: origin 2014-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 4534 rows, scoring 1907
+backtest of upworthy: still running, 60 s elapsed
+backtest of upworthy: still running, 70 s elapsed
+backtest of upworthy: still running, 80 s elapsed
+progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
+backtest of upworthy: still running, 90 s elapsed
+backtest of upworthy: still running, 100 s elapsed
+backtest of upworthy: still running, 110 s elapsed
+backtest of upworthy: still running, 120 s elapsed
+backtest of upworthy: still running, 130 s elapsed
+backtest of upworthy: still running, 140 s elapsed
+backtest of upworthy: still running, 150 s elapsed
+progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9139 rows, scoring 2640
+backtest of upworthy: still running, 160 s elapsed
+backtest of upworthy: still running, 170 s elapsed
+backtest of upworthy: still running, 180 s elapsed
+backtest of upworthy: still running, 190 s elapsed
+backtest of upworthy: still running, 200 s elapsed
+backtest of upworthy: still running, 210 s elapsed
+progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
+backtest of upworthy: still running, 220 s elapsed
+backtest of upworthy: still running, 230 s elapsed
+backtest of upworthy: still running, 240 s elapsed
+progress: origin 2015-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 13132 rows, scoring 270
+filled the backtest summary of model 97f42709799d
+scored 13247 rows over 9 origins in 314.2 s (report writing 53.4 s; the whole run 367.6 s)
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.md
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.json
 wrote ~/mootcourt-data/reports/scores-upworthy-20261104-4bfb354b87e3.parquet
@@ -92,9 +123,9 @@ Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare 
 |---|---|---|
 | P0 | the empirical base-rate forecaster | 0.0000, by construction |
 | P1 | pooled empirical-Bayes shrinkage | 0.0015 (-0.0018 to 0.0048) |
-| P2 | weighted precedents under an admission guard | 0.0015 (-0.0017 to 0.0047) |
+| P2 | weighted precedents under an admission guard | 0.0019 (-0.0018 to 0.0054) |
 
-**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P0 is that base rate, as a forecaster, so its skill is zero by construction and its interval has no width. The intervals of P1 and P2 contain zero: pooled shrinkage and weighted precedents are no better than the base rate on this archive, and no worse. Look at the log score for the difference between the two: P2 minus P1 is about minus 0.004 nats, so the precedents did not add anything out of time, even though the admission guard let them in for some cells (the report says for how many). The guard limits how much noise the selection fits. It does not promise that P2 beats P1 on later tests, and here it does not.
+**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P0 is that base rate, as a forecaster, so its skill is zero by construction and its interval has no width. The intervals of P1 and P2 contain zero: pooled shrinkage and weighted precedents are no better than the base rate on this archive, and no worse. Look at the log score for the difference between the two: P2 minus P1 is about plus 0.0004 nats, which is level with the prior within the interval, so the precedents added nothing measurable out of time, even though the admission guard let them in for some cells (the report says for how many). The guard limits how much noise the selection fits. It does not promise that P2 beats P1 on later tests, and here it shows no measurable gain.
 
 That is the finding, and it is a modest one: on this archive no rung of the ladder is distinguishable from the base rate in Brier skill, and the extra machinery of P2 does not pay. Nothing here says it would be the same for product experiments: the archive is headline and image tests from one publisher. The README's list of what the project does not show applies in full.
 
@@ -111,30 +142,30 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 ```text output
 # Moot Court card
 
-- Card id: 1e18aacedefd9dab
+- Card id: 590cd9a242fbc9d0
 - Source: upworthy
 - Cell: headline_only
 - Origin: 2015-05-07T00:00:00+00:00
 - Ledger snapshot: 20261104-4bfb354b87e3
-- Model: 380a643333cc
+- Model: 97f42709799d
 - Feature hash: b4b031b2f77e
 - Issued at: 2015-05-07T00:00:00+00:00
-- Request: headline "A simple fact about your mornings", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.110 percentage points
+- Request: headline "A simple fact about your mornings", image changed: no, planned units per arm: 20000, standard error of the future estimate: 0.110 percentage points
+- Reference headline: not supplied; the pair features use the fit-set mean reference vector (the center of the pairwise space), not a real pair
 
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 7593
-- Effective number of precedents: 1413.3
+- Effective number of precedents: 1393.2
 - Base rate of significant positive results in the cell (P0): 0.101
 
 ## Prediction
 
-- P(significant and positive): 0.198
-- Point estimate: -0.08 percentage points
-- 80 percent interval for the true effect: -0.54 to 0.38 percentage points
-- 80 percent interval for the result of the test at the planned standard error: -0.56 to 0.40 percentage points
-- P(true effect above 0): 0.397
-- Rung: P2, weight on precedents 0.1
+- P(significant and positive): 0.154
+- Point estimate: -0.09 percentage points
+- 80 percent interval for the true effect: -0.47 to 0.28 percentage points
+- 80 percent interval for the result of the test at the planned standard error: -0.50 to 0.31 percentage points
+- P(true effect above 0): 0.357
 ```
 
 This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).

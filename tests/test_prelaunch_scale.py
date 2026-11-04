@@ -208,3 +208,13 @@ def test_method_md_records_the_finding_in_plain_words():
     low = text.lower()
     for needle in ("relative lift", "noisy reference", "-41", "+104", "pre-launch", "planned exposure", "precision"):
         assert needle in low, f"method.md lacks {needle}"
+
+
+def test_the_two_run_length_fields_of_the_asos_rows_reach_no_pre_launch_view(imp):
+    """T6-plan row 2 (R2 nit 1, call 249): ``n_checkpoints`` and ``final_offset_days`` stay at the top level of the ASOS features, which
+    keeps every snapshot id of the released ledgers; the guard is that the pre-launch view, the only reader of the features, drops both."""
+    scale = imp("mootcourt.scale")
+    features = {"metric_id": 3, "n_variants": 2, "n_checkpoints": 41, "final_offset_days": 43.5, "calendar": "nominal",
+                "post_launch": {"original_effect": 0.1, "original_se": 0.2}}
+    assert {"n_checkpoints", "final_offset_days"}.isdisjoint(scale.prelaunch_view(features))
+    assert set(scale.PRELAUNCH_FEATURES).isdisjoint({"n_checkpoints", "final_offset_days"})

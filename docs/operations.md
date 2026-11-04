@@ -17,18 +17,21 @@ makes a decision about a test.
 ## Nightly fit
 
 The fit rebuilds the retrieval index from scratch for the current ledger snapshot. It never updates an index in place.
-A fit stores the snapshot id, the feature hash, the parameters and the fit time in the model's manifest. The first model
+The fit uses the rows usable at the fit clock: `moot fit --now T` (default now) takes only rows whose `usable_after` is at or before T, so a fit repeated at an earlier clock sees what a team could have seen then. The manifest stores the snapshot id, the feature hash, the parameters, the fit time, `fit_as_of` (the clock) and `data_through` (the latest result seen, at or before the clock), and the fit prints "on N rows usable at T". The first model
 registered for a source is its champion. Later models are challengers, except a refit of the same method on newer data, which refreshes the champion
 (see "Champion refresh" below).
 
 ## Weekly join
 
 The join reads new concluded rows, appends them to the ledger, and attaches an outcome to every card whose row is now
-in the ledger, issued or abstained (see "Abstained cards and the convention of the join" below). Two rules protect the record.
+in the ledger, issued or abstained (see "Abstained cards and the convention of the join" below). Four rules protect the record.
 
 - Card files are never changed. An outcome is a separate file, written once and made read-only.
 - An outcome exists only once its registered horizon has passed. A join at time `now` skips any row whose `usable_after` is
   after `now`. The first later join attaches it. The reliability window also ignores outcomes dated after `now`.
+
+- A card counts as pre-launch evidence only when both its origin and its issue time are at or before the row's `started_at` (equal counts). A card issued while the test was running (in flight) or after its result is recorded with `post_hoc: true`, the reason and the times, and is never scored; it leaves the reliability report, the drift rule and the skill line untouched. `moot join` prints how many it recorded, and `moot doctor` has a `cards <source>` check that warns when any exist. A card whose origin is after its issue time is refused when it is made (command, service and tool alike), because it would stand on rows that were not yet usable.
+- A row is scored once. When several cards name the same row, the earliest pre-launch card by issue time is the scored one (the card id breaks a tie, and a row already scored keeps its card); the others are recorded as reissues (`reissue: true`, `superseded_by`) and not scored. `moot join` and `moot doctor` count them.
 
 Each outcome carries a typed miss: `abstained_but_clear`, `confident_but_wrong`, `direction_miss`, `magnitude_miss`, or a hit.
 
@@ -44,8 +47,7 @@ A card also abstains when the cell's reliability report is missing or more than 
 
 ## Promotion
 
-`moot promote` compares the challenger's backtest Brier skill with the champion's. It promotes only when the gain reaches the
-margin and the challenger's backtest test count reaches the gate size for its own skill (the gate counts tests, not rows). Otherwise it prints each condition that failed.
+`moot promote` compares the two methods on the rows both scored. It reads the per-row score tables of the champion's backtest and of a backtest of the challenger's method, pairs the rows by row id and bootstraps the paired Brier skill difference by test (`--bootstrap`, default 500 resamples). It promotes only when the lower end of the 90 percent interval clears the margin (`--margin`, default 0: the interval decides) and the common tests reach the gate size for the challenger's skill (the gate counts tests, not rows). `--challenger-scores` and `--challenger-rung` name the challenger's table and rung when its own summary does not; a table shared with the champion is refused, because it carries no paired evidence. Otherwise it prints each condition that failed. The earn-weight rule for a second opinion keeps its own margin of 0.02.
 
 ## What the service does not do
 
@@ -71,7 +73,7 @@ Three reports are for study of the method, not for the weekly cycle. All are fil
 The join and the replay of an archive (`scripts/replay_weekly.py`) share one code path, so a team gets what the replay reports. An abstained card is scored on the forecast it withheld: a frozen card
 of an abstained cell keeps that forecast in a sealed `withheld` block of its file (rung, weight on precedents, `p_sig`, point, intervals and the predictive), and the join scores it exactly as it scores an issued card,
 flagged `abstained: true` and `scored_forecast: withheld`, never dropped. The reliability report is built from every outcome that has a forecast, so a cell whose entry is older than 14 days, or is marked drifted,
-collects evidence while it abstains and recovers: after the first ten outcomes in the trailing window the entry is dated at the join, and one join that is not below threshold clears a drift mark. No screen, no HTTP response and no
+collects evidence while it abstains and recovers (the backtest's first seed of the report is dated at the fit clock when the ledger's last result is no more than 14 days before it, so a fresh fit on a recent ledger starts inside the staleness limit; a report a join has written is never re-dated): an entry is dated at the join that finds its first outcome inside the trailing window, which is what recovers a stale cell; ten outcomes are the minimum for drift evidence, so they gate the clearing of a drift mark and nothing else, and one join that is not below threshold clears the mark. No screen, no HTTP response and no
 tool shows the sealed block; an abstained card still shows P0 only, labelled as the base rate the card declined to improve on. A card with no forecast at all (no visible row in its cell) has nothing to score.
 
 An outcome is scored with the predictive the card stored (family, degrees of freedom, location, scale and grid, and the planned standard error `s_star`), so the log score and the coverage match the backtest's for the same row. Coverage is
@@ -89,10 +91,10 @@ argument of the MCP tool name that row. The tool never freezes a card, so it onl
 Each fit records its `method_id`, a hash of the method version, the fixed hyperparameters and the kind and size of the feature space (never of the data), and `data_through`, the latest result it saw. A fit with the champion's `method_id` on strictly newer data is the same method on newer data: it becomes the champion
 without the challenger margin, unless its backtest Brier skill interval lies entirely below the champion's. The fit time only breaks a tie between equal data, and a refit of an older snapshot never takes the champion back, whatever its fit time.
 A same-method fit that has no backtest yet (the usual state right after new rows arrive) is held as the challenger and marked pending; `moot fit` says so, and `moot backtest` decides it by attaching the summary (no second `moot fit`): the champion is refreshed or the history records `refresh_refused`. A registry written before `data_through` existed gets the champion's value derived from its bundle's fit cutoff (the history logs `data_through_derived`).
-Every route to the challenger writes its reason in the history. A fit with another `method_id` is a different method and needs the margin and the gate (`moot promote`).
+Every route to the challenger writes its reason in the history. A fit with another `method_id` is a different method and needs the paired comparison and the gate (`moot promote`).
 
 ## The skill line on a card
 
 The card prints the trailing eight-week Brier skill of the cell against its base rate with its 90 percent by-test interval, the rows and tests in the window, the gate verdict at that many tests (read at the base rate nearest the cell's own
-in `gates.json`) and the latest gated figure of the champion's backtest. A reliability report written before the interval was stored prints "no interval is recorded". Run `moot simulate gate-power` to size the gates by test at the base rate
+in `gates.json`) and the champion's backtest figure for the card's own cell, with its interval and gate verdict, when that cell is decidable; otherwise the pooled figure, labelled pooled with the reason. A reliability report written before the interval was stored prints "no interval is recorded". Run `moot simulate gate-power` to size the gates by test at the base rate
 of your archive; `moot simulate power` is the earlier per-row simulation at one base rate.

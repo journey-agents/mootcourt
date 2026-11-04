@@ -30,9 +30,10 @@ def check_versions() -> str | None:
     init = re.search(r'__version__ = "([^"]+)"', (ROOT / "src" / "mootcourt" / "__init__.py").read_text(encoding="utf-8"))
     if not init or init.group(1) != version:
         return f"pyproject says {version} but the package says {init.group(1) if init else 'nothing'}"
-    top = re.search(r"^## \[([^\]]+)\]", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
-    if not top or top.group(1) != version:
-        return f"the newest CHANGELOG entry is {top.group(1) if top else 'missing'}, not {version}"
+    headings = re.findall(r"^## \[([^\]]+)\]", (ROOT / "CHANGELOG.md").read_text(encoding="utf-8"), re.M)
+    top = next((h for h in headings if h.lower() != "unreleased"), None)    # an Unreleased section may sit above the newest version
+    if top != version:
+        return f"the newest CHANGELOG entry is {top or 'missing'}, not {version}"
     return None
 
 

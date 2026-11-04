@@ -17,6 +17,7 @@ missing or older, ``reliability-<source>.json``.
 from __future__ import annotations
 
 import datetime as dt
+import importlib
 import json
 import math
 from dataclasses import dataclass, field
@@ -26,8 +27,21 @@ import matplotlib
 import numpy as np
 import pandas as pd
 
+from mootcourt.storage import SidecarEnvironmentError, sidecar_message
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+
+
+def _pyplot(importer=importlib.import_module):
+    """The plotting library; a UnicodeDecodeError at import (its style directory holds a macOS ``._`` sidecar it cannot read, an install on
+    an exFAT volume) becomes ``SidecarEnvironmentError``, which the command line prints as one line (round 01, R6; call 226)."""
+    try:
+        return importer("matplotlib.pyplot")
+    except UnicodeDecodeError as exc:
+        raise SidecarEnvironmentError(sidecar_message(str(exc))) from exc
+
+
+plt = _pyplot()
 
 from mootcourt import harness_stats as hs  # noqa: E402
 from mootcourt.config import BOUNDARY_SENTENCE, BY_ORIGIN_RESAMPLES  # noqa: E402
@@ -57,7 +71,16 @@ CALIBRATION_NOTE = (
 DECISION_NOTE = (
     "Random order captures K over n of the total by linearity, so it is exact, not a draw. A rung whose p_win is constant within a cell "
     "chooses by cell and then at random; its capture differs from random order only through between-cell differences. Intervals "
-    "resample whole tests within each origin."
+    "resample whole tests within each origin. The adjusted bounds are Bonferroni bounds for the family of rungs compared with random "
+    "order in the pooled rows (family_size, the decision-value call of docs/method.md). diff_matched is the difference from random order "
+    "matched to the arm-count composition of the chosen set, the baseline a rung must beat (the number of contrasts is known before launch)."
+)
+CELL_GATE_NOTE = (
+    "The gate sizes are simulated at an archive-level rows per test and within-test correlation (gate_assumed_*). A cell has its own, measured "
+    "on its rows (gate_cell_rows_per_test, gate_cell_icc); gate_cell_n_200 and gate_cell_n_400 scale the nearest simulated sizes to first order "
+    "by the information a test carries, rows per test over the design effect, and decidable_by_tests_cell is the verdict at those sizes. A "
+    "simulation per cell is too slow for the backtest path, so this is an approximation; decidable_by_tests stays the verdict at the nearest "
+    "simulated row."
 )
 MIN_BIN_N = 10          # bins with fewer rows are in the tables but not drawn
 DECISION_BOOTSTRAP = 500
@@ -203,6 +226,7 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
     """
     agg = hs.aggregate_scores(scores, gates, B=B, seed=seed)
     agg.insert(2, "kind", agg["rung"].map(rung_kind))
+    decidable_unit = hs.verdict_in_gate_unit(agg, gates)
     primary = next((r for r in ("P2", "P1", "P0") if (scores["rung"] == r).any()), sorted(scores["rung"].unique())[-1])
     metrics = sorted(m for m in scores["metric"].dropna().unique() if m) if "metric" in scores.columns else []
     multi = len(metrics) >= 2
@@ -216,6 +240,7 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
             part = scores[scores["metric"] == m]
             a = hs.aggregate_scores(part, gates, B=min(B, hs.DEFAULT_B), seed=seed)
             a.insert(2, "kind", a["rung"].map(rung_kind))
+            hs.verdict_in_gate_unit(a, gates)
             by_metric.append({"metric": m, "primary": m == pm, "n_rows": int(part.loc[part["rung"] == primary, "row_id"].nunique()),
                               "aggregate": a})
     dv = decision_value(scores[scores["metric"] == pm] if multi else scores, ledger, seed=seed, B=min(B, DECISION_BOOTSTRAP))
@@ -261,7 +286,8 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
         header["variant"] = variant
     notes = {"circularity": hs.CIRCULARITY_NOTE, "burn_in": BURN_IN_NOTE, "abstention_triggers": hs.abstention_trigger_note(scores),
              "rungs": {r: RUNG_NOTES.get(r, "") for r in header["rungs"]}, "p0_skill": P0_SKILL_NOTE, "intervals": INTERVAL_NOTE,
-             "calibration_null": CALIBRATION_NOTE, "decision_value": DECISION_NOTE}
+             "calibration_null": CALIBRATION_NOTE, "decision_value": DECISION_NOTE, "decidable_unit": decidable_unit,
+             "cell_gate": CELL_GATE_NOTE}
     so_table = None
     if second_opinion:
         from mootcourt.simulators.scoring import CONTAMINATION_SENTENCE
@@ -343,6 +369,11 @@ def _split_half(ledger: pd.DataFrame, origin=None) -> dict:
 
 
 # -------------------------------------------------------------- markdown
+def _unsigned_zero(text: str) -> str:
+    """A formatted number that is zero at its printed precision loses its sign (call 209)."""
+    return text[1:] if text.startswith("-") and float(text) == 0.0 else text
+
+
 def _fmt(v) -> str:
     if v is None:
         return "n/a"
@@ -351,7 +382,7 @@ def _fmt(v) -> str:
     if isinstance(v, int):
         return str(v)
     if isinstance(v, float):
-        return f"{v:.4f}"
+        return _unsigned_zero(f"{v:.4f}")
     return str(v).replace("|", "/")
 
 
@@ -381,10 +412,21 @@ _AGG_GROUPS = [
      "outcomes, however spread it is)",
      ["cell", "rung", "auc_event", "auc_event_lo", "auc_event_hi", "resolution_event", "resolution_event_lo", "resolution_event_hi",
       "auc_direction", "auc_direction_lo", "auc_direction_hi", "resolution_direction", "resolution_direction_lo", "resolution_direction_hi"]),
+    ("Discrimination within strata (an origin and a cell scored on its own, averaged with weights by stratum size): the pooled AUC above also "
+     "credits a rung with the movement of the base rate between cells and origins, which P0 has by construction",
+     ["cell", "rung", "auc_event_within", "auc_event_within_lo", "auc_event_within_hi", "resolution_event_within", "resolution_event_within_lo",
+      "resolution_event_within_hi", "auc_direction_within", "auc_direction_within_lo", "auc_direction_within_hi", "resolution_direction_within"]),
     ("Sensitivity of the event definition: the same forecasts scored against y > z s_star on the planned standard error (the headline uses "
      "the realized one)",
      ["cell", "rung", "event_rate_planned", "p_sig_mean", "brier_planned", "brier_base_planned", "brier_skill_planned",
       "brier_skill_planned_lo", "brier_skill_planned_hi"]),
+    ("Paired log score difference from P1 on the same rows (nats per row, 90 percent by-test interval; negative means the rung scores below P1)",
+     ["cell", "rung", "logscore_vs_p1", "logscore_vs_p1_lo", "logscore_vs_p1_hi", "logscore_vs_p1_adjusted_lo", "logscore_vs_p1_adjusted_hi",
+      "n_paired"]),
+    ("The gate read with the group's own dependence: rows per test and within-test correlation of the group against those the nearest simulated gate "
+     "assumed, and the gate sizes scaled to first order by the information per test (an approximation; docs/method.md call 205)",
+     ["cell", "rung", "event_rate", "gate_cell_rows_per_test", "gate_cell_icc", "gate_assumed_rows_per_test", "gate_assumed_icc", "gate_cell_n_200",
+      "gate_cell_n_400", "decidable_by_tests_cell"]),
     ("Direction accuracy and coverage of the intervals for y",
      ["cell", "rung", "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi", "n_decisive", "direction_accuracy_decisive",
       "direction_ceiling",
@@ -526,7 +568,7 @@ def render_markdown(doc: dict) -> str:
             "Each scored row belongs to the year in which its test started; the years partition the scored rows. Brier skill and "
             "log score carry 90 percent by-test intervals.", ""]
     out += _table(t.get("score_by_year", []), ["year", "cell", "rung", "n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier_skill",
-                                                "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "abstention_rate"])
+                                                "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "abstention_rate", "event_rate"])
     out += ["## Coverage of the intervals for y (primary rung)", ""]
     out += _table(t["coverage"], ["cell", "n", "coverage_80", "coverage_90"])
     out += ["## Coverage by realized over planned standard error", "",
@@ -552,8 +594,12 @@ def render_markdown(doc: dict) -> str:
             "of y, the fraction is of the period's total positive observed lift, and regret is the oracle's capture minus the policy's. "
             + notes.get("decision_value", ""), ""]
     out += _table(t["decision_value"], ["origin", "policy", "rung", "budget", "K", "n_tests", "total", "captured", "captured_fraction",
-                                        "captured_fraction_lo", "captured_fraction_hi", "regret", "regret_lo", "regret_hi", "random_fraction",
-                                        "diff_random", "diff_random_lo", "diff_random_hi", "constant_within_cell"])
+                                        "captured_fraction_lo", "captured_fraction_hi", "captured_fraction_adjusted_lo",
+                                        "captured_fraction_adjusted_hi", "regret", "regret_lo", "regret_hi", "regret_adjusted_lo",
+                                        "regret_adjusted_hi", "random_fraction",
+                                        "diff_random", "diff_random_lo", "diff_random_hi", "diff_random_adjusted_lo",
+                                        "diff_random_adjusted_hi", "matched_fraction", "diff_matched", "diff_matched_lo", "diff_matched_hi",
+                                        "diff_matched_adjusted_lo", "diff_matched_adjusted_hi", "family_size", "constant_within_cell"])
     out += ["## Figures", ""] + [f"- figures/{n}-{h['source']}.png" for n in FIGURE_NAMES] + [""]
     return "\n".join(out)
 
@@ -673,6 +719,7 @@ def write_reliability(scores: pd.DataFrame, source: str, out_dir, as_of: dt.date
                              "p0_logscore": p0_ls, "brier": main["brier_event"].to_numpy(), "p0_brier": main["brier_base"].to_numpy(),
                              "test_id": main["test_id"].to_numpy()})
     report = build_reliability(None, outcomes, when.to_pydatetime(), advance=True, source=source)
+    report["seed"] = {"last_result": report["as_of"]}       # call 248: only a seed carries this; the weekly join's rewrite drops it
     if path.exists() and not overwrite:
         old = json.loads(path.read_text(encoding="utf-8"))
         if dt.datetime.fromisoformat(old["as_of"]) >= when.to_pydatetime():

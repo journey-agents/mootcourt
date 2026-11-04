@@ -10,6 +10,8 @@ Start with `moot doctor`. It names most of what can be wrong, and its exit code 
 | `FAIL data root: ... does not exist` | The folder named by `MOOTCOURT_DATA_ROOT` or `[storage] data_root` is not there. | Create it, or run `moot init`, or correct the path. |
 | `WARN data root: ... free space ... (under 10 GB ...)` | Little room for reports, models and caches. | Point the data root at a larger volume. |
 | `WARN ledger: no ledger at ...` | Nothing has been imported. | `moot ingest`, see [tutorial 2](tutorials/02-your-own-archive.md). |
+| `FAIL environment: N sidecar files ...` | The Python environment sits on an exFAT volume and holds macOS `._` sidecar files; `moot backtest` would fail on them. Make the environment on the internal disk, see [working from a clone on an exFAT volume](#working-from-a-clone-on-an-exfat-volume). A `WARN environment` says the environment is on an external volume. |
+| `WARN cards SOURCE: ... post-hoc cards ...` | Cards of this source were issued after their test started (or after its result). They are recorded and never scored, so they cannot raise the record; a reissue for a row that already has a scored card is counted here too. Issue cards before the test starts. The line is absent until outcome records exist. |
 | `FAIL ledger` with violations | The ledger does not conform to the schema (duplicate row ids, a standard error of zero, a row used before it was final, mixed units in a cell). | Run `moot ledger check` on the ledger for the rows, fix the export and import again. |
 | `WARN models: no registry` | No model has been fitted. | `moot fit --source NAME`. |
 | `WARN model ...: champion ... was fit on snapshot ..., which no longer matches the ledger` | The ledger grew after the last fit. | `moot fit`, then `moot backtest`. |
@@ -28,27 +30,56 @@ Everything heavy lives under one folder, the **data root**. These are the questi
 
 ## exFAT volumes and `._` files
 
-External drives are often formatted as exFAT. Moot Court works on them: it needs no symlinks, no hard links and no permission changes, and a permission change that the volume refuses is skipped quietly. On macOS an exFAT volume gets a binary companion file called `._NAME` next to many files. The package ignores every dot file when it lists a folder, so these do not confuse it. If a script of your own globs a folder under the data root, skip names that start with a dot. Do not copy a data root between volumes with a tool that follows symlinks into it, and do not put a symlink inside it.
+External drives are often formatted as exFAT. A data root works on them (the repository and its environment do not, see the next section): it needs no symlinks, no hard links and no permission changes, and a permission change that the volume refuses is skipped quietly. On macOS an exFAT volume gets a binary companion file called `._NAME` next to many files. The package ignores every dot file when it lists a folder, so these do not confuse it. If a script of your own globs a folder under the data root, skip names that start with a dot. Do not copy a data root between volumes with a tool that follows symlinks into it, and do not put a symlink inside it.
 
 ## Working from a clone on an exFAT volume
 
-If the repository itself sits on an exFAT drive, two things differ from an internal disk.
+Keep the clone and its environment on the internal disk. If the repository or its environment sits on an exFAT drive, macOS writes a `._NAME` sidecar file next to every file it creates there (19,356 of them under a fresh `.venv`), and several things break. The data root can stay on the drive; see the last point for what that costs.
 
-- **macOS sidecar files fail tests.** macOS writes a `._NAME` sidecar file next to files it copies or edits on such a drive. Several tests read the docs, reports and source folders as text, and stop with `UnicodeDecodeError: ... byte 0xb0` when they reach one, so a fresh clone or copy shows about twenty failures that have nothing to do with the code. Delete the sidecar files before you run the tests, and again after anything that copies files onto the drive:
+- **`moot backtest` fails after a `pip install -e .` that succeeded.** The install, `moot init`, `moot ingest` and `moot fit` all work, then `moot backtest` exits 2 with this text (the path is that of your environment):
+
+  ```text
+  Cannot decode configuration file PosixPath('.../.venv/lib/python3.11/site-packages/matplotlib/mpl-data/stylelib/.__classic_test_patch.mplstyle') as utf-8. error: 'utf-8' codec can't decode byte 0xb0 in position 37
+  ```
+
+  The plotting library globs the sidecar of one of its own style files, and the message names a style file and not the drive. `moot backtest` now stops on this with one line that says what it is ("the Python environment holds macOS `._` sidecar files ...") and `moot doctor` reports it on its second line: `FAIL environment: N sidecar files (`._name`) under ...` (and `WARN environment: ... lives on an external volume` before any sidecar appears). Cure: make the environment on the internal disk and install into that, then run again.
+
+  ```bash
+  python3 -m venv ~/.venvs/mootcourt
+  source ~/.venvs/mootcourt/bin/activate
+  pip install -e /path/to/clone
+  ```
+
+  Delete the damaged `.venv` inside the clone, and the sidecars (below).
+
+- **`uv sync` fails with a RECORD mismatch.** In a clone on the drive, `uv sync --all-extras` exits 2 with the lines below (the first warning appears too; the paths are those of your clone), after it has already removed two packages from an existing `.venv`:
+
+  ```text
+  warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+           If the cache and target directories are on different filesystems, hardlinking may not be supported.
+           If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+  error: Failed to install: ruff-0.17.3-py3-none-macosx_11_0_arm64.whl (ruff==0.17.3)
+    Caused by: RECORD file doesn't match wheel contents: Could not find entry for ruff-0.17.3.data/scripts/._ruff (/Volumes/Crucial X10/mootcourt-data/round01-r4-clone/.venv/lib/python3.13/site-packages/ruff-0.17.3.data/scripts/._ruff)
+  ```
+
+  An older uv fails with `failed to copy ... ._ttx.1` instead; the cause is the same, a `._` file in a wheel. Cure: point uv at an environment on the internal disk, and leave the clone and the data root where they are.
+
+  ```bash
+  export UV_PROJECT_ENVIRONMENT="$HOME/.venvs/mootcourt"
+  uv sync --all-extras
+  uv run pytest -q
+  ```
+
+  The environment takes a few hundred megabytes of the internal disk. Keep the variable set in every shell that runs `uv run` in that clone.  `--all-extras` also installs the packages that build the manual.
+
+- **Sidecar files fail tests.** Several tests read the docs, reports and source folders as text, and stop with `UnicodeDecodeError: ... byte 0xb0` when they reach a sidecar, so a fresh clone or copy shows about twenty failures that have nothing to do with the code. Delete the sidecar files before you run the tests, and again after anything that copies files onto the drive. The command reaches `.git` as well:
 
   ```bash
   find . -name '._*' -type f -delete
   ```
 
-- **Keep the uv virtualenv on the internal disk.** `uv sync` into a virtualenv on the drive fails with `failed to copy ... ._ttx.1`, a `._` file inside a wheel. Point uv at an environment on the internal disk, and leave the clone and the data root where they are:
-
-  ```bash
-  export UV_PROJECT_ENVIRONMENT="$HOME/.venvs/mootcourt"
-  uv sync --extra dev
-  uv run pytest -q
-  ```
-
-  The environment takes a few hundred megabytes of the internal disk. Keep the variable set in every shell that runs `uv run` in that clone.
+- **Two harmless messages.** `git status` in a fresh clone prints `error: non-monotonic index .git/objects/pack/._pack-....idx` twice, and `pip install -e .` prints about ten lines of `WARNING: Ignoring invalid distribution -httpx2 ...` (pip reads each `._NAME` sidecar as a package named `-NAME`). The `find` command above cures both.
+- **A data root on the drive is slower.** Sample-sized commands take several times longer there than on the internal disk, because they write many small files: one measurement gave `moot init` 90 s and `moot backtest` 97 s on exFAT against 24 s and 12 s on the internal disk, with the backtest printing 11 s for its own run. `moot init` and `moot backtest` print progress lines to standard error after 10 seconds (`--progress-after`), and the backtest's last line reports "the whole run N s". Keep the data root on the drive for large runs, where the space matters more than the small-file cost.
 
 ## A card abstains
 

@@ -11,13 +11,15 @@ R4 Reproducibility chair. Clean clone, environment, `make data fit backtest`, ev
 R5 Area chair. Significance of the contribution, honesty of the claims against the results, fit to the venue, clarity, related work coverage and credit, limitations, ethics.
 R6 Practitioner and documentation reviewer. A data scientist at a company with an experiment archive who has never seen the project. Follows README and the tutorials from a clean clone with no other context: the five-minute quickstart, the bring-your-own-archive tutorial, the weekly loop and the service. Judges whether a new user understands what the package does and can run it on their own results within an hour, whether the manual answers the questions that come up, and whether the outputs are understandable without reading the paper. A tutorial step that fails or an output a reader cannot interpret is a major finding. Scores clarity and code quality; reports the wall time of the walkthrough.
 
+The same six reviewers continue across rounds; each receives its own previous review and the response letter, verifies each of its previous findings first (closed or not closed, with the evidence), then runs its rubric section of paper/reviews/rubric.md, then may add findings that name a claim or a rubric item. Round 03 adds one fresh area chair, bounded by the rubric, as the independent check.
+
 ## Scores
 
-Each reviewer scores six dimensions from 1 to 5: novelty, technical correctness, experimental rigor, clarity, reproducibility, code quality. Each reviewer gives a recommendation: reject, major revision, minor revision, accept. Each finding carries a severity: blocking (a correctness, leakage or reproducibility defect, or a claim the results do not support), major (a missing experiment, baseline or analysis the conclusions need), minor (presentation, wording, structure), nit.
+Each reviewer scores six dimensions from 1 to 5: novelty, technical correctness, experimental rigor, clarity, reproducibility, code quality. Each reviewer gives a recommendation: reject, major revision, minor revision, accept. Each finding carries a severity fixed by paper/reviews/rubric.md: blocking only for leakage, a number that does not reproduce, or a claim the evidence does not support; major only for an experiment the rubric names that is missing or defective; minor for presentation, wording, structure and the other items the rubric names; nit for naming and formatting. Every finding cites the claim id (paper/reviews/claims.md) or the rubric item id it rests on; a finding that cites neither is a suggestion, recorded in the letter under "Suggestions", never fixed in the round and never counted toward the stop condition.
 
 ## Stop condition
 
-The loop stops when, in one round, all six reviewers recommend accept or minor revision, no blocking or major finding remains, R4 reports a clean-clone run that regenerates every number in the paper, and every number in the paper traces to a report JSON path. If any reviewer disagrees, the round's response letter answers every finding (fixed, with the commit; or argued, with the reason), the affected experiments are re-run, and a new round begins. The log of rounds is part of the paper's supplementary material.
+The loop stops when, in one round, all six reviewers recommend accept or minor revision, no blocking or major finding remains, every rubric item passes for every role, every finding of the round names the claim it weakens or the rubric item it fails (a finding that names neither is a suggestion and does not count), R4 reports a clean-clone run that regenerates every number in the paper, every number in the paper traces to a report JSON path, and every claim in paper/reviews/claims.md is supported as written. If any reviewer disagrees, the round's response letter answers every finding (fixed, with the commit; or argued, with the reason; or suggestion, with no change in the round), the affected experiments are re-run at the cheapest verification tier that proves the change, and a new round begins. The loop runs at most two further rounds after round 01; at the cap, open minors are listed in the letter and in the limitations section and the paper is released; an open major at the cap is a decision for the launching team, written up with the options (fix and run one more round, or argue and release). The log of rounds is part of the paper's supplementary material.
 
 ## Review file format (one per reviewer)
 
@@ -27,15 +29,17 @@ Paper version: <git commit>   Code version: <git commit>
 Scores: novelty n/5, correctness n/5, rigor n/5, clarity n/5, reproducibility n/5, code n/5
 Recommendation: <reject | major revision | minor revision | accept>
 ## Summary (five sentences, in the reviewer's own words, of what the paper claims and shows)
+## Verification of previous findings (from round 02 on: each of this reviewer's previous findings, closed or not closed, with the evidence)
 ## Findings
-- [blocking|major|minor|nit] <where: section, table, file:line> <what is wrong> <what would fix it>
+- [blocking|major|minor|nit] [Rk.n and/or Cj] <where: section, table, file:line> <what is wrong> <what would fix it>
+## Suggestions (what names no claim id and no rubric id; not fixed in the round)
 ## Questions for the authors
 ## What is good (so it is not removed in revision)
 ```
 
 ## Response letter format
 
-For every finding, in the reviewers' order: the finding quoted in one line, then "Fixed:" with the change and commit, or "Argued:" with the reason and, where possible, the number that settles it. Re-run experiments are listed with their new report JSON paths. The letter ends with the diff of the paper's claims between rounds.
+For every finding, in the reviewers' order: the finding quoted in one line with its claim or rubric id, then "Fixed:" with the change and commit, or "Argued:" with the reason and, where possible, the number that settles it, or "Suggestion:" with no change in the round. Re-run experiments are listed with their new report JSON paths. The letter ends with the diff of the paper's claims between rounds, by claim id. The round's summary file carries the convergence table: open findings by severity, rubric items passed per role, claims supported as written, and numbers changed since the previous round.
 
 ## Writing rules (also enforced on the reviews)
 

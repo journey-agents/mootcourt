@@ -103,12 +103,15 @@ def test_promotion_gate_compares_tests_with_the_gate(imp, tmp_path):
     reg = regm.Registry(tmp_path)
     reg.register_model("s", "champ", {"brier_skill": 0.05, "n": 5000, "n_tests": 5000})
     reg.register_model("s", "chall", {"brier_skill": 0.20, "n": 5000, "n_tests": 100})
-    res = reg.promote("s", {"n_200": 300, "n_400": 800})
+    # the paired comparison counts the common tests against the gate (round 01, R2, call 224)
+    paired = {"skill_diff": 0.15, "lo": 0.10, "hi": 0.20, "n_tests": 100, "n_rows": 5000, "level": 0.9, "resamples": 200,
+              "champion_rung": "P2", "challenger_rung": "P2"}
+    res = reg.promote("s", {"n_200": 300, "n_400": 800}, paired=paired)
     assert not res.promoted and "tests" in res.reason
     reg2 = regm.Registry(tmp_path / "ok")
     reg2.register_model("s", "champ", {"brier_skill": 0.05, "n": 5000, "n_tests": 5000})
     reg2.register_model("s", "chall", {"brier_skill": 0.20, "n": 5000, "n_tests": 900})
-    assert reg2.promote("s", {"n_200": 300, "n_400": 800}).promoted
+    assert reg2.promote("s", {"n_200": 300, "n_400": 800}, paired={**paired, "n_tests": 900}).promoted
 
 
 def test_backtest_summary_carries_the_test_count(imp):

@@ -18,11 +18,19 @@ after a no-regression check on its backtest: refused (it becomes the challenger 
 entirely below the champion's. A same-method fit with no backtest summary yet is a pending refresh, held as the challenger, and the check runs
 when the summary is attached. A bundle with a different ``method_id`` is a different method and needs the margin below.
 
-Promotion rule (``promote``, for a different method): the challenger replaces the champion only when its Brier skill beats the
-champion's by at least the margin (default ``config.PROMOTION_MARGIN``, 0.02 in Brier skill) and its
-backtest row count reaches the gate for its own skill: ``n_200`` when the challenger's skill is at least
-0.20, otherwise ``n_400``, both read from gates.json. Otherwise the reason says which condition failed and by
-how much; the champion changes only on promotion.
+Promotion rule (``promote``, for a different method; round 01, reviewer R2, docs/method.md call 224): the comparison is paired. The two
+methods are scored on the same rows (``paired_comparison``: the per-row Brier of each on the rows both score, joined by row id), the
+statistic is the paired Brier skill difference, challenger over champion (the mean per-row Brier difference divided by the mean base-rate
+Brier of the common rows, so it is on the skill scale), with a 90 percent bootstrap interval that resamples whole tests. The challenger
+replaces the champion only when the lower bound of that interval clears the margin (default ``config.PROMOTION_MARGIN``, zero: the interval
+decides; a margin above zero is a team's own choice) and the common tests reach the gate for the challenger's own skill: ``n_200`` when it
+is at least 0.20, otherwise ``n_400``, both read from gates.json. Two models scored by one backtest table and rung have no paired evidence
+between them, and ``promote_command`` says so. Otherwise the reason says which condition failed and by how much; the champion changes only
+on promotion.
+
+Nightly fit (``fit_command``; call 223): the bundle is fit on the rows usable at the fit clock under the visibility rule of the backtest
+(``ledger.visible_rows``: status admitted and ``usable_after`` at or before the clock), the clock is recorded in the manifest as
+``fit_as_of`` and ``data_through`` is the latest ``usable_after`` the fit saw, which is at or before the clock.
 
 Units: Brier skill is unitless; ``n`` is a count of scored rows.
 """
@@ -35,11 +43,13 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from mootcourt.config import PROMOTION_MARGIN
+import pandas as pd
+
+from mootcourt.config import PROMOTION_MARGIN, RELIABILITY_MAX_AGE_DAYS
 from mootcourt.storage import visible_glob
 
 SKILL_FOR_N_200 = 0.20
-_EPS = 1e-9
+PAIRED_LEVEL = 0.90
 
 
 @dataclass(frozen=True)
@@ -288,8 +298,12 @@ class Registry:
                 self._log(e, "refresh_refused", now, model_id=model_id, reason=reason)
         self._write(doc)
 
-    def promote(self, source: str, gates: dict, margin: float = PROMOTION_MARGIN, now: dt.datetime | None = None) -> PromotionResult:
-        """Promote the challenger when it clears the margin and the gate; see the module docstring."""
+    def promote(self, source: str, gates: dict, paired: dict | None = None, margin: float = PROMOTION_MARGIN,
+                now: dt.datetime | None = None) -> PromotionResult:
+        """Promote the challenger when the paired interval clears the margin at the gate; see the module docstring.
+
+        ``paired`` is what ``paired_comparison`` returns (the two methods on the same rows); without it nothing is promoted.
+        """
         doc = self._read()
         e = doc.get(source)
         champ = e.get("champion") if e else None
@@ -298,44 +312,89 @@ class Registry:
             return PromotionResult(False, f"no champion is registered for source {source}")
         if not chall:
             return PromotionResult(False, "no challenger is registered, nothing to promote", champ, None)
-        s_ch, s_cp = e["summaries"].get(chall), e["summaries"].get(champ)
+        s_ch = e["summaries"].get(chall)
         if not s_ch or s_ch.get("brier_skill") is None:
             return PromotionResult(False, f"no backtest summary for the challenger {chall}; run `moot backtest` then `moot fit`", champ, chall)
-        if not s_cp or s_cp.get("brier_skill") is None:
-            return PromotionResult(False, f"no backtest summary for the champion {champ}; run `moot backtest` then `moot fit`", champ, chall)
-        gain = float(s_ch["brier_skill"]) - float(s_cp["brier_skill"])
+        if paired is None:
+            return PromotionResult(False, "no paired comparison: a challenger is promoted only on the paired difference of the two methods "
+                                          "scored on the same rows (`moot promote` reads both per-row score tables; pass --challenger-scores "
+                                          "for the backtest of the challenger's method)", champ, chall)
         n_need = gates["n_200"] if float(s_ch["brier_skill"]) >= SKILL_FOR_N_200 else gates["n_400"]
-        # The gate counts tests, not rows (REV-007, call 83): rows of one test share an arm and are not independent. A summary
-        # written before the test count was stored falls back to its row count.
-        n_have = int(s_ch["n_tests"] if s_ch.get("n_tests") is not None else s_ch.get("n", 0))
-        unit = "tests" if s_ch.get("n_tests") is not None else "rows"
+        # The gate counts tests, not rows (REV-007, call 83): rows of one test share an arm and are not independent.
+        n_have = int(paired.get("n_tests") or 0)
+        lo, hi, diff = paired.get("lo"), paired.get("hi"), paired.get("skill_diff")
         problems = []
-        if gain + _EPS < margin:
-            problems.append(f"Brier skill gain {gain:.4f} is short by {margin - gain:.4f} of the margin {margin:.4f}")
+        if lo is None or hi is None or diff is None:
+            problems.append(f"the paired Brier skill difference has no interval ({n_have} common tests, {paired.get('n_rows') or 0} common rows; "
+                            "at least two tests are needed)")
+        elif float(lo) <= margin:
+            bar = "zero" if margin == 0 else f"the margin {margin:.4f}"
+            problems.append(f"the 90 percent interval of the paired Brier skill difference, {diff:.4f} ({lo:.4f} to {hi:.4f}) on "
+                            f"{paired.get('n_rows')} common rows of {n_have} tests, does not clear {bar}")
         if n_have < n_need:
-            problems.append(f"the challenger's backtest has {n_have} {unit}, below gate n = {n_need} tests for its skill")
+            problems.append(f"the paired comparison rests on {n_have} common tests, below gate n = {n_need} tests for the challenger's skill")
         if problems:
             return PromotionResult(False, "; ".join(problems), champ, chall)
         e["champion"], e["challenger"] = chall, None
-        self._log(e, "promoted", now, model_id=chall, replaced=champ, brier_skill_gain=gain, n=n_have, gate_n=n_need, margin=margin)
+        self._log(e, "promoted", now, model_id=chall, replaced=champ, paired=dict(paired), n=n_have, gate_n=n_need, margin=margin)
         self._write(doc)
-        return PromotionResult(True, f"promoted {chall} over {champ}: Brier skill gain {gain:.4f} at n = {n_have} (gate n = {n_need})", chall, None)
+        return PromotionResult(True, f"promoted {chall} over {champ}: paired Brier skill difference {diff:.4f} ({lo:.4f} to {hi:.4f}) on "
+                                     f"{n_have} common tests (gate n = {n_need})", chall, None)
+
+
+def paired_comparison(champion_scores: pd.DataFrame, challenger_scores: pd.DataFrame, rung_champion: str = "P2", rung_challenger: str = "P2",
+                      B: int | None = None, seed: int = 0) -> dict:
+    """The two methods on the same rows: the paired Brier skill difference, challenger over champion, with its by-test bootstrap interval.
+
+    Each table is a per-row score table (``scores-<source>-<snapshot>[--variant].parquet``) with ``row_id``, ``test_id``, ``rung``,
+    ``brier_event`` and ``brier_base``; the rows both tables score at the named rungs are joined by row id. The difference is the mean of
+    the champion's Brier minus the challenger's over the common rows, divided by the mean base-rate Brier of those rows, so its sign and
+    scale are those of a Brier skill difference; positive favours the challenger. The interval resamples whole tests (``B`` draws, default
+    the backtest's own count ``harness_stats.DEFAULT_B``; 90 percent); it is None with fewer than two common tests. Returns ``n_rows``,
+    ``n_tests``, ``skill_diff``, ``lo``, ``hi``, ``level``, ``resamples`` and the two rungs.
+    """
+    from mootcourt import harness_stats as hs
+
+    B = int(hs.DEFAULT_B if B is None else B)
+
+    a = champion_scores.loc[champion_scores["rung"] == rung_champion, ["row_id", "test_id", "brier_event", "brier_base"]]
+    b = challenger_scores.loc[challenger_scores["rung"] == rung_challenger, ["row_id", "brier_event"]]
+    m = a.merge(b, on="row_id", suffixes=("_champion", "_challenger"))
+    out = {"n_rows": int(len(m)), "n_tests": int(m["test_id"].nunique()) if len(m) else 0, "skill_diff": None, "lo": None, "hi": None,
+           "level": PAIRED_LEVEL, "resamples": int(B), "champion_rung": rung_champion, "challenger_rung": rung_challenger}
+    if m.empty:
+        return out
+    base = float(m["brier_base"].mean())
+    if not base > 0:
+        return out
+    frame = pd.DataFrame({"test_id": m["test_id"].to_numpy(),
+                          "d": (m["brier_event_champion"].to_numpy(float) - m["brier_event_challenger"].to_numpy(float)) / base})
+    iv = hs.bootstrap_by_test(frame, "d", B=B, seed=seed, level=PAIRED_LEVEL)
+    out["skill_diff"] = float(iv.estimate)
+    if out["n_tests"] >= 2:
+        out["lo"], out["hi"] = float(iv.lo), float(iv.hi)
+    return out
 
 
 def backtest_summary(report: dict, report_name: str) -> dict:
     """Headline backtest summary of the card rung from a backtest report document (the ``ALL`` cell of P2).
 
-    Falls back to the last rung when there is no P2. Holds the Brier skill with its interval, the scored row
-    count, the log score and the report file name.
+    Falls back to the last rung when there is no P2. Holds the Brier skill with its interval, the scored row count, the log score, the
+    report file name, the name of its per-row score table (``scores`` beside the report) and, under ``cells``, the same figures for every
+    cell of the rung with the cell's gate verdict (``decidable_by_tests``), which the card's backtest line reads (call 225).
     """
     rows = report["tables"]["aggregate"]
     rungs = sorted({r["rung"] for r in rows})
     rung = "P2" if "P2" in rungs else rungs[-1]
     r = next(x for x in rows if x["cell"] == "ALL" and x["rung"] == rung)
+    cells = {x["cell"]: {k: x.get(k) for k in ("brier_skill", "brier_skill_lo", "brier_skill_hi", "n", "n_tests", "decidable_by_tests",
+                                              "gate_base_rate")}
+             for x in rows if x["rung"] == rung and x["cell"] != "ALL"}
+    scores = (report_name.replace("backtest-", "scores-", 1).rsplit(".json", 1)[0] + ".parquet") if report_name.startswith("backtest-") else None
     return {"snapshot_id": report["header"]["snapshot_id"], "rung": rung, "brier_skill": r["brier_skill"],
             "brier_skill_lo": r["brier_skill_lo"], "brier_skill_hi": r["brier_skill_hi"], "n": r["n"],
             "n_tests": r.get("n_tests"), "logscore": r["logscore"],
-            "report": report_name}
+            "report": report_name, "scores": scores, "cells": cells}
 
 
 def find_backtest(reports_dir, source: str, snapshot_id: str) -> tuple[dict, str] | None:
@@ -355,21 +414,117 @@ def find_scores(reports_dir, source: str, snapshot_id: str) -> Path | None:
     return path if path.is_file() else None
 
 
-def fit_command(source: str, df, ledger_dir, models_dir, reports_dir) -> tuple[str, str, str, dict | None]:
-    """Fit the bundle at the current snapshot, save it and register it.
+def _scores_of(reports_dir, source: str, summary: dict | None) -> tuple[Path | None, str]:
+    """The per-row score table a registry summary points at (``scores`` beside its report, else by its snapshot id) and its rung."""
+    summary = summary or {}
+    rung = str(summary.get("rung") or "P2")
+    if summary.get("scores"):
+        return Path(reports_dir) / str(summary["scores"]), rung
+    if summary.get("snapshot_id"):
+        return find_scores(reports_dir, source, str(summary["snapshot_id"])), rung
+    return None, rung
 
-    Returns ``(model_id, snapshot_id, role, summary)``; ``summary`` is None when no backtest exists for the
+
+def promote_command(models_dir, reports_dir, source: str, margin: float = PROMOTION_MARGIN, challenger_scores=None,
+                    challenger_rung: str | None = None, B: int | None = None, seed: int = 0) -> PromotionResult:
+    """The ``moot promote`` step: pair the champion's and the challenger's per-row score tables and decide.
+
+    The champion's table is the one its registry summary names; the challenger's is ``challenger_scores`` (the table of a backtest of
+    the challenger's method, with ``challenger_rung``, default the summary's rung) or, left out, the one its own summary names. Two models
+    scored by one table and rung have no paired evidence between them, so nothing is promoted and the reason says what to run. Raises
+    FileNotFoundError when gates.json is missing.
+    """
+    from mootcourt import simulate
+
+    gates = simulate.load_gates(Path(reports_dir) / "gates.json")
+    reg = Registry(models_dir)
+    e = reg._read().get(source) or {}
+    champ, chall = e.get("champion"), e.get("challenger")
+    if not champ or not chall:
+        return reg.promote(source, gates, paired=None, margin=margin)
+    s_cp, s_ch = e.get("summaries", {}).get(champ), e.get("summaries", {}).get(chall)
+    champ_path, champ_rung = _scores_of(reports_dir, source, s_cp)
+    if challenger_scores is not None:
+        chall_path, chall_rung = Path(challenger_scores), str(challenger_rung or (s_ch or {}).get("rung") or "P2")
+    else:
+        chall_path, chall_rung = _scores_of(reports_dir, source, s_ch)
+        chall_rung = str(challenger_rung or chall_rung)
+    for who, mid, path in (("champion", champ, champ_path), ("challenger", chall, chall_path)):
+        if path is None or not path.is_file():
+            where = f" (expected {path})" if path is not None else ""
+            return PromotionResult(False, f"no per-row score table for the {who} {mid}{where}; run `moot backtest` at its snapshot, "
+                                          "or pass --challenger-scores", champ, chall)
+    if champ_path.resolve() == chall_path.resolve() and champ_rung == chall_rung:
+        return PromotionResult(False, f"the champion and the challenger are scored by the same backtest table and rung ({champ_path.name}, "
+                                      f"{champ_rung}), so no paired evidence separates them; back-test the challenger's method and pass "
+                                      "--challenger-scores", champ, chall)
+    paired = paired_comparison(pd.read_parquet(champ_path), pd.read_parquet(chall_path), champ_rung, chall_rung, B=B, seed=seed)
+    paired.update({"champion_scores": str(champ_path), "challenger_scores": str(chall_path)})
+    return reg.promote(source, gates, paired=paired, margin=margin)
+
+
+def date_reliability_seed(reports_dir, source: str, clock: dt.datetime) -> bool:
+    """Date the reliability seed at the fit ``clock`` when the ledger's last result is within the staleness limit of it (call 248).
+
+    Only a seed is touched: ``report.write_reliability`` marks it with ``seed.last_result`` and the weekly join's rewrite drops the mark, so
+    a report a join has written is never redated. The report's ``as_of`` and every entry's ``as_of`` move to the clock, nothing else
+    changes, and the date of the last result stays on the mark so a later fit judges the limit again. Returns True when the file was
+    rewritten. A seed whose last result is older than the limit, or later than the clock, is left as it is.
+    """
+    path = Path(reports_dir) / f"reliability-{source}.json"
+    if not path.is_file():
+        return False
+    report = json.loads(path.read_text(encoding="utf-8"))
+    mark = report.get("seed")
+    if not isinstance(mark, dict) or not mark.get("last_result"):
+        return False
+    last = dt.datetime.fromisoformat(mark["last_result"])
+    clock = clock if clock.tzinfo is not None else clock.replace(tzinfo=dt.timezone.utc)
+    if last > clock or clock - last > dt.timedelta(days=RELIABILITY_MAX_AGE_DAYS):
+        return False
+    stamp = clock.isoformat()
+    if report.get("as_of") == stamp and all(e.get("as_of") == stamp for e in report.get("cells", {}).values()):
+        return False
+    report["as_of"] = stamp
+    for entry in report.get("cells", {}).values():
+        entry["as_of"] = stamp
+    tmp = path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(report, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+    return True
+
+
+def date_seed_at_champion_fit(models_dir, reports_dir, source: str) -> bool:
+    """``date_reliability_seed`` at the fit clock of the source's champion, for a seed written after the fit (the quickstart fits first).
+
+    False when the source has no champion, the champion was not fit under a clock, or the seed does not qualify."""
+    from mootcourt.bundle import read_manifest
+
+    reg = Registry(models_dir)
+    if source not in reg.sources():
+        return False
+    fit_as_of = read_manifest(reg.get_champion(source), models_dir).get("fit_as_of")
+    return bool(fit_as_of) and date_reliability_seed(reports_dir, source, dt.datetime.fromisoformat(fit_as_of))
+
+
+def fit_command(source: str, df, ledger_dir, models_dir, reports_dir, now: dt.datetime | None = None) -> tuple[str, str, str, dict | None]:
+    """Fit the bundle at the current snapshot on the rows usable at the fit clock, save it and register it.
+
+    ``now`` is the fit clock (default the wall clock): only rows with ``usable_after`` at or before it enter the fit, the visibility rule
+    of the backtest (call 223). Returns ``(model_id, snapshot_id, role, summary)``; ``summary`` is None when no backtest exists for the
     snapshot (the manifest slot stays empty and the message says so).
     """
     from mootcourt.bundle import fit_bundle, save_bundle
     from mootcourt.ledger import ensure_snapshot
 
+    as_of = now or dt.datetime.now(dt.timezone.utc)
     sid = ensure_snapshot(df, ledger_dir)
-    bundle = fit_bundle(df, source, sid)
+    bundle = fit_bundle(df, source, sid, as_of=as_of)
     found = find_backtest(reports_dir, source, sid)
     summary = backtest_summary(*found) if found else None
     bundle.backtest_summary = summary
     save_bundle(bundle, models_dir)
+    date_reliability_seed(reports_dir, source, as_of)
     role = Registry(models_dir).register_model(
         source, bundle.model_id, summary, method_id=bundle.method_id or None, fitted_at=bundle.fit_time or None,
         data_through=bundle.fit_cutoff.isoformat() if bundle.fit_cutoff is not None else None,

@@ -10,7 +10,7 @@
 
 A **response simulator** is any program you or your team already have that gives a second opinion on a proposed test: a pool of simulated readers backed by a language model, a trained click model, a rule of thumb. Moot Court does not care how it works. It gives the program a proposed test, reads back a probability that the live test will end significant and positive, scores that probability on the same backtest as the model, and gives it a **weight of zero** until it earns a weight by beating the model on origins it was not tuned on. The opinion shows next to the model's on the card. It never replaces the model's, and it never touches a ship, allocation or stopping rule.
 
-What goes to the agent is aggregate and non-personal: the source and cell, the origin, the reference and variant headlines if you have them, whether the image or headline changed, the planned exposures per arm, the standard error known before launch, the action threshold and a budget (the number of simulated respondents and a time cap). There is no user-level field, and an unknown field is refused. [Simulators](../simulators.md) lists the whole request and result.
+What goes to the agent is aggregate and non-personal: the source and cell, the origin, the reference and variant headlines if you have them, whether the image or headline changed, the planned units per arm, the standard error known before launch, the action threshold and a budget (the number of simulated respondents and a time cap). There is no user-level field, and an unknown field is refused. [Simulators](../simulators.md) lists the whole request and result.
 
 ## 0. Set up a project
 
@@ -36,7 +36,7 @@ words = len(req["variant_headline"].split())
 p = 0.10 + 0.01 * min(words, 12) + 0.05 * ("?" in req["variant_headline"])
 print(json.dumps({"p_win_ai": round(p, 2), "n_simulated": 1}))
 PY
-echo '{"variant_headline": "Is this the best day of the week?"}' | python my_agent.py
+echo '{"variant_headline": "Is this the best day of the week?"}' | python3 my_agent.py
 ```
 
 ```text output
@@ -87,7 +87,7 @@ moot simulators run --provider my_agent --source sample --out agent.jsonl
 ```
 
 ```text output
-my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 8.7 s, wall 9.0 s
+my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 9.0 s, wall 9.4 s
 wrote agent.jsonl
 ```
 
@@ -102,9 +102,9 @@ moot backtest --source sample --second-opinion agent.jsonl | tail -n 3
 ```
 
 ```text output
-wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261104-80131c793938--second-opinion.md
-wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261104-80131c793938--second-opinion.json
-wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/scores-sample-20261104-80131c793938--second-opinion.parquet
+wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261104-b04b5b1dd18c--second-opinion.md
+wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261104-b04b5b1dd18c--second-opinion.json
+wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/scores-sample-20261104-b04b5b1dd18c--second-opinion.parquet
 ```
 
 This replays the records and writes a separate report next to the main one. It adds two rungs: `agent`, the agent's probability alone, and `P2+agent`, the model's probability stacked with the agent's at the weight in force. Open the report and look at the section "Second opinion":
@@ -120,10 +120,10 @@ grep -E '^\| all \| (P2|agent) ' mootcourt-data/reports/second-opinion-my_agent/
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - Weight in force: 0.0000 (zero until earned on the backtest)
 - Rows scored by the base rung P2: 330; with an opinion: 330; declined: 0; failed calls: 0; absent from the records file: 0
-- Cost of the recorded run: 0.0000 dollars, latency 8.7178 seconds in total
- P2 | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
- P2 on agent rows | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
- agent | 330 | 0.1724 | -0.0598 | -0.1104 | 0.0000
+- Cost of the recorded run: 0.0000 dollars, latency 9.0382 seconds in total
+ P2 | 330 | 0.0620 | 0.0199 | -0.0007 | 0.0376
+ P2 on agent rows | 330 | 0.0620 | 0.0199 | -0.0007 | 0.0376
+ agent | 330 | 0.0633 | -0.0007 | -0.0714 | 0.0345
 ```
 
 The last two lines are the rows `P2` and `agent` of the score table, cut to the columns rung, rows, Brier score, Brier skill and the two ends of its 90 percent interval.
@@ -142,10 +142,10 @@ moot earn-weight --source sample --second-opinion agent.jsonl
 ```
 
 ```text output
-my_agent 1.0 on origins from 1970-01-01 on, scores scores-sample-20261104-80131c793938.parquet, 147 judged rows (49 tests) with an opinion: 147 judged rows with an opinion from 49 tests is below the gate of 150 tests; weight stays 0
+my_agent 1.0 on origins from 1970-01-01 on, scores scores-sample-20261104-b04b5b1dd18c.parquet, 147 judged rows (49 tests) with an opinion: 147 judged rows with an opinion from 49 tests is below the gate of 250 tests; weight stays 0
 ```
 
-The stacked probability is `(1 - w) p_sig + w p_AI`. The weight starts at zero. `earn-weight` puts the recorded rows in time order and cuts them between two origins. It chooses `w` on a grid from the earlier rows and **judges** it on the later rows, never on the same rows. A positive weight is stored only if, on the judged rows, the stacked Brier score beats the model's by the promotion margin (0.02) and those rows come from at least as many distinct experiments as the gate asks (counted in experiments, because rows of one experiment are not independent). Otherwise the weight stays zero, and a weight that no longer passes is reset to zero. Here it says why: 49 judged experiments is far below the gate of 400.
+The stacked probability is `(1 - w) p_sig + w p_AI`. The weight starts at zero. `earn-weight` puts the recorded rows in time order and cuts them between two origins. It chooses `w` on a grid from the earlier rows and **judges** it on the later rows, never on the same rows. A positive weight is stored only if, on the judged rows, the stacked Brier score beats the model's by the promotion margin (0.02) and those rows come from at least as many distinct experiments as the gate asks (counted in experiments, because rows of one experiment are not independent). Otherwise the weight stays zero, and a weight that no longer passes is reset to zero. Here it says why: 49 judged experiments is below the gate of 150 tests. The gate is a number of scored tests, and it depends on the base rate, the share of your tests that end significant and positive. At the release power of 0.90 the simulated gates are, for a skill difference of 0.20 and of 0.10: 175 and 250 tests at base rate 0.09, 200 and 400 at 0.14, and 75 and 150 at 0.30. The quick gates file that `moot init` writes holds only the line for 0.09, the base rate of the Upworthy archive; `moot simulate gate-power` writes all three, and a backtest reads the line nearest the cell's own rate.
 
 For a real agent on a real ledger, the usual outcome in the first months is also zero. That is the honest answer, not a defect. Run it again as the ledger grows, and run it on a ledger of your own experiments that are newer than the agent's training data.
 
@@ -158,11 +158,11 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 ## Prediction
 
-- P(significant and positive): 0.249
-- Point estimate: 0.01 units of the ledger's effect
-- 80 percent interval for the true effect: -0.03 to 0.05 units of the ledger's effect
-- 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
-- P(true effect above 0): 0.585
+- P(significant and positive): 0.052
+- Point estimate: -0.03 units of the ledger's effect
+- 80 percent interval for the true effect: -0.06 to 0.01 units of the ledger's effect
+- 80 percent interval for the result of the test at the planned standard error: -0.07 to 0.02 units of the ledger's effect
+- P(true effect above 0): 0.200
 - Rung: P2, weight on precedents 0.0
 
 ## Team forecast
@@ -173,7 +173,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - P(significant and positive) according to the agent: 0.100
-- Model, side by side: P(significant and positive) 0.249
+- Model, side by side: P(significant and positive) 0.052
 - Weight in force: 0.00
 - The weight is zero: the agent has not earned a place in the number yet, so the model's p_sig is the one that counts.
 

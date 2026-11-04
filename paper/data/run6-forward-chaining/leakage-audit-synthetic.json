@@ -1,0 +1,120 @@
+{
+ "source": "synthetic",
+ "scores": "scores-synthetic-20261103-bf4fd286e2b2.parquet",
+ "ledger": "ledger.parquet",
+ "rungs": [
+  {
+   "rung": "GBM",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "GBM+cal",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P0",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P1",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P2",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "always_reference",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "always_variant",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "local_eb",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "local_eb+cal",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "text_lr",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "text_lr+cal",
+   "origins": 8,
+   "scored_rows": 1814,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  }
+ ],
+ "post_launch_fields_in_features": "0",
+ "total_violations": 0,
+ "pass": true
+}

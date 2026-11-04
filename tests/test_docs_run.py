@@ -391,6 +391,13 @@ def test_a_block_that_times_out_ends_the_page_and_stops_everything_it_started(tm
         raise AssertionError("the background process of the page survived the timeout")
 
 
+def test_the_mask_hides_the_fit_clock_and_the_number_of_progress_lines_and_nothing_else():
+    a = "progress: base rate 0.09 (12 s elapsed)\nfitted on 360 rows usable at 2026-11-04T17:42:00.297668+00:00 in 1.5 s"
+    b = "progress: x\nthe quick gates simulation: still running, 30 s elapsed\nfitted on 360 rows usable at 2027-01-01T01:02:03+00:00 in 1.9 s"
+    assert rds.mask(a) == rds.mask(b)
+    assert rds.mask("fitted on 360 rows usable at 2026-11-04T17:42:00+00:00") != rds.mask("fitted on 361 rows usable at 2026-11-04T17:42:00+00:00")
+
+
 def test_the_output_mask_hides_how_many_days_old_but_not_the_staleness_limit():
     assert rds.mask("reliability: 3 entries are stale (limit 14 days, oldest 489 days old)") == rds.mask(
         "reliability: 3 entries are stale (limit 14 days, oldest 12 days old)")

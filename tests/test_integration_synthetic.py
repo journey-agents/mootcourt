@@ -30,7 +30,7 @@ def test_fit_issue_freeze_join_type_drift_abstain_clear_issue(imp, tmp_path, mak
     now = origin + dt.timedelta(days=1)
     fresh = reliability_factory(as_of=now - dt.timedelta(days=1), n=400)
     issued = []
-    for r in new.head(6).itertuples():
+    for r in new[new["started_at"] > now].head(6).itertuples():  # issued before the test starts (call 220)
         req = card_mod.CardRequest(source="synthetic", headline=json.loads(r.features_json)["headline"],
                                    image_changed=False, impressions=20000, origin=origin, row_id=r.row_id)
         c = card_mod.build_card(bundle, req, reliability=fresh, now=now)
