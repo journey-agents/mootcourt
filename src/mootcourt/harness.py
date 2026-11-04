@@ -636,7 +636,7 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
     shared = _Shared()
 
     def p1_of(rows, origin):
-        return shared.get("p1", rows, origin, lambda: P1Predictor(kappa=kappa, nu_grid=nu_grid).fit(rows))
+        return shared.get("p1", rows, origin, lambda: P1Predictor(kappa=kappa, nu_grid=nu_grid).fit(rows, data_end=origin))
 
     def space_of(rows, origin):
         return shared.get("space", rows, origin, lambda: FeatureSpace.fit(rows, cell_only=cell_only, feature_set=features, pairwise=pairwise))
@@ -857,7 +857,7 @@ def rolling_origin(
         expo = scale.planned_exposure(scored)
         metric_ids = np.array([metric_of(j) for j in scored["features_json"]], dtype=object)
 
-        p1 = next((m for m in models.values() if isinstance(m, P1Predictor)), None) or P1Predictor().fit(visible)
+        p1 = next((m for m in models.values() if isinstance(m, P1Predictor)), None) or P1Predictor().fit(visible, data_end=t)
         p0m = next((m for m in models.values() if isinstance(m, P0Predictor)), None) or P0Predictor().fit(visible)
         floor = posterior_floor(scored, p1, t)
         base_by_cell = {c: p0m.sig_positive_frequency(c, t) for c in scored["cell"].unique()}

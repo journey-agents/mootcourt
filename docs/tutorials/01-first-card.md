@@ -86,18 +86,18 @@ moot backtest --source sample
 ```
 
 ```text output
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.6 s; it is the champion for sample
+fitted model 6e5029e03c73 at snapshot 20261104-80131c793938 in 1.4 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 gates read from ~/moot-first/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
 gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
-filled the backtest summary of model 097a3bd3b39b
-scored 330 rows over 11 origins in 4.0 s (report writing 4.7 s)
+filled the backtest summary of model 6e5029e03c73
+scored 330 rows over 11 origins in 3.6 s (report writing 4.1 s)
 wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
 wrote ~/moot-first/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
 ```
 
-`fit` makes the forecaster from the ledger. The first model for a source becomes its **champion**. The line "no backtest exists" is expected the first time: the backtest then fills that slot, as the next lines say. The backtest takes about ten seconds here and minutes on a ledger with tens of thousands of rows.
+`fit` makes the forecaster from the ledger. The level of each period (quarter) in the fit is taken from the last complete quarter, because the latest quarter of a ledger is usually thin; the backtest, which fits at quarter starts, is unaffected. The first model for a source becomes its **champion**. The line "no backtest exists" is expected the first time: the backtest then fills that slot, as the next lines say. The backtest takes about ten seconds here and minutes on a ledger with tens of thousands of rows.
 
 The backtest scored 330 rows over 11 quarterly origins. Open the Markdown report named in the last lines, `reports/backtest-sample-....md`, and read three things before you trust any card:
 
@@ -114,12 +114,12 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: 8f5b904729f2bbd2
+- Card id: 1705a34c4ed02a00
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
 - Ledger snapshot: 20261104-80131c793938
-- Model: 097a3bd3b39b
+- Model: 6e5029e03c73
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.015 units of the ledger's effect
@@ -127,16 +127,16 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 120
-- Effective number of precedents: 119.2
+- Effective number of precedents: 119.3
 - Base rate of significant positive results in the cell (P0): 0.275
 
 ## Prediction
 
-- P(significant and positive): 0.220
-- Point estimate: 0.00 units of the ledger's effect
-- 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
+- P(significant and positive): 0.249
+- Point estimate: 0.01 units of the ledger's effect
+- 80 percent interval for the true effect: -0.03 to 0.05 units of the ledger's effect
 - 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
-- P(true effect above 0): 0.551
+- P(true effect above 0): 0.585
 - Rung: P2, weight on precedents 0.0
 
 ## Team forecast
@@ -169,7 +169,7 @@ How to read the card, top to bottom:
 
 - **Request**: what you asked about. The "standard error of the future estimate" is how noisy the planned test will be at 20,000 units per arm. More units make it smaller, and a smaller one makes a significant result more likely.
 - **Evidence**: how many admitted rows of this cell the forecaster could see at the origin. The effective number of precedents counts how many of them carry weight. The base rate is the share of past tests in this cell that ended significant and positive.
-- **Prediction**: `P(significant and positive)` is the headline number, to be compared with the base rate 0.275. Here it is 0.220: slightly below the base rate. The first interval is for the true effect, which is what you read. The second, "for the result of the test at the planned standard error", is wider because it adds the noise the test will have: it is the interval a measured result is compared with, and the one the backtest's coverage is checked against. `Rung: P2, weight on precedents 0.0` means the weighted-precedent rung found no benefit in similar experiments for this cell and fell back to the pooled prior, which is what the guard against fitting noise should do on a ledger with no structure.
+- **Prediction**: `P(significant and positive)` is the headline number, to be compared with the base rate 0.275. Here it is 0.249: slightly below the base rate. The first interval is for the true effect, which is what you read. The second, "for the result of the test at the planned standard error", is wider because it adds the noise the test will have: it is the interval a measured result is compared with, and the one the backtest's coverage is checked against. `Rung: P2, weight on precedents 0.0` means the weighted-precedent rung found no benefit in similar experiments for this cell and fell back to the pooled prior, which is what the guard against fitting noise should do on a ledger with no structure.
 - **Robustness**: how easily the forecast could flip to the other side of the action threshold, by dismissing precedents. Here the weight on precedents is 0.0, so the forecast does not depend on any particular precedent and the section says "Not applicable". With a weight above zero it counts the precedents the forecast leans on, asks how many of them, heaviest first, you would have to dismiss to push the probability across 0.35, and resamples the precedents to report the share of resamples that stay on the same side.
 - **Skill at this n** (the skill line): the card's record, in three lines. The first is the Brier skill of this cell's most recent forecasts, from its reliability record, over the trailing eight weeks, with a 90 percent interval by test and the rows and tests it rests on. Seven rows from seven tests is very little, and the interval (minus 0.227 to 0.221) says so. The second is the gate verdict at that many tests: "undecidable at this n", with the sizes the gate needs. A gates file written by the older per-row simulation (`moot simulate power`) would give a count of rows instead, and the line would say rows. The third is the latest gated backtest of the model, with its interval and the number of tests: 0.020 here, a different measurement from the first line, because it covers the whole history. Treat the first line as no evidence.
 - **Abstention**: `issue` means the card gives an opinion. When a card declines it says `abstain` and lists the reasons. See [troubleshooting](../troubleshooting.md#a-card-abstains).
@@ -195,9 +195,9 @@ OK    package fastapi: 0.162.0 (needs 0.110 or newer)
 OK    package uvicorn: 0.54.0 (needs 0.29 or newer)
 OK    package mcp: 2.3.0 (needs 1.2 or newer)
 OK    package matplotlib: 3.11.2 (needs 3.8 or newer)
-OK    data root: ~/moot-first/mootcourt-data; free space 11.7 GB
+OK    data root: ~/moot-first/mootcourt-data; free space 13.3 GB
 OK    ledger: ~/moot-first/mootcourt-data/data/ledger/ledger.parquet conforms
-OK    model sample: champion 097a3bd3b39b on snapshot 20261104-80131c793938
+OK    model sample: champion 6e5029e03c73 on snapshot 20261104-80131c793938
 WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 310 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 status: warn

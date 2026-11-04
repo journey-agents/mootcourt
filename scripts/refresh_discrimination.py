@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recompute the discrimination columns (AUC and the Murphy resolution term) of existing backtest reports from their stored score tables.
+"""Recompute the discrimination and planned-event columns of existing backtest reports from their stored score tables.
 
 A report's ``tables.aggregate`` rows carry ``auc_*`` and ``resolution_*`` keys. When the definition of those columns changes (review N,
 REV-N-001: the resolution is the Murphy term over equal-mass forecast bins, not the spread of the forecast) the reports can be brought up to
@@ -7,6 +7,9 @@ date without rerunning a backtest: this script reads each ``backtest-*.json`` an
 every (cell, rung) row with the report's own bootstrap settings (``header.bootstrap_resamples``, ``header.seed``), writes the JSON back and
 regenerates the Markdown from it. Nothing else in a report changes; the AUC values are recomputed too and must equal the stored ones
 (a mismatch aborts, which shows the score table is not the one the report was built from).
+
+Run it on the data root, where the score tables live: a folder of copied report JSONs (the paper data) holds no score tables, so every report there is
+skipped; skipped reports are counted in the closing line and make ``--check`` exit 1.
 
 Use: ``python scripts/refresh_discrimination.py REPORTS_DIR [--check]`` (REPORTS_DIR holds ``backtest-*.json``; ``ablations/`` and
 ``positive-control/`` below it are visited too).
@@ -38,6 +41,13 @@ KEYS = (
     "resolution_direction",
     "resolution_direction_lo",
     "resolution_direction_hi",
+    "event_rate_planned",
+    "p_sig_mean",
+    "brier_planned",
+    "brier_base_planned",
+    "brier_skill_planned",
+    "brier_skill_planned_lo",
+    "brier_skill_planned_hi",
 )
 
 
@@ -46,20 +56,11 @@ def group_values(g: pd.DataFrame, B: int, seed: int) -> dict:
     counts = ts.resample_counts(B, np.random.default_rng(seed))
     row: dict = {}
     hs._discrimination(row, g, ts, counts)
+    hs._planned_event_sensitivity(row, g, ts, counts)
     return row
 
 
-def refresh(json_path: Path, check: bool = False) -> int:
-    scores_path = json_path.with_name(json_path.name.replace("backtest-", "scores-", 1)).with_suffix(".parquet")
-    if not scores_path.exists():
-        print(f"skipped {json_path.name}: no score table beside it", file=sys.stderr)
-        return 0
-    doc = json.loads(json_path.read_text(encoding="utf-8"))
-    rows = doc["tables"]["aggregate"]
-    if not any("resolution_event" in r for r in rows):
-        return 0
-    scores = pd.read_parquet(scores_path)
-    B, seed = int(doc["header"]["bootstrap_resamples"]), int(doc["header"]["seed"])
+def _refresh_rows(json_path: Path, rows: list, scores: pd.DataFrame, B: int, seed: int) -> int:
     changed = 0
     for r in rows:
         sr = scores[scores["rung"] == r["rung"]]
@@ -77,11 +78,32 @@ def refresh(json_path: Path, check: bool = False) -> int:
                 if r.get(k) != value:
                     changed += 1
                     r[k] = value
+    return changed
+
+
+def refresh(json_path: Path, check: bool = False) -> tuple[int, int]:
+    """Returns ``(values changed, 1 if the report was skipped else 0)``."""
+    scores_path = json_path.with_name(json_path.name.replace("backtest-", "scores-", 1)).with_suffix(".parquet")
+    doc = json.loads(json_path.read_text(encoding="utf-8"))
+    rows = doc["tables"]["aggregate"]
+    if not any("resolution_event" in r for r in rows):
+        return 0, 0
+    if not scores_path.exists():
+        print(f"skipped {json_path.name}: no score table beside it", file=sys.stderr)
+        return 0, 1
+    scores = pd.read_parquet(scores_path)
+    B, seed = int(doc["header"]["bootstrap_resamples"]), int(doc["header"]["seed"])
+    changed = 0
+    blocks = [(rows, scores, B)] + [
+        (m["aggregate"], scores[scores["metric"].astype(str) == str(m["metric"])], min(B, hs.DEFAULT_B)) for m in doc["tables"].get("by_metric", [])
+    ]
+    for block_rows, block_scores, block_B in blocks:
+        changed += _refresh_rows(json_path, block_rows, block_scores, block_B, seed)
     if changed and not check:
         json_path.write_text(json.dumps(clean(doc), indent=1, sort_keys=False, allow_nan=False) + "\n", encoding="utf-8")
         json_path.with_suffix(".md").write_text(render_markdown(doc), encoding="utf-8")
     print(f"{json_path.name}: {changed} values {'differ' if check else 'updated'}")
-    return changed
+    return changed, 0
 
 
 def main() -> int:
@@ -95,8 +117,12 @@ def main() -> int:
         + sorted((root / "ablations").glob("backtest-*.json"))
         + sorted((root / "positive-control").glob("backtest-*.json"))
     )
-    total = sum(refresh(f, args.check) for f in files)
-    print(f"{len(files)} reports, {total} values {'would change' if args.check else 'updated'}")
+    results = [refresh(f, args.check) for f in files]
+    total, skipped = sum(r[0] for r in results), sum(r[1] for r in results)
+    print(f"{len(files)} reports, {skipped} skipped (no score table), {total} values {'would change' if args.check else 'updated'}")
+    if args.check and skipped:
+        print("error: some reports were not checked", file=sys.stderr)
+        return 1
     return 0
 
 

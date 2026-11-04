@@ -561,6 +561,34 @@ def guard_gain_table(reports_dir, out):
     )
 
 
+def guard_period_control_table(reports_dir, out):
+    """The guard's admissions at lift zero under the old period rule, with no period deviation, and under the new rule."""
+    path = latest(os.path.join(reports_dir, "paper-extras-synthetic-*.json"))
+    pc = load(path).get("guard_period_control") if path else None
+    if not pc or not pc.get("rows"):
+        return
+    names = {"old_rule": "old rule", "old_rule_no_period": "old rule, no period deviation", "new_rule": "new rule"}
+    lines = [
+        r"\begin{tabular}{rlrrrrr}",
+        r"\toprule",
+        r"tests & P1 period level & mean gain & mean s.e. & gain / s.e. & share admitted & rows in the period level \\",
+        r"\midrule",
+    ]
+    for r in pc["rows"]:
+        lines.append(
+            f"{r['n_tests']:,} & {names.get(r['arm'], r['arm'])} & {f3(r['mean_gain'], 5)} & {f3(r['mean_gain_se'], 5)} & "
+            f"{f3(r['ratio_of_means'], 2)} & "
+            f"{f3(r['share_admitted'], 2)} & {'none' if not r['mean_rows_in_period_level'] else format(r['mean_rows_in_period_level'], '.0f')} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        "guard-period-control.tex",
+        f"{path} (guard_period_control; no planted signal; guard multiplier {pc.get('multiplier')}; nats per row)",
+        "\n".join(lines) + "\n",
+    )
+
+
 def guard_held_out_table(reports_dir, out):
     """In-selection gain against held-out gain by ledger size, and the share admitted under changes of the fit set."""
     path = latest(os.path.join(reports_dir, "paper-extras-synthetic-*.json"))
@@ -568,23 +596,26 @@ def guard_held_out_table(reports_dir, out):
     ho, fs = doc.get("guard_held_out_gain"), doc.get("guard_fit_fraction_stability")
     if ho and ho.get("rows"):
         lines = [
-            r"\begin{tabular}{rrrrrrrr}",
+            r"\begin{tabular}{rrrrrrrrr}",
             r"\toprule",
-            r"tests & cells & in-selection gain & held-out gain & difference & admitted cells & difference, admitted & difference, unguarded \\",
+            r"tests & cells & in-selection gain & candidate held-out gain (s.e.) & bias & chosen-weight held-out gain (s.e.) & admitted cells "
+            r"& bias, admitted & bias, unguarded \\",
             r"\midrule",
         ]
         for r in ho["rows"]:
             lines.append(
-                f"{r['n_tests']:,} & {r['cells']} & {f3(r['mean_in_selection_gain'], 5)} & {f3(r['mean_held_out_gain'], 5)} & "
-                f"{f3(r['mean_difference'], 5)} & {r['admitted_cells']} & {f3(r['admitted_mean_difference'], 5)} & "
-                f"{f3(r['unguarded_mean_difference'], 5)} ({r['unguarded_cells_with_weight']}) \\\\"
+                f"{r['n_tests']:,} & {r['cells']} & {f3(r['mean_in_selection_gain'], 5)} & {f3(r['mean_candidate_held_out_gain'], 5)} "
+                f"({f3(r['mean_candidate_held_out_se'], 5)}) & {f3(r['mean_bias'], 5)} & {f3(r['mean_chosen_held_out_gain'], 5)} "
+                f"({f3(r['mean_chosen_held_out_se'], 5)}) & {r['admitted_cells']} & {f3(r['admitted_mean_bias'], 5)} & "
+                f"{f3(r['unguarded_mean_bias'], 5)} ({r['unguarded_cells_with_weight']}) \\\\"
             )
         lines += [r"\bottomrule", r"\end{tabular}"]
         write(
             out,
             "guard-gain-held-out.tex",
             f"{path} (guard_held_out_gain; {ho.get('held_out_share_of_tests')} of the tests held out; no planted signal; nats per row; "
-            "the unguarded column is the bias of the unguarded choice over the cells where it picks a weight, their number in brackets)",
+            "bias = in-selection gain minus the held-out gain of the same best candidate; the unguarded column is the bias of the unguarded "
+            "choice over the cells where it picks a weight, their number in brackets)",
             "\n".join(lines) + "\n",
         )
     if fs and fs.get("rows"):
@@ -840,4 +871,5 @@ if __name__ == "__main__":
     walltime_table(a.reports, a.out)
     guard_gain_table(a.reports, a.out)
     guard_held_out_table(a.reports, a.out)
+    guard_period_control_table(a.reports, a.out)
     cautionary_table(a.reports, a.out)

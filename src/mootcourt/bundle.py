@@ -250,7 +250,7 @@ def fit_bundle(ledger: pd.DataFrame, source: str, snapshot_id: str, as_of=None, 
         raise ValueError("cannot fit a bundle without admitted rows")
     space = FeatureSpace.fit(adm, cell_only=use_cell_only(source, adm) if cell_only is None else cell_only)
     p0 = P0Predictor().fit(adm)
-    p1 = P1Predictor().fit(adm)
+    p1 = P1Predictor().fit(adm, data_end=as_of)
     p2 = P2Predictor().fit(adm, space, p1)
     fh = feature_hash(space)
     parameters = {

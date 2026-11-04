@@ -33,6 +33,7 @@ its weight is at least one half, otherwise the global ``nu``.
 Origin semantics: ``fit(rows)`` uses exactly the rows passed in (the harness passes rows with status
 admitted and ``usable_after <= origin``); non-admitted rows are ignored.
 """
+
 from __future__ import annotations
 
 import math
@@ -152,8 +153,8 @@ def marginal_loglik(y, s, mu: float, tau: float, nu: float, n_grid: int | None =
     prior = np.where(u[:-1] >= 0.0, sf[:-1] - sf[1:], cdf[1:] - cdf[:-1])
     total = 0.0
     for a in range(0, len(y), 1024):
-        z = (y[a:a + 1024, None] - th[None, :]) / s[a:a + 1024, None]
-        like = np.exp(-0.5 * z * z) / (s[a:a + 1024, None] * math.sqrt(2.0 * math.pi))
+        z = (y[a : a + 1024, None] - th[None, :]) / s[a : a + 1024, None]
+        like = np.exp(-0.5 * z * z) / (s[a : a + 1024, None] * math.sqrt(2.0 * math.pi))
         total += float(np.log(like @ prior).sum())
     return total
 
@@ -173,7 +174,7 @@ def fit_cell(y, s, nu_grid=NU_GRID) -> dict:
     mu0 = float(np.average(y, weights=1.0 / (s * s)))
     var_y = float(np.var(y)) if n > 1 else float(s.mean() ** 2)
     floor = _TAU_FLOOR_FRAC * math.sqrt(max(var_y, 1e-12))
-    tau0 = math.sqrt(max(var_y - float(np.mean(s * s)), (0.1 ** 2) * max(var_y, 1e-12)))
+    tau0 = math.sqrt(max(var_y - float(np.mean(s * s)), (0.1**2) * max(var_y, 1e-12)))
     tau0 = max(tau0, floor)
     if n < _MIN_FIT_ROWS:
         return {"mu": mu0, "tau": tau0, "nu": math.inf, "loglik": _loglik_normal(y, s, mu0, tau0), "n": n}
@@ -184,8 +185,7 @@ def fit_cell(y, s, nu_grid=NU_GRID) -> dict:
             lt = min(max(p[1], lo), hi)
             return -_loglik_fast(y, s, p[0], math.exp(lt), nu) + 1e-6 * (p[1] - lt) ** 2
 
-        res = optimize.minimize(nll, [start[0], math.log(start[1])], method="Nelder-Mead",
-                                options={"xatol": 1e-4, "fatol": 1e-7, "maxiter": 400})
+        res = optimize.minimize(nll, [start[0], math.log(start[1])], method="Nelder-Mead", options={"xatol": 1e-4, "fatol": 1e-7, "maxiter": 400})
         lt = min(max(res.x[1], lo), hi)
         return float(res.x[0]), math.exp(lt), -float(res.fun)
 
@@ -214,6 +214,12 @@ def scale_from_sd(sd: float, nu: float) -> float:
     return sd if math.isinf(nu) else sd * math.sqrt((nu - 2.0) / nu)
 
 
+def _period_end(period: str) -> pd.Timestamp:
+    """First instant after a ``YYYYQn`` period (UTC): the start of the next quarter."""
+    year, q = int(period[:4]), int(period[5])
+    return pd.Timestamp(year=year + (q == 4), month=1 + 3 * (q % 4), day=1, tz="UTC")
+
+
 def _as_nu(v: float) -> float:
     return math.inf if v is None else float(v)
 
@@ -233,8 +239,15 @@ class P1Predictor:
         self._cache: dict[tuple[str, str], dict] = {}
 
     # ----------------------------------------------------------------- fitting
-    def fit(self, rows: pd.DataFrame) -> P1Predictor:
-        """Fit the global, per-cell and per-period parameters on the admitted rows passed in."""
+    def fit(self, rows: pd.DataFrame, data_end=None) -> P1Predictor:
+        """Fit the global, per-cell and per-period parameters on the admitted rows passed in.
+
+        ``data_end`` is the instant up to which the fit's data reach (the origin of a backtest fit, the ``as_of`` of a bundle); by default the newest
+        ``usable_after`` among the rows.
+        A period (calendar quarter) whose last day is after the calendar day of that instant is still incomplete (a period whose last day is
+        that day is kept): its rows enter the global and the cell fits, but it sets no period level (docs/method.md call 199), so a fit made a
+        few days into a quarter does not forecast every cell with
+        the noise of those few days."""
         adm = rows.loc[rows["status"] == ADMITTED]
         if len(adm) == 0:
             raise ValueError("P1 needs at least one admitted row")
@@ -248,7 +261,14 @@ class P1Predictor:
             self._ranges[c] = (float(y.min()), float(y.max()))
             self._kind[c] = fit_cell(y, s, self.nu_grid)
         nu_g = (self._global["nu"],)
+        end = pd.Timestamp(data_end) if data_end is not None else (pd.Timestamp(adm["usable_after"].max()) if "usable_after" in adm.columns else None)
+        if end is not None:
+            end = end.tz_localize("UTC") if end.tzinfo is None else end.tz_convert("UTC")
         for p, g in adm.groupby("period"):
+            if (
+                end is not None and (_period_end(p) - pd.Timedelta(days=1)).date() > end.date()
+            ):  # complete: the last day is on or before the data end's day
+                continue  # a partial tail period: its rows are in the fits above, but it sets no level
             self._period[p] = fit_cell(g["y"].to_numpy(float), g["s"].to_numpy(float), nu_g)
         return self
 
@@ -267,9 +287,9 @@ class P1Predictor:
         return self._ranges.get(cell, self._yrange_global)
 
     def last_period(self) -> str:
-        """The most recent period with at least ``MIN_PERIOD_ROWS`` admitted rows (else the most recent one)."""
+        """The most recent COMPLETE period with at least ``MIN_PERIOD_ROWS`` rows (else the most recent complete one; empty when none)."""
         solid = [p for p, v in self._period.items() if v["n"] >= MIN_PERIOD_ROWS]
-        return max(solid) if solid else max(self._period)
+        return max(solid) if solid else (max(self._period) if self._period else "")
 
     def cell_params(self, cell: str, period: str) -> dict:
         """Pooled parameters ``{"mu", "tau", "nu", "n_cell", "n_period"}`` for a cell in a period.
@@ -284,8 +304,9 @@ class P1Predictor:
             out = {"mu": float(g["mu"]), "tau": float(g["tau"]), "nu": _as_nu(g["nu"]), "n_cell": 0, "n_period": 0}
         else:
             per = period if period in self._period else self.last_period()
-            kc, pp = self._kind[cell], self._period[per]
-            n_c, n_p = kc["n"], pp["n"]
+            kc = self._kind[cell]
+            pp = self._period.get(per, g)  # no complete period at all: the global fit, no period deviation
+            n_c, n_p = kc["n"], (pp["n"] if per in self._period else 0)
             if n_p < MIN_PERIOD_ROWS:
                 pp, n_p = g, 0
             g_lsd = math.log(sd_equivalent(g["tau"], g["nu"]))
@@ -316,6 +337,7 @@ class P1Predictor:
     # ----------------------------------------------------------------- state
     def to_state(self) -> dict:
         """Plain-dict state (JSON-safe: infinite nu becomes None)."""
+
         def enc(d):
             return {k: (None if (k == "nu" and math.isinf(v)) else v) for k, v in d.items()}
 
@@ -331,6 +353,7 @@ class P1Predictor:
     @classmethod
     def from_state(cls, state: dict) -> P1Predictor:
         """Inverse of ``to_state``."""
+
         def dec(d):
             return {k: (math.inf if (k == "nu" and v is None) else v) for k, v in d.items()}
 

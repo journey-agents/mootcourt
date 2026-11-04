@@ -173,12 +173,12 @@ moot backtest --source mine
 ```
 
 ```text output
-fitted model adf46433a35f at snapshot 20261104-4a80e5b241d7 in 1.7 s; it is the champion for mine
+fitted model c96f692ed992 at snapshot 20261104-4a80e5b241d7 in 1.5 s; it is the champion for mine
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
 gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
-filled the backtest summary of model adf46433a35f
-scored 330 rows over 11 origins in 4.2 s (report writing 5.0 s)
+filled the backtest summary of model c96f692ed992
+scored 330 rows over 11 origins in 3.8 s (report writing 4.5 s)
 wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-4a80e5b241d7.md
 wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-4a80e5b241d7.json
 wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261104-4a80e5b241d7.parquet
@@ -211,7 +211,7 @@ It writes `reports/benchmark/ledger-<snapshot>.md`. Read its sections in this or
    - The two **coverage** columns. Near 0.80 and 0.90 is calibrated, and well below means overconfident. [Tutorial 1](01-first-card.md#4-fit-the-models-and-back-test-them) shows how to judge "near" with the interval in the backtest report.
    - **Abstention**: the share of rows on which a card would have declined.
    - **Decidable**: whether the number of experiments reaches the gate.
-4. **Decision value.** If the top quarter of experiments had been chosen by a rung's forecast, what share of the total positive lift would have been captured, against random choice (the floor, computed exactly) and an oracle that knows the outcomes (the ceiling). Each policy has an interval and a difference from random order; a difference whose interval contains zero is no edge. It is a different question from calibration, and it is never mixed into the scores.
+4. **Decision value.** If the top quarter of experiments had been chosen by a rung's forecast, what share of the total positive lift would have been captured, against random choice (the floor) and an oracle that knows the outcomes (the ceiling). The report card shows the share captured for each policy; the full backtest report adds an interval and a difference from random order for each, and a difference whose interval contains zero is no edge. With 110 tests, as here, treat any gap between the rows as noise. It is a different question from calibration, and it is never mixed into the scores.
 5. **Calibration by precision.** The scored rows in ten bands of planned exposure. In each band the mean forecast should be near the event rate. A forecaster that is right only for the most precise experiments shows here.
 6. **Limitations.** Three standing sentences: a forecast is only as good as its ledger, the gates say what is decidable and not whether the tool is useful, and a precedent forecast never replaces running the experiment.
 
@@ -230,12 +230,12 @@ moot card --source mine --cell revenue_per_user --impressions 50000 --now 2025-1
 ```text output
 # Moot Court card
 
-- Card id: 78d1c35a26f41151
+- Card id: d56fd0ceb1e8cf08
 - Source: mine
 - Cell: revenue_per_user
 - Origin: 2025-12-30T00:00:00+00:00
 - Ledger snapshot: 20261104-4a80e5b241d7
-- Model: adf46433a35f
+- Model: c96f692ed992
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 50000, standard error of the future estimate: 0.019 units of the ledger's effect
@@ -243,16 +243,16 @@ moot card --source mine --cell revenue_per_user --impressions 50000 --now 2025-1
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 120
-- Effective number of precedents: 116.9
+- Effective number of precedents: 117.1
 - Base rate of significant positive results in the cell (P0): 0.117
 
 ## Prediction
 
-- P(significant and positive): 0.151
+- P(significant and positive): 0.172
 - Point estimate: -0.00 units of the ledger's effect
 - 80 percent interval for the true effect: -0.05 to 0.04 units of the ledger's effect
 - 80 percent interval for the result of the test at the planned standard error: -0.05 to 0.05 units of the ledger's effect
-- P(true effect above 0): 0.457
+- P(true effect above 0): 0.488
 - Rung: P2, weight on precedents 0.0
 ```
 

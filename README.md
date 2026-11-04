@@ -12,7 +12,7 @@ The ideas, in the order you meet them:
 
 - **The ledger** is the table of your concluded experiments: one row per variant, per metric, per experiment. Importing results is one command, and rows that fail an admission rule are kept and counted, never dropped.
 - **A card** is the forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how fragile that opinion is. A card can also abstain, and then it says why. Cards are frozen under a digest of their content, so nobody can edit one after the result is known.
-- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer, and each adds one thing to the one below it: P0 is the empirical base-rate forecaster of the cell, P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly; the guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests, and it is a weak one: on a synthetic ledger of the size of the Upworthy headline-only cell it admits a weight in most cells with no planted text signal, and on Upworthy the weights it admitted lost out of time (the results page has the guard pairs and the sensitivity table, and shows guarded and unguarded selection side by side). A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
+- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer, and each adds one thing to the one below it: P0 is the empirical base-rate forecaster of the cell, P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly; the guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests, and on Upworthy the weights it admitted lost out of time (the results page has the guard pairs and the positive-control sensitivity table, which says how often the guard admits a weight at each ledger size and strength of a planted text signal, and shows guarded and unguarded selection side by side). A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
 - **The backtest** replays the ledger quarter by quarter, forecasts every past experiment using only what was final before it, and scores the forecast. It tells you whether the cards can be trusted, and how many experiments it takes to tell.
 
 A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak. The join finds a card by the ledger row it names: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`), and give `POST /card` and the MCP tool `get_card` the same `row_id`. A card without a row id is valid, but no outcome can be attached to it. The [concepts page](docs/concepts.md) has the diagram and the glossary.
@@ -44,7 +44,7 @@ Next, from the project folder:
   3. moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
 ```
 
-Import the sample ledger and fit the forecaster (about 5 seconds). `ingest` reports how many rows were admitted to teach the models:
+Import the sample ledger and fit the forecaster (about 5 to 15 seconds). `ingest` reports how many rows were admitted to teach the models:
 
 ```bash run
 moot ingest --format generic --input mootcourt-data/data/sample-ledger.csv --source-name sample
@@ -58,7 +58,7 @@ admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_us
 final reads from 2023-01-23 to 2025-12-29
 snapshot 20261104-80131c793938 for sample
 ledger ~/moot-demo/mootcourt-data/data/ledger/ledger.parquet: 360 rows
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.7 s; it is the champion for sample
+fitted model 6e5029e03c73 at snapshot 20261104-80131c793938 in 1.4 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -71,8 +71,8 @@ moot backtest --source sample
 ```text output
 gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
 gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
-filled the backtest summary of model 097a3bd3b39b
-scored 330 rows over 11 origins in 4.3 s (report writing 5.0 s)
+filled the backtest summary of model 6e5029e03c73
+scored 330 rows over 11 origins in 3.5 s (report writing 4.1 s)
 wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
 wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
@@ -89,12 +89,12 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: 8f5b904729f2bbd2
+- Card id: 1705a34c4ed02a00
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
 - Ledger snapshot: 20261104-80131c793938
-- Model: 097a3bd3b39b
+- Model: 6e5029e03c73
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.015 units of the ledger's effect
@@ -102,16 +102,16 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 120
-- Effective number of precedents: 119.2
+- Effective number of precedents: 119.3
 - Base rate of significant positive results in the cell (P0): 0.275
 
 ## Prediction
 
-- P(significant and positive): 0.220
-- Point estimate: 0.00 units of the ledger's effect
-- 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
+- P(significant and positive): 0.249
+- Point estimate: 0.01 units of the ledger's effect
+- 80 percent interval for the true effect: -0.03 to 0.05 units of the ledger's effect
 - 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
-- P(true effect above 0): 0.551
+- P(true effect above 0): 0.585
 - Rung: P2, weight on precedents 0.0
 
 ## Team forecast
@@ -150,7 +150,7 @@ tail -n 5 doctor.txt
 ```text output
 exit code: 1
 OK    ledger: ~/moot-demo/mootcourt-data/data/ledger/ledger.parquet conforms
-OK    model sample: champion 097a3bd3b39b on snapshot 20261104-80131c793938
+OK    model sample: champion 6e5029e03c73 on snapshot 20261104-80131c793938
 WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 310 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 status: warn

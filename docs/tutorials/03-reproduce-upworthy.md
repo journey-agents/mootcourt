@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (4.3 s)
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (3.4 s)
 snapshot 20261104-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 4.7 s
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 3.7 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,7 +59,7 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 3834241d2b4a at snapshot 20261104-4bfb354b87e3 in 16.0 s; it is the champion for upworthy
+fitted model 380a643333cc at snapshot 20261104-4bfb354b87e3 in 15.0 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -75,8 +75,8 @@ moot backtest --source upworthy
 ~/mootcourt-data/reports/gates.json is missing; running the gate power simulation first (synthetic data, same as `moot simulate power`)
 gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 375}
 note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
-filled the backtest summary of model 3834241d2b4a
-scored 13247 rows over 9 origins in 217.4 s (report writing 23.7 s)
+filled the backtest summary of model 380a643333cc
+scored 13247 rows over 9 origins in 225.7 s (report writing 24.1 s)
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.md
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.json
 wrote ~/mootcourt-data/reports/scores-upworthy-20261104-4bfb354b87e3.parquet
@@ -111,12 +111,12 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 ```text output
 # Moot Court card
 
-- Card id: 1c3190f7e3731062
+- Card id: 1e18aacedefd9dab
 - Source: upworthy
 - Cell: headline_only
 - Origin: 2015-05-07T00:00:00+00:00
 - Ledger snapshot: 20261104-4bfb354b87e3
-- Model: 3834241d2b4a
+- Model: 380a643333cc
 - Feature hash: b4b031b2f77e
 - Issued at: 2015-05-07T00:00:00+00:00
 - Request: headline "A simple fact about your mornings", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.110 percentage points
@@ -124,17 +124,17 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 7593
-- Effective number of precedents: 1393.2
+- Effective number of precedents: 1413.3
 - Base rate of significant positive results in the cell (P0): 0.101
 
 ## Prediction
 
-- P(significant and positive): 0.195
-- Point estimate: -0.09 percentage points
-- 80 percent interval for the true effect: -0.55 to 0.37 percentage points
-- 80 percent interval for the result of the test at the planned standard error: -0.57 to 0.40 percentage points
-- P(true effect above 0): 0.388
-- Rung: P2, weight on precedents 0.4
+- P(significant and positive): 0.198
+- Point estimate: -0.08 percentage points
+- 80 percent interval for the true effect: -0.54 to 0.38 percentage points
+- 80 percent interval for the result of the test at the planned standard error: -0.56 to 0.40 percentage points
+- P(true effect above 0): 0.397
+- Rung: P2, weight on precedents 0.1
 ```
 
 This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).

@@ -4,7 +4,7 @@
   {
    "derived": [],
    "file": "cautionary-upworthy.pdf",
-   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.aggregate.brier_skill",
     "tables.aggregate.brier_skill_hi",
@@ -134,7 +134,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.0014727895194049934,
      "where": {
@@ -144,7 +144,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.0018181929301026689,
      "where": {
@@ -154,7 +154,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.0047984950480917865,
      "where": {
@@ -164,7 +164,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.004322710955801279,
      "where": {
@@ -174,7 +174,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.00851689747163049,
      "where": {
@@ -184,7 +184,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.0006249615331614182,
      "where": {
@@ -194,7 +194,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.009246036693207671,
      "where": {
@@ -204,7 +204,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.0025228637306292877,
      "where": {
@@ -214,7 +214,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.015389575792331658,
      "where": {
@@ -224,7 +224,7 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.020920236845146878,
      "where": {
@@ -234,7 +234,7 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": -0.000340434805731005,
      "where": {
@@ -244,7 +244,7 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
      "table": "tables.aggregate",
      "value": 0.04194632233182697,
      "where": {
@@ -257,7 +257,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-asos.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -566,7 +566,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-synthetic.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -875,7 +875,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-upworthy.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -1184,7 +1184,7 @@
   {
    "derived": [],
    "file": "coverage-se-asos.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1792,7 +1792,7 @@
   {
    "derived": [],
    "file": "coverage-se-synthetic.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1914,7 +1914,7 @@
   {
    "derived": [],
    "file": "coverage-se-upworthy.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -2522,7 +2522,7 @@
   {
    "derived": [],
    "file": "decision-value-asos.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3096,7 +3096,7 @@
   {
    "derived": [],
    "file": "decision-value-synthetic.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3769,7 +3769,7 @@
   {
    "derived": [],
    "file": "decision-value-upworthy.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -4442,7 +4442,7 @@
   {
    "derived": [],
    "file": "learning-curve-asos.pdf",
-   "json": "paper/data/run4-review-l-fixes/learning-curve-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run5-period-rule/learning-curve-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "rows.skill",
     "rows.skill_hi",
@@ -4995,7 +4995,7 @@
   {
    "derived": [],
    "file": "learning-curve-upworthy.pdf",
-   "json": "paper/data/run4-review-l-fixes/learning-curve-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run5-period-rule/learning-curve-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "rows.skill",
     "rows.skill_hi",
@@ -6163,7 +6163,7 @@
     }
    ],
    "file": "reliability-asos.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run5-period-rule/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -6866,7 +6866,7 @@
     }
    ],
    "file": "reliability-synthetic.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run5-period-rule/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -7400,7 +7400,7 @@
     }
    ],
    "file": "reliability-upworthy.pdf",
-   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "json": "paper/data/run5-period-rule/backtest-upworthy-20261103-4bfb354b87e3.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -7628,11 +7628,11 @@
   }
  ],
  "generated_by": "scripts/paper_figures.py",
- "run_folder": "paper/data/run4-review-l-fixes",
+ "run_folder": "paper/data/run5-period-rule",
  "skipped": [
   {
    "file": "learning-curve-synthetic.pdf",
-   "reason": "no learning-curve-synthetic-*.json in paper/data/run4-review-l-fixes"
+   "reason": "no learning-curve-synthetic-*.json in paper/data/run5-period-rule"
   }
  ]
 }

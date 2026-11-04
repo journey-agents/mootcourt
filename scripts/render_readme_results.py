@@ -398,7 +398,7 @@ def positive_control_lines(reports: Path) -> list[str]:
     doc = json.loads(found[-1].read_text(encoding="utf-8"))
     h = doc["header"]
     out = ["### Positive control, synthetic", "",
-           "The synthetic archive with no text signal shows how often the guard admits a weight when no text signal is planted; that share is not a false-positive rate, because the ledger still has structure the precedents capture (method call 198). This run plants "
+           "The synthetic archive with no text signal shows how often the guard admits a weight when no text signal is planted. An earlier version of this control admitted a weight in most cells at 3,700 tests; the cause was P1's thin latest period, which moved the level on a handful of rows and which the guard detected as a precedent gain, not the precedents (method call 198 and the period control). Under the period rule P1 takes its period level from the last complete quarter, and the share admitted with no planted signal is read from the table below. This run plants "
            "a text effect between headlines with and without a signal word (`moot simulate ledger --text-effect 1.0`, a 1.0 percent lift, "
            "0.33 to 0.67 prior standard deviations in the default cells) and runs the whole protocol on it. If the guard works, it should admit a weight "
            "in `headline_only`, where the effect is planted, and hold it at zero in the other cells. "

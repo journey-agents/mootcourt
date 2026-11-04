@@ -105,8 +105,8 @@ release-check:
 	$(PY) scripts/release_check.py
 
 # Regenerates the paper's figures (vector PDFs and figures.json) from a run folder; no data root or network needed.
-# Usage: make paper-figures [RUN=paper/data/run4-review-l-fixes] [FIGURES=paper/figures]
-RUN ?= paper/data/run4-review-l-fixes
+# Usage: make paper-figures [RUN=paper/data/run5-period-rule] [FIGURES=paper/figures]
+RUN ?= paper/data/run5-period-rule
 FIGURES ?= paper/figures
 paper-figures:
 	$(PY) scripts/paper_figures.py --run $(RUN) --out $(FIGURES)

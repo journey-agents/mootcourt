@@ -777,7 +777,7 @@ percent interval from the same by-test resamples as the other columns), and the 
 resolution is computed over ten equal-mass bins of the forecast (the bins the equal-mass ECE uses): the bin-weighted mean of the squared difference between the bin's observed frequency and the
 overall event rate. It is zero for a forecast whose bins all show the base rate, however spread the forecast is, so it measures separation and not sharpness. (An earlier version of this call
 reported the spread of the forecast around the base rate under the name resolution; that quantity is sharpness plus miscalibration, put GBM first while its skill was negative, and was replaced in
-the review of chunk N, REV-N-001.) The estimate is biased upward by about `(10 - 1) / N * rate * (1 - rate)` from the sampling noise of the bin frequencies, and a percentile interval of a biased
+the review of chunk N, REV-N-001.) The estimate is biased upward by about `(10 - 1) / N * rate * (1 - rate)` from the sampling noise of the bin frequencies (for independent rows; larger by about the design effect when the rows of a test are correlated, as on the archives), and a percentile interval of a biased
 statistic can leave the estimate near its lower end; read the column as a ranking of rungs on the same rows, not as an absolute amount. The AUC is the rank statistic with ties counting one half
 and is None where the group has only one class. Skill (Brier against the base rate) mixes discrimination with calibration and with the base rate; an AUC above 0.5 or a resolution above what a
 noise forecast gives shows that a rung ranks rows better than chance when its skill is zero or negative. P0's `p_sig` is constant within a cell and origin, so its AUC and resolution measure only
@@ -815,28 +815,50 @@ neighbor search returns P1's predictive when the kernel peak is below the float3
 filled with the exposure column's mean (REV-N-006); `list_precedents` takes an optional exposure. `moot init` writes quick gates by test at the 90 percent level with the rows per test and within-test correlation
 of base rate 0.30 (`SOURCE_DEPENDENCE`), and `gate_verdict` compares the row count, not the test count, with a per-row gates file (REV-N-007).
 
-### Call 198: why the guard admits weights on data with no planted signal as the cells grow
+### Call 198: why the guard admitted weights on data with no planted signal as the cells grew
 
 The guard admits a weight when the candidate's in-selection gain over lambda 0 exceeds the tie tolerance and two standard errors. On synthetic ledgers with no planted text effect (12 seeds, three cells each,
-36 cells per size; `guard_gain_diagnostic`, `guard_held_out_gain` and `guard_fit_fraction_stability` in the synthetic paper extras; tables `guard-gain-diagnostic.tex`, `guard-gain-held-out.tex`,
-`guard-fit-fraction.tex`) the share of cells that admit a weight is 0.03 at 300 and at 1,000 tests, 0.67 at 3,700 and 0.39 at 11,100.
+36 cells per size) the run4 share of cells that admitted a weight was 0.03 at 300 and at 1,000 tests, 0.67 at 3,700 and 0.39 at 11,100, and it swung from 0.03 to 0.92 with the fit set at one size (first 85, 90,
+95 and 100 percent of the rows: 0.03, 0.42, 0.00, 0.67). Two earlier readings of this are withdrawn: a fixed selection bias that passes a growing significance test, and structure of the generator that the
+precedents capture (the guard's power). The cause is in P1, not in P2 and not in the generator (review N2, REV-N2-001 and 003).
 
-The explanation tested first was a fixed selection bias: the gain is measured on the rows that chose the weight, so its upward bias would not shrink with the cell while its standard error does, and the rule
-"gain above two standard errors" would become a significance test that any fixed bias passes once the cell is large. The in-selection numbers alone look like that: the mean standard error of the best candidate's
-gain falls from 0.00442 to 0.00152, 0.00085 and 0.00059 nats per row (200, 667, 2,467 and 7,400 rows per cell) while the mean gain stays between 0.0010 and 0.0031 (0.00310, 0.00102, 0.00274, 0.00121), so its ratio
-to the standard error passes two between 1,000 and 3,700 tests. They do not separate a bias from a real small gain: the share of cells with a positive gain rising from 0.72 to 0.89 and 0.97 is predicted by both.
+The mechanism. P1 adds half of the shrunken deviation of the latest period (the most recent quarter with at least 30 rows) to every cell's prior mean. A synthetic ledger ends on a fixed date, so its latest quarter
+is a tail of the next one: 58 to 70 rows at 3,700 tests (the week after the ledger's end), 176 to 216 at 11,100, 216 to 252 at 1,000. The tail's mean is noise, mixed over the cells, and it moves every cell's mu by up
+to 0.29 percent lift away from the cell's own fit. P2, which weights precedents of the same cell, undoes that error, so its in-selection gain over lambda 0 is real out of sample against this P1 and the guard admits.
+The size of the tail explains the size pattern and the fit-fraction swing. The control in `guard_period_control` (synthetic paper extras, table `guard-period-control.tex`) at planted lift zero, 12 seeds, 36 cells per size:
 
-The held-out test does separate them, and it refutes the bias as the cause at the large sizes. A random 15 percent of the tests (never rows) is held out, P2 is fit on the rest with the guard, and the gain of
-the chosen weight over lambda 0 is scored on the held-out rows. The in-selection gain minus the held-out gain, over all 36 cells, is 0.00406 nats at 300 tests, 0.00123 at 1,000, -0.00035 at 3,700 and 0.00055 at
-11,100: it does not stay at a fixed positive bias while the standard error falls; it falls with it. Over the admitted cells the held-out gain is 0.00584 at 3,700 tests (24 cells; in-selection 0.00516) and 0.00207 at
-11,100 (12 cells; in-selection 0.00276), positive and about as large as the in-selection gain. At 300 tests the single admitted cell is a pure overstatement (in-selection 0.01744, held-out -0.00443), and the
-unguarded choice overstates at the small sizes (difference 0.01267 over 22 cells at 300, 0.00628 over 15 at 1,000) and not at the large ones (-0.00063 over 24 cells at 3,700, 0.00049 over 16 at 11,100). So the
-bias exists where the cells are small and is small where they are large. At the sizes where the share admitted jumps, the admitted weights carry a real out-of-sample gain on these ledgers. A ledger without a
-planted text effect is therefore not a null for P2: the precedents capture some structure of the generator other than the planted text signal (which structure was not isolated here), and the guard, which was
-built to hold a weight at zero when nothing transfers, finds that gain once the cell is large enough to measure it. The jump in the share admitted is the power of the guard, not a rise in false admissions.
+| tests | P1 period level | mean gain | mean s.e. | share admitted | rows in the level |
+|---|---|---|---|---|---|
+| 3,700 | old rule | 0.00274 | 0.00085 | 0.67 | 62 |
+| 3,700 | old rule, every period set to the global fit | 0.00010 | 0.00019 | 0.00 | none |
+| 3,700 | new rule (call 199) | 0.00020 | 0.00027 | 0.06 | 799 |
+| 11,100 | old rule | 0.00121 | 0.00059 | 0.39 | 183 |
+| 11,100 | old rule, every period set to the global fit | 0.00012 | 0.00021 | 0.00 | none |
+| 11,100 | new rule (call 199) | 0.00024 | 0.00030 | 0.00 | 2,441 |
 
-The admission is unstable near the threshold, which fits a small true gain close to two standard errors. On the same 3,700-test ledgers, fitting on the first 85, 90, 95 and 100 percent of the rows in time order
-admits a weight in 0.03, 0.42, 0.00 and 0.67 of the cells, and on a random 85 percent in 0.47 (36 cells each). This was run at 3,700 tests only; at 11,100 each fit takes minutes. The readings the paper should keep
-apart: the first positive-control row (planted lift zero) measures the share of cells admitted on data with no text signal, not a false-positive rate; the guard's holding of lambda at zero on Upworthy and ASOS
-(out-of-time P2 minus P1 negative over the admitted pairs, call 191) is a separate fact. Remedies for the instability are future work: a held-out split for the gain (select the weight on one part of the history,
-test it on another) or a threshold that depends on the size of the cell.
+With the period deviation removed, or with the level taken from the last complete period, the gains fall to 0.0001 to 0.0002 nats and the share admitted at lift zero is 0.00 to 0.06. Under the new rule the share
+admitted at lift zero is 0.03, 0.03, 0.06 and 0.00 at 300, 1,000, 3,700 and 11,100 tests, and over the fit fractions at 3,700 tests 0.06, 0.06, 0.03 and 0.06 (random 85 percent: 0.00): the instability is gone.
+
+What the held-out diagnostics show after the correction (`guard_held_out_gain`, a random 15 percent of the tests held out, never rows): the in-selection gain of the best positive-weight candidate minus the held-out
+gain of the same candidate (the bias of the selection) is 0.00629 nats over all 36 cells at 300 tests, 0.00277 at 1,000, 0.00036 at 3,700 and 0.00016 at 11,100, with held-out standard errors of the candidate
+gain of 0.0028, 0.0009, 0.0002 and 0.0001. The selection bias is large in small cells and negligible in large ones, and the gain of the weight the guard chose is held-out zero where it chose none. So the
+guard behaves as built: it holds the weight at zero when nothing transfers, and it admitted weights before the rule only because P1 was wrong. The first positive-control row (planted lift zero) is a share of cells
+admitted with no text signal and now reads near the 0.03 of the small sizes at every size. Remedies named in review N (a held-out split for the gain, a size-aware threshold) are not needed for this and stay future work.
+The first version of `guard_held_out_gain` compared the best candidate's in-selection gain with a held-out gain fixed at zero wherever the guard held, which is not a bias estimate; it is replaced.
+
+### Call 199: the period level comes from the last complete period
+
+`P1Predictor.fit(rows, data_end=None)` takes the instant up to which the fit's data reach: the origin of a backtest fit, the `as_of` of a bundle, otherwise the newest `usable_after` among the rows. A calendar quarter
+whose last day is after the calendar day of that instant is incomplete (a quarter whose last day is the data end's day is kept): its rows still enter the global and the cell fits, but it sets no period level and a request for it (a card at a date inside it) takes the
+level of the last complete period. `MIN_PERIOD_ROWS` (30) stays as the second condition. If no period is complete the period deviation is zero (the global fit). Why: a fit made a few days into a quarter otherwise
+forecasts every cell with the noise of those few days, which no cell can correct and which the guard then reads as a gain for the precedents (call 198).
+
+Effect. At the quarterly origins of the backtest the data end is the origin, which is a quarter start, so the latest visible quarter is complete and the parameters are those of the old rule to the last digit (pinned in a
+test); all three main backtests were rerun and every score is identical to run4 (only the model id, which depends on the fitted bundle, differs, together with two reporting corrections that run4 had not applied: P0's planned-event mean in the Upworthy report, and the 288 resolution values of the ASOS `by_metric` blocks, which still held the forecast spread). Fits at other dates change: the bundles of
+`moot fit` (the card path), the synthetic diagnostics and any fit made inside a quarter. The weekly replays were rerun and their numbers are identical. A bundle fitted before this rule keeps its stored period table until refit.
+An empirical-Bayes period variance (a period deviation weighted by its own estimated variance instead of a row count threshold) is the alternative; it is not built here.
+
+On the archives the card-path default (the data end is the newest `usable_after`) drops the trailing quarter of each ledger from the level: on Upworthy 2015Q2 (321 rows, the newest result is 6 May 2015), whose
+level is replaced by that of 2015Q1 (1,135 rows), and on ASOS 2021Q1 (40 rows, newest result 26 February 2021). Those rows still enter the global and the cell fits (13,453 of 13,453 and 381 of 381 rows). The rule
+is calendar-level: a quarter is kept when its last day is on or before the data end's day, so a data end on 30 June keeps the second quarter and 29 June drops it. The empirical-Bayes period variance would weight a
+thin or noisy period instead of dropping it; it is future work.

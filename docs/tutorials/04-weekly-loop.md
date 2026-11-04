@@ -48,9 +48,9 @@ admitted by cell: checkout_conversion 100, pages_per_session 100, revenue_per_us
 final reads from 2023-01-23 to 2025-07-02
 snapshot 20261104-12617dfc4337 for sample
 ledger ~/moot-weekly/mootcourt-data/data/ledger/ledger.parquet: 300 rows
-fitted model daff697c1c13 at snapshot 20261104-12617dfc4337 in 1.2 s; it is the champion for sample
+fitted model 9cfe6781f619 at snapshot 20261104-12617dfc4337 in 1.2 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-scored 270 rows over 9 origins in 3.5 s (report writing 4.7 s)
+scored 270 rows over 9 origins in 2.9 s (report writing 3.6 s)
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-12617dfc4337.md
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-12617dfc4337.json
 wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-12617dfc4337.parquet
@@ -71,18 +71,18 @@ done
 ```
 
 ```text output
-2e8547ee9d9b6048 issue p_sig 0.209 sample:exp-101:treatment::checkout_conversion
-df6f18660a14a53a issue p_sig 0.209 sample:exp-102:treatment::checkout_conversion
-c2eef18ad2e15151 issue p_sig 0.209 sample:exp-103:treatment::checkout_conversion
-efb08dd9f023bc46 issue p_sig 0.209 sample:exp-104:treatment::checkout_conversion
-995f836daec8df6c issue p_sig 0.209 sample:exp-105:treatment::checkout_conversion
-fa13538af2766b26 issue p_sig 0.209 sample:exp-106:treatment::checkout_conversion
-4977d4f0a4d4aff1 issue p_sig 0.209 sample:exp-107:treatment::checkout_conversion
-79f16e30a81f5788 issue p_sig 0.209 sample:exp-108:treatment::checkout_conversion
-37a76214ba56f510 issue p_sig 0.209 sample:exp-109:treatment::checkout_conversion
-fe05deb172d9a7e5 issue p_sig 0.209 sample:exp-110:treatment::checkout_conversion
-163a7cdb1e38917e issue p_sig 0.209 sample:exp-111:treatment::checkout_conversion
-75a3c03394de01dd issue p_sig 0.209 sample:exp-112:treatment::checkout_conversion
+d009d1ac0cf91891 issue p_sig 0.227 sample:exp-101:treatment::checkout_conversion
+8f2e3953dd2a4e16 issue p_sig 0.227 sample:exp-102:treatment::checkout_conversion
+538e43041e08de14 issue p_sig 0.227 sample:exp-103:treatment::checkout_conversion
+4c541feb930571a2 issue p_sig 0.227 sample:exp-104:treatment::checkout_conversion
+72b78ced52209545 issue p_sig 0.227 sample:exp-105:treatment::checkout_conversion
+7d7d85f87d61d6be issue p_sig 0.227 sample:exp-106:treatment::checkout_conversion
+7fd9af6440d26ac6 issue p_sig 0.227 sample:exp-107:treatment::checkout_conversion
+7e7b632a1653fb31 issue p_sig 0.227 sample:exp-108:treatment::checkout_conversion
+b0b1e4a5ce3d350e issue p_sig 0.227 sample:exp-109:treatment::checkout_conversion
+cf1004aec10dacd3 issue p_sig 0.227 sample:exp-110:treatment::checkout_conversion
+e278a5ae448b5d5e issue p_sig 0.227 sample:exp-111:treatment::checkout_conversion
+ea432f27871086c9 issue p_sig 0.227 sample:exp-112:treatment::checkout_conversion
 ```
 
 Each card is frozen under `cards/` with its row id inside. `--now` is the issue time: just after the history ends. To adapt the loop to your own archive, change the source name, the cell, `--impressions` (the planned units per arm), the issue time and the experiment and variant ids, and issue one card for each experiment you are about to launch. A card without a row id is frozen and valid, but `moot join` cannot attach an outcome to it. A card requested through the MCP tool is never frozen, so freeze through `moot card` or `POST /card`.
@@ -155,7 +155,7 @@ PY
 ```text output
 report as of 2025-12-30T00:00:00+00:00
 cell                   as of          n  brier skill  log score  P0 log score  below drifted
-checkout_conversion    2025-12-01     5       -0.087      1.984         1.978      0 False
+checkout_conversion    2025-12-01     5       -0.062      1.956         1.978      0 False
 pages_per_session      2025-07-02     7       -0.086      2.200         2.268      0 False
 revenue_per_user       2025-07-02     7        0.033      1.921         1.910      0 False
 ```
@@ -177,7 +177,7 @@ tail -n 4 doctor.txt
 
 ```text output
 exit code: 1
-WARN  model sample: champion daff697c1c13 was fit on snapshot 20261104-12617dfc4337, which no longer matches the ledger; run `moot fit`
+WARN  model sample: champion 9cfe6781f619 was fit on snapshot 20261104-12617dfc4337, which no longer matches the ledger; run `moot fit`
 WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 490 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 status: warn
@@ -185,7 +185,7 @@ status: warn
 
 ## 5. Refit, back-test and promote
 
-New rows came in, so the model is out of date ("fit on a snapshot that no longer matches the ledger"). Refit. A fit records the method it was made with (`method_id`, a hash of the method version and its fixed hyperparameters, never of the data) and the date of the latest result it saw (`data_through`). A fit with the champion's method on strictly newer data is a **champion refresh**: it takes the champion's place without the promotion margin, after a check that its backtest did not regress. Until its backtest summary is attached, the refresh is pending and the new model is listed as the challenger, which is why the backtest follows the fit. The registry history states the reason either way (`champion_refreshed` or `refresh_refused`). Any other later fit is registered as the **challenger**.
+New rows came in, so the model is out of date ("fit on a snapshot that no longer matches the ledger"). Refit. A fit at a date inside a quarter takes the period level from the last complete quarter, so a refit after a few new rows moves a card only slightly. A fit records the method it was made with (`method_id`, a hash of the method version and its fixed hyperparameters, never of the data) and the date of the latest result it saw (`data_through`). A fit with the champion's method on strictly newer data is a **champion refresh**: it takes the champion's place without the promotion margin, after a check that its backtest did not regress. Until its backtest summary is attached, the refresh is pending and the new model is listed as the challenger, which is why the backtest follows the fit. The registry history states the reason either way (`champion_refreshed` or `refresh_refused`). Any other later fit is registered as the **challenger**.
 
 ```bash run
 moot fit --source sample
@@ -194,7 +194,7 @@ moot promote --source sample
 ```
 
 ```text output
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.9 s; it is the challenger for sample
+fitted model 6e5029e03c73 at snapshot 20261104-80131c793938 in 1.4 s; it is the challenger for sample
 a refresh of the champion is pending: same method, newer data; `moot backtest` decides it (no further `moot fit`)
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
@@ -202,7 +202,7 @@ wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-80131c793938.p
 not promoted: no challenger is registered, nothing to promote
 ```
 
-Read the first line of the fit output: it says which role the new model took when it was fitted. Here it says challenger, because the refresh is pending until the backtest has run; after the backtest the refresh is decided and goes through, which is why `promote` then finds no challenger. The backtest then attaches the summary and decides a pending refresh. `moot promote` looks at a challenger, and promotes it only when two conditions hold. Its Brier skill must beat the champion's by a margin (0.02 by default, `--margin`), and its backtest must rest on at least as many distinct experiments as the gate for that skill. Otherwise it says which condition failed, for example that the gain is short of the margin or that the backtest has too few tests. When the refresh went through there is no challenger, and `promote` says so. `moot doctor` keeps warning that the champion was fit on an older snapshot until a model fitted on the current ledger is the champion. Nothing is broken. The backtest after the fit also fills the new model's backtest summary, which the skill line of a card reads (its first line is cut off here by `tail`).
+Read the first line of the fit output: it says which role the new model took when it was fitted. Here it says challenger, because the refresh is pending until the backtest has run; after the backtest the refresh is decided and goes through, which is why `promote` then finds no challenger. The backtest then attaches the summary and decides a pending refresh. `moot promote` looks at a challenger, and promotes it only when two conditions hold. Its Brier skill must beat the champion's by a margin (0.02 by default, `--margin`), and its backtest must rest on at least as many distinct experiments as the gate for that skill. Otherwise it says which condition failed, for example that the gain is short of the margin or that the backtest has too few tests. When the refresh went through there is no challenger, and `promote` says so. `moot doctor` warns that the champion was fit on an older snapshot whenever the champion is not a model fitted on the current ledger; once the refresh has gone through it reads OK for the model. Nothing is broken. The backtest after the fit also fills the new model's backtest summary, which the skill line of a card reads (its first line is cut off here by `tail`).
 
 ## 6. What the weekly job looks like
 

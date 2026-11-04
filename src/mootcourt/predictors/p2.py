@@ -349,7 +349,7 @@ class P2Predictor:
         if guard is not None and guard < 0:
             raise ValueError("guard must be nonnegative or None")
         self.selection, self.recency, self.bandwidth_override = selection, recency, bandwidth_override
-        self.guard, self.guard_by_cell = guard, {}
+        self.guard, self.guard_by_cell, self.top_candidate_by_cell = guard, {}, {}
         self.lambda_by_cell, self.tau_res2_by_cell, self._cells = {}, {}, {}
         self.bandwidth_mult_by_cell, self.half_life_by_cell, self.score_by_cell = {}, {}, {}
         mults = BANDWIDTH_MULTIPLIERS if bandwidth_override is None else (float(bandwidth_override),)
@@ -391,6 +391,7 @@ class P2Predictor:
             self.bandwidth_mult_by_cell[cell], self.half_life_by_cell[cell], self.score_by_cell[cell] = c, hl, diag["score"]
             self.tau_res2_by_cell[cell], self.lambda_by_cell[cell] = pick["tau_res2"], diag["lambda"]
             self.guard_by_cell[cell] = {k: diag[k] for k in ("lambda_unguarded", "gain", "gain_se", "guard_held")}
+            self.top_candidate_by_cell[cell] = self._top_pending
         return self
 
     def _select(self, picks):
@@ -414,6 +415,7 @@ class P2Predictor:
                 if top is None or gain > top[2] + 1e-12:
                     top = (c, hl, gain, se, lam, pick)
         gain0, se0 = (top[2], top[3]) if top else (0.0, math.inf)
+        self._top_pending = None if top is None else {"lambda": top[4], "bandwidth_mult": top[0], "half_life_days": top[1]}
         if self.guard is None or self.lambda_override is not None or top is None:
             sel_gain, sel_se = gain0, se0
             if unguarded["lambda"] > 0:

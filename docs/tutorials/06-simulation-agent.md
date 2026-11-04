@@ -87,7 +87,7 @@ moot simulators run --provider my_agent --source sample --out agent.jsonl
 ```
 
 ```text output
-my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 8.9 s, wall 9.3 s
+my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 8.7 s, wall 9.0 s
 wrote agent.jsonl
 ```
 
@@ -120,7 +120,7 @@ grep -E '^\| all \| (P2|agent) ' mootcourt-data/reports/second-opinion-my_agent/
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - Weight in force: 0.0000 (zero until earned on the backtest)
 - Rows scored by the base rung P2: 330; with an opinion: 330; declined: 0; failed calls: 0; absent from the records file: 0
-- Cost of the recorded run: 0.0000 dollars, latency 8.9498 seconds in total
+- Cost of the recorded run: 0.0000 dollars, latency 8.7178 seconds in total
  P2 | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
  P2 on agent rows | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
  agent | 330 | 0.1724 | -0.0598 | -0.1104 | 0.0000
@@ -158,11 +158,11 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 ## Prediction
 
-- P(significant and positive): 0.220
-- Point estimate: 0.00 units of the ledger's effect
-- 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
+- P(significant and positive): 0.249
+- Point estimate: 0.01 units of the ledger's effect
+- 80 percent interval for the true effect: -0.03 to 0.05 units of the ledger's effect
 - 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
-- P(true effect above 0): 0.551
+- P(true effect above 0): 0.585
 - Rung: P2, weight on precedents 0.0
 
 ## Team forecast
@@ -173,7 +173,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - P(significant and positive) according to the agent: 0.100
-- Model, side by side: P(significant and positive) 0.220
+- Model, side by side: P(significant and positive) 0.249
 - Weight in force: 0.00
 - The weight is zero: the agent has not earned a place in the number yet, so the model's p_sig is the one that counts.
 

@@ -1040,16 +1040,166 @@ def test_the_held_out_gain_and_fit_fraction_diagnostics_hold_out_tests_and_have_
     ho = pe.guard_held_out_gain(sizes=(120,), seeds=range(2))
     row = ho["rows"][0]
     assert row["n_tests"] == 120 and row["cells"] > 0
-    assert row["mean_difference"] == pytest.approx(row["mean_in_selection_gain"] - row["mean_held_out_gain"])
+    assert row["mean_bias"] == pytest.approx(row["mean_in_selection_gain"] - row["mean_candidate_held_out_gain"])
     assert row["admitted_cells"] <= row["cells"] and ho["held_out_share_of_tests"] == 0.15
+    assert row["mean_candidate_held_out_se"] >= 0.0 and row["mean_chosen_held_out_se"] >= 0.0
     fs = pe.guard_fit_fraction_stability(n_tests=120, seeds=range(2))
     assert [r["fit"] for r in fs["rows"]] == ["first_85_percent", "first_90_percent", "first_95_percent", "first_100_percent", "random_85_percent"]
     assert all(r["cells"] > 0 and 0.0 <= r["share_admitted"] <= 1.0 for r in fs["rows"])
+    pc = pe.guard_period_control(sizes=(120,), seeds=range(2))
+    assert [r["arm"] for r in pc["rows"]] == ["old_rule", "old_rule_no_period", "new_rule"]
     spec = importlib.util.spec_from_file_location("build_tables_h", Path(__file__).resolve().parents[1] / "paper" / "build_tables.py")
     bt = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(bt)
-    (tmp_path / "paper-extras-synthetic-SID.json").write_text(json.dumps({"guard_held_out_gain": ho, "guard_fit_fraction_stability": fs}))
+    (tmp_path / "paper-extras-synthetic-SID.json").write_text(
+        json.dumps({"guard_held_out_gain": ho, "guard_fit_fraction_stability": fs, "guard_period_control": pc})
+    )
     bt.guard_held_out_table(str(tmp_path), str(tmp_path))
+    bt.guard_period_control_table(str(tmp_path), str(tmp_path))
     assert (
         "120 &" in (tmp_path / "guard-gain-held-out.tex").read_text() and "random\\_85\\_percent" in (tmp_path / "guard-fit-fraction.tex").read_text()
     )
+    assert "old rule, no period deviation" in (tmp_path / "guard-period-control.tex").read_text()
+
+
+def test_the_held_out_split_is_by_test_and_each_fit_part_has_no_test_of_the_held_out_part():
+    pe = _load_paper_extras()
+    ledger = upworthy_like(150, seed=3)
+    fit_rows, held_rows = pe.split_tests(ledger, 1, 0.15)
+    assert not set(fit_rows["test_id"]) & set(held_rows["test_id"])
+    assert len(fit_rows) + len(held_rows) == len(ledger)
+    assert len(set(held_rows["test_id"])) == round(0.15 * ledger["test_id"].nunique())
+
+
+# ============================================================================ T-058: the period level comes from the last complete period
+def _p1_ledger_at(origin: str):
+    from mootcourt.ledger import visible_rows
+
+    ledger = upworthy_like(260, seed=5)
+    o = pd.Timestamp(origin, tz="UTC")
+    v = visible_rows(ledger, o)
+    return v[v["status"] == "admitted"], o
+
+
+def test_a_fit_whose_data_end_is_a_quarter_boundary_gives_the_cell_params_it_gave_before_the_rule():
+    from mootcourt.predictors.p1 import P1Predictor
+
+    pinned = {  # the numbers of the code before the rule (chunk N), at the origins 2014-07-01 and 2014-04-01
+        "2014-07-01": {
+            "both": (0.011696170660432274, 0.140499626288567, 30.0),
+            "headline_only": (0.04024386917444933, 0.12796507608920615, math.inf),
+        },
+        "2014-04-01": {
+            "both": (-0.01674225296666164, 0.1484269549232275, math.inf),
+            "headline_only": (0.016076295502955612, 0.12725430539400662, math.inf),
+        },
+    }
+    for origin, want in pinned.items():
+        adm, o = _p1_ledger_at(origin)
+        p1 = P1Predictor().fit(adm, data_end=o)
+        for cell, (mu, tau, nu) in want.items():
+            got = p1.cell_params(cell, "2099Q1")
+            assert got["mu"] == pytest.approx(mu, abs=1e-12) and got["tau"] == pytest.approx(tau, abs=1e-12) and got["nu"] == nu
+
+
+def test_a_ledger_ending_a_week_into_a_quarter_takes_the_previous_quarters_level_and_the_partial_period_sets_none():
+    from mootcourt.predictors.p1 import P1Predictor
+
+    adm, o = _p1_ledger_at("2014-07-01")
+    week = adm[adm["usable_after"] <= pd.Timestamp("2014-04-08", tz="UTC")]  # data end a week into 2014Q2
+    p1 = P1Predictor().fit(week, data_end=pd.Timestamp("2014-04-08", tz="UTC"))
+    assert "2014Q2" not in p1._period and p1.last_period() == "2014Q1"
+    # the partial period's rows still count in the global and the cell fits
+    assert p1.global_params()["n"] == len(week)
+    # a card at a date inside the partial period gets the previous quarter's level, as a date after it would
+    assert p1.cell_params("headline_only", "2014Q2") == p1.cell_params("headline_only", "2099Q1")
+    # the same rows with the data end given as the origin after the quarter treat the quarter as complete
+    assert "2014Q2" in P1Predictor().fit(adm, data_end=o)._period
+    # no complete period at all: the global fit, no failure
+    first_week = adm[adm["usable_after"] <= adm["usable_after"].min() + pd.Timedelta(days=7)]
+    alone = P1Predictor().fit(first_week)  # the default data end is the newest usable_after
+    assert alone.last_period() == "" and alone.cell_params("headline_only", "2013Q1")["n_period"] == 0
+
+
+def test_refresh_discrimination_counts_skipped_reports_and_fails_the_check_when_one_was_skipped(tmp_path, capsys, monkeypatch):
+    import importlib.util
+    import sys
+
+    spec = importlib.util.spec_from_file_location(
+        "refresh_discrimination_n", Path(__file__).resolve().parents[1] / "scripts" / "refresh_discrimination.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    (tmp_path / "backtest-x-1.json").write_text(
+        json.dumps({"header": {"bootstrap_resamples": 10, "seed": 0}, "tables": {"aggregate": [{"cell": "ALL", "rung": "P1"}]}})
+    )
+    monkeypatch.setattr(sys, "argv", ["refresh_discrimination.py", str(tmp_path), "--check"])
+    assert mod.main() == 0  # no resolution key in the report: nothing to check
+    (tmp_path / "backtest-y-1.json").write_text(
+        json.dumps(
+            {"header": {"bootstrap_resamples": 10, "seed": 0}, "tables": {"aggregate": [{"cell": "ALL", "rung": "P1", "resolution_event": 0.1}]}}
+        )
+    )
+    assert mod.main() == 1  # a report with the keys and no score table beside it
+    assert "1 skipped" in capsys.readouterr().out
+
+
+# ============================================================================ T-059: the review of chunk O (REV-N3)
+def test_a_data_end_on_the_last_day_of_a_quarter_keeps_that_quarter_and_the_next_instant_day_drops_nothing_else():
+    from mootcourt.predictors.p1 import P1Predictor
+
+    adm, _ = _p1_ledger_at("2014-07-01")
+    keep = P1Predictor().fit(adm, data_end=pd.Timestamp("2014-06-30 09:00", tz="UTC"))  # the last day of 2014Q2: the quarter is complete
+    assert "2014Q2" in keep._period
+    drop = P1Predictor().fit(adm, data_end=pd.Timestamp("2014-06-29 23:59:59", tz="UTC"))  # the day before: 2014Q2 is partial
+    assert "2014Q2" not in drop._period and "2014Q1" in drop._period
+    pacific = P1Predictor().fit(adm, data_end=pd.Timestamp("2014-06-30 17:00", tz="US/Pacific"))  # 2014-07-01 00:00 UTC
+    assert "2014Q2" in pacific._period
+    assert P1Predictor().fit(adm, data_end=pd.Timestamp("2014-07-01", tz="UTC")).last_period() == "2014Q2"  # the quarterly origin: unchanged
+
+
+def test_the_period_control_arms_are_built_as_described_on_a_small_ledger():
+    pe = _load_paper_extras()
+    from mootcourt.predictors.p1 import P1Predictor
+    from mootcourt.sources import synthetic
+
+    ledger, _ = synthetic.generate(synthetic.SyntheticConfig(seed=1, n_tests=300, variants_per_test=2, text_effect_strength=0.0))
+    adm = ledger[ledger["status"] == "admitted"]
+    old = P1Predictor().fit(adm, data_end=pd.Timestamp("2100-01-01", tz="UTC"))
+    new = P1Predictor().fit(adm)
+    assert old.last_period() == max(p for p, v in old._period.items() if v["n"] >= 30)  # the pre-rule choice: the latest period with 30 rows
+    assert len(new._period) <= len(old._period)
+    # the control arm without period deviation: every period is the global fit, so the cell params equal the cell fit shrunk to the global fit
+    pc = pe.guard_period_control(sizes=(300,), seeds=range(1))
+    arms = {r["arm"]: r for r in pc["rows"]}
+    assert set(arms) == {"old_rule", "old_rule_no_period", "new_rule"}
+    assert arms["old_rule_no_period"]["mean_rows_in_period_level"] == 0
+    assert arms["old_rule"]["mean_rows_in_period_level"] > 0
+    flat = P1Predictor().fit(adm, data_end=pd.Timestamp("2100-01-01", tz="UTC"))
+    flat._period = {k: dict(flat._global) for k in flat._period}
+    flat._cache = {}
+    from mootcourt.predictors.p1 import shrink
+
+    for cell in sorted(adm["cell"].unique()):
+        kc, g = flat._kind[cell], flat._global
+        assert flat.cell_params(cell, "2099Q1")["mu"] == pytest.approx(shrink(kc["mu"], g["mu"], kc["n"], flat.kappa), abs=1e-12)
+    # the new-rule arm is the production path: P1Predictor().fit(rows) with no special casing
+    import inspect
+
+    src = inspect.getsource(pe.guard_period_control)
+    assert 'if arm == "new_rule":\n            return P1Predictor().fit(rows)' in src.replace("    # every period counts", "")
+
+
+def test_a_cell_without_held_out_rows_is_skipped_and_counted_not_zero_filled(monkeypatch):
+    pe = _load_paper_extras()
+    real = pe.split_tests
+
+    def only_one_cell_held(ledger, seed, share=0.15):
+        fit_rows, held_rows = real(ledger, seed, share)
+        first = sorted(ledger["cell"].unique())[0]
+        return pd.concat([fit_rows, held_rows[held_rows["cell"] != first]]), held_rows[held_rows["cell"] == first]
+
+    monkeypatch.setattr(pe, "split_tests", only_one_cell_held)
+    row = pe.guard_held_out_gain(sizes=(120,), seeds=range(2))["rows"][0]
+    assert row["cells_skipped_without_held_out_rows"] >= 1
+    assert row["cells"] + row["cells_skipped_without_held_out_rows"] <= 6

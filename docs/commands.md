@@ -58,7 +58,7 @@ tail -n 5 doctor.txt
 
 ```text output
 exit code: 1
-OK    data root: ~/moot-commands/mootcourt-data; free space 11.7 GB
+OK    data root: ~/moot-commands/mootcourt-data; free space 13.3 GB
 WARN  ledger: no ledger at ~/moot-commands/mootcourt-data/data/ledger/ledger.parquet; import results with `moot ingest`
 WARN  models: no registry; run `moot fit --source NAME`
 WARN  reliability: no reliability report; `moot backtest` seeds one and `moot join` keeps it current
@@ -89,13 +89,13 @@ moot storage
 
 ```text output
 data root: ~/moot-commands/mootcourt-data  [set MOOTCOURT_DATA_ROOT or storage.data_root in mootcourt.toml]
-raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 11.7 GB
-ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 11.7 GB
-reports     ~/moot-commands/mootcourt-data/reports  size 3.3 KB  free 11.7 GB
-models      ~/moot-commands/mootcourt-data/models  size 0 B  free 11.7 GB
-cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 11.7 GB
-cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 11.7 GB
-experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 11.7 GB
+raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 13.3 GB
+ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 13.3 GB
+reports     ~/moot-commands/mootcourt-data/reports  size 3.3 KB  free 13.3 GB
+models      ~/moot-commands/mootcourt-data/models  size 0 B  free 13.3 GB
+cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 13.3 GB
+cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 13.3 GB
+experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 13.3 GB
 ```
 
 **Common errors.** The command only reads, so nothing in your data makes it fail. A folder that does not exist yet is shown as `(not created yet)` with size 0, which is normal before `moot init` and means the first line names the wrong data root if you expected existing data: the line says whether the root came from the variable, the file or the working directory. `No such option: --nope` (exit 2) for any option; the command takes none.
@@ -205,7 +205,7 @@ moot fit --source sample
 ```
 
 ```text output
-fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.8 s; it is the champion for sample
+fitted model 6e5029e03c73 at snapshot 20261104-80131c793938 in 1.3 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -234,8 +234,8 @@ moot backtest --source sample
 ```text output
 gates read from ~/moot-commands/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 50, "n_400": 100}, "0.90": {"n_200": 75, "n_400": 150}}, "decision_target": 0.9, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 75, "n_400": 150}
 gate sizes by base rate (tests): 0.30: n_200 75, n_400 150
-filled the backtest summary of model 097a3bd3b39b
-scored 330 rows over 11 origins in 4.3 s (report writing 4.9 s)
+filled the backtest summary of model 6e5029e03c73
+scored 330 rows over 11 origins in 3.5 s (report writing 3.9 s)
 wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
 wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
 wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
@@ -253,6 +253,8 @@ wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261104-80131c793938
 
 **Reads** the champion model (or `--model-id`), the reliability report and the settings. **Writes** `cards/<card id>.json`. **Prints** the card as Markdown, or as JSON with `--json`. About a second, most of it loading the model.
 
+**Period level.** A model fitted at a date inside a quarter, as `moot fit` does, takes P1's period level from the last complete quarter (the global fit when no quarter is complete), so a thin latest period cannot move a card; a backtest at quarterly origins is unaffected. A model fitted before this rule keeps its stored period table until you refit.
+
 **Options you will use.** `--source` and `--impressions` (planned units per arm) always. `--cell` for a ledger with several metrics, where the cell is the metric. `--headline`, `--image-changed` and `--headline-changed` for a ledger with text features. `--guardrail CELL:DELTA` (repeatable) to add a guardrail metric, shown with `p_harm`. `--now` (the issue time, which sets what "recent" means for the reliability check) and `--origin` (the time whose rows the forecaster may see, default `--now`) to issue as of a past time, which a static ledger needs. `--row-id source:test_id:variant_id`, or `--test-id` with `--variant-id`, to name the ledger row that the weekly join will attach the outcome to ([tutorial 4](tutorials/04-weekly-loop.md); `POST /card` and the MCP tool take the same field as `row_id`). `--impressions-variant` when the variant arm has other planned exposure than the reference arm, and `--reference-headline` for a ledger whose rows carry the reference headline. `--simulator NAME` to add a second opinion.
 
 ```bash run head=24
@@ -262,12 +264,12 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: 8f5b904729f2bbd2
+- Card id: 1705a34c4ed02a00
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
 - Ledger snapshot: 20261104-80131c793938
-- Model: 097a3bd3b39b
+- Model: 6e5029e03c73
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.015 units of the ledger's effect
@@ -275,14 +277,14 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 120
-- Effective number of precedents: 119.2
+- Effective number of precedents: 119.3
 - Base rate of significant positive results in the cell (P0): 0.275
 
 ## Prediction
 
-- P(significant and positive): 0.220
-- Point estimate: 0.00 units of the ledger's effect
-- 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
+- P(significant and positive): 0.249
+- Point estimate: 0.01 units of the ledger's effect
+- 80 percent interval for the true effect: -0.03 to 0.05 units of the ledger's effect
 - 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
 ```
 
