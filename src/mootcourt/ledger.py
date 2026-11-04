@@ -100,8 +100,10 @@ def resolve_row_id(source: str, row_id: str | None = None, test_id: str | None =
         if not test_id or not variant_id:
             raise ValueError("a ledger row key needs both a test id and a variant id")
         row_id = make_row_id(source, test_id, variant_id)
-    if not str(row_id).strip() or "\n" in str(row_id):
-        raise ValueError("the row id must be a non-empty single line")
+    if not str(row_id).strip() or any(ord(ch) < 32 or ord(ch) == 127 for ch in str(row_id)):
+        raise ValueError("the row id must be a non-empty single line without control characters")
+    if not str(row_id).startswith(f"{source}:"):
+        raise ValueError(f"the row id must start with the card's source, {source}: (a row of another source would be joined to this one)")
     return str(row_id)
 
 

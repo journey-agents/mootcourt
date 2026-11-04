@@ -79,7 +79,7 @@ SCORE_COLUMNS = [
 ]
 EXTRA_COLUMNS = [
     "usable_after", "point", "p_gt0", "event_pos", "brier_pos", "p_base", "brier_base", "brier_floor_row",
-    "dir_ceiling_row", "n_visible_cell", "s_star", "exposure",
+    "dir_ceiling_row", "n_visible_cell", "s_star", "exposure", "event_planned", "brier_planned", "p_base_planned", "brier_base_planned",
 ]
 
 
@@ -150,13 +150,27 @@ def _audit_fits(origin):
                 return fn(self, rows, *a, **k)
             return wrapped
 
-        saved.append((cls, raw))
+        saved.append((cls, "fit", raw))
         cls.fit = make()
+    # The challengers are built from the rows the factory hands them, in __init__: wrapped the same way (review L, REV-L-005), so a factory
+    # that gives GBMChallenger, LocalEB or TextLR a row that is not yet usable raises LeakageError.
+    for cls in (GBMChallenger, LocalEB, TextLR):
+        raw_init = cls.__dict__["__init__"]
+
+        def make_init(raw_init=raw_init):
+            def wrapped(self, *args, **kwargs):
+                for a in list(args) + list(kwargs.values()):
+                    check(a)
+                return raw_init(self, *args, **kwargs)
+            return wrapped
+
+        saved.append((cls, "__init__", raw_init))
+        cls.__init__ = make_init()
     try:
         yield
     finally:
-        for cls, raw in saved:
-            cls.fit = raw
+        for cls, name, raw in saved:
+            setattr(cls, name, raw)
 
 
 # -------------------------------------------------------------- rung models
@@ -328,7 +342,11 @@ class GBMChallenger:
         """``(p_sig, event)`` of the visible rows from their out-of-fold predictions, at their own pre-launch ``s_star``."""
         rows = self.sorted_rows
         s_star = scale.s_star_rows(rows, rows)
-        return self._p_sig(self.oof_mean, s_star), (rows["y"].to_numpy(float) > Z * rows["s"].to_numpy(float)).astype(float)
+        p, e = self._p_sig(self.oof_mean, s_star), (rows["y"].to_numpy(float) > Z * rows["s"].to_numpy(float)).astype(float)
+        if len(p) > CALIBRATION_MAX_ROWS:         # the same fixed subsample as the other challengers (REV-L-026)
+            pick = np.sort(np.random.default_rng(0).choice(len(p), CALIBRATION_MAX_ROWS, replace=False))
+            p, e = p[pick], e[pick]
+        return p, e
 
 
 def dersimonian_laird(y, s) -> tuple[float, float]:
@@ -844,6 +862,11 @@ def rolling_origin(
         floor = posterior_floor(scored, p1, t)
         base_by_cell = {c: p0m.sig_positive_frequency(c, t) for c in scored["cell"].unique()}
         p_base = scored["cell"].map(base_by_cell).to_numpy(float)
+        # The sensitivity event of review R5: significant on the PLANNED standard error (y > z s_star) instead of the realized one. The
+        # forecast p_sig is the same number; P0's forecast for this event is the visible rate of the same event (its own definition), so its
+        # skill is zero here too. The visible rows' planned standard errors are the pre-launch ones computed from the visible set.
+        event_planned = y > Z * s_star
+        p_base_planned = _planned_event_base(visible, scored, s_star_mode)
 
         outcomes = _outcomes_for_reliability(blocks, rel_rung, t)
         if prev_report is not None or len(outcomes):
@@ -882,6 +905,11 @@ def rolling_origin(
                 "brier_base": (p_base[idx] - event[idx]) ** 2, "brier_floor_row": floor["brier_floor_row"][idx],
                 "dir_ceiling_row": floor["dir_ceiling_row"][idx], "n_visible_cell": n_vis[idx],
             })
+            p_plan = p_base_planned[idx] if isinstance(models[name], P0Predictor) else cols["p_sig"]
+            frame["event_planned"] = event_planned[idx]
+            frame["brier_planned"] = (p_plan - event_planned[idx]) ** 2
+            frame["p_base_planned"] = p_base_planned[idx]
+            frame["brier_base_planned"] = (p_base_planned[idx] - event_planned[idx]) ** 2
             if metric_ids.any():                      # the column exists only for multi-metric ledgers: the single-metric table is unchanged
                 frame["metric"] = metric_ids[idx]
             blocks.append(frame)
@@ -893,6 +921,17 @@ def rolling_origin(
     out.attrs["dropped_triggers"] = sorted(cfg.disabled)
     out.attrs["selections"] = selections
     return out
+
+
+def _planned_event_base(visible: pd.DataFrame, scored: pd.DataFrame, s_star_mode: str) -> np.ndarray:
+    """Per scored row, the share of the visible rows of its cell with ``y > z s_star`` (the planned-standard-error event), the share over all
+    visible rows where the cell has fewer than two. The visible rows' ``s_star`` is the pre-launch one computed from the visible set."""
+    s_vis = np.array(visible["s"].to_numpy(float), copy=True) if s_star_mode == "realized" else scale.s_star_rows(visible, visible)
+    ev = pd.Series(visible["y"].to_numpy(float) > Z * s_vis, index=visible.index).astype(float)
+    cells = visible["cell"].to_numpy()
+    glob = float(ev.mean()) if len(ev) else float("nan")
+    by_cell = {c: (float(ev[cells == c].mean()) if (cells == c).sum() >= 2 else glob) for c in np.unique(cells)}
+    return scored["cell"].map(lambda c: by_cell.get(c, glob)).to_numpy(float)
 
 
 def _direction_correct(point, y) -> np.ndarray:

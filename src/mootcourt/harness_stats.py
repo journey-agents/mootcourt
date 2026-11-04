@@ -48,7 +48,8 @@ DEFAULT_B = 500
 LEVEL = 0.90
 # perfect-calibration null draws: the percentile resolves at most (draws - 1) / draws, so 100 means "above every draw"
 NULL_DRAWS = 500
-LEGACY_BASE_RATE = 0.30               # the base rate of the gates before round 00, kept as a labelled column
+BY_ROW_NOT_COMPUTED = "not computed: the gates count tests"
+LEGACY_BASE_RATE = 0.30               # base rate of the earlier gates; the column reads the by-test gate at it
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,7 @@ class _TestSums:
 
     def __init__(self, df: pd.DataFrame, columns: dict[str, np.ndarray]):
         codes, uniques = pd.factorize(df["test_id"])
+        self.codes = codes
         self.n_tests = len(uniques)
         self.counts = np.bincount(codes, minlength=self.n_tests).astype(np.float64)
         self.sums = {k: np.bincount(codes, weights=np.asarray(v, dtype=np.float64), minlength=self.n_tests) for k, v in columns.items()}
@@ -82,6 +84,42 @@ def _percentile_interval(draws: np.ndarray, level: float) -> tuple[float, float]
     a = (1.0 - level) / 2.0
     lo, hi = np.nanpercentile(draws, [100 * a, 100 * (1 - a)])
     return float(lo), float(hi)
+
+
+def _weighted_auc(p: np.ndarray, e: np.ndarray, w: np.ndarray, order: np.ndarray, starts: np.ndarray) -> float:
+    """AUC of ``p`` for the binary ``e`` with row weights ``w`` (a bootstrap draw's test multiplicities), ties counting one half.
+
+    ``order`` sorts the rows by ``p`` and ``starts`` marks where each distinct value begins in that order, both computed once."""
+    pos = np.add.reduceat((w * e)[order], starts)
+    neg = np.add.reduceat((w * (1.0 - e))[order], starts)
+    sp, sn = pos.sum(), neg.sum()
+    if sp <= 0 or sn <= 0:
+        return float("nan")
+    below = np.cumsum(neg) - neg                       # negatives with a strictly smaller forecast
+    return float((pos * (below + 0.5 * neg)).sum() / (sp * sn))
+
+
+def auc_by_test(p, event, test_codes, counts: np.ndarray | None) -> tuple[float | None, float | None, float | None]:
+    """AUC of the forecast probabilities for a binary event, with a 90 percent interval from the by-test resample counts (``counts``, shape
+    (B, n_tests), the same draws as the other statistics of the group). None where a class is missing among the rows (or in a draw)."""
+    p, e = np.asarray(p, float), np.asarray(event, float)
+    ok = np.isfinite(p) & np.isfinite(e)
+    if ok.sum() < 2 or e[ok].min() == e[ok].max():
+        return None, None, None
+    p, e, codes = p[ok], e[ok], np.asarray(test_codes)[ok]
+    order = np.argsort(p, kind="stable")
+    ps = p[order]
+    starts = np.r_[0, np.flatnonzero(np.diff(ps)) + 1]
+    est = _weighted_auc(p, e, np.ones(len(p)), order, starts)
+    if counts is None:
+        return est, None, None
+    draws = np.array([_weighted_auc(p, e, counts[b][codes], order, starts) for b in range(counts.shape[0])])
+    draws = draws[np.isfinite(draws)]
+    if len(draws) < 2:
+        return est, None, None
+    lo, hi = _percentile_interval(draws, LEVEL)
+    return est, lo, hi
+
 
 
 def bootstrap_by_test(scores: pd.DataFrame, stat: str, B: int = DEFAULT_B, seed: int = 0, level: float = LEVEL) -> Interval:
@@ -162,12 +200,45 @@ def design_effect(p, event, test_ids) -> dict:
     return {"design_effect": float(deff), "icc": icc, "mean_test_size": m, "n_tests": int(len(sizes))}
 
 
+def latent_rho_for_design_effect(p, test_ids, target_deff: float, draws: int = 60, seed: int = 0, steps: int = 14) -> float:
+    """The latent correlation of the one-factor copula whose null draws have mean design effect ``target_deff``.
+
+    Thresholding a latent Gaussian at ``Phi^-1(p)`` attenuates its correlation sharply at a low ``p``: using the observed binary
+    correlation as the latent one reproduced a design effect of 1.14 where the data had 1.39 (review L, REV-L-004). The latent
+    correlation is solved by bisection on the design effect of ``draws`` null draws with common random numbers, so it matches the data
+    whatever the spread of ``p``. A target at or below 1 gives 0; a target the copula cannot reach gives 0.995.
+    """
+    p = np.asarray(p, float)
+    if target_deff <= 1.0 + 1e-9:
+        return 0.0
+    codes, uniq = pd.factorize(pd.Series(np.asarray(test_ids)))
+    rng = np.random.default_rng(seed)
+    g = rng.standard_normal((draws, len(uniq)))[:, codes]
+    eps = rng.standard_normal((draws, p.size))
+    thr = special.ndtri(np.clip(p, 1e-12, 1.0 - 1e-12))
+    den = float((p * (1.0 - p)).sum())
+
+    def deff(rho: float) -> float:
+        z = np.sqrt(rho) * g + np.sqrt(1.0 - rho) * eps
+        r = (z < thr[None, :]).astype(float) - p[None, :]
+        return float(np.mean([(np.bincount(codes, weights=row) ** 2).sum() for row in r]) / den)
+
+    lo, hi = 0.0, 0.995
+    if deff(hi) < target_deff:
+        return hi
+    for _ in range(steps):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if deff(mid) < target_deff else (lo, mid)
+    return 0.5 * (lo + hi)
+
+
 def ece_null(p, draws: int = NULL_DRAWS, seed: int = 0, n_bins: int = 10, test_ids=None, icc: float = 0.0, equal_mass: bool = False) -> np.ndarray:
     """ECE of ``draws`` outcome sets drawn from the predicted probabilities (the perfect-calibration null).
 
     Without ``test_ids`` the outcomes are independent Bernoulli(p). With them, contrasts of one test are drawn together: a one-factor
-    Gaussian copula with within-test correlation ``icc`` (one shared normal per test plus one per row) keeps every marginal at its
-    ``p`` and makes outcomes of a test move together, which is what a shared reference arm does. ``icc = 0`` is the independent null.
+    Gaussian copula with LATENT within-test correlation ``icc`` (one shared normal per test plus one per row) keeps every marginal at its
+    ``p`` and makes outcomes of a test move together, which is what a shared reference arm does. ``icc = 0`` is the independent null. Pass the
+    latent correlation from ``latent_rho_for_design_effect``, not the observed binary correlation.
     ``equal_mass`` bins by quantile instead of equal width.
     """
     p = np.asarray(p, float)
@@ -401,20 +472,93 @@ def _na(x) -> float | None:
     return None if x is None or not np.isfinite(x) else float(x)
 
 
-def _bonferroni(est: float, draws: np.ndarray, family: int) -> tuple[float | None, float | None]:
-    """Bonferroni-adjusted 90 percent bounds: the estimate plus or minus the bootstrap standard error times the quantile of ``1 - 0.05 / family``."""
+def _se(draws: np.ndarray) -> float | None:
     d = draws[np.isfinite(draws)]
-    if not np.isfinite(est) or len(d) < 2 or family < 1:
-        return None, None
-    half = float(special.ndtri(1.0 - (1.0 - LEVEL) / 2.0 / family)) * float(np.std(d, ddof=1))
-    return float(est - half), float(est + half)
+    return float(np.std(d, ddof=1)) if len(d) >= 2 else None
 
 
-def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, gates: dict, B: int, seed: int, family: int = 1) -> dict:
+def apply_bonferroni(frame: pd.DataFrame) -> pd.DataFrame:
+    """Fill the adjusted bounds (``adjusted_lo/hi``, ``logscore_adjusted_lo/hi``) and ``family_size`` from the private ``_se_*`` columns.
+
+    The family is the number of intervals the table actually reports: one per row with a Brier skill interval of positive width plus one per
+    row with a log score interval (rows without an interval, such as the direction baselines, and the zero-width skill interval of P0 are not
+    counted; review L, REV-L-018). The adjusted bound is the estimate plus or minus the bootstrap standard error times the normal quantile of
+    ``1 - 0.05 / family``. The private columns are dropped.
+    """
+    out = frame.copy()
+    has_skill = out["_se_skill"].notna() & out["brier_skill"].notna() & ((out["brier_skill_hi"] - out["brier_skill_lo"]) > 0)
+    has_log = out["_se_logscore"].notna() & out["logscore"].notna()
+    m = int(has_skill.sum() + has_log.sum())
+    z = float(special.ndtri(1.0 - (1.0 - LEVEL) / 2.0 / m)) if m else float("nan")
+    for est, se, ok, lo, hi in (("brier_skill", "_se_skill", has_skill, "adjusted_lo", "adjusted_hi"),
+                                ("logscore", "_se_logscore", has_log, "logscore_adjusted_lo", "logscore_adjusted_hi")):
+        out[lo] = np.where(ok, out[est] - z * out[se], np.nan)
+        out[hi] = np.where(ok, out[est] + z * out[se], np.nan)
+    out["family_size"] = m
+    return out.drop(columns=["_se_skill", "_se_logscore"])
+
+
+def _bincount_ok(ts: "_TestSums", values: np.ndarray, ok: np.ndarray) -> np.ndarray:
+    return np.bincount(ts.codes[ok], weights=np.asarray(values, float)[ok], minlength=ts.n_tests)
+
+
+def _discrimination(row: dict, g: pd.DataFrame, ts: "_TestSums", counts: np.ndarray) -> None:
+    """AUC and resolution, so discrimination is reported apart from skill (reviews R3 and R5).
+
+    For the significance event: ``p_sig`` against ``event``. For the direction: ``p_gt0`` against ``event_pos``. Resolution is the Murphy
+    decomposition term, the mean squared deviation of the forecast probabilities from the group's own event rate. Both carry the 90 percent
+    by-test bootstrap interval of the group's other statistics. A rung without the probability, or a group in which the event never or always
+    happens, gets None for the AUC (and the resolution is still defined)."""
+    for key, pcol, ecol in (("event", "p_sig", "event"), ("direction", "p_gt0", "event_pos")):
+        if pcol not in g.columns or ecol not in g.columns:
+            continue
+        p, e = g[pcol].to_numpy(float), g[ecol].to_numpy(float)
+        ok = np.isfinite(p) & np.isfinite(e)
+        row[f"auc_{key}"], row[f"auc_{key}_lo"], row[f"auc_{key}_hi"] = auc_by_test(p, e, ts.codes, counts) if ok.sum() >= 2 else (None, None, None)
+        if not ok.any():
+            row[f"resolution_{key}"] = row[f"resolution_{key}_lo"] = row[f"resolution_{key}_hi"] = None
+            continue
+        n_t, s_p, s_p2, s_e = (_bincount_ok(ts, v, ok) for v in (np.ones(len(p)), p, p * p, e))
+        n_all = n_t.sum()
+        ebar = s_e.sum() / n_all
+        row[f"resolution_{key}"] = float(s_p2.sum() / n_all - 2.0 * ebar * s_p.sum() / n_all + ebar * ebar)
+        den = counts @ n_t
+        den = np.where(den > 0, den, np.nan)
+        eb = (counts @ s_e) / den
+        draws = (counts @ s_p2) / den - 2.0 * eb * (counts @ s_p) / den + eb * eb
+        lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
+        row[f"resolution_{key}_lo"], row[f"resolution_{key}_hi"] = _na(lo), _na(hi)
+
+
+def _planned_event_sensitivity(row: dict, g: pd.DataFrame, ts: "_TestSums", counts: np.ndarray) -> None:
+    """The headline event is ``y > z s`` on the realized standard error; here the same scores against ``y > z s_star`` on the planned one
+    (review R5). The forecast ``p_sig`` is the same number; P0's forecast for this event is the visible rate of this event, so its skill is
+    zero here as well. Columns: the event rate, the mean forecast, the Brier score and base Brier score, and the skill with its interval."""
+    need = ("event_planned", "brier_planned", "brier_base_planned")
+    if not all(c in g.columns for c in need):
+        return
+    bp, bb = g["brier_planned"].to_numpy(float), g["brier_base_planned"].to_numpy(float)
+    ev = g["event_planned"].to_numpy(float)
+    ok = np.isfinite(bp) & np.isfinite(bb)
+    if not ok.any():
+        return
+    n_t = _bincount_ok(ts, np.ones(len(bp)), ok)
+    s_bp, s_bb, s_ev = _bincount_ok(ts, bp, ok), _bincount_ok(ts, bb, ok), _bincount_ok(ts, ev, ok)
+    n_all = n_t.sum()
+    row["event_rate_planned"] = float(s_ev.sum() / n_all)
+    row["p_sig_mean"] = _na(float(np.nanmean(g["p_sig"].to_numpy(float)))) if "p_sig" in g.columns else None
+    row["brier_planned"], row["brier_base_planned"] = float(s_bp.sum() / n_all), float(s_bb.sum() / n_all)
+    row["brier_skill_planned"] = _na(1.0 - s_bp.sum() / s_bb.sum()) if s_bb.sum() > 0 else None
+    den = counts @ s_bb
+    draws = 1.0 - (counts @ s_bp) / np.where(den > 0, den, np.nan)
+    lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
+    row["brier_skill_planned_lo"], row["brier_skill_planned_hi"] = _na(lo), _na(hi)
+
+
+def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | None, gates: dict, B: int, seed: int) -> dict:
     """One row of the aggregate table for a (cell, rung) group.
 
-    ``family`` is the number of intervals the table shows, for the Bonferroni-adjusted bounds (``adjusted_lo``, ``adjusted_hi`` for the
-    Brier skill and ``logscore_adjusted_lo``, ``logscore_adjusted_hi`` for the log score).
+    The bootstrap standard errors of the Brier skill and the log score are kept in ``_se_skill`` and ``_se_logscore`` for ``apply_bonferroni``.
     """
     n = len(g)
     ev = g["event"].to_numpy(float)
@@ -451,7 +595,7 @@ def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | Non
         lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
         return float(est), lo, hi
 
-    row: dict = {"n": n, "n_tests": ts.n_tests, "family_size": int(family)}
+    row: dict = {"n": n, "n_tests": ts.n_tests}
     for key, name in (("logscore", "logscore"), ("crps", "crps"), ("brier", "brier"), ("direction_accuracy", "dir"),
                       ("coverage_80", "cov80"), ("coverage_90", "cov90"), ("abstention_rate", "abstain")):
         est, lo, hi = mean_ci(name)
@@ -459,7 +603,7 @@ def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | Non
         if key != "abstention_rate":
             row[key + "_lo"], row[key + "_hi"] = lo, hi
         if key == "logscore":
-            row["logscore_adjusted_lo"], row["logscore_adjusted_hi"] = _bonferroni(est, (counts @ ts.sums["logscore"]) / den_safe, family)
+            row["_se_logscore"] = _se((counts @ ts.sums["logscore"]) / den_safe)
     # Brier skill against the base rate (call 1): 1 - Brier / Brier_base, resampled by test.
     if "base" in ts.sums:
         b_est, b0_est = ts.sums["brier"].sum() / ts.counts.sum(), ts.sums["base"].sum() / ts.counts.sum()
@@ -481,7 +625,9 @@ def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | Non
     row["brier_skill"] = _na(1.0 - b_est / b0_est) if np.isfinite(b0_est) and b0_est > 0 else None
     lo, hi = _percentile_interval(draws, LEVEL) if np.isfinite(draws).any() else (float("nan"), float("nan"))
     row["brier_skill_lo"], row["brier_skill_hi"] = _na(lo), _na(hi)
-    row["adjusted_lo"], row["adjusted_hi"] = _bonferroni(row["brier_skill"] if row["brier_skill"] is not None else float("nan"), draws, family)
+    row["_se_skill"] = _se(draws)
+    _discrimination(row, g, ts, counts)
+    _planned_event_sensitivity(row, g, ts, counts)
     if "floor" in ts.sums:
         row["brier_floor"] = float(ts.sums["floor"].sum() / ts.counts.sum())
         row["direction_ceiling"] = float(ts.sums["ceiling"].sum() / ts.counts.sum())
@@ -497,12 +643,13 @@ def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | Non
     if fin.sum() >= 2:
         p_f, e_f, t_f = g["p_sig"].to_numpy(float)[fin], ev[fin], g["test_id"].to_numpy()[fin]
         de = design_effect(p_f, e_f, t_f)
+        rho = latent_rho_for_design_effect(p_f, t_f, de["design_effect"], seed=seed)
         row["ece"] = ece(p_f, e_f)
-        row["ece_percentile"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed, test_ids=t_f, icc=de["icc"])
+        row["ece_percentile"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed, test_ids=t_f, icc=rho)
         row["ece_percentile_independent"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed)
         row["ece_equal_mass"] = ece_equal_mass(p_f, e_f)
-        row["ece_equal_mass_percentile"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed, test_ids=t_f, icc=de["icc"], equal_mass=True)
-        row["design_effect"], row["icc"] = de["design_effect"], de["icc"]
+        row["ece_equal_mass_percentile"] = ece_percentile(p_f, e_f, draws=NULL_DRAWS, seed=seed, test_ids=t_f, icc=rho, equal_mass=True)
+        row["design_effect"], row["icc"], row["latent_rho"] = de["design_effect"], de["icc"], rho
     # Decisive rows: the direction of the estimate on rows whose result was significant either way (the pairwise accuracy of the
     # winner-prediction literature), beside the all-rows direction accuracy.
     if "s" in g.columns:
@@ -512,9 +659,13 @@ def _group_table_impl(g: pd.DataFrame, base_sums: tuple[pd.DataFrame, str] | Non
     # Gates are read at the base rate nearest to this group's own event rate; the base rate 0.3 of the earlier gates stays beside them.
     sel = select_gates(gates, float(ev.mean()) if len(ev) else None)
     row["gate_base_rate"] = sel.get("base_rate")
-    st = gate_status(n, sel)
-    row["decidable"] = st["label"]
-    row["decidable_research"] = st["label_research"]
+    if (gates.get("interval") or {}).get("by") == "test":
+        # The sizes in the gates are numbers of TESTS; a row count against them is not a decision (review L, REV-L-003).
+        row["decidable"] = row["decidable_research"] = BY_ROW_NOT_COMPUTED
+    else:
+        st = gate_status(n, sel)
+        row["decidable"] = st["label"]
+        row["decidable_research"] = st["label_research"]
     st_tests = gate_status(ts.n_tests, sel)
     row["decidable_by_tests"] = st_tests["label"]
     row["decidable_research_by_tests"] = st_tests["label_research"]
@@ -533,7 +684,7 @@ def _group_table(*args, **kwargs) -> dict:
         return _group_table_impl(*args, **kwargs)
 
 
-def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed: int = 0, family_size: int | None = None) -> pd.DataFrame:
+def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed: int = 0, adjust: bool = True) -> pd.DataFrame:
     """Aggregate table per cell and rung (plus an ``ALL`` cell), with 90 percent by-test bootstrap intervals.
 
     Columns: n, n_tests, logscore, crps, brier, brier_skill, direction_accuracy, coverage_80, coverage_90,
@@ -541,8 +692,8 @@ def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed
     non-abstained rows (``*_nonabstained``); the Brier floor and direction ceiling from the shrunken
     posterior when the columns exist; ECE and its percentile in the null; and ``decidable`` from the gates.
     The Brier skill baseline is the ``brier_base`` column (the cell's significant-positive base rate, call 1)
-    when present, otherwise the P0 rung's Brier score on the same tests. Every row also carries the Bonferroni-adjusted bounds for the
-    family of ``family_size`` intervals (default: the number of (cell, rung) rows of the table), the design effect and the clustered
+    when present, otherwise the P0 rung's Brier score on the same tests. Every row also carries the Bonferroni-adjusted bounds
+    (``adjust``; ``apply_bonferroni`` states the family), the design effect and the clustered
     ECE percentile, the decisive-row direction accuracy and the gate read at the base rate nearest to the group's own.
     """
     rows = []
@@ -552,19 +703,17 @@ def aggregate_scores(scores: pd.DataFrame, gates: dict, B: int = DEFAULT_B, seed
         for cell, g in [("ALL", p0)] + list(p0.groupby("cell")):
             grp = g.groupby("test_id")["brier_event"]
             p0_by_cell[cell] = pd.DataFrame({"sum": grp.sum(), "n": grp.size().astype(float)})
-    family = (
-        family_size if family_size is not None else int(sum(1 + scores.loc[scores["rung"] == r, "cell"].nunique() for r in scores["rung"].unique()))
-    )
     for rung in sorted(scores["rung"].unique()):
         sr = scores[scores["rung"] == rung]
         for cell, g in [("ALL", sr)] + list(sr.groupby("cell")):
             base = (p0_by_cell[cell], "P0") if cell in p0_by_cell else None
-            row = _group_table(g, base, gates, B, seed, family)
+            row = _group_table(g, base, gates, B, seed)
             rows.append({"cell": cell, "rung": rung, **row})
     out = pd.DataFrame(rows)
     order = {"ALL": 0}
     out["_c"] = out["cell"].map(lambda c: order.get(c, 1))
-    return out.sort_values(["_c", "cell", "rung"]).drop(columns="_c").reset_index(drop=True)
+    out = out.sort_values(["_c", "cell", "rung"]).drop(columns="_c").reset_index(drop=True)
+    return apply_bonferroni(out) if adjust else out
 
 
 def brier_skill_draws(g: pd.DataFrame, B: int = DEFAULT_B, seed: int = 0) -> np.ndarray:
@@ -595,14 +744,14 @@ def by_year(scores: pd.DataFrame, years, gates: dict, B: int = DEFAULT_B, seed: 
     """
     years = pd.Series(np.asarray(years), index=scores.index)
     parts = []
-    family = int(sum(1 + scores.loc[(scores["rung"] == r) & (years == y), "cell"].nunique() for y in years.unique() for r in scores["rung"].unique()
-                     if ((scores["rung"] == r) & (years == y)).any()))
     for year in sorted(years.unique()):
-        agg = aggregate_scores(scores[years == year], gates, B=B, seed=seed, family_size=family)
-        keep = agg[["cell", "rung", *[c for c in YEAR_COLUMNS if c in agg.columns]]].copy()
+        agg = aggregate_scores(scores[years == year], gates, B=B, seed=seed, adjust=False)
+        keep = agg[["cell", "rung", *[c for c in YEAR_COLUMNS if c in agg.columns], "_se_skill", "_se_logscore"]].copy()
         keep.insert(0, "year", int(year))
         parts.append(keep)
-    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["year", "cell", "rung", *YEAR_COLUMNS])
+    if not parts:
+        return pd.DataFrame(columns=["year", "cell", "rung", *YEAR_COLUMNS])
+    return apply_bonferroni(pd.concat(parts, ignore_index=True))      # one family over every year, cell and rung of the table
 
 
 RELEASED_COLUMNS = ["n", "n_tests", "logscore", "logscore_lo", "logscore_hi", "brier", "brier_skill", "brier_skill_lo", "brier_skill_hi",

@@ -235,7 +235,8 @@ Simulate the gates by test, at the base rates of the archives, and write reports
 | `--seed` | int | `20261102` |  |
 | `--base-rate` | float |  | Base rate of the significant-positive event; repeat for several. Default: 0.09 (the Upworthy archive), 0.14 (ASOS) and 0.30 (the earlier gates). |
 | `--target` | float |  | Power of the release gate; default gate.target_power in mootcourt.toml, else 0.90. |
-| `--rows-per-test` | float | `3.5` | Mean rows per test (Upworthy: 3.5); sizes are numbers of tests. |
+| `--rows-per-test` | float |  | Mean rows per test; default: the measured value of each base rate (Upworthy 3.5, ASOS 5); sizes are numbers of tests. |
+| `--icc` | float |  | Binary within-test correlation of the event; default: the measured value of each base rate (Upworthy 0.13, ASOS 0.67). |
 | `--level` | float | `0.9` | Interval whose lower end must clear zero (the harness reports 90 percent by test). |
 
 ### `moot simulate ledger`

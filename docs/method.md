@@ -110,12 +110,12 @@ estimate and the intervals.
 31. Floor ingredients. For each scored row the shrunken posterior of the true effect given the row's own `y` and `s` under the pooled P1 prior is integrated by
     24-point Gauss-Hermite quadrature, giving the Brier floor and the direction ceiling.
 32. The 80 and 90 percent intervals of the observed estimate come from one cumulative distribution evaluation per row on 201 points, inverted by linear interpolation.
-33. `decidable_by_tests` applies the gates to the number of tests and is the headline; `decidable` applies them to the number of scored rows, as in the simulation, and is shown beside it as the by-row figure (call 70). All intervals are
+33. `decidable_by_tests` applies the gates to the number of tests and is the headline; `decidable` applies per-row gates to the number of scored rows and is shown beside it as the by-row figure (call 70); when the gates file counts tests (`moot simulate gate-power`) the by-row column reads "not computed: the gates count tests", because a row count against a number of tests is not a decision (call 180). All intervals are
     90 percent percentile bootstrap intervals that resample whole tests.
 34. Registry. The first registered model is the champion. Promotion needs a Brier skill gain of at least the margin at the gate size for the challenger's own skill, and it reports every failed condition.
-35. Decision value. A test's value is `max(0, best y)`. Ties at the cut are averaged. The random policy averages 200 seeded draws. Regret is the oracle's capture minus the policy's.
+35. Decision value. A test's value is `max(0, best y)`. Ties at the cut are averaged. Random order is exact, K over n of the total (call 173). Regret is the oracle's capture minus the policy's.
 36. The report is built as JSON first and the Markdown is a pure function of it, with every float printed to four decimals, so any printed number is in the JSON.
-37. Outcome files are written once per issued or abstained card whose row is admitted. The model log score is that of a Normal rebuilt from the frozen card. A join advances the drift counters only when it attached new outcomes.
+37. Outcome files are written once per issued or abstained card whose row is admitted. The model log score is the analytic marginal of the predictive the card stored (calls 162 and 180); only a card of schema 1 is scored by the Normal its point and interval imply, and the baseline log score is the P0 the card itself stored (call 188). A join advances the drift counters only when it attached new outcomes.
 38. The service preloads the champion of every registered source at startup. `POST /card` freezes the card it issues, which is the only write. The service has no authentication and binds to the loopback address by default.
 39. Test edits in the second build chunk: a report-test helper builds its command from the source, and the MCP test reads `isError` or `is_error` for the SDK rename. No assertion was weakened.
 40. The task registry dashboard writes a data file inside the repository. It is ignored by git, and the style test scans only files git would commit.
@@ -544,6 +544,8 @@ The probability of a significant positive estimate, the dismissal walk and the i
 with the grid computation to about 1e-3. The grid reaches 8 scales around the location, so for three degrees of freedom the variance of the
 gridded t is below `v` by the mass in the far tail; P1 has the same truncation, so the two stay comparable.
 
+Review L amended the scoring: the log score of y is the analytic marginal of this t, not the grid (call 180).
+
 ### Call 162: what a card stores, and how the loop and the replay score it
 
 Card schema version 2. The prediction block carries the predictive itself (`family`, `df`, `location`, `scale`, the grid bounds and number of points,
@@ -575,7 +577,7 @@ compose the same id; giving both forms is an error. The tool never freezes, so i
 arms separately (`--impressions` for the reference arm and `--impressions-variant`, default equal), which the Upworthy and ASOS standard errors use, and
 the reference headline (`--reference-headline`) that a pairwise feature space reads (call 167).
 
-### Call 165: the champion-refresh rule
+### Call 165: the champion-refresh rule (tightened in call 185)
 
 A fit records the METHOD it was made with, `method_id`: a hash of the method version and the fixed hyperparameters, never of the data. A
 bundle with the champion's `method_id` and a later fit time is the same method on newer data. `register_model` makes it the champion without the
@@ -635,6 +637,8 @@ the unit the harness counts decidability in, at each `--base-rate` (default 0.09
 nearest to the group's own event rate (`gate_base_rate` in the aggregate) and keeps the earlier 0.30 gate as the column `decidable_by_tests_base_0.3`. The per-row `moot simulate
 power` command is kept for comparison.
 
+Review L amended the gates: the rows of a test are dependent in the simulation, with the measured correlation of each source (call 183), and the by-row `decidable` column is not computed against gates that count tests (call 180's neighbor, item 33).
+
 ### Call 171: coverage by decile of the realized over the planned standard error
 
 The pooled coverage of 0.89 hid a gradient from 1.00 to 0.66 across deciles of the ratio of the realized to the planned standard error: the forecaster fixes the click-through
@@ -651,6 +655,8 @@ variance of the total residual with whole tests as units over its independent-ro
 comparison (`ece_percentile_independent`) and the ECE over ten equal-mass bins with its percentile. Five hundred null draws resolve percentiles up to 99.8, so 100 means above every draw. A bootstrap of the
 observed rows would not be a null, so the clustered null is a draw from a calibrated world with the observed dependence, not a resample of the data.
 
+Review L amended the null: its latent correlation is solved to reproduce the observed design effect (call 182).
+
 ### Call 173: decision value with intervals and budgets
 
 Random order captures `K / n` of the total by linearity, so it is computed exactly and the 200 seeded draws are gone. Each policy row carries a 90 percent bootstrap interval that resamples whole tests within each origin (the
@@ -663,6 +669,8 @@ differs from random order only through between-cell differences; `constant_withi
 Every aggregate and year row carries Bonferroni-adjusted bounds beside the percentile intervals, for the Brier skill (`adjusted_lo`, `adjusted_hi`) and for the log score (`logscore_adjusted_lo`, `logscore_adjusted_hi`), with the
 family size. The bound is the estimate plus or minus the bootstrap standard error times the normal quantile of `1 - 0.05 / m`, where `m` is the number of intervals the table shows (every cell and rung for the aggregate table, every
 year, cell and rung for the year table); the normal approximation is used so that the correction works for any family size with 500 draws. The per-cell and per-year intervals are descriptive; the pooled interval is the pre-registered claim.
+
+Review L amended the family: the intervals actually reported (call 186).
 
 ### Call 175: the counts of tests
 
@@ -690,4 +698,105 @@ standardized effect is computed for every source in the paper-extras report, so 
 
 The findings of round 00 that have no code component or are answered by a stated reason are listed in `.claude/fleet/plan-notes.md` (calls 160 to 179 and the finding-to-test map). The ones argued against here: a scale mixture for the
 uncertain click-through level (call 171); extending the grid of degrees of freedom below three (the pooling of the scale needs `nu` above two and the fit on the boundary is reported, not hidden); seeding the reliability report with the join clock
-(a cold-start product item, listed for the lead); the sensitivity that defines the significant-positive event on the planned standard error as well (R5; it needs the base rate, the floor and the history of every rung redefined, and the admission and proxy ablations of call 178 cover the disclosed stand-ins; listed for the lead); the Brier floor and the direction ceiling, which replace the t prior by the Normal with the same standard deviation before computing the posterior (a stated approximation, not changed); and the novelty rate on held-out text (the backtest's novelty trigger already queries rows that did not build the index, so its 2.9 percent is the held-out rate).
+(a cold-start product item, listed for the lead); the sensitivity that defines the significant-positive event on the planned standard error as well (R5; built after the review of chunk L as a scoring sensitivity, call 190; the base rate of the planned event is redefined, the floor and the history of the challengers are not); the Brier floor and the direction ceiling, which replace the t prior by the Normal with the same standard deviation before computing the posterior (a stated approximation, not changed); and the novelty rate on held-out text (the backtest's novelty trigger already queries rows that did not build the index, so its 2.9 percent is the held-out rate).
+
+
+## Calls made after the review of chunk L (3 Nov 2026)
+
+A fresh review of chunk L (REV-L-001 to REV-L-028) found two high and six medium problems. Chunk N fixed them and reran every experiment (run4).
+
+### Call 180: the log score of y is the analytic t marginal, everywhere
+
+Call 161 says the lambda selection, P1's likelihood and the backtest score the same object. They did not: the backtest, the card, the join and the replay scored y on
+the GRID, which drops every bit of t mass beyond its edge and then scores a far y with the Gaussian decay of the edge, while the selection and the P1 likelihood use the
+untruncated marginal. At three degrees of freedom the gap was 0.025 nats on Upworthy and 0.099 on ASOS, several times the P2 minus P1 difference and a quarter of the 0.10
+nat drift margin; P0, an untruncated Normal, was not subject to it. `Predictive.logscore` now evaluates `theta + Normal(0, s*^2)` with `theta ~ t(location, scale, df)`
+from the stored spec by the scale-mixture integral of `marginal_logpdf_rows` (the Normal when `df` is None), so one function serves the backtest, the card, the join,
+the replay and the drift flag, and a test asserts it equals `marginal_logpdf_rows` on random rows including rows far beyond the old grid edge. The grid still serves
+the intervals, `p_sig`, `p_win` and the CRPS, which depend on the mass near the bulk. A predictive without a spec keeps its exact grid mixture. Every number of run3
+that is a log score of P1, P2, a challenger or the drift flag moved; run4 replaces them.
+
+### Call 181: outcome files without a test id
+
+The skill interval of a cell resamples tests. Outcomes written before test ids were stored, or whose row had none, are left out of the resampling; `n_tests` counts only
+the outcomes that have an id, and is None when none has one, so the card says "no interval is recorded" instead of crashing the join or printing "0 tests".
+
+### Call 182: the clustered null reproduces the observed design effect
+
+Thresholding a latent Gaussian at `Phi^-1(p)` attenuates its correlation sharply at a low `p`; using the observed binary correlation as the latent one gave null draws with a
+design effect of 1.14 against 1.39 in the data. The latent correlation is now solved (`latent_rho_for_design_effect`, bisection on the design effect of 60 null draws with
+common random numbers) so the null draws reproduce the observed design effect, whatever the spread of `p`; the aggregate reports it as `latent_rho` beside the binary `icc`.
+The design effect is measured on residuals that include the miscalibration under test, which raises it a little with no clustering and widens the null: the clustered
+percentile is therefore conservative (it leans toward not rejecting), and a rejection under it is the stronger statement. The independent percentile is reported beside it.
+
+### Call 183: the gate simulation has dependence within a test
+
+Rows of one test shared a forecast but their outcomes were independent given it, so the simulated design effect was 1 and power at a given number of tests was overstated
+(0.94 against 0.77 at 175 tests, base rate 0.09, skill 0.10). The simulation now draws the rows of a test with a latent Gaussian factor whose correlation is chosen so that the
+binary correlation of two events of a test equals the source's measured value (`latent_rho_for_icc`), at the source's rows per test: Upworthy 3.5 rows and binary correlation
+0.13 at base rate 0.09; ASOS 5 rows and 0.67 at 0.14; the Upworthy values at 0.30, where no archive exists. The values are measured on the backtests (design effect 1.4 on
+Upworthy, 3.8 on ASOS) and are in `simulate.SOURCE_DEPENDENCE`; `gates.json` records the values each entry used. The gates are larger than run3's.
+
+### Call 184: the leakage spies cover every challenger
+
+`_audit_fits` wraps the construction of `GBMChallenger`, `LocalEB` and `TextLR` as it wraps the fits of the predictors, so a factory that hands one a row that is not yet usable raises
+`LeakageError`. The recalibration spy runs for all three challengers, and the outcome-flip check flips the outcomes of the last quarter's rows before `rolling_origin` and asserts
+that the recalibrated probabilities of every origin are unchanged.
+
+### Call 185: the champion refresh needs strictly newer data and a backtest
+
+A same-method fit is a refresh only when the data it saw (`data_through`, the latest result in its fit set) is strictly newer than the champion's; the fit time only breaks a tie
+between equal data, and unknown recency is not newer (a refit of an old snapshot has a new fit time and must not take the champion back). A same-method fit with no backtest summary
+is held as the challenger and marked pending; `attach_summary` decides it when the summary arrives (refresh, or `refresh_refused`). Every route to the challenger writes its reason in
+the history (a different method, older data, the same data and not later, unknown recency, pending, clearly worse).
+
+### Call 186: the Bonferroni family
+
+The family is the number of intervals the table reports: one per row with a Brier skill interval of positive width and one per row with a log score interval. Rows without an interval
+(the direction baselines) and P0's zero-width skill interval are not counted. The year table is one family over every year, cell and rung.
+
+### Call 187: the lows
+
+The planned exposure is bounded (at most 1e12; a larger value is a one-line error on the command, 422 on the service). The MCP tool turns a refusal into its one-line message. The
+simulator request carries the variant arm's exposure. Without a reference headline the pair features are the fit-set means, as the reference vector is. The learning curve runs on
+the admission it records. A row id must start with the card's source and carry no control character. P0's variance is floored at the median squared standard error of the visible
+rows. A query whose kernel underflows to exactly zero for every precedent gets P1's predictive (an empty state with a weight of zero) because the fit-time validation never saw such
+a query; a query whose peak is merely tiny keeps the relative-kernel path. `method_id` covers the kind and size of the feature space, the top-M and the half-lives. The GBM's
+calibration set is the same fixed subsample of 3,000 rows as the other challengers'. The robustness count is relative to the weight the state started with. A guardrail margin must be finite. Review nit REV-L-024: the far-query change
+is exact to rounding (4e-16), not bit-identical.
+
+### Call 188: the baseline of the join is the card's own P0
+
+The card stores P0's mean and variance of y beside its probability, and the join's baseline log score is that Normal, so the drift flag compares the model with a baseline that has
+the information the model had (the replay used a P0 fit on the whole current ledger, up to twelve weeks ahead of the bundle). A card without them falls back to the refit.
+
+### Call 189: discrimination is reported apart from skill
+
+The aggregate table carries, per cell and rung, the AUC of `p_sig` for the significant-positive event and of the direction probability for `y > 0` (`auc_event`, `auc_direction`, each with a 90 percent
+interval from the same by-test resamples as the other columns), and the Murphy resolution term (`resolution_event`, `resolution_direction`, with intervals): the mean squared deviation of the
+forecast probability from the group's own event rate. The AUC is the rank statistic with ties counting one half and is None where the group has only one class. Skill (Brier against the base
+rate) mixes discrimination with calibration and with the base rate; the pair of columns lets a reader see whether a rung ranks rows better than chance (AUC above 0.5, resolution above zero)
+when its skill is zero or negative. P0's `p_sig` is constant within a cell and origin, so its AUC measures only the movement of the base rate across cells and origins.
+
+### Call 190: the event defined on the planned standard error is a scoring sensitivity
+
+The headline event is `y > z s` with the realized standard error `s`, the quantity an experimenter's own significance test uses. The forecast is made before launch from the planned
+standard error `s_star`, so a row whose realized standard error differs from the plan is scored against an event the forecast did not describe. The sensitivity scores the same forecast
+against `y > z s_star` (`event_planned`, `brier_planned`, `brier_base_planned`; aggregate columns `event_rate_planned`, `p_sig_mean`, `brier_planned`, `brier_base_planned`,
+`brier_skill_planned` with its interval). The base rate for this event is the visible share of rows of the cell with `y > z s_star`, each visible row's `s_star` computed from its planned
+exposure as for scored rows; P0's forecast for this event is that base rate, so its skill is zero by construction here as well. The challengers were trained on the realized event and are
+scored against the planned one unchanged; the sensitivity changes the scoring, not any fit. The headline stays on the realized standard error because it is the event the
+user acts on and the one every earlier number used; the sensitivity is a table beside it (report group "Sensitivity of the event definition"). On ASOS the planned and realized standard error
+coincide in this archive, so the two events agree row by row.
+
+### Call 191: the guard pairs are a table
+
+`scripts/paper_extras.py` writes `guard_pairs`: for every (origin, cell) pair of the main run in which the guard admitted a positive precedent weight, the in-selection gain (mean per-row log
+score gain over lambda 0 on the leave-one-test-out validation rows, nats), its standard error, the chosen and the unguarded lambda, the rows and tests scored in the pair and the realized
+out-of-time P2 minus P1 log score on them, then the pooled realized difference over the admitted pairs with a 90 percent interval that resamples tests. The claim that in-selection gains
+do not transfer out of time is a column of this table and a pooled line, not a sentence.
+
+### Call 192: the positive control reaches the size of the cell it is used on
+
+The sensitivity of the guard to a planted text effect adds a ledger of 3,700 tests of two variants (7,400 rows, the size of Upworthy's headline-only cell) beside 300 and 1,000, so the
+paper can state the guard's power at the size of the cell the guard works in.

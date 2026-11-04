@@ -24,12 +24,12 @@ moot backtest --source sample > /dev/null
 
 Run this section and the rest of the HTTP part in one terminal: the later steps use the variable `SERVER` that this section sets.
 
-The service binds to the loopback address `127.0.0.1` on port 8000 by default. This tutorial uses port 8731 so that it does not clash with anything. It starts in a second or two, and in a real deployment it runs under your process manager. Here it runs in the background of this shell, with its log in a file.
+The service binds to the loopback address `127.0.0.1` on port 8000 by default. This tutorial uses port 8731 so that it does not clash with anything. It starts in a second or two, and in a real deployment it runs under your process manager. Here it runs in the background of this shell, with its log in a file. The loop waits at most 30 seconds for it to answer; if the service did not start, the next line fails and `serve.log` says why.
 
 ```bash run
 moot serve --port 8731 > serve.log 2>&1 &
 SERVER=$!
-until curl -sf http://127.0.0.1:8731/health > /dev/null; do sleep 0.5; done
+for i in $(seq 1 60); do curl -sf http://127.0.0.1:8731/health > /dev/null && break; sleep 0.5; done
 curl -s http://127.0.0.1:8731/health | python -m json.tool
 ```
 
@@ -47,15 +47,18 @@ curl -s http://127.0.0.1:8731/health | python -m json.tool
 
 ## 2. Ask for a card
 
-`POST /card` takes the fields of `moot card`: `source` and `impressions` are required, and `origin` is the time whose rows the forecaster may see (the `--origin` option of the command line, see [tutorial 1](01-first-card.md#5-ask-for-a-card)). The service has no `--now`: it uses the clock of the machine it runs on as the issue time. That clock matters here, because the sample ledger's reliability report is old, so this card will abstain, and the output shows why. A ledger without headline text is served by naming the `cell`. The card is returned as JSON and frozen under `cards/`, exactly like a card from the command line.
+`POST /card` takes the fields of `moot card`: `source` and `impressions` are required, and `origin` is the time whose rows the forecaster may see (the `--origin` option of the command line, see [tutorial 1](01-first-card.md#5-ask-for-a-card)). The service has no `--now`: it uses the clock of the machine it runs on as the issue time, and the age of the reliability report is measured against that clock. An `origin` changes which rows the forecaster sees and does not change the clock. The sample ledger's reliability report is old, so this card will abstain, and the output shows why.
+
+The request also carries `row_id`, the ledger row that the weekly join will attach the outcome to (`source:test_id:variant_id`; or give `test_id` with `variant_id`). Without it the card is valid but no join can find it. [Tutorial 4](04-weekly-loop.md) uses the same field. A ledger without headline text is served by naming the `cell`. The card is returned as JSON and frozen under `cards/`, exactly like a card from the command line.
 
 ```bash run
 curl -s -X POST http://127.0.0.1:8731/card -H 'content-type: application/json' \
-  -d '{"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00"}' \
+  -d '{"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00", "row_id": "sample:exp-101:treatment::checkout_conversion"}' \
   | python -c "
 import json, sys
 card = json.load(sys.stdin)
 print('cell      ', card['cell'])
+print('row id    ', card['request']['row_id'])
 print('origin    ', card['origin'])
 print('status    ', card['abstention']['status'], card['abstention']['reasons'])
 print('detail    ', card['abstention']['details']['reliability'])
@@ -65,10 +68,11 @@ print('rung      ', card['prediction']['rung'], 'p_sig', round(card['prediction'
 
 ```text output
 cell       checkout_conversion
+row id     sample:exp-101:treatment::checkout_conversion
 origin     2025-12-30T00:00:00+00:00
 status     abstain ['reliability']
 detail     reliability report is older than 14 days
-rung       P0 p_sig 0.234
+rung       P0 p_sig 0.275
 ```
 
 This card **abstains**, and the reason is on the card: `reliability report is older than 14 days`. The `origin` you send says which rows the forecaster may see. The check on the age of the reliability report uses the real clock of the machine the service runs on, and the sample ledger's reliability report is dated 2025. A real ledger that you join weekly ([tutorial 4](04-weekly-loop.md)) has a fresh report, and its cards carry the full prediction. The abstained card still carries the base-rate forecast (`rung P0`) so that a tool has something to show, with the reasons beside it.
@@ -128,7 +132,7 @@ The service reads `[decision] action_threshold` from `mootcourt.toml` once, at s
 
 ## 3. The MCP server
 
-MCP is the protocol an AI assistant uses to call a tool. `moot mcp` speaks it over standard input and output, which means that an MCP client starts it as a child process. It offers three tools. All three read and propose only: nothing is frozen or written.
+MCP is the protocol an AI assistant uses to call a tool. `moot mcp` speaks it over standard input and output, which means that an MCP client starts it as a child process. It offers three tools. All three read and propose only: nothing is frozen or written. `get_card` takes the same `row_id` (or `test_id` with `variant_id`) as the HTTP request and only echoes it, because the tool never freezes a card.
 
 | Tool | Returns |
 |---|---|
@@ -157,8 +161,9 @@ async def main():
             tools = await session.list_tools()
             print("tools:", [t.name for t in tools.tools])
             args = {"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00"}
-            card = json.loads((await session.call_tool("get_card", args)).content[0].text)
-            print("card:", card["abstention"]["status"], card["abstention"]["reasons"], "rung", card["prediction"]["rung"])
+            row_id = "sample:exp-101:treatment::checkout_conversion"
+            card = json.loads((await session.call_tool("get_card", {**args, "row_id": row_id})).content[0].text)
+            print("card:", card["abstention"]["status"], card["abstention"]["reasons"], "rung", card["prediction"]["rung"], "row id", card["request"]["row_id"])
             precedents = json.loads((await session.call_tool("list_precedents", {**args, "k": 3})).content[0].text)
             for p in precedents:
                 print("precedent:", p["test_id"], "weight", round(p["weight"], 4), "effect", p["y"], "se", p["s"])
@@ -171,13 +176,13 @@ python mcp_demo.py
 
 ```text output
 tools: ['get_card', 'list_precedents', 'reliability_report']
-card: abstain ['reliability'] rung P0
+card: abstain ['reliability'] rung P0 row id sample:exp-101:treatment::checkout_conversion
 precedent: exp-003 weight 0.009 effect 0.015169 se 0.008696
 precedent: exp-105 weight 0.009 effect -0.013988 se 0.008751
 precedent: exp-115 weight 0.009 effect -0.040743 se 0.008771
 ```
 
-The `origin` is optional (default now). An origin earlier than the end of the history the model was fitted on is refused, because its parameters were fitted on rows that the origin should not see. A refused request shows up in the client as a generic tool error. The reason is in the server's standard error: in your terminal if you run `moot mcp` yourself, and in the client's MCP log if the client started it.
+The `origin` is optional (default now). An origin earlier than the end of the history the model was fitted on is refused, because its parameters were fitted on rows that the origin should not see. A refused request shows up in the client as a tool error whose message is one line naming the cause.
 
 `list_precedents` is the tool that makes a card explainable to an assistant's user: it names the past experiments that carry the forecast and says how much weight each has. On a ledger without features that tell experiments apart, the weights are nearly equal, as here. On a ledger with headline text, the heaviest precedents are the most similar headlines.
 

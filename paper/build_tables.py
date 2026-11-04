@@ -152,8 +152,10 @@ def decision_table(rep, source, out):
         lines.append(f"{esc(pol)} & {esc(rg)} & {f3(cf)} & {fr(rg_)} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     n_origins = len({r["origin"] for r in per_origin})
-    note = (f"{rep['_path']} (tables.decision_value; each mean is over the {n_origins} per-origin rows of the policy "
-            "and excludes the pooled origin=ALL row)")
+    note = (
+        f"{rep['_path']} (tables.decision_value; each mean is over the {n_origins} per-origin rows of the policy "
+        "and excludes the pooled origin=ALL row)"
+    )
     write(out, f"decision-{source}.tex", note, "\n".join(lines) + "\n")
     decision_intervals_table(rep, source, out)
 
@@ -170,8 +172,12 @@ def decision_intervals_table(rep, source, out):
     if not pooled or "captured_fraction_lo" not in pooled[0]:
         return
     budgets = sorted({r.get("budget", 0.25) for r in pooled}, key=lambda b: (b != 0.25, b))
-    lines = [r"\begin{tabular}{llrrrrr}", r"\toprule",
-             r"budget & policy & model & captured fraction (90\%) & minus random (90\%) & regret (90\%) & const.\ in cell \\", r"\midrule"]
+    lines = [
+        r"\begin{tabular}{llrrrrr}",
+        r"\toprule",
+        r"budget & policy & model & captured fraction (90\%) & minus random (90\%) & regret (90\%) & const.\ in cell \\",
+        r"\midrule",
+    ]
     for bud in budgets:
         rows = [r for r in pooled if r.get("budget", 0.25) == bud]
         keys = sorted({(r["policy"], r["rung"]) for r in rows}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
@@ -187,8 +193,10 @@ def decision_intervals_table(rep, source, out):
             const = "" if r.get("constant_within_cell") is None else ("yes" if r["constant_within_cell"] else "no")
             lines.append(f"{bud:g} & {esc(pol)} & {esc(rg)} & {cf} & {dr} & {rgt} & {const} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
-    note = (f"{rep['_path']} (tables.decision_value, origin ALL; intervals are 90 percent bootstrap by test within each origin; random order is "
-            "exact, K over n; constant_within_cell: p_win is one number per cell, so the policy chooses by cell and then at random)")
+    note = (
+        f"{rep['_path']} (tables.decision_value, origin ALL; intervals are 90 percent bootstrap by test within each origin; random order is "
+        "exact, K over n; constant_within_cell: p_win is one number per cell, so the policy chooses by cell and then at random)"
+    )
     write(out, f"decision-intervals-{source}.tex", note, "\n".join(lines) + "\n")
 
 
@@ -197,8 +205,12 @@ def coverage_ratio_table(rep, source, out, rungs=("P0", "P1", "P2")):
     t = rep["tables"].get("coverage_by_se_ratio", [])
     if not t:
         return
-    lines = [r"\begin{tabular}{r" + "r" * (2 + len(rungs)) + "}", r"\toprule",
-             r"decile & ratio range & event rate (" + esc(rungs[0]) + ") & " + " & ".join(f"{esc(r)} cov.\\ 90" for r in rungs) + r" \\", r"\midrule"]
+    lines = [
+        r"\begin{tabular}{r" + "r" * (2 + len(rungs)) + "}",
+        r"\toprule",
+        r"decile & ratio range & event rate (" + esc(rungs[0]) + ") & " + " & ".join(f"{esc(r)} cov.\\ 90" for r in rungs) + r" \\",
+        r"\midrule",
+    ]
     first = [r for r in t if r["rung"] == rungs[0]] or [r for r in t if r["rung"] == t[0]["rung"]]
     for row in first:
         cells = [str(row["decile"]), f"{f3(row['ratio_lo'], 2)} to {f3(row['ratio_hi'], 2)}", f3(row["event_rate"])]
@@ -228,8 +240,10 @@ def ece_table(rep, source, out, rungs=("P0", "P1", "P2")):
     ]
     for r in sorted(rows, key=lambda x: rungs.index(x["rung"])):
         adj = f"({f3(r.get('adjusted_lo'))}, {f3(r.get('adjusted_hi'))}) $m={r.get('family_size')}$" if r.get("adjusted_lo") is not None else ""
-        lines.append(f"{esc(r['rung'])} & {f3(r.get('ece'), 4)} & {f3(r.get('ece_percentile'), 1)} & {f3(r.get('ece_percentile_independent'), 1)} & "
-                     f"{f3(r.get('design_effect'), 2)} & {interval(r, 'brier_skill', 4)} & {adj} \\\\")
+        lines.append(
+            f"{esc(r['rung'])} & {f3(r.get('ece'), 4)} & {f3(r.get('ece_percentile'), 1)} & {f3(r.get('ece_percentile_independent'), 1)} & "
+            f"{f3(r.get('design_effect'), 2)} & {interval(r, 'brier_skill', 4)} & {adj} \\\\"
+        )
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(
         out,
@@ -305,13 +319,18 @@ def ablation_table(reports_dir, source, out):
         rows = [r for r in rep["tables"]["aggregate"] if r["cell"] == "ALL" and r["rung"] == "P2"]
         if rows:
             runs[setting] = (rows[0], rep["header"].get("p2_guard"), rep["header"].get("bootstrap_resamples"))
-    def base_of(name):          # the setting without its guard token, whichever side of the name the token is on
+
+    def base_of(name):  # the setting without its guard token, whichever side of the name the token is on
         return "+".join(t for t in name.split("+") if t != "p2-guard-off") or "p2-guard-off"
 
     bases = sorted({base_of(k) for k in runs})
     guard_off = {base_of(k): k for k in runs if "p2-guard-off" in k.split("+") and k != "p2-guard-off"}
-    lines = [r"\begin{tabular}{lrrrr}", r"\toprule",
-             r"setting & log score, guard on & Brier skill, guard on & log score, guard off & Brier skill, guard off \\", r"\midrule"]
+    lines = [
+        r"\begin{tabular}{lrrrr}",
+        r"\toprule",
+        r"setting & log score, guard on & Brier skill, guard on & log score, guard off & Brier skill, guard off \\",
+        r"\midrule",
+    ]
     for base in bases:
         on = runs.get(base) if base != "p2-guard-off" else None
         off = runs.get(guard_off[base]) if base in guard_off else (runs.get("p2-guard-off") if base == "p2-guard-off" else None)
@@ -319,12 +338,17 @@ def ablation_table(reports_dir, source, out):
             base = "p2-guard-off (main settings)"
         cells = [esc(base)]
         for run in (on, off):
-            cells += ([f3(run[0]["logscore"]), interval(run[0], "brier_skill")] if run else ["", ""])
+            cells += [f3(run[0]["logscore"]), interval(run[0], "brier_skill")] if run else ["", ""]
         lines.append(" & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     resamples = sorted({v[2] for v in runs.values() if v[2]})
-    write(out, f"ablations-{source}.tex", f"{reports_dir}/ablations/backtest-{source}-*.json ({len(files)} files; bootstrap resamples {resamples}; "
-          "guard setting from each header p2_guard)", "\n".join(lines) + "\n")
+    write(
+        out,
+        f"ablations-{source}.tex",
+        f"{reports_dir}/ablations/backtest-{source}-*.json ({len(files)} files; bootstrap resamples {resamples}; "
+        "guard setting from each header p2_guard)",
+        "\n".join(lines) + "\n",
+    )
 
 
 def admission_table(rep, reports_dir, source, out):
@@ -383,6 +407,158 @@ def positive_control_table(reports_dir, out):
         out,
         "positive-control.tex",
         f"{hits[-1]} (command {rep['header'].get('command')}; planted text signal, guard {rep['header'].get('p2_guard')})",
+        "\n".join(lines) + "\n",
+    )
+
+
+def _scored_rungs(rep):
+    """Aggregate rows of cell ALL for every rung that issues probabilities (the ladder and the challengers, not the direction baselines)."""
+    return [r for r in rep["tables"]["aggregate"] if r["cell"] == "ALL" and r.get("kind", "") != "baseline"]
+
+
+def discrimination_table(rep, source, out):
+    """AUC and Murphy resolution per rung (cell ALL): discrimination reported apart from skill."""
+    rows = _scored_rungs(rep)
+    if not rows or not any(r.get("auc_event") is not None or r.get("resolution_event") is not None for r in rows):
+        return
+    lines = [
+        r"\begin{tabular}{lrrrr}",
+        r"\toprule",
+        r"model & AUC, event (90\%) & resolution, event & AUC, direction (90\%) & resolution, direction \\",
+        r"\midrule",
+    ]
+    for r in rows:
+        lines.append(
+            f"{esc(r['rung'])} & {interval(r, 'auc_event')} & {f3(r.get('resolution_event'), 4)} & "
+            f"{interval(r, 'auc_direction')} & {f3(r.get('resolution_direction'), 4)} \\\\"
+        )
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        f"discrimination-{source}.tex",
+        f"{rep['_path']} (tables.aggregate, cell ALL; AUC with ties one half, intervals by test; resolution = mean squared "
+        "deviation of the forecast from the group's own event rate)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def event_definition_table(rep, source, out):
+    """The same forecasts scored against the event on the realized and on the planned standard error (cell ALL)."""
+    rows = _scored_rungs(rep)
+    if not rows or not any(r.get("brier_skill_planned") is not None for r in rows):
+        return
+    lines = [
+        r"\begin{tabular}{lrrr}",
+        r"\toprule",
+        r"model & mean $p_{\mathrm{sig}}$ & Brier skill, realized event (90\%) & Brier skill, planned event (90\%) \\",
+        r"\midrule",
+    ]
+    for r in rows:
+        lines.append(
+            f"{esc(r['rung'])} & {f3(r.get('p_sig_mean'), 4)} & {interval(r, 'brier_skill', 4)} & {interval(r, 'brier_skill_planned', 4)} \\\\"
+        )
+    rate = next((r.get("event_rate_planned") for r in rows if r.get("event_rate_planned") is not None), None)
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        f"event-definition-{source}.tex",
+        f"{rep['_path']} (tables.aggregate, cell ALL; planned event rate {f3(rate, 4)}; the planned event is y > z s_star)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def guard_pairs_table(reports_dir, source, out):
+    """Every (origin, cell) pair where the guard admitted a positive weight: in-selection gain and the realized out-of-time P2 minus P1."""
+    path = latest(os.path.join(reports_dir, f"paper-extras-{source}-*.json"))
+    if not path:
+        return
+    gp = load(path).get("guard_pairs")
+    if not gp or not gp.get("rows"):
+        return
+    s = gp["summary"]
+    lines = [
+        r"\begin{tabular}{llrrrrr}",
+        r"\toprule",
+        r"origin & cell & $\lambda$ & in-selection gain (s.e.) & scored rows & scored tests & realized P2 $-$ P1 \\",
+        r"\midrule",
+    ]
+    for r in gp["rows"]:
+        gain = f"{f3(r.get('in_selection_gain'), 4)} ({f3(r.get('in_selection_gain_se'), 4)})"
+        lines.append(
+            f"{str(r['origin'])[:10]} & {esc(r['cell'])} & {f3(r.get('lambda'), 2)} & {gain} & {r['n_scored_rows']} & {r['n_scored_tests']} & "
+            f"{f3(r.get('realized_p2_minus_p1'), 4)} \\\\"
+        )
+    lines += [
+        r"\midrule",
+        f"pooled ({s['pairs_admitted']} of {s['pairs_in_selection']} pairs) & & & {f3(s.get('mean_in_selection_gain'), 4)} & "
+        f"{s.get('pooled_rows')} & {s.get('pooled_tests')} & "
+        f"{f3(s.get('pooled_realized_p2_minus_p1'), 4)} ({f3(s.get('pooled_lo'), 4)}, {f3(s.get('pooled_hi'), 4)}) \\\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+    ]
+    write(
+        out,
+        f"guard-pairs-{source}.tex",
+        f"{path} (guard_pairs; nats per row; interval by test, {s.get('bootstrap_resamples')} resamples)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def sensitivity_table(reports_dir, out):
+    """Share of cells in which the guard admits a positive weight, by planted strength and ledger size."""
+    path = latest(os.path.join(reports_dir, "paper-extras-synthetic-*.json"))
+    if not path:
+        return
+    sens = load(path).get("positive_control_sensitivity")
+    if not sens or not sens.get("rows"):
+        return
+    sizes = sorted({r["n_tests"] for r in sens["rows"]})
+    strengths = sorted({r["text_effect_strength"] for r in sens["rows"]})
+    by = {(r["n_tests"], r["text_effect_strength"]): r for r in sens["rows"]}
+    lines = [
+        r"\begin{tabular}{l" + "r" * len(sizes) + "}",
+        r"\toprule",
+        "planted lift (percent) & " + " & ".join(f"{n:,} tests" for n in sizes) + r" \\",
+        r"\midrule",
+    ]
+    for st in strengths:
+        lines.append(f"{f3(st, 1)} & " + " & ".join(f3(by[(n, st)]["share_admitted"], 2) if (n, st) in by else "" for n in sizes) + " \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    write(
+        out,
+        "positive-control-sensitivity.tex",
+        f"{path} (positive_control_sensitivity; guard multiplier {sens.get('multiplier')}; two variants per test)",
+        "\n".join(lines) + "\n",
+    )
+
+
+def walltime_table(reports_dir, out):
+    """Wall-clock seconds of each stage of the timed run, from ``run-log.json``, with what the data stage did stated."""
+    path = os.path.join(reports_dir, "run-log.json")
+    if not os.path.exists(path):
+        return
+    rl = load(path)
+    kind = rl.get("data_stage_kind", "")
+    if kind == "download":
+        data_note = (f"data stage: downloaded {rl.get('downloaded_files')} files, {rl.get('downloaded_bytes')} bytes, "
+                     f"download script time {rl.get('download_seconds')} s")
+    else:
+        data_note = f"data stage: {kind} ({rl.get('download_seconds')} s), nothing downloaded"
+    lines = [r"\begin{tabular}{lr}", r"\toprule", r"stage & seconds \\", r"\midrule"]
+    for st in rl["stages"]:
+        name = esc(st["stage"]) + (" (download)" if st["stage"] == "data" and kind == "download" else "")
+        lines.append(f"{name} & {st['seconds']:.1f} \\\\")
+    lines += [
+        r"\midrule",
+        f"main pipeline & {rl['main_pipeline_seconds']:.1f} \\\\",
+        f"total & {rl['total_seconds']:.1f} \\\\",
+        r"\bottomrule",
+        r"\end{tabular}",
+    ]
+    write(
+        out,
+        "walltime.tex",
+        f"{path} ({data_note}; main pipeline = setup, data, power, fit and backtest of the three sources)",
         "\n".join(lines) + "\n",
     )
 
@@ -533,31 +709,14 @@ def learning_table(path, source, out):
 
 
 def cautionary_table(reports_dir, out):
-    """By decile of REALIZED standard error on the naive-protocol run (relative lift, realized s_star)."""
-    files = sorted(glob.glob(os.path.join(reports_dir, "ablations", "scores-upworthy-*effect-scale-relative*.parquet")))
-    if not files:
-        print("no cautionary scores parquet")
+    """By decile of REALIZED standard error on the naive-protocol run (relative lift, realized s_star), read from the paper-extras JSON."""
+    path = latest(os.path.join(reports_dir, "paper-extras-upworthy-*.json"))
+    cd = load(path).get("cautionary_deciles") if path else None
+    if not cd:
+        print("no cautionary deciles in the paper extras")
         return
-    import pandas as pd
-
-    s = pd.read_parquet(files[-1])
-    rows = []
-    for rung in ("P1", "P2"):
-        d = s[s["rung"] == rung].copy()
-        d["dec"] = pd.qcut(d["s"], 10, labels=False)
-        g = d.groupby("dec")
-        for dec, grp in g:
-            rows.append(
-                {
-                    "rung": rung,
-                    "decile": int(dec) + 1,
-                    "s_med": float(grp["s"].median()),
-                    "y_mean": float(grp["y"].mean()),
-                    "event": float(grp["event"].mean()),
-                    "p_sig": float(grp["p_sig"].mean()),
-                    "cov90": float(((grp["y"] >= grp["lo90"]) & (grp["y"] <= grp["hi90"])).mean()),
-                }
-            )
+    rows = cd["rows"]
+    files = [path]
     lines = [
         r"\begin{tabular}{rrrrrr}",
         r"\toprule",
@@ -587,6 +746,9 @@ if __name__ == "__main__":
         calibration_table(rep, source, a.out)
         coverage_ratio_table(rep, source, a.out)
         ece_table(rep, source, a.out)
+        discrimination_table(rep, source, a.out)
+        event_definition_table(rep, source, a.out)
+        guard_pairs_table(a.reports, source, a.out)
         decision_table(rep, source, a.out)
         admission_table(rep, a.reports, source, a.out)
         abstention_table(rep, source, a.out)
@@ -604,4 +766,6 @@ if __name__ == "__main__":
     if os.path.exists(gp):
         gates_table(gp, a.out)
     positive_control_table(a.reports, a.out)
+    sensitivity_table(a.reports, a.out)
+    walltime_table(a.reports, a.out)
     cautionary_table(a.reports, a.out)

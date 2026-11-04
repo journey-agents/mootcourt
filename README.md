@@ -12,10 +12,10 @@ The ideas, in the order you meet them:
 
 - **The ledger** is the table of your concluded experiments: one row per variant, per metric, per experiment. Importing results is one command, and rows that fail an admission rule are kept and counted, never dropped.
 - **A card** is the forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how fragile that opinion is. A card can also abstain, and then it says why. Cards are frozen under a digest of their content, so nobody can edit one after the result is known.
-- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer: P0 forecasts the cell's base rate, P1 pools the cells, P2 weighs similar past experiments behind an admission guard: its weight on precedents is above zero only when it beats zero out of sample by more than noise, and the results page shows guarded and unguarded selection side by side. A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
+- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer, and each adds one thing to the one below it: P0 is the empirical base-rate forecaster of the cell, P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly; the guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests, and it is a weak one: on a synthetic ledger of the size of the Upworthy headline-only cell it admits a weight in most cells where no signal exists, and on Upworthy the weights it admitted lost out of time (the results page has the guard pairs and the sensitivity table, and shows guarded and unguarded selection side by side). A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
 - **The backtest** replays the ledger quarter by quarter, forecasts every past experiment using only what was final before it, and scores the forecast. It tells you whether the cards can be trusted, and how many experiments it takes to tell.
 
-A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak. The [concepts page](docs/concepts.md) has the diagram and the glossary.
+A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak. The join finds a card by the ledger row it names: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`), and give `POST /card` and the MCP tool `get_card` the same `row_id`. A card without a row id is valid, but no outcome can be attached to it. The [concepts page](docs/concepts.md) has the diagram and the glossary.
 
 ## Quickstart
 
@@ -56,9 +56,9 @@ moot fit --source sample
   admitted: 360
 admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_user 120
 final reads from 2023-01-23 to 2025-12-29
-snapshot 20261103-80131c793938 for sample
+snapshot 20261104-80131c793938 for sample
 ledger ~/moot-demo/mootcourt-data/data/ledger/ledger.parquet: 360 rows
-fitted model 57a727de0c15 at snapshot 20261103-80131c793938 in 1.6 s; it is the champion for sample
+fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 2.1 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -69,15 +69,16 @@ moot backtest --source sample
 ```
 
 ```text output
-gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "n_200": 175, "n_400": 400}
-filled the backtest summary of model 57a727de0c15
-scored 330 rows over 11 origins in 4.4 s (report writing 2.3 s)
-wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261103-80131c793938.md
-wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261103-80131c793938.json
-wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261103-80131c793938.parquet
+gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 400}
+note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+filled the backtest summary of model 097a3bd3b39b
+scored 330 rows over 11 origins in 4.8 s (report writing 5.4 s)
+wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
+wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
+wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
 ```
 
-Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "undecidable at this n". Ignore the columns `decidable` and `decidable_research` beside it, which count rows instead of experiments and overstate. That is the right reading of a sample with no structure, and it is what the report is for.
+The first two lines say which gates the backtest read. `moot init` wrote them with a quick simulation at one base rate, so the note advises `moot simulate gate-power`, which sizes the gates by test at the base rate of your own archive; for this walk-through you can ignore it. Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "undecidable at this n". Ignore the columns `decidable` and `decidable_research` beside it, which count rows instead of experiments and overstate. That is the right reading of a sample with no structure, and it is what the report is for.
 
 Ask for a card (about a second). The sample is static, so `--now` issues it as of the end of its history; on a live ledger you leave `--now` out:
 
@@ -88,12 +89,12 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: a96d585026449f64
+- Card id: e2e1dc1f08778be9
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
-- Ledger snapshot: 20261103-80131c793938
-- Model: 57a727de0c15
+- Ledger snapshot: 20261104-80131c793938
+- Model: 097a3bd3b39b
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.015 units of the ledger's effect
@@ -109,6 +110,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 - P(significant and positive): 0.220
 - Point estimate: 0.00 units of the ledger's effect
 - 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
+- 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
 - P(true effect above 0): 0.551
 - Rung: P2, weight on precedents 0.0
 
@@ -118,13 +120,13 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 
 ## Robustness
 
-- Top precedents considered (k = round of the effective number): 119
-- Precedents to dismiss, highest weight first, to move p_sig across 0.35: more than 119
-- Share of 0 resamples by test with p_sig on the same side of 0.35: 1.00
+- Not applicable: the weight on precedents is zero, so the card uses the cell prior and no precedent can change it.
 
 ## Skill at this n
 
-- Brier skill against P0: 0.093 measured on 7 rows, as of 2025-12-29T00:00:00+00:00
+- Brier skill against the cell base rate, trailing 8 weeks: 0.093 (90 percent interval -0.227 to 0.221, by test), measured on 7 rows from 7 tests, as of 2025-12-29T00:00:00+00:00
+- Gate at this n: 7 tests: undecidable at this n (the gate needs 400 rows for a skill of 0.10 and 175 for 0.20 at base rate 0.30) (this gates file was simulated per row, which overstates what tests can decide), and its interval includes zero
+- Latest gated backtest, rung P2: Brier skill 0.020 (90 percent interval -0.007 to 0.046) over 110 tests
 
 ## Abstention
 
@@ -136,7 +138,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
 ```
 
-Read `Abstention` first, then the probability against the base rate, then the interval. [Tutorial 1](docs/tutorials/01-first-card.md) explains each line.
+Read `Abstention` first, then the probability against the base rate, then the interval. The section `Skill at this n` is the card's own record, the skill line: how forecasts like it did recently and in the backtest, with intervals and the gate verdict. [Tutorial 1](docs/tutorials/01-first-card.md) explains each line.
 
 Check the setup. The output goes to a file so that the exit code can be printed; piping it into `tail` would hide the code:
 
@@ -148,8 +150,8 @@ tail -n 5 doctor.txt
 ```text output
 exit code: 1
 OK    ledger: ~/moot-demo/mootcourt-data/data/ledger/ledger.parquet conforms
-OK    model sample: champion 57a727de0c15 on snapshot 20261103-80131c793938
-WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 309 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
+OK    model sample: champion 097a3bd3b39b on snapshot 20261104-80131c793938
+WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 310 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 status: warn
 ```
@@ -159,8 +161,8 @@ The exit code printed on the first line is 0 when healthy, 1 with warnings and 2
 ## What the results show, and what the project does not show
 
 - **Headline-test skill is not deployment skill.** The main archive is headline and image tests from one publisher. Nothing here measures whether a forecaster that predicts them predicts product experiments.
-- **The headline result is modest.** On the Upworthy archive the best rung is not distinguishable from always forecasting the base rate, and weighing similar headlines does worse than the pooled prior. Nulls are reported as nulls.
-- **Most ASOS cells are undecidable at their n.** The deployment-shaped archive has a few hundred contrasts, and the results mark each cell as decidable or undecidable at the release gate. That file has no dates, so its calendar is nominal and says nothing about drift.
+- **The headline result is modest.** On the Upworthy archive no rung of the ladder is distinguishable from always forecasting the base rate, and weighing similar headlines does not improve on the pooled prior out of time. Nulls are reported as nulls.
+- **ASOS is undecidable at its n.** The deployment-shaped archive has a few hundred contrasts in under a hundred tests, and the results mark each cell as decidable or undecidable at the release gate, sized at the archive's own base rate; every ASOS cell is undecidable. That file has no dates, so its calendar is nominal and says nothing about drift.
 - **Scores are against the observed estimate, not the unknown true effect.** A predictor is judged on the estimate a test produced, noise included.
 - **Two stand-ins on Upworthy.** The archive does not record when a test was read, so a test is treated as final seven days after its latest arm was created. It does not record planned exposure either, so realized impressions stand in, and that stand-in can leak: log impressions correlate +0.099 with the absolute standardized effect on the admitted rows (`DATA.md`, `docs/method.md`).
 - **Not every rung is exercised on real data.** The team-forecast rung needs a forecast frozen before the test, and no archive holds one. It runs on synthetic data only.
@@ -169,7 +171,7 @@ The exit code printed on the first line is 0 when healthy, 1 with warnings and 2
 ## Headline results
 
 <!-- moot-headline:start -->
-- Upworthy, 13247 scored rows: Brier skill against the base rate on all rows is 0.0015 (-0.0018 to 0.0048) for P1 (not distinguishable from the constant base rate) and -0.0078 (-0.0119 to -0.0032) for P2 (worse than the constant base rate); 0 of 3 cells are undecidable at this n at the release gate.
+- Upworthy, 13247 scored rows: Brier skill against the base rate on all rows is 0.0015 (-0.0018 to 0.0048) for P1 (not distinguishable from the constant base rate) and 0.0015 (-0.0017 to 0.0047) for P2 (not distinguishable from the constant base rate); 0 of 3 cells are undecidable at this n at the release gate.
 - ASOS, 337 scored rows: Brier skill against the base rate on all rows is -0.1073 (-0.2366 to -0.0020) for P1 (worse than the constant base rate) and -0.1073 (-0.2366 to -0.0020) for P2 (worse than the constant base rate); 4 of 4 cells are undecidable at this n at the release gate.
 <!-- moot-headline:end -->
 

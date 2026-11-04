@@ -872,9 +872,11 @@ def test_simulators_list_marks_a_contaminated_weight_and_ignores_another_version
     reg = regm.Registry(models)
     reg.register_model("synthetic", "m1")
     app = imp("mootcourt.cli").app
+    config = tmp_path / "simulators.toml"
+    config.write_text("", encoding="utf-8")                      # a real, empty config: only the built-in providers (a missing file is an error)
 
     def listing():
-        res = CliRunner().invoke(app, ["simulators", "list", "--models-dir", str(models), "--config", str(tmp_path / "none.toml")])
+        res = CliRunner().invoke(app, ["simulators", "list", "--models-dir", str(models), "--config", str(config)])
         assert res.exit_code == 0, res.output
         return next(line for line in res.output.splitlines() if line.startswith("heuristic"))
 

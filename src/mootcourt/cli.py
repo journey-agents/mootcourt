@@ -223,8 +223,8 @@ def _parse_guardrail(text: str):
         d = float(delta)
     except ValueError:
         d = float("nan")
-    if not sep or not cell or not d > 0:
-        raise typer.BadParameter(f"--guardrail must be CELL:DELTA with DELTA above zero, got {text!r}")
+    if not sep or not cell or not d > 0 or d == float("inf"):
+        raise typer.BadParameter(f"--guardrail must be CELL:DELTA with DELTA above zero and finite, got {text!r}")
     return Guardrail(cell, d)
 
 
@@ -242,7 +242,7 @@ def _attach_simulator(issued, name, source, models_dir, reference_headline, sim_
         r = issued.request
         req = SimulationRequest(source=source, cell=issued.cell, origin=issued.origin, reference_headline=reference_headline,
                                 variant_headline=r.headline, image_changed=r.image_changed, headline_changed=r.headline_changed,
-                                planned_n_ref=r.impressions, planned_n_var=r.impressions, s_star=r.s_star,
+                                planned_n_ref=r.impressions, planned_n_var=r.impressions_variant or r.impressions, s_star=r.s_star,
                                 action_threshold=issued.robustness.action_threshold)
     except SimulatorError as exc:
         typer.echo(f"error: {exc}", err=True)
@@ -504,6 +504,13 @@ def backtest(
 
     command = f"moot backtest --source {source} --origins {origins}" + "".join(f" --challenger {n}" for n in names)
     command += _variant_flags(variant) + f" --seed {seed}"
+    if admission == "prelaunch":          # before the learning curve too: the curve must be on the admission its recorded command says
+        from mootcourt.scale import prelaunch_admission_ledger
+
+        before = int((df["status"] == "admitted").sum())
+        df = prelaunch_admission_ledger(df)         # a view, like the cautionary run: the snapshot id above is the stored ledger's
+        typer.echo(f"admission on exposure only: {int((df['status'] == 'admitted').sum()) - before} contrasts admitted "
+                   "that the realized-clicks rule excluded")
     if learning_curve is not None:
         from mootcourt.learning_curve import parse_fractions, run_learning_curve, write_learning_curve
 
@@ -527,15 +534,6 @@ def backtest(
         typer.echo("cautionary run: y is the relative lift in percent and s its standard error")
     if s_star == "realized":
         typer.echo("cautionary run: the forecaster is given each row's realized standard error")
-    if admission == "prelaunch":
-        from mootcourt.scale import prelaunch_admission_ledger
-
-        before = int((df["status"] == "admitted").sum())
-        df = prelaunch_admission_ledger(df)  # a view, like the cautionary run: the snapshot id above is the stored ledger's
-        typer.echo(
-            f"admission on exposure only: {int((df['status'] == 'admitted').sum()) - before} contrasts admitted "
-            "that the realized-clicks rule excluded"
-        )
     scores = rolling_origin(df, make_rungs(df), quarterly_origins(df), source=source, verbose=verbose, s_star_mode=s_star,
                             drop_triggers=tuple(drop_trigger or ()))
     t_scored = time.perf_counter() - t0
@@ -937,6 +935,9 @@ def simulators_list(
     from mootcourt.registry import Registry
     from mootcourt.simulators.loader import describe_all
 
+    if config is not None and not Path(config).is_file():
+        typer.echo(f"error: the config file {config} does not exist", err=True)
+        raise typer.Exit(code=2)
     models_dir = models_dir if models_dir is not None else storage_paths().models
     reg = Registry(models_dir)
     typer.echo(f"{'name':<18}{'adapter':<13}{'version':<9}{'knowledge cutoff':<18}{'cost':<10}weight earned")
@@ -1173,7 +1174,10 @@ def simulate_gate_power(
     base_rate: list[float] | None = typer.Option(None, "--base-rate", help="Base rate of the significant-positive event; repeat for several. "
                                                  "Default: 0.09 (the Upworthy archive), 0.14 (ASOS) and 0.30 (the earlier gates)."),
     target: float | None = typer.Option(None, "--target", help="Power of the release gate; default gate.target_power in mootcourt.toml, else 0.90."),
-    rows_per_test: float = typer.Option(3.5, "--rows-per-test", help="Mean rows per test (Upworthy: 3.5); sizes are numbers of tests."),
+    rows_per_test: float | None = typer.Option(None, "--rows-per-test", help="Mean rows per test; default: the measured value of each base rate "
+                                               "(Upworthy 3.5, ASOS 5); sizes are numbers of tests."),
+    icc: float | None = typer.Option(None, "--icc", help="Binary within-test correlation of the event; default: the measured value of each base rate "
+                                     "(Upworthy 0.13, ASOS 0.67)."),
     level: float = typer.Option(0.90, "--level", help="Interval whose lower end must clear zero (the harness reports 90 percent by test)."),
 ) -> None:
     """Simulate the gates by test, at the base rates of the archives, and write reports/gates.json (synthetic data only)."""
@@ -1185,7 +1189,9 @@ def simulate_gate_power(
     power = target if target is not None else load_settings()["gate"]["target_power"]
     rates = list(base_rate) if base_rate else list(simulate.RELEASE_BASE_RATES)
     doc = simulate.write_gates(out, base=rates[0], base_rates=rates, target=power, reps=reps, B=bootstrap, seed=seed,
-                               rows_per_test=rows_per_test, level=level, max_seconds=600.0)
+                               rows_per_test={b: v[0] for b, v in simulate.SOURCE_DEPENDENCE.items()} if rows_per_test is None else rows_per_test,
+                               icc={b: v[1] for b, v in simulate.SOURCE_DEPENDENCE.items()} if icc is None else icc,
+                               level=level, max_seconds=900.0)
     _print_gates(doc, simulate, reps, bootstrap, out)
 
 

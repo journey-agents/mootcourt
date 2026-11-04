@@ -65,6 +65,7 @@ nav:
   - Reference:
       - Command guide: commands.md
       - Command line: reference/cli.md
+      - Card: reference/card.md
       - Configuration: reference/config.md
       - Python API: reference/api.md
       - Ledger format: ledger-format.md

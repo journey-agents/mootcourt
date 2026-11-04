@@ -110,7 +110,7 @@ class GuardrailPayload(BaseModel):
     """A guardrail metric: its cell and the harm margin delta (above zero)."""
 
     cell: str = Field(max_length=64)
-    delta: float = Field(gt=0)
+    delta: float = Field(gt=0, allow_inf_nan=False)
 
 
 class CardPayload(BaseModel):
@@ -119,7 +119,7 @@ class CardPayload(BaseModel):
     source: str = Field(max_length=64)
     headline: str = Field(default="", max_length=1000)       # optional, as on the command line: a ledger without headline text has none
     image_changed: bool = False
-    impressions: int = Field(gt=0)
+    impressions: int = Field(gt=0, le=10**12)
     origin: dt.datetime | None = None
     headline_changed: bool = True
     cell: str | None = Field(default=None, max_length=64)
@@ -127,7 +127,7 @@ class CardPayload(BaseModel):
     test_id: str | None = Field(default=None, max_length=200)         # with variant_id: the ledger row key, instead of row_id
     variant_id: str | None = Field(default=None, max_length=200)
     reference_headline: str = Field(default="", max_length=1000)
-    impressions_variant: int | None = Field(default=None, gt=0)
+    impressions_variant: int | None = Field(default=None, gt=0, le=10**12)
     team_forecast: TeamPayload | None = None
     guardrails: list[GuardrailPayload] = Field(default_factory=list, max_length=20)
 

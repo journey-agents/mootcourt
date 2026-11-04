@@ -61,15 +61,22 @@ def _frame(outcomes) -> pd.DataFrame:
 def skill_interval(
     brier: np.ndarray, base: np.ndarray, test_ids, B: int = SKILL_RESAMPLES, seed: int = 0
 ) -> tuple[float | None, float | None, int | None]:
-    """90 percent by-test bootstrap interval of ``1 - mean(brier) / mean(base)`` and the number of tests; ``(None, None, None)`` without test ids."""
+    """90 percent by-test bootstrap interval of ``1 - mean(brier) / mean(base)`` and the number of tests; ``(None, None, None)`` without ids.
+
+    Outcomes without a test id (files written before ids were stored) are left out of the resampling; when none has one the answer is None."""
     if test_ids is None:
         return None, None, None
-    codes, uniq = pd.factorize(pd.Series(np.asarray(test_ids)))
+    ids = pd.Series(np.asarray(test_ids, dtype=object))
+    keep = ids.notna().to_numpy() & (ids.astype(str).str.strip() != "").to_numpy() & (ids.astype(str) != "None").to_numpy()
+    if not keep.any():                # files written before test ids were stored, or rows without one: no clusters, no interval (REV-L-001)
+        return None, None, None
+    brier, base = np.asarray(brier, float)[keep], np.asarray(base, float)[keep]
+    codes, uniq = pd.factorize(ids[keep])
     t = len(uniq)
     if t < 2:
         return None, None, int(t)
-    sb = np.bincount(codes, weights=np.asarray(brier, float), minlength=t)
-    s0 = np.bincount(codes, weights=np.asarray(base, float), minlength=t)
+    sb = np.bincount(codes, weights=brier, minlength=t)
+    s0 = np.bincount(codes, weights=base, minlength=t)
     counts = np.random.default_rng(seed).multinomial(t, np.full(t, 1.0 / t), size=B).astype(float)
     with np.errstate(invalid="ignore", divide="ignore"):
         draws = 1.0 - (counts @ sb) / (counts @ s0)

@@ -19,7 +19,7 @@ The ledger holds **aggregates only**: no user-level data, no event streams. For 
 
 A standard error is not always exported. An interval, a half-width or a p-value is enough: the importer recovers the standard error from it and writes how it did so into the row. You do not need a baseline name (default `control`), a cell (default the metric) or any headline text.
 
-**How many experiments?** The gates in the backtest report say it. As a rule of thumb, a few dozen experiments per metric make a card possible, and about 175 to 400 scored experiments in total are needed before a difference in skill between two forecasters can be told from zero. With fewer, you still get cards and reports, and the reports say "undecidable at this n" instead of a verdict.
+**How many experiments?** The gates in the backtest report say it. As a rule of thumb, a few dozen experiments per metric make a card possible, and somewhere between 75 and 400 scored experiments in total are needed before a difference in skill between two forecasters can be told from zero, fewer when your experiments often end significant and positive and more when they rarely do (`moot simulate gate-power` sizes the gate at the rate of your archive). With fewer, you still get cards and reports, and the reports say "undecidable at this n" instead of a verdict.
 
 ### If the archive lives in a warehouse
 
@@ -147,7 +147,7 @@ moot ingest --format generic --input my-export.csv --mapping mapping.toml --sour
   admitted: 360
 admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_user 120
 final reads from 2023-01-23 to 2025-12-29
-snapshot 20261103-4a80e5b241d7 for mine
+snapshot 20261104-4a80e5b241d7 for mine
 ledger ~/moot-mine/mootcourt-data/data/ledger/ledger.parquet: 360 rows
 ```
 
@@ -173,19 +173,20 @@ moot backtest --source mine
 ```
 
 ```text output
-fitted model 6f22a0b61424 at snapshot 20261103-4a80e5b241d7 in 1.6 s; it is the champion for mine
+fitted model adf46433a35f at snapshot 20261104-4a80e5b241d7 in 1.6 s; it is the champion for mine
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "n_200": 175, "n_400": 400}
-filled the backtest summary of model 6f22a0b61424
-scored 330 rows over 11 origins in 4.3 s (report writing 2.5 s)
-wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261103-4a80e5b241d7.md
-wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261103-4a80e5b241d7.json
-wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261103-4a80e5b241d7.parquet
+gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 400}
+note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+filled the backtest summary of model adf46433a35f
+scored 330 rows over 11 origins in 4.1 s (report writing 4.6 s)
+wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-4a80e5b241d7.md
+wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-4a80e5b241d7.json
+wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261104-4a80e5b241d7.parquet
 ```
 
 Time: about ten seconds here. It grows roughly with the number of rows times the number of origins; a ledger of a million contrasts is measured in [Scale](../scale.md).
 
-The gates came from `reports/gates.json`, which `moot init` wrote with a quick simulation. Run `moot simulate power` once for the full simulation (a few minutes).
+The gates came from `reports/gates.json`, which `moot init` wrote with a quick simulation at one base rate (0.3). The backtest says so in the note after the gates line. Run `moot simulate gate-power --base-rate R`, with `R` the share of your experiments that end significant and positive (the report card's Ledger section gives it), to size the gates by experiment at your own rate; it takes a few minutes, and the next backtest reads the result.
 
 ## 7. Read the report card
 
@@ -197,20 +198,20 @@ moot benchmark --ledger mootcourt-data/data/ledger/ledger.parquet
 
 ```text output
 scoring 360 contrasts of source mine
-wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261103-4a80e5b241d7.md
-wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261103-4a80e5b241d7.json
+wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261104-4a80e5b241d7.md
+wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261104-4a80e5b241d7.json
 ```
 
 It writes `reports/benchmark/ledger-<snapshot>.md`. Read its sections in this order:
 
 1. **Ledger.** Admitted contrasts, the number of distinct experiments scored (the unit that matters, because the rows of one experiment are not independent), the number of cells and the base rate of significant positive results. A low base rate makes every probability score harder to move.
 2. **Gates.** How many scored experiments a skill difference of 0.20 and 0.10 needs, at two power targets (0.90 for decisions, 0.80 as a screen). They come from a simulation on synthetic data and say nothing about your ledger except how large it must be.
-3. **Ladder.** One row per **rung**, a predictor of the ladder. P0 predicts each cell's base rate. P1 pools the cells and shrinks each toward the whole. P2 weighs the precedents that resemble the proposal. A rung is used only if it beats the one below it out of time. The columns to read:
-   - **Brier skill** with its 90 percent interval. Zero means no better than the base rate. An interval that contains zero means the data cannot tell the rung from the base rate.
+3. **Ladder.** One row per **rung**, a predictor of the ladder, and each rung adds one thing to the one below. P0 is the empirical base-rate forecaster of each cell, so its Brier skill is zero by construction. P1 adds a fitted partially pooled prior that accounts for measurement error: it pools the cells and shrinks each toward the whole. P2 adds the precedents that resemble the proposal, under an **admission guard**: its weight on precedents is above zero only when it beats zero on validation rows inside the fit by more than two standard errors, and at zero P2 equals P1. The guard limits how much noise the selection fits. It does not promise that P2 beats P1 out of time, so compare the P2 row with the P1 row on the score, and do not assume the richer rung is the better one. The columns to read:
+   - **Brier skill** with its 90 percent interval. Zero means no better than the base rate. An interval that contains zero means the data cannot tell the rung from the base rate. P0's skill is zero by construction.
    - The two **coverage** columns. Near 0.80 and 0.90 is calibrated, and well below means overconfident. [Tutorial 1](01-first-card.md#4-fit-the-models-and-back-test-them) shows how to judge "near" with the interval in the backtest report.
    - **Abstention**: the share of rows on which a card would have declined.
    - **Decidable**: whether the number of experiments reaches the gate.
-4. **Decision value.** If the top quarter of experiments had been chosen by a rung's forecast, what share of the total positive lift would have been captured, against random choice (the floor) and an oracle that knows the outcomes (the ceiling). It is a different question from calibration, and it is never mixed into the scores.
+4. **Decision value.** If the top quarter of experiments had been chosen by a rung's forecast, what share of the total positive lift would have been captured, against random choice (the floor, computed exactly) and an oracle that knows the outcomes (the ceiling). Each policy has an interval and a difference from random order; a difference whose interval contains zero is no edge. It is a different question from calibration, and it is never mixed into the scores.
 5. **Calibration by precision.** The scored rows in ten bands of planned exposure. In each band the mean forecast should be near the event rate. A forecaster that is right only for the most precise experiments shows here.
 6. **Limitations.** Three standing sentences: a forecast is only as good as its ledger, the gates say what is decidable and not whether the tool is useful, and a precedent forecast never replaces running the experiment.
 
@@ -220,21 +221,21 @@ The card holds counts, rates and scores only. It has no row id, no experiment na
 
 ## 8. Issue a card
 
-Name the cell you want to forecast and the planned number of units per arm. The `--now` option is needed only because this stand-in ledger is static.
+Name the cell you want to forecast and the planned number of units per arm. The `--now` option is needed only because this stand-in ledger is static. When you will join the outcome later, also name the ledger row the card is for with `--row-id source:test_id:variant_id` (or `--test-id` with `--variant-id`); [tutorial 4](04-weekly-loop.md) shows the loop.
 
-```bash run head=25
+```bash run head=26
 moot card --source mine --cell revenue_per_user --impressions 50000 --now 2025-12-30T00:00:00+00:00
 ```
 
 ```text output
 # Moot Court card
 
-- Card id: aa786aca71837a03
+- Card id: 7a051d7d7ecd88dc
 - Source: mine
 - Cell: revenue_per_user
 - Origin: 2025-12-30T00:00:00+00:00
-- Ledger snapshot: 20261103-4a80e5b241d7
-- Model: 6f22a0b61424
+- Ledger snapshot: 20261104-4a80e5b241d7
+- Model: adf46433a35f
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 50000, standard error of the future estimate: 0.019 units of the ledger's effect
@@ -250,6 +251,7 @@ moot card --source mine --cell revenue_per_user --impressions 50000 --now 2025-1
 - P(significant and positive): 0.151
 - Point estimate: -0.00 units of the ledger's effect
 - 80 percent interval for the true effect: -0.05 to 0.04 units of the ledger's effect
+- 80 percent interval for the result of the test at the planned standard error: -0.05 to 0.05 units of the ledger's effect
 - P(true effect above 0): 0.457
 - Rung: P2, weight on precedents 0.0
 ```

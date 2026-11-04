@@ -140,10 +140,16 @@ def outcome_from_card(card: dict, row, p0: P0Predictor, now: dt.datetime) -> dic
     base = card["evidence"].get("base_rate_sig_pos")
     origin = dt.datetime.fromisoformat(card["origin"])
     fc = card_forecast(card)
-    try:
-        p0_ls = float(p0.logscore(y, card["cell"], origin)) if has_star else None
-    except ValueError:          # no row was visible at the card's origin: there is no baseline to compare with
-        p0_ls = None
+    p0_card = (pred.get("p0") or {}) if pred else {}
+    if has_star and p0_card.get("var") is not None and p0_card.get("mean") is not None:
+        # the card's own baseline: P0 as the bundle had it at issue, the same information the model had (REV-L-019)
+        sd = max(math.sqrt(p0_card["var"]), 1e-6)
+        p0_ls = float(-0.5 * ((y - p0_card["mean"]) / sd) ** 2 - math.log(sd * math.sqrt(2.0 * math.pi)))
+    else:                       # a card from before the baseline was stored on it: P0 refit on the ledger rows visible at its origin
+        try:
+            p0_ls = float(p0.logscore(y, card["cell"], origin)) if has_star else None
+        except ValueError:      # no row was visible at the card's origin: there is no baseline to compare with
+            p0_ls = None
     p_scored = None if fc is None else fc.get("p_sig")
     logscore, legacy, cover90 = None, False, None
     if fc is not None and has_star:

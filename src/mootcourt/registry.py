@@ -11,12 +11,12 @@ the number of those rows. Writes are atomic (a temporary file in the same direct
 a concurrent reader sees the old file or the new one, never a partial file. There is no cross-process lock:
 the registry is written by one operator at a time (builder call 34).
 
-Champion refresh (round 00, docs/method.md call 165). A bundle fit with the champion's METHOD (the same ``method_id``, a hash of the method
-version and the fixed hyperparameters, never of the data) on a newer fit time is the same method on newer data. ``register_model`` makes
-it the champion directly, without the challenger margin, after a no-regression check: it is refused (and the bundle becomes the
-challenger, with the reason in the history) only when its backtest Brier skill interval lies entirely below the champion's. A bundle with
-a different ``method_id`` is a different method and is a challenger that needs the margin below. Without this split a method with skill
-near zero could never replace a champion that is merely older.
+Champion refresh (round 00, docs/method.md call 165; review L tightened it). A bundle fit with the champion's METHOD (the same ``method_id``, a
+hash of the method version and the fixed hyperparameters, never of the data) on strictly newer data (``data_through``, the latest result the fit
+saw; the fit time only breaks a tie) is the same method on newer data. ``register_model`` makes it the champion without the challenger margin,
+after a no-regression check on its backtest: refused (it becomes the challenger and the history says why) when its Brier skill interval lies
+entirely below the champion's. A same-method fit with no backtest summary yet is a pending refresh, held as the challenger, and the check runs
+when the summary is attached. A bundle with a different ``method_id`` is a different method and needs the margin below.
 
 Promotion rule (``promote``, for a different method): the challenger replaces the champion only when its Brier skill beats the
 champion's by at least the margin (default ``config.PROMOTION_MARGIN``, 0.02 in Brier skill) and its
@@ -164,57 +164,81 @@ class Registry:
         self._write(doc)
 
     def register_model(self, source: str, model_id: str, backtest_summary: dict | None = None, now: dt.datetime | None = None,
-                       method_id: str | None = None, fitted_at: str | None = None) -> str:
+                       method_id: str | None = None, fitted_at: str | None = None, data_through: str | None = None) -> str:
         """Register a fitted model. Returns ``"champion"`` or ``"challenger"``, the role it holds afterwards.
 
-        The first model of a source becomes the champion. A later model with the champion's ``method_id`` and a newer ``fitted_at`` is
-        a refresh and becomes the champion (see the module docstring); any other later model becomes the challenger (replacing any
-        earlier challenger) unless it already is the champion or the challenger, in which case only its summary is refreshed.
+        The first model of a source becomes the champion. A later model is a refresh of the champion, and becomes the champion, only when
+        it has the champion's ``method_id``, was fit on strictly newer data (``data_through``, the latest result it saw; ``fitted_at`` is only
+        the tie breaker when that is equal) and its backtest is not clearly worse (``decide_refresh``). A same-method fit that has no backtest
+        summary yet is held as a pending refresh (a challenger) until the summary is attached, where the check runs. Any other later model
+        becomes the challenger (replacing any earlier challenger), and the history says why. A model that already is the champion or the
+        challenger only has its summary refreshed.
         """
         doc = self._read()
         e = self._entry(doc, source)
         if backtest_summary is not None:
             e["summaries"][model_id] = backtest_summary
-        if method_id is not None:
-            e.setdefault("methods", {})[model_id] = method_id
-        if fitted_at is not None:
-            e.setdefault("fitted_at", {})[model_id] = fitted_at
+        for key, value in (("methods", method_id), ("fitted_at", fitted_at), ("data_through", data_through)):
+            if value is not None:
+                e.setdefault(key, {})[model_id] = value
         if e["champion"] is None:
             e["champion"] = model_id
             role = "champion"
             self._log(e, "champion_set", now, model_id=model_id)
         elif e["champion"] == model_id:
             role = "champion"
-        elif self._is_refresh(e, model_id):
-            old = e["champion"]
-            e["champion"] = model_id
-            if e.get("challenger") == model_id:
-                e["challenger"] = None
-            role = "champion"
-            self._log(e, "champion_refreshed", now, model_id=model_id, replaced=old, method_id=method_id)
         else:
-            if e["challenger"] != model_id:
-                self._log(e, "challenger_set", now, model_id=model_id)
-            e["challenger"] = model_id
-            role = "challenger"
+            verdict, reason = self.decide_refresh(e, model_id)
+            if verdict == "refresh":
+                self._refresh(e, model_id, now, reason)
+                role = "champion"
+            else:
+                if e["challenger"] != model_id:
+                    self._log(e, "challenger_set", now, model_id=model_id, method_id=method_id, reason=reason)
+                e["challenger"] = model_id
+                if verdict == "pending":
+                    e["pending_refresh"] = model_id
+                role = "challenger"
         self._write(doc)
         return role
 
+    def _refresh(self, e: dict, model_id: str, now, reason: str) -> None:
+        old = e["champion"]
+        e["champion"] = model_id
+        if e.get("challenger") == model_id:
+            e["challenger"] = None
+        if e.get("pending_refresh") == model_id:
+            e["pending_refresh"] = None
+        self._log(e, "champion_refreshed", now, model_id=model_id, replaced=old, method_id=e.get("methods", {}).get(model_id), reason=reason)
+
     @staticmethod
-    def _is_refresh(e: dict, model_id: str) -> bool:
-        """True when ``model_id`` is the champion's method on a newer fit and its backtest is not clearly worse than the champion's."""
+    def decide_refresh(e: dict, model_id: str) -> tuple[str, str]:
+        """``(verdict, reason)`` for a model against the champion: ``refresh``, ``pending`` (no backtest summary yet) or ``no``.
+
+        A refresh needs the champion's method, strictly newer data and a backtest whose Brier skill interval does not lie entirely below the
+        champion's. Unknown data recency counts as not newer: a refit of an older snapshot has a new fit time and must not take the champion back.
+        """
         champ = e["champion"]
-        methods, fitted = e.get("methods", {}), e.get("fitted_at", {})
+        methods, fitted, through = e.get("methods", {}), e.get("fitted_at", {}), e.get("data_through", {})
         mid = methods.get(model_id)
         if not mid or methods.get(champ) != mid:
-            return False
-        new_t, old_t = fitted.get(model_id), fitted.get(champ)
-        if not new_t or not old_t or dt.datetime.fromisoformat(new_t) <= dt.datetime.fromisoformat(old_t):
-            return False
+            return "no", "a different method (or an unknown one): it needs the promotion margin"
+        new_d, old_d = through.get(model_id), through.get(champ)
+        if not new_d or not old_d:
+            return "no", "the recency of its data or the champion's is unknown, so it is not shown to be newer"
+        d_new, d_old = dt.datetime.fromisoformat(new_d), dt.datetime.fromisoformat(old_d)
+        if d_new < d_old:
+            return "no", "fit on older data than the champion"
+        if d_new == d_old:
+            f_new, f_old = fitted.get(model_id), fitted.get(champ)
+            if not f_new or not f_old or dt.datetime.fromisoformat(f_new) <= dt.datetime.fromisoformat(f_old):
+                return "no", "fit on the same data as the champion and not later"
         s_new, s_old = e["summaries"].get(model_id) or {}, e["summaries"].get(champ) or {}
-        if s_new.get("brier_skill_hi") is not None and s_old.get("brier_skill_lo") is not None and s_new["brier_skill_hi"] < s_old["brier_skill_lo"]:
-            return False            # clearly worse on the backtest: not a refresh, a challenger
-        return True
+        if s_new.get("brier_skill_hi") is None:
+            return "pending", "a refresh is pending: the backtest summary of this fit is not attached yet, and the no-regression check needs it"
+        if s_old.get("brier_skill_lo") is not None and s_new["brier_skill_hi"] < s_old["brier_skill_lo"]:
+            return "no", "refresh refused: its backtest Brier skill interval lies entirely below the champion's"
+        return "refresh", "same method on strictly newer data, backtest not clearly worse"
 
     def set_challenger(self, source: str, model_id: str, now: dt.datetime | None = None) -> None:
         """Name the challenger of a source."""
@@ -224,10 +248,18 @@ class Registry:
         self._log(e, "challenger_set", now, model_id=model_id)
         self._write(doc)
 
-    def attach_summary(self, source: str, model_id: str, summary: dict) -> None:
-        """Store or replace a model's backtest summary."""
+    def attach_summary(self, source: str, model_id: str, summary: dict, now: dt.datetime | None = None) -> None:
+        """Store or replace a model's backtest summary. A pending refresh of this model is decided now (the no-regression check)."""
         doc = self._read()
-        self._entry(doc, source)["summaries"][model_id] = summary
+        e = self._entry(doc, source)
+        e["summaries"][model_id] = summary
+        if e.get("pending_refresh") == model_id and e.get("champion") not in (None, model_id):
+            verdict, reason = self.decide_refresh(e, model_id)
+            if verdict == "refresh":
+                self._refresh(e, model_id, now, reason + " (decided when the backtest summary was attached)")
+            elif verdict == "no":
+                e["pending_refresh"] = None
+                self._log(e, "refresh_refused", now, model_id=model_id, reason=reason)
         self._write(doc)
 
     def promote(self, source: str, gates: dict, margin: float = PROMOTION_MARGIN, now: dt.datetime | None = None) -> PromotionResult:
@@ -313,7 +345,8 @@ def fit_command(source: str, df, ledger_dir, models_dir, reports_dir) -> tuple[s
     bundle.backtest_summary = summary
     save_bundle(bundle, models_dir)
     role = Registry(models_dir).register_model(
-        source, bundle.model_id, summary, method_id=bundle.method_id or None, fitted_at=bundle.fit_time or None
+        source, bundle.model_id, summary, method_id=bundle.method_id or None, fitted_at=bundle.fit_time or None,
+        data_through=bundle.fit_cutoff.isoformat() if bundle.fit_cutoff is not None else None,
     )
     return bundle.model_id, sid, role, summary
 

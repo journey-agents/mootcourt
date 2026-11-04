@@ -23,7 +23,7 @@ flowchart LR
     A["Outside simulation agent<br/>(optional)"] -.->|second opinion| C
 ```
 
-Read it from the left. Concluded experiments become the **ledger**. The ledger trains **models** and is replayed by the **backtest**, which says whether the models can be trusted and how many experiments it takes to tell. A **card** combines a model with the reliability report and either gives a forecast or abstains. The card is frozen. When the live experiment ends, `moot join` attaches its result to the card as an **outcome**, and the outcomes become the reliability report that the next card reads. The loop is how the forecaster earns and loses trust.
+Read it from the left. Concluded experiments become the **ledger**. The ledger trains **models** and is replayed by the **backtest**, which says whether the models can be trusted and how many experiments it takes to tell. A **card** combines a model with the reliability report and either gives a forecast or abstains. The card is frozen, and it names the ledger row that will hold its result (its **row id**). When the live experiment ends, `moot join` finds the card by that row id and attaches the result to it as an **outcome**, and the outcomes become the reliability report that the next card reads. The loop is how the forecaster earns and loses trust.
 
 Nothing in the flow decides anything about the experiment. The card prioritizes and sizes the test. The live test decides.
 
@@ -40,6 +40,9 @@ Nothing in the flow decides anything about the experiment. The card prioritizes 
 | Second opinion | an outside agent's probability, held at weight zero until it earns more | [Second opinion](#second-opinion) |
 | Abstention triggers | the four reasons a card declines: support, novelty, reliability, instability | [Abstention](#abstention) |
 | Card | the frozen forecast for one proposed experiment | [Card](#card) |
+| Row id | the ledger row a card will be joined to, `source:test_id:variant_id` | [Card](#row-id) |
+| Skill line | the card's own record: recent skill with its interval and the gate verdict | [Card](#the-skill-line) |
+| Champion and challenger | the model cards use and the newer fit that may replace it | [Champion and challenger](#champion-and-challenger) |
 | Frozen ids | content digests that make a card, a model and a snapshot tamper-evident | [Frozen ids](#frozen-ids) |
 | Harness | the rolling-origin backtest | [Harness](#harness) |
 | Gate | the number of scored experiments below which a difference cannot be told from zero | [Gates](#gates) |
@@ -63,14 +66,16 @@ An origin is a point in time. A model at an origin sees only rows whose `usable_
 
 ## Ladder
 
-The ladder is a sequence of predictors, called **rungs**, each admitted only if it beats the one below out of time:
+The ladder is a sequence of predictors, called **rungs**. The rungs are not a nested chain. Each adds one thing to the one below it:
 
-- **P0** predicts the cell base rate: what the cell's experiments did on average.
-- **P1** pools the cells and shrinks each toward the whole, weighing every row by its own standard error. A noisy experiment counts for less.
-- **P2** weighs precedents that resemble the proposal (a kernel regression on the proposal's features), shrunk toward P1, with a weight on precedents chosen per cell and a guard against fitting noise: the weight is above zero only when it beats zero out of sample by more than two standard errors. With the weight at zero, P2 equals P1 exactly.
+- **P0** is the empirical base-rate forecaster of the cell. Its probability of a significant positive result is the cell's visible event rate, the quantity that Brier skill is measured against, so its skill is zero by construction. Its intervals are the quantiles of the visible estimates. It is the floor, and it never models measurement error: the estimates it summarizes already contain it.
+- **P1** adds a fitted partially pooled Student-t prior that accounts for measurement error. It pools the cells and shrinks each toward the whole, weighing every row by its own standard error, so a noisy experiment counts for less.
+- **P2** adds kernel-weighted precedents under an admission guard: it weighs past experiments that resemble the proposal (a kernel regression on the proposal's features), shrunk toward P1, with a weight on precedents chosen per cell. Its predictive is a Student-t of the same family as P1, with the cell's own degrees of freedom, so a change in the weight changes the location and the scale and never the family. At a weight of zero P2 equals P1 exactly.
 - **P3** is the team's own forecast, when one is supplied with the request, frozen at issue. No public archive holds one, so it is exercised on synthetic data only.
 
-Challengers (gradient boosting, local empirical Bayes, a text-only classifier) run beside the ladder on the same rows and never replace it without winning on the promotion rule.
+The **admission guard** decides when P2 may use a weight above zero. For each cell and origin it scores every candidate weight on validation rows inside the fit and admits a weight only if its gain in log score over a weight of zero, minus two standard errors (clustered by test), is above zero. Otherwise the weight is zero and P2 reduces to P1. The guard limits how much noise the selection can fit, and it is a weak limit. It does not promise that P2 beats P1 on later tests, and the results show that on the Upworthy archive it does not: P2 can score below P1 out of time, by a few thousandths of a nat. The positive-control table in the [results](results.md) shows the cause: with 3,700 tests in the ledger, about the size of the Upworthy headline-only cell, the guard admits a weight in most cells even when no signal is planted, so an admitted weight is not evidence that precedents help. This is a known limitation of the guard, which the multiplier of two standard errors does not remove. The reports say how often the guard held the weight at zero, and the [results page](results.md) shows guarded and unguarded selection side by side.
+
+Challengers (gradient boosting, local empirical Bayes, a text-only classifier) run beside the ladder on the same rows and never replace it without winning on the promotion rule. Each also has a recalibrated row, whose probability goes through a map fit on the rows visible at the origin only.
 
 ### Second opinion
 
@@ -84,14 +89,28 @@ Abstention is the court declining to rule. A card abstains when any one of four 
 |---|---|
 | support | the cell has fewer than 30 admitted rows visible at the origin |
 | novelty | the proposal is unlike every precedent: its similarity to the cell's rows is below the 5th percentile of what the cell's own rows have to each other |
-| reliability | the cell's reliability report is missing, more than 14 days old, or marks the cell drifted (two joins in a row with forecasts worse than the base rate) |
+| reliability | the cell's reliability report is missing, more than 14 days old at the card's issue time, or marks the cell drifted (two joins in a row with at least ten outcomes in the window and a rolling log score more than 0.10 nats under the base rate) |
 | instability | resampling the precedents by experiment keeps the forecast on the same side of the action threshold in 80 percent or fewer of the resamples |
 
-An abstained card says which reasons fired and shows the base-rate forecast only. The abstention rate is reported with every score, so a forecaster cannot look good by declining everything without that showing.
+An abstained card says which reasons fired and shows the base-rate forecast only. It still keeps the forecast it withheld, sealed in its frozen file, and the weekly join scores that forecast like any other card's (see [the card](#card)), so a cell that abstains for a stale record collects the evidence it needs to recover. The abstention rate is reported with every score, so a forecaster cannot look good by declining everything without that showing.
 
 ## Card
 
-A card is a pre-trial opinion for one proposed test: the probability that it ends significant and positive, an interval for the true effect, the precedents that carry the forecast, how far the answer is from changing a decision, how well forecasts like it did in the backtest, and the abstention status. A card never contains a ship, rollout or stopping recommendation. Cards are frozen as content-addressed files, so a card cannot be edited after the outcome is known.
+A card is a pre-trial opinion for one proposed test: the probability that it ends significant and positive, an interval for the true effect, the precedents that carry the forecast, how far the answer is from changing a decision, how well forecasts like it did, and the abstention status. A card never contains a ship, rollout or stopping recommendation. Cards are frozen as content-addressed files, so a card cannot be edited after the outcome is known. The fields are listed in the [card reference](reference/card.md).
+
+The prediction block of a card (schema version 2) stores the forecast itself: the family of the predictive (a Student-t), its degrees of freedom, location and scale, the grid it was computed on and the planned standard error. It gives two intervals at each level. The interval for the true effect is what the team reads. The interval for the observed estimate adds the noise the test will have at its planned standard error, so it is wider, and it is the interval that a result is compared with and that the backtest's coverage is measured against. The weekly join scores a card from its stored predictive, so a joined card has the same log score as the backtest gives the same row.
+
+### Row id
+
+A card can name the ledger row that will hold its result, `source:test_id:variant_id`, so that the weekly join can find it. Give it as `--row-id` on `moot card` (or `--test-id` with `--variant-id`, which compose the same id), as the `row_id` field of `POST /card`, and as the `row_id` argument of the MCP tool `get_card`. A card without a row id is frozen and valid, but no join can attach an outcome to it. The MCP tool never freezes a card, so it only echoes the key. The request also takes the planned exposure of the variant arm apart from the reference arm (`--impressions-variant`) and the reference headline (`--reference-headline`).
+
+### The skill line
+
+Every card carries the **skill line**: the trailing eight-week Brier skill of recent cards against the cell base rate, with its 90 percent interval by test, the rows and tests it rests on, the gate verdict at that many tests (read at the base rate nearest the cell's own) and the latest gated figure of the model's backtest with its interval. A record with too few tests says "undecidable at this n"; a report written before the intervals were stored says that no interval is recorded.
+
+### Abstained cards keep a sealed forecast
+
+When a card abstains, it keeps the forecast it withheld in a sealed block of its frozen file. No renderer, HTTP response or tool shows it, so an abstained card still shows only the base rate. The weekly join scores it with the same function as an issued card, flags it as abstained, and feeds it to the reliability report. Without that, abstention would be absorbing: a stale cell would abstain every card, the abstained cards would add no evidence, and the cell could never refresh.
 
 ## Frozen ids
 
@@ -99,15 +118,21 @@ Three ids are content digests, written as hexadecimal strings: the **card id** (
 
 ## Harness
 
-The harness is the rolling-origin backtest. It scores every admitted row once per rung with models fitted only on earlier rows, then reports log score, CRPS, Brier skill against the base rate, calibration, coverage, abstention and decision value, with intervals bootstrapped by test.
+The harness is the rolling-origin backtest. It scores every admitted row once per rung with models fitted only on earlier rows, then reports log score, CRPS, Brier skill against the base rate, calibration, coverage, abstention and decision value, with intervals bootstrapped by test. Beside each 90 percent interval the aggregate rows carry Bonferroni-adjusted bounds for the whole table of intervals, because a table of many cells and rungs will show some intervals that exclude zero by chance. The calibration test draws its null by test, not by row, because the contrasts of one test share a baseline. Coverage is reported by decile of planned exposure and by decile of the realized over the planned standard error: it is near the stated level on average and not within every group, and the second table shows where it is not. The report header counts the tests in the ledger, the tests admitted and the tests scored, and says why they differ.
 
 ## Gates
 
-A gate is a number of scored tests below which a difference in skill cannot be told from zero. Gates come from a power simulation and are read at two power targets: 0.90 for release decisions and 0.80 as a research screen. A comparison below its gate is reported as undecidable at this n. The gate counts tests, not rows, because contrasts of one test share a baseline and are not independent. The gates file is `reports/gates.json`; `moot init` writes a quick one and `moot simulate power` the full one.
+A gate is a number of scored tests below which a difference in skill cannot be told from zero. Gates come from a power simulation and are read at two power targets: 0.90 for release decisions and 0.80 as a research screen. A comparison below its gate is reported as undecidable at this n. The gate counts tests, not rows, because contrasts of one test share a baseline and are not independent.
+
+How many tests a gate needs depends on how often a test ends significant and positive, the base rate. `moot simulate gate-power` draws simulated ledgers at several base rates (0.09, 0.14 and 0.30 by default), bootstraps by test and writes the sizes for each into `reports/gates.json`, in tests, with the 90 percent by-test interval it used. A backtest reads each cell's gate at the simulated base rate nearest the cell's own event rate and keeps the earlier base rate of 0.30 beside it as a second verdict. `moot init` writes a quick gates file and `moot simulate power` the per-row simulation that earlier releases used; both are kept for comparison, and a backtest that finds one of them says so.
 
 ## Decision value
 
-Decision value asks a different question from calibration: if a team had chosen the top quarter of its tests by a rung's forecast, how much of the total positive lift would it have captured, compared with choosing at random and with an oracle? It is reported apart from the scores and never folded into them.
+Decision value asks a different question from calibration: if a team had chosen the top quarter of its tests by a rung's forecast, how much of the total positive lift would it have captured, compared with choosing at random and with an oracle? It is reported at budgets of 10, 25 and 50 percent of the tests. Random order is computed exactly (it captures the budget's share of the total), and every policy row carries a 90 percent interval by test and its difference from random order, so a policy whose interval for the difference contains zero has shown no edge. A rung whose win probability is the same for every test in a cell can only choose between cells, and the table says so. It is reported apart from the scores and never folded into them.
+
+## Champion and challenger
+
+The **champion** is the model that cards use. A fit records the method it was made with (`method_id`, a hash of the method version and its fixed hyperparameters, never of the data). A fit with the champion's `method_id` on strictly newer data is the same method on newer data, and it may refresh the champion without the promotion margin, after a no-regression check on its backtest: it is refused, and kept as a challenger with the reason in the registry history, when its backtest Brier skill interval lies entirely below the champion's. Until the backtest of the fit is attached, the refresh is pending, which is why the backtest follows the fit. A fit with another `method_id` is a different method. It stays a challenger until `moot promote` finds that its Brier skill beats the champion's by the margin on a backtest that meets the gate. Without the split, a method whose skill is near zero could never replace a champion that was merely older.
 
 ## Report card
 
@@ -115,4 +140,4 @@ The report card is the one-page summary that `moot benchmark --ledger` writes: l
 
 ## Reliability report
 
-The reliability report holds, per cell, the rolling log score and Brier skill of recently issued cards over the trailing eight weeks, and whether the cell has drifted. The backtest seeds it, and `moot join` keeps it current. A card reads it, which is how the record of past cards changes what the next card does. See [tutorial 4](tutorials/04-weekly-loop.md).
+The reliability report holds, per cell, the rolling log score and Brier skill of recently issued cards over the trailing eight weeks, the interval and the number of tests behind the skill, and whether the cell has drifted. A cell drifts when, at two joins in a row, its rolling log score is more than 0.10 nats under the base rate with at least ten outcomes in the window; the mark clears at the first join that is not below. The backtest seeds the report, and `moot join` keeps it current, abstained cards included. A card reads it, which is how the record of past cards changes what the next card does. See [tutorial 4](tutorials/04-weekly-loop.md).

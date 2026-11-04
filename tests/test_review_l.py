@@ -590,11 +590,15 @@ def test_a_refit_of_the_same_method_on_a_newer_fit_replaces_the_champion_without
     reg = Registry(tmp_path)
     t0, t1, t2 = (f"2026-11-0{d}T12:00:00+00:00" for d in (1, 2, 3))
     skill = lambda s: {"brier_skill": s, "brier_skill_lo": s - 0.01, "brier_skill_hi": s + 0.01, "n": 100, "n_tests": 100}  # noqa: E731
-    assert reg.register_model("s", "m1", skill(0.001), method_id="A", fitted_at=t0) == "champion"
-    assert reg.register_model("s", "m2", skill(0.002), method_id="A", fitted_at=t1) == "champion"           # same method, newer fit: a refresh
+    # round 00 review L: a refresh needs strictly newer DATA, not a later fit time
+    d0, d1, d2 = (f"2014-0{d}-01T00:00:00+00:00" for d in (1, 2, 3))
+    assert reg.register_model("s", "m1", skill(0.001), method_id="A", fitted_at=t0, data_through=d0) == "champion"
+    # same method, newer data: a refresh
+    assert reg.register_model("s", "m2", skill(0.002), method_id="A", fitted_at=t1, data_through=d1) == "champion"
     assert reg.get_champion("s") == "m2" and reg.get_challenger("s") is None
     assert [e["event"] for e in reg._read()["s"]["history"]][-1] == "champion_refreshed"
-    assert reg.register_model("s", "m3", skill(0.50), method_id="B", fitted_at=t2) == "challenger"          # another method needs the margin
+    # another method needs the margin
+    assert reg.register_model("s", "m3", skill(0.50), method_id="B", fitted_at=t2, data_through=d2) == "challenger"
     assert reg.get_champion("s") == "m2" and reg.get_challenger("s") == "m3"
     res = reg.promote("s", {"n_200": 10, "n_400": 20}, margin=0.02)
     assert res.promoted and reg.get_champion("s") == "m3"
@@ -606,9 +610,15 @@ def test_a_refresh_that_is_clearly_worse_or_older_is_a_challenger_not_a_refresh(
     reg = Registry(tmp_path)
     good = {"brier_skill": 0.10, "brier_skill_lo": 0.08, "brier_skill_hi": 0.12, "n": 100, "n_tests": 100}
     worse = {"brier_skill": 0.01, "brier_skill_lo": -0.01, "brier_skill_hi": 0.03, "n": 100, "n_tests": 100}
-    reg.register_model("s", "m1", good, method_id="A", fitted_at="2026-11-02T00:00:00+00:00")
-    assert reg.register_model("s", "m2", worse, method_id="A", fitted_at="2026-11-03T00:00:00+00:00") == "challenger"
-    assert reg.register_model("s", "m3", good, method_id="A", fitted_at="2026-11-01T00:00:00+00:00") == "challenger"        # older fit
+    reg.register_model("s", "m1", good, method_id="A", fitted_at="2026-11-02T00:00:00+00:00", data_through="2014-02-01T00:00:00+00:00")
+    assert (
+        reg.register_model("s", "m2", worse, method_id="A", fitted_at="2026-11-03T00:00:00+00:00", data_through="2014-03-01T00:00:00+00:00")
+        == "challenger"
+    )
+    assert (
+        reg.register_model("s", "m3", good, method_id="A", fitted_at="2026-11-04T00:00:00+00:00", data_through="2014-01-01T00:00:00+00:00")
+        == "challenger"
+    )  # older data
     assert reg.get_champion("s") == "m1"
 
 
@@ -690,7 +700,7 @@ def test_write_gates_records_every_base_rate_and_the_by_test_interval_and_load_g
     )
     assert set(doc["by_base_rate"]) == {"0.09", "0.30"} and doc["base_rate"] == 0.09
     assert doc["by_base_rate"]["0.09"]["n_400"] >= doc["by_base_rate"]["0.30"]["n_400"]
-    assert doc["interval"] == {"level": 0.9, "by": "test", "rows_per_test": 3.5}
+    assert {k: doc["interval"][k] for k in ("level", "by", "rows_per_test")} == {"level": 0.9, "by": "test", "rows_per_test": 3.5}
     g = sim.load_gates(path)
     assert sorted(g["by_base_rate"]) == [0.09, 0.30] and g["n_200"] == doc["n_200"]
     assert sim.select_gates(g, 0.085)["base_rate"] == 0.09 and sim.select_gates(g, 0.25)["base_rate"] == 0.30
@@ -1122,7 +1132,9 @@ def test_the_aggregate_carries_bonferroni_adjusted_bounds_wider_than_the_unadjus
     _, sc = _bt()
     agg = hs.aggregate_scores(sc, GATES, B=100)
     fam = agg["family_size"].iloc[0]
-    assert fam == int(sum(1 + sc.loc[sc["rung"] == r, "cell"].nunique() for r in sc["rung"].unique()))
+    # round 00 review L (REV-L-018): the family is the intervals the table reports, not its rows
+    has_skill = agg["brier_skill_lo"].notna() & ((agg["brier_skill_hi"] - agg["brier_skill_lo"]) > 0)
+    assert fam == int(has_skill.sum() + agg["logscore_lo"].notna().sum())
     ok = agg[agg["brier_skill_lo"].notna() & agg["adjusted_lo"].notna()]
     assert len(ok) > 10
     assert (ok["adjusted_lo"] < ok["brier_skill_lo"] + 1e-9).all() and (ok["adjusted_hi"] > ok["brier_skill_hi"] - 1e-9).all()
@@ -1186,11 +1198,10 @@ def test_a_query_whose_kernel_underflows_to_zero_for_every_precedent_still_gets_
     origin = adm["usable_after"].max() + pd.Timedelta(days=1)
     x = space.transform_text(["zzz qqq xxx nothing like it"], False, reference="www", exposure=20000)[0] + 50.0
     st = p2.neighbor_state(x, "headline_only", origin)
-    assert st.kernel.max() > 0 and np.isfinite(st.kernel).all()
-    mo = st.moments()
-    assert np.isfinite(mo.theta_hat) and mo.v > 0 and 1.0 <= mo.n_eff <= len(adm)
+    # round 00 review L (REV-L-021): such a query gets P1's predictive (an empty state, weight zero), never a weight chosen elsewhere on one precedent
+    assert len(st.row_ids) == 0 and st.lam == 0.0
     pred = p2.predictive_from_state(st, x, 0.2, "headline_only", origin)
-    assert 0.0 < pred.p_sig(0.2) < 1.0
+    assert 0.0 < pred.p_sig(0.2) < 1.0 and np.array_equal(pred.pmf, p1.predict(x, 0.2, "headline_only", origin).pmf)
 
 
 def test_the_challengers_see_the_cell_because_the_ladder_fits_each_cell_apart():

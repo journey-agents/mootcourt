@@ -14,8 +14,10 @@ The service binds to `127.0.0.1:8000`. It offers `POST /card`, `GET /reliability
 issues a card and freezes it; that is the only write. Request body:
 
 ```json
-{"source": "mine", "headline": "A plain headline", "image_changed": false, "impressions": 20000}
+{"source": "mine", "headline": "A plain headline", "image_changed": false, "impressions": 20000, "row_id": "mine:exp-101:treatment"}
 ```
+
+`row_id` is optional: it names the ledger row (`source:test_id:variant_id`) that the weekly join will attach the outcome to. A card without it is valid, but no join can find it. The MCP tool takes the same argument and only echoes it, because it never freezes a card. The service uses its own clock as the issue time and has no `now` field, so a source whose reliability report is more than 14 days old gets abstained cards; join fresh results first.
 
 The service has no authentication. Keep it on the loopback address, or put your own access control in front of it.
 

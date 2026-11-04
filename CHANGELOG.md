@@ -68,6 +68,20 @@ First release.
 - Ablations: the feature, bandwidth, selection, recency and pairwise ablations also run with `--p2-guard off`; `--admission prelaunch` admits on exposure only (ablation); `moot simulate ledger --text-effect` plants a text signal for the positive control.
 - The learning curve drops the direction baselines. The decision-value rows of a benchmark card read the 25 percent budget.
 
+### Changed after the review of chunk L (chunk N)
+
+- The log score of y for every predictive built from a location-scale family (P1, P2, the card, the weekly join, the replay, the drift flag) is the analytic marginal of the stored Student-t (or Normal),
+  the quantity the lambda selection and the P1 likelihood already used; the grid serves intervals, probabilities and the CRPS. Every log score of run3 moved (P1 by 0.025 nats on Upworthy, 0.099 on ASOS).
+- The weekly join and the reliability report tolerate outcome files without a test id (`n_tests` None, "no interval is recorded"). The by-row `decidable` column reads "not computed: the gates count tests"
+  when the gates file counts tests. The clustered calibration null solves its latent correlation to reproduce the observed design effect (`latent_rho`). The gate simulation draws dependent rows within a test with the
+  measured correlation of each source (`SOURCE_DEPENDENCE`, `--icc`), so the gates are larger. The Bonferroni family counts the intervals reported.
+- The leakage audit wraps the construction of `GBMChallenger`, `LocalEB` and `TextLR`. Champion refresh needs strictly newer data (`data_through`), holds a same-method fit without a backtest as pending until the summary is attached, and writes the reason of every challenger in the history.
+- Smaller: exposure bound, MCP refusals as messages, the variant exposure to the simulator, neutral pair features without a reference, the learning curve on the recorded admission, row id checks, P0 variance floor, P1's predictive for a far query,
+  `method_id` covering the feature space, GBM calibration subsample, relative robustness threshold, finite guardrail margins, the join's baseline from the card's own P0 (the card stores P0's variance).
+- Reports: AUC and the Murphy resolution term per rung (`auc_event`, `auc_direction`, `resolution_event`, `resolution_direction`, with intervals); a sensitivity of the event defined on the planned standard
+  error (score columns `event_planned`, `brier_planned`, `p_base_planned`, `brier_base_planned`; aggregate columns `event_rate_planned`, `p_sig_mean`, `brier_planned`, `brier_base_planned`, `brier_skill_planned`
+  with `_lo` and `_hi`); `guard_pairs` in the paper extras; the positive-control sensitivity gains a ledger of 3,700 tests.
+
 ### Security
 
 - The HTTP simulator adapter ignores proxy settings and refuses redirects and non-loopback hosts unless allowed.

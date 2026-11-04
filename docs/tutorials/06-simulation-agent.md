@@ -87,7 +87,7 @@ moot simulators run --provider my_agent --source sample --out agent.jsonl
 ```
 
 ```text output
-my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 10.5 s, wall 11.0 s
+my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 14.9 s, wall 15.4 s
 wrote agent.jsonl
 ```
 
@@ -102,9 +102,9 @@ moot backtest --source sample --second-opinion agent.jsonl | tail -n 3
 ```
 
 ```text output
-wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261103-80131c793938--second-opinion.md
-wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261103-80131c793938--second-opinion.json
-wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/scores-sample-20261103-80131c793938--second-opinion.parquet
+wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261104-80131c793938--second-opinion.md
+wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/backtest-sample-20261104-80131c793938--second-opinion.json
+wrote ~/moot-agent/mootcourt-data/reports/second-opinion-my_agent/scores-sample-20261104-80131c793938--second-opinion.parquet
 ```
 
 This replays the records and writes a separate report next to the main one. It adds two rungs: `agent`, the agent's probability alone, and `P2+agent`, the model's probability stacked with the agent's at the weight in force. Open the report and look at the section "Second opinion":
@@ -120,9 +120,9 @@ grep -E '^\| all \| (P2|agent) ' mootcourt-data/reports/second-opinion-my_agent/
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - Weight in force: 0.0000 (zero until earned on the backtest)
 - Rows scored by the base rung P2: 330; with an opinion: 330; declined: 0; failed calls: 0; absent from the records file: 0
-- Cost of the recorded run: 0.0000 dollars, latency 10.5473 seconds in total
- P2 | 330 | 0.1596 | 0.0189 | -0.0066 | 0.0446
- P2 on agent rows | 330 | 0.1596 | 0.0189 | -0.0066 | 0.0446
+- Cost of the recorded run: 0.0000 dollars, latency 14.8733 seconds in total
+ P2 | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
+ P2 on agent rows | 330 | 0.1595 | 0.0195 | -0.0071 | 0.0462
  agent | 330 | 0.1724 | -0.0598 | -0.1104 | 0.0000
 ```
 
@@ -142,7 +142,7 @@ moot earn-weight --source sample --second-opinion agent.jsonl
 ```
 
 ```text output
-my_agent 1.0 on origins from 1970-01-01 on, scores scores-sample-20261103-80131c793938.parquet, 147 judged rows (49 tests) with an opinion: 147 judged rows with an opinion from 49 tests is below the gate of 400 tests; weight stays 0
+my_agent 1.0 on origins from 1970-01-01 on, scores scores-sample-20261104-80131c793938.parquet, 147 judged rows (49 tests) with an opinion: 147 judged rows with an opinion from 49 tests is below the gate of 400 tests; weight stays 0
 ```
 
 The stacked probability is `(1 - w) p_sig + w p_AI`. The weight starts at zero. `earn-weight` puts the recorded rows in time order and cuts them between two origins. It chooses `w` on a grid from the earlier rows and **judges** it on the later rows, never on the same rows. A positive weight is stored only if, on the judged rows, the stacked Brier score beats the model's by the promotion margin (0.02) and those rows come from at least as many distinct experiments as the gate asks (counted in experiments, because rows of one experiment are not independent). Otherwise the weight stays zero, and a weight that no longer passes is reset to zero. Here it says why: 49 judged experiments is far below the gate of 400.
@@ -161,6 +161,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 - P(significant and positive): 0.220
 - Point estimate: 0.00 units of the ledger's effect
 - 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
+- 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
 - P(true effect above 0): 0.551
 - Rung: P2, weight on precedents 0.0
 

@@ -16,6 +16,8 @@ function not listed here is internal and may change in any release.
         - snapshot_id
         - ensure_snapshot
         - append_rows
+        - make_row_id
+        - resolve_row_id
 
 ## Predictors
 

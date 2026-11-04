@@ -25,7 +25,7 @@ SETUP := uv sync --extra dev --extra docs
 endif
 MOOT := $(PY) -m mootcourt.cli
 
-.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check
+.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check paper-figures paper
 
 setup:
 	$(SETUP)
@@ -40,11 +40,10 @@ fit:
 backtest:
 	$(MOOT) backtest --source $(SOURCE) --origins quarterly
 
-# The challengers (gradient-boosted, local empirical Bayes, text-only classifier) run in their own folder so they never replace the main report.
+# The challengers (gradient-boosted, local empirical Bayes, text-only classifier) are rungs of the main report, with their recalibrated "+cal" rungs, so this
+# target is the main backtest with the challenger flags; there is no separate folder any more.
 challenger challengers:
-	mkdir -p "$(REPORTS)/challengers"
-	cp "$(REPORTS)/gates.json" "$(REPORTS)/challengers/gates.json"
-	$(MOOT) backtest --source $(SOURCE) --origins quarterly $(CHALLENGER_FLAGS) --reports-dir "$(REPORTS)/challengers" --models-dir "$(REPORTS)/challengers/models"
+	$(MOOT) backtest --source $(SOURCE) --origins quarterly $(CHALLENGER_FLAGS)
 
 # Ablation backtests (reports/ablations) and the learning curve (reports/learning-curve-*).
 ablations:
@@ -104,3 +103,15 @@ docker-check:
 # Every check a release needs, locally: lint, tests, the writing rules, the wheel, the documentation and the version and file checks.
 release-check:
 	$(PY) scripts/release_check.py
+
+# Regenerates the paper's figures (vector PDFs and figures.json) from a run folder; no data root or network needed.
+# Usage: make paper-figures [RUN=paper/data/run4-review-l-fixes] [FIGURES=paper/figures]
+RUN ?= paper/data/run4-review-l-fixes
+FIGURES ?= paper/figures
+paper-figures:
+	$(PY) scripts/paper_figures.py --run $(RUN) --out $(FIGURES)
+
+# The whole paper PDF in one command: figures from the run folder, then tectonic (as the writer builds it; a first run on a clean
+# machine lets tectonic fetch its LaTeX bundle). Writes paper/main.pdf, which git ignores. RUN= selects the run folder for both targets.
+paper: paper-figures
+	cd paper && tectonic -X compile main.tex

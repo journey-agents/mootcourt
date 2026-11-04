@@ -54,5 +54,5 @@ It checks versions, the data root and its free space, the ledger, whether the mo
 ## Next
 
 - Bring your own results: `docs/ledger-format.md`.
-- Keep it current: `moot join` attaches new results to issued cards and refreshes reliability (see `docs/operations.md`).
+- Keep it current: `moot join` attaches new results to the issued cards that name their ledger row (`moot card --row-id`) and refreshes reliability (see `docs/operations.md` and [tutorial 4](tutorials/04-weekly-loop.md)).
 - Serve it: `moot serve` (HTTP) or `moot mcp`.

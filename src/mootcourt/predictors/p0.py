@@ -57,6 +57,7 @@ class _CellSeries:
         df = df.sort_values("usable_after", kind="stable")
         self.t = series_ns(df["usable_after"])
         self.y_raw = df["y"].to_numpy(dtype=np.float64)
+        self.s_raw = df["s"].to_numpy(dtype=np.float64)
         self.cum_pos = np.cumsum((self.y_raw > 0.0).astype(np.float64))
         y = df["y"].to_numpy(dtype=np.float64) - center
         self.cum_n = np.arange(1, len(y) + 1, dtype=np.float64)
@@ -131,6 +132,9 @@ class P0Predictor:
         got = self._cache.get(key)
         if got is None:
             mean, var = series.stats(k, self._center)
+            # a variance floor: y contains its measurement noise, so Var(y) is at least about the median s^2; two visible rows must not give a
+            # near-zero spread and an unbounded log score (REV-L-022)
+            var = max(var, float(np.median(series.s_raw[:k] ** 2)))
             lo80, hi80, lo90, hi90 = (float(v) for v in np.quantile(series.y_raw[:k], [0.1, 0.9, 0.05, 0.95]))
             got = P0Forecast(k, mean, var, float(series.cum_sig[k - 1] / k), float(series.cum_pos[k - 1] / k), lo80, hi80, lo90, hi90, fallback)
             self._cache[key] = got

@@ -58,7 +58,7 @@ tail -n 5 doctor.txt
 
 ```text output
 exit code: 1
-OK    data root: ~/moot-commands/mootcourt-data; free space 12.5 GB
+OK    data root: ~/moot-commands/mootcourt-data; free space 11.4 GB
 WARN  ledger: no ledger at ~/moot-commands/mootcourt-data/data/ledger/ledger.parquet; import results with `moot ingest`
 WARN  models: no registry; run `moot fit --source NAME`
 WARN  reliability: no reliability report; `moot backtest` seeds one and `moot join` keeps it current
@@ -89,13 +89,23 @@ moot storage
 
 ```text output
 data root: ~/moot-commands/mootcourt-data  [set MOOTCOURT_DATA_ROOT or storage.data_root in mootcourt.toml]
-raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 12.5 GB
-ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 12.5 GB
-reports     ~/moot-commands/mootcourt-data/reports  size 2.5 KB  free 12.5 GB
-models      ~/moot-commands/mootcourt-data/models  size 0 B  free 12.5 GB
-cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 12.5 GB
-cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 12.5 GB
-experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 12.5 GB
+raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 11.4 GB
+ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 11.4 GB
+reports     ~/moot-commands/mootcourt-data/reports  size 2.9 KB  free 11.4 GB
+models      ~/moot-commands/mootcourt-data/models  size 0 B  free 11.4 GB
+cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 11.4 GB
+cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 11.4 GB
+experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 11.4 GB
+```
+
+**Common errors.** The command only reads, so nothing in your data makes it fail. A folder that does not exist yet is shown as `(not created yet)` with size 0, which is normal before `moot init` and means the first line names the wrong data root if you expected existing data: the line says whether the root came from the variable, the file or the working directory. `No such option: --nope` (exit 2) for any option; the command takes none.
+
+```bash run quiet expect="not created yet"
+MOOTCOURT_DATA_ROOT=/nonexistent/moot-demo moot storage
+```
+
+```bash run exit=2 quiet expect="No such option"
+moot storage --nope
 ```
 
 ## Bringing results in
@@ -117,7 +127,7 @@ moot ingest --format generic --input mootcourt-data/data/sample-ledger.csv --sou
   admitted: 360
 admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_user 120
 final reads from 2023-01-23 to 2025-12-29
-snapshot 20261103-80131c793938 for sample
+snapshot 20261104-80131c793938 for sample
 ledger ~/moot-commands/mootcourt-data/data/ledger/ledger.parquet: 360 rows
 ```
 
@@ -176,6 +186,12 @@ generic: exchange columns, or any file through --mapping
 
 Only the first line is shown; the list continues with the vendor formats, one per line. `generic` is the exchange format itself, and the only one you need when you write the file yourself.
 
+**Common errors.** The command reads nothing, so no data can make it fail. `Got unexpected extra argument(s) (...)` (exit 2) if you pass a name: it lists every format and takes no argument. A format you expected is missing when your vendor has no importer; write the exchange file yourself or map your columns with `moot ingest --mapping` ([tutorial 2](tutorials/02-your-own-archive.md)).
+
+```bash run exit=2 quiet expect="unexpected extra argument"
+moot ledger formats generic
+```
+
 ## Fitting and scoring
 
 ### `moot fit`
@@ -189,7 +205,7 @@ moot fit --source sample
 ```
 
 ```text output
-fitted model 57a727de0c15 at snapshot 20261103-80131c793938 in 1.4 s; it is the champion for sample
+fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.7 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -209,24 +225,25 @@ moot fit --source nope
 
 **Reads** the ledger and `reports/gates.json`. When the gates file is missing it runs a gate simulation first, which takes about a minute. **Writes** `reports/backtest-<source>-<snapshot>.md` and `.json`, the score table (`scores-...parquet`) and figures. **Time** about 10 seconds for a few hundred rows and about 3 minutes for 18,000 rows.
 
-**Options you will use.** `--challenger gbm` (also `local_eb`, `text_lr`) to compare with another model; `--second-opinion FILE` ([tutorial 6](tutorials/06-simulation-agent.md)); `--bootstrap N` for the interval resamples; `--primary-metric` for a ledger with several metrics; the ablation flags (`--features`, `--lambda`, `--kappa`, `--drop-trigger`) in the [method page](method.md).
+**Options you will use.** `--challenger gbm` (also `local_eb`, `text_lr`) to compare with another model; `--second-opinion FILE` ([tutorial 6](tutorials/06-simulation-agent.md)); `--bootstrap N` for the interval resamples; `--primary-metric` for a ledger with several metrics; the ablation flags (`--features`, `--lambda`, `--kappa`, `--drop-trigger`, `--p2-guard off`, `--pairwise off`) in the [method page](method.md). `--drop-trigger NAME` removes an abstention trigger; alone it also computes the rows that the trigger would have released, and combined with another ablation flag or a second opinion it still scores and writes the report but says, in the header notes (`released_rows_skipped`) and on screen, that released rows are not computed. `--admission prelaunch` scores every contrast with a finite estimate whatever its realized clicks, as an ablation beside the main run. A challenger gets a raw row and a recalibrated one (`GBM+cal`).
 
 ```bash run
 moot backtest --source sample
 ```
 
 ```text output
-gates read from ~/moot-commands/mootcourt-data/reports/gates.json: {"by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "n_200": 175, "n_400": 400}
-filled the backtest summary of model 57a727de0c15
-scored 330 rows over 11 origins in 4.1 s (report writing 2.4 s)
-wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261103-80131c793938.md
-wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261103-80131c793938.json
-wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261103-80131c793938.parquet
+gates read from ~/moot-commands/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 275}, "0.90": {"n_200": 175, "n_400": 400}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 400}
+note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+filled the backtest summary of model 097a3bd3b39b
+scored 330 rows over 11 origins in 4.2 s (report writing 4.8 s)
+wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
+wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
+wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
 ```
 
 **What to look at.** Open the Markdown report. Read the Brier skill with its interval, the coverage, the abstention rate and the gates, as in [tutorial 1](tutorials/01-first-card.md#4-fit-the-models-and-back-test-them). The one-page version is `moot benchmark --ledger`.
 
-**Common errors.** The same `has no rows for source` as `fit`. A ledger with fewer than about 20 admitted rows before its first quarterly origin cannot be back-tested: today it stops with a Python traceback that ends in `KeyError: 'cell'` and not with a sentence. Import more history. See [troubleshooting](troubleshooting.md#backtest-stops-with-keyerror-cell).
+**Common errors.** The same `has no rows for source` as `fit`. A ledger with fewer than 20 admitted rows usable before its first quarterly origin cannot be back-tested: the command ends in one line, `Invalid value: the ledger is too small to backtest: N admitted rows, and a quarter is scored only when at least 20 admitted rows are usable before it starts` (exit 2). Import more history. See [troubleshooting](troubleshooting.md#backtest-says-the-ledger-is-too-small).
 
 ## Issuing cards
 
@@ -236,7 +253,7 @@ wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261103-80131c793938
 
 **Reads** the champion model (or `--model-id`), the reliability report and the settings. **Writes** `cards/<card id>.json`. **Prints** the card as Markdown, or as JSON with `--json`. About a second, most of it loading the model.
 
-**Options you will use.** `--source` and `--impressions` (planned units per arm) always. `--cell` for a ledger with several metrics, where the cell is the metric. `--headline`, `--image-changed` and `--headline-changed` for a ledger with text features. `--guardrail CELL:DELTA` (repeatable) to add a guardrail metric, shown with `p_harm`. `--now` (the issue time, which sets what "recent" means for the reliability check) and `--origin` (the time whose rows the forecaster may see, default `--now`) to issue as of a past time, which a static ledger needs. `--simulator NAME` to add a second opinion.
+**Options you will use.** `--source` and `--impressions` (planned units per arm) always. `--cell` for a ledger with several metrics, where the cell is the metric. `--headline`, `--image-changed` and `--headline-changed` for a ledger with text features. `--guardrail CELL:DELTA` (repeatable) to add a guardrail metric, shown with `p_harm`. `--now` (the issue time, which sets what "recent" means for the reliability check) and `--origin` (the time whose rows the forecaster may see, default `--now`) to issue as of a past time, which a static ledger needs. `--row-id source:test_id:variant_id`, or `--test-id` with `--variant-id`, to name the ledger row that the weekly join will attach the outcome to ([tutorial 4](tutorials/04-weekly-loop.md); `POST /card` and the MCP tool take the same field as `row_id`). `--impressions-variant` when the variant arm has other planned exposure than the reference arm, and `--reference-headline` for a ledger whose rows carry the reference headline. `--simulator NAME` to add a second opinion.
 
 ```bash run head=24
 moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
@@ -245,12 +262,12 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: a96d585026449f64
+- Card id: e2e1dc1f08778be9
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
-- Ledger snapshot: 20261103-80131c793938
-- Model: 57a727de0c15
+- Ledger snapshot: 20261104-80131c793938
+- Model: 097a3bd3b39b
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: headline "", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.015 units of the ledger's effect
@@ -266,7 +283,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 - P(significant and positive): 0.220
 - Point estimate: 0.00 units of the ledger's effect
 - 80 percent interval for the true effect: -0.03 to 0.04 units of the ledger's effect
-- P(true effect above 0): 0.551
+- 80 percent interval for the result of the test at the planned standard error: -0.04 to 0.05 units of the ledger's effect
 ```
 
 A ledger can carry several metrics per experiment. Each metric is its own cell, scored in its own block of the backtest report, and a card names a primary metric with `--cell` and any number of guardrails with `--guardrail CELL:DELTA`. A guardrail shows `p_harm`, the probability that the true effect is worse than minus the margin `DELTA`, from the same ladder, and abstains on its own when its evidence is thin.
@@ -280,11 +297,17 @@ A ledger can carry several metrics per experiment. Each metric is its own cell, 
 | `Invalid value: no fitted model for source nope in ...; run moot fit first` (exit 2) | Fit first, or fix the source name. |
 | `Invalid value: --now 'yesterday' is not an ISO-8601 time` (exit 2) | Use a full time with an offset, such as `2025-12-30T00:00:00+00:00`. |
 | `Invalid value: --image-changed must be true or false, got ...` (exit 2) | Pass `true` or `false`. |
+| `error: this ledger's cells are A, B, C; the card needs --cell (or the cell field) to name one of them` (exit 2) | The ledger's cells are metrics and you named none. Pass `--cell` with one of the listed names. |
+| `error: give either a row id or a test id with a variant id, not both` (exit 2) | Name the row once: `--row-id`, or `--test-id` with `--variant-id`. A `--test-id` without `--variant-id` is refused too. |
 | `error: card ... is frozen with different content` (exit 1) | The card id covers the content; a clash fails loudly instead of replacing a record. |
 | a card with `Reason reliability: reliability report is older than 14 days` | Not an error: the cell has no recent record. See [troubleshooting](troubleshooting.md#a-card-abstains). |
 
 ```bash run exit=2 quiet expect="no fitted model for source nope"
 moot card --source nope --impressions 100
+```
+
+```bash run exit=2 quiet expect="the card needs --cell"
+moot card --source sample --impressions 20000
 ```
 
 ## Running the loop
@@ -349,6 +372,12 @@ heuristic         builtin      1        none              free      0 (not earne
 null              builtin      1        none              free      0 (not earned)
 ```
 
+**Common errors.** A provider whose table cannot be loaded is still listed, with `?` in the columns it could not read, and the command exits 0: `moot simulators run` gives the reason (exit 2). A missing file given to `--config` stops the command with `error: the config file ... does not exist` (exit 2).
+
+```bash run exit=2 quiet expect="does not exist"
+moot simulators list --config missing.toml
+```
+
 ### `moot simulators run`
 
 **Purpose.** Run one provider once over the rolling-origin request set of a source and write one record per request. Results are cached by provider, version and request digest, so a second run calls the agent zero times.
@@ -381,7 +410,7 @@ moot earn-weight --source sample --second-opinion heuristic.jsonl
 ```
 
 ```text output
-heuristic 1 on all origins, scores scores-sample-20261103-80131c793938.parquet, 30 judged rows (10 tests) with an opinion: 30 judged rows with an opinion from 10 tests is below the gate of 400 tests; weight stays 0
+heuristic 1 on all origins, scores scores-sample-20261104-80131c793938.parquet, 30 judged rows (10 tests) with an opinion: 30 judged rows with an opinion from 10 tests is below the gate of 400 tests; weight stays 0
 ```
 
 **Common errors.** `error: ...: No such file or directory` (exit 2) for a wrong records path; `no backtest scores for SOURCE at snapshot ...; run moot backtest` means the ledger changed since the last backtest: run it again.
@@ -400,8 +429,8 @@ moot benchmark --ledger mootcourt-data/data/ledger/ledger.parquet
 
 ```text output
 scoring 360 contrasts of source sample
-wrote ~/moot-commands/mootcourt-data/reports/benchmark/ledger-20261103-80131c793938.md
-wrote ~/moot-commands/mootcourt-data/reports/benchmark/ledger-20261103-80131c793938.json
+wrote ~/moot-commands/mootcourt-data/reports/benchmark/ledger-20261104-80131c793938.md
+wrote ~/moot-commands/mootcourt-data/reports/benchmark/ledger-20261104-80131c793938.json
 ```
 
 **What to look at.** [Tutorial 2](tutorials/02-your-own-archive.md#7-read-the-report-card) reads each section.
@@ -416,7 +445,7 @@ moot benchmark
 
 **Purpose.** Write a synthetic ledger with known truth, labeled synthetic. Use it to try commands or to test a pipeline.
 
-**Writes** the Parquet file named by `--out`. **Options** `--n-tests`, `--seed`.
+**Writes** the Parquet file named by `--out`. **Options** `--n-tests`, `--seed`, `--variants-per-test`, and `--text-effect PERCENT`, which plants a text effect of that percent lift between headlines with and without a signal word (the positive control: a forecaster that reads text should find it, and the admission guard should let a weight on precedents in where it is planted).
 
 ```bash run
 moot simulate ledger --out synthetic.parquet --n-tests 40
@@ -426,9 +455,21 @@ moot simulate ledger --out synthetic.parquet --n-tests 40
 wrote 80 synthetic rows to synthetic.parquet (label: synthetic)
 ```
 
+With `--text-effect 1.0` the last line also says `planted text effect 1`.
+
+**Common errors.** `Missing option '--out'` (exit 2). `error: n_tests must be at least 1` (exit 2). `No such option: --tests (Possible options: --n-tests)` (exit 2) for a misspelled option. `error: ...: Read-only file system` or `No such file or directory` when the folder of `--out` cannot be written: create it first.
+
+```bash run exit=2 quiet expect="n_tests must be at least 1"
+moot simulate ledger --n-tests 0 --out empty.parquet
+```
+
+```bash run exit=2 quiet expect="Missing option"
+moot simulate ledger
+```
+
 ### `moot simulate power`
 
-**Purpose.** Simulate the release gates (how many scored experiments a skill difference needs before it can be told from zero) and write `reports/gates.json`. Everything here is synthetic.
+**Purpose.** Simulate the gates the earlier way (how many scored rows a skill difference needs before it can be told from zero, rows resampled one by one at a base rate of 0.3) and write `reports/gates.json`. It is kept for comparison. For the gates a backtest reads at the base rate of your archive, in tests, use `moot simulate gate-power`. Everything here is synthetic.
 
 **Writes** the gates file (or the path in `--out`). The default of 1,000 simulated gates per point takes about a minute; `moot init` writes a quick version. The example uses a small run and writes to a separate file so that it does not replace your gates.
 
@@ -437,7 +478,8 @@ moot simulate power --reps 40 --bootstrap 50 --out gates-small.json
 ```
 
 ```text output
-Gate power (synthetic data only), share of simulated gates whose 95 percent interval clears zero
+interval 0.95 by row
+Gate power (synthetic data only), share of simulated gates whose 95 percent interval clears zero (n in rows)
 skill \ n       100     125     150     250     400     500    1000    2000
 0.05           0.25    0.33    0.38    0.47    0.70    0.90    1.00    1.00
 0.10           0.53    0.55    0.62    0.82    1.00    1.00    1.00    1.00
@@ -448,7 +490,44 @@ power 0.90: n_200 = 150 (skill 0.20), n_400 = 400 (skill 0.10)
 release gate = power 0.90; reps 40, bootstrap 50, 0.3 s. Synthetic data. Wrote gates-small.json
 ```
 
-The two lines to read are the gates, `n_200` (the number of scored experiments at which a Brier skill difference of 0.20 is decidable) and `n_400` (for 0.10), at power 0.90 and 0.80. A small run is noisy; use the default for a decision.
+The two lines to read are the gates, `n_200` (the number of scored rows at which a Brier skill difference of 0.20 is decidable) and `n_400` (for 0.10), at power 0.90 and 0.80. A small run is noisy; use the default for a decision. A backtest that finds a gates file from this command prints a note that its gates were sized at one base rate and by row.
+
+**Common errors.** `error: no n up to 3200 reaches power 2.0 at skill 0.2` (exit 2) when `--target` is not a power between 0 and 1. Sizes in rows overstate what a decision rests on, because the contrasts of one test are not independent: size by test with `moot simulate gate-power`.
+
+```bash run exit=2 quiet expect="reaches power 2.0"
+moot simulate power --target 2 --reps 5 --bootstrap 5 --out never.json
+```
+
+### `moot simulate gate-power`
+
+**Purpose.** Simulate the gates by test, at the base rate of your archive. A simulated ledger draws tests of 3.5 rows on average with one forecast per test, the interval resamples whole tests, and a gate passes when the lower end of the 90 percent interval for the Brier gain is above zero. The sizes are numbers of scored tests, the unit a backtest counts decidability in, and they depend on how often a test ends significant and positive: the more rarely, the more tests. Everything here is synthetic.
+
+**Writes** `reports/gates.json` (or the path in `--out`), with the sizes for each `--base-rate` (repeat the option; the default is 0.09 for the Upworthy archive, 0.14 for ASOS and 0.30 for the earlier gates) under `by_base_rate`, and the first of them at the top level. A backtest reads each cell's gate at the simulated base rate nearest the cell's own event rate. The full default run takes about ten minutes; the example uses a small run and writes to a separate file.
+
+```bash run
+moot simulate gate-power --base-rate 0.10 --reps 20 --bootstrap 20 --out gates-by-test.json
+```
+
+```text output
+base rate 0.10: interval 0.9 by test
+Gate power (synthetic data only), share of simulated gates whose 90 percent interval clears zero (n in tests)
+skill \ n       100     125     175     225     250     500    1000    2000
+0.05           0.65    0.55    0.85    0.85    0.80    0.95    1.00    1.00
+0.10           0.80    0.80    0.90    0.90    1.00    1.00    1.00    1.00
+0.20           0.70    0.85    1.00    1.00    1.00    1.00    1.00    1.00
+0.30           0.85    0.90    1.00    1.00    1.00    1.00    1.00    1.00
+power 0.80: n_200 = 125 (skill 0.20), n_400 = 100 (skill 0.10)
+power 0.90: n_200 = 175 (skill 0.20), n_400 = 225 (skill 0.10)
+release gate = power 0.90; reps 20, bootstrap 20, 1.2 s. Synthetic data. Wrote gates-by-test.json
+```
+
+The lines to read are again `n_200` and `n_400` at power 0.90 and 0.80, now in tests. A small run is noisy; use the default for a decision. `--rows-per-test` sets the mean rows per test (3.5 for Upworthy; use the figure of your ledger), `--icc` the within-test correlation of the event (by default the measured value of each base rate: 0.13 for Upworthy, 0.67 for ASOS; contrasts of one test move together, so a ledger with more rows per test or a higher correlation needs more tests) and `--level` the interval (0.9). `gates.json` records the rows per test, the correlation and the latent correlation behind it for every base rate.
+
+**Common errors.** `error: base must be strictly between 0 and 1` (exit 2) for a `--base-rate` outside that range. A `--target` outside (0, 1) is refused with the same `no n up to 3200 reaches power` line as for `simulate power`. A reps count that is too small gives a power curve that is not monotone: raise `--reps`.
+
+```bash run exit=2 quiet expect="strictly between 0 and 1"
+moot simulate gate-power --base-rate 1.5 --reps 5 --bootstrap 5 --out never.json
+```
 
 ## Serving
 
@@ -461,7 +540,7 @@ The two lines to read are the gates, `n_200` (the number of scored experiments a
 ```bash run
 moot serve --port 8731 > serve.log 2>&1 &
 SERVER=$!
-until curl -sf http://127.0.0.1:8731/health > /dev/null; do sleep 0.5; done
+for i in $(seq 1 60); do curl -sf http://127.0.0.1:8731/health > /dev/null && break; sleep 0.5; done
 curl -s http://127.0.0.1:8731/health | head -c 60
 echo
 kill $SERVER
@@ -471,6 +550,8 @@ wait $SERVER 2> /dev/null || true
 ```text output
 {"status":"ok","sources":["sample"],"boundary":"The card pri
 ```
+
+The loop waits at most 30 seconds for the service to answer.
 
 **Common errors.** `address already in use` in the log: pick another `--port`. A card request for a source that has no model returns 404 and lists the sources that do.
 

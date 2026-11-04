@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (3.4 s)
-snapshot 20261103-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 3.8 s
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (5.6 s)
+snapshot 20261104-4bfb354b87e3 for upworthy
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 6.2 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,11 +59,11 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 5f1c07efd730 at snapshot 20261103-4bfb354b87e3 in 13.6 s; it is the champion for upworthy
+fitted model 3834241d2b4a at snapshot 20261104-4bfb354b87e3 in 19.8 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
-The model id should be `5f1c07efd730` on the same data and the same code. Ids are content digests of the fitted parameters and the platform can change their last digits (see [troubleshooting](../troubleshooting.md#ids-differ-between-machines)), so a different id on another operating system is not a failure. The scores below are the check.
+The model id is a digest of the snapshot id and the fitted parameters. The snapshot id begins with the date of the import, so the model id you get on another day differs from the one in the header of the published backtest report, and the last digits of the parameters can differ on another platform (see [troubleshooting](../troubleshooting.md#ids-differ-between-machines)). A different id is not a failure. The scores below are the check.
 
 ## 4. Back-test
 
@@ -73,31 +73,32 @@ moot backtest --source upworthy
 
 ```text output
 ~/mootcourt-data/reports/gates.json is missing; running the gate power simulation first (synthetic data, same as `moot simulate power`)
-gates read from ~/mootcourt-data/reports/gates.json: {"by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "n_200": 175, "n_400": 375}
-filled the backtest summary of model 5f1c07efd730
-scored 13247 rows over 9 origins in 182.6 s (report writing 14.4 s)
-wrote ~/mootcourt-data/reports/backtest-upworthy-20261103-4bfb354b87e3.md
-wrote ~/mootcourt-data/reports/backtest-upworthy-20261103-4bfb354b87e3.json
-wrote ~/mootcourt-data/reports/scores-upworthy-20261103-4bfb354b87e3.parquet
+gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 375}
+note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+filled the backtest summary of model 3834241d2b4a
+scored 13247 rows over 9 origins in 264.9 s (report writing 36.1 s)
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.md
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.json
+wrote ~/mootcourt-data/reports/scores-upworthy-20261104-4bfb354b87e3.parquet
 ```
 
-The first time, there is no gates file, so the command first runs the gate power simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about 3 and a half minutes). It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
+The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about 3 and a half minutes). That quick file sizes the gate at one base rate (0.3), so the backtest ends with a note, and the decidability columns of your report will differ from the published ones. The published tables read gates sized by test at the base rate of each cell: run `moot simulate gate-power` (`make power`, about ten minutes) and then the backtest again to get the same columns. The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
 
 ## 5. Compare with the published tables
 
-Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare its tables with the Upworthy tables in [Results](../results.md). With the same data and the same seed (`--seed 0` is the default), the report matches the published one to every printed digit, apart from timing lines. The rows to compare:
+Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare its tables with the Upworthy tables in [Results](../results.md). With the same data and the same seed (`--seed 0` is the default), the scores of the report match the published ones to every printed digit, apart from timing lines. The decidability columns match too once the gates come from `moot simulate gate-power`. The rows to compare:
 
 | Rung | What it is | Brier skill on all rows (90% interval) |
 |---|---|---|
-| P0 | the cell base rate | -0.1237 (-0.1401 to -0.1073) |
+| P0 | the empirical base-rate forecaster | 0.0000, by construction |
 | P1 | pooled empirical-Bayes shrinkage | 0.0015 (-0.0018 to 0.0048) |
-| P2 | weighted precedents | -0.0078 (-0.0119 to -0.0032) |
+| P2 | weighted precedents under an admission guard | 0.0015 (-0.0017 to 0.0047) |
 
-**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P1's interval contains zero: pooled shrinkage is no better than the base rate on this archive, and no worse. P2's whole interval is below zero: weighing similar headlines made the forecasts slightly worse than P1's, which the report states in words ("worse than the constant base rate", "the precedent rung scores worse than the prior"). P0 is clearly below zero: a Normal model of the cell's effects forecasts the significant-positive event worse than the event's own base rate.
+**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P0 is that base rate, as a forecaster, so its skill is zero by construction and its interval has no width. The intervals of P1 and P2 contain zero: pooled shrinkage and weighted precedents are no better than the base rate on this archive, and no worse. Look at the log score for the difference between the two: P2 minus P1 is about minus 0.004 nats, so the precedents did not add anything out of time, even though the admission guard let them in for some cells (the report says for how many). The guard limits how much noise the selection fits. It does not promise that P2 beats P1 on later tests, and here it does not.
 
-That is the finding, and it is a modest one: on this archive, the ladder's best rung is not distinguishable from the base rate in Brier skill, and the extra machinery of P2 does not pay. Nothing here says it would be the same for product experiments: the archive is headline and image tests from one publisher. The README's list of what the project does not show applies in full.
+That is the finding, and it is a modest one: on this archive no rung of the ladder is distinguishable from the base rate in Brier skill, and the extra machinery of P2 does not pay. Nothing here says it would be the same for product experiments: the archive is headline and image tests from one publisher. The README's list of what the project does not show applies in full.
 
-The report has more to read: calibration, coverage of the intervals (near 0.80 and 0.90 is calibrated), abstention by trigger, decision value and calibration by precision. [Tutorial 2](02-your-own-archive.md#7-read-the-report-card) explains each section. The tables of [Results](../results.md) include the cautionary first run, which scored a relative lift against a noisy reference arm and found negative skill everywhere, because of a design defect and not a finding about the archive.
+The report has more to read: calibration, coverage of the intervals (near 0.80 and 0.90 is calibrated), abstention by trigger, decision value and calibration by precision. [Tutorial 2](02-your-own-archive.md#7-read-the-report-card) explains each section. The tables of [Results](../results.md) include the cautionary first run, which scored a relative lift against a noisy reference arm and found negative skill everywhere, because of a design defect and not a finding about the archive, and the coverage by decile of the realized over the planned standard error, which shows where the intervals cover less than they say.
 
 ## 6. A card as of the end of the archive
 
@@ -110,30 +111,30 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 ```text output
 # Moot Court card
 
-- Card id: ec887a71bf244eb4
+- Card id: 7f03f4c5b75e36ca
 - Source: upworthy
 - Cell: headline_only
 - Origin: 2015-05-07T00:00:00+00:00
-- Ledger snapshot: 20261103-4bfb354b87e3
-- Model: 5f1c07efd730
-- Feature hash: 71f093b4dc70
+- Ledger snapshot: 20261104-4bfb354b87e3
+- Model: 3834241d2b4a
+- Feature hash: b4b031b2f77e
 - Issued at: 2015-05-07T00:00:00+00:00
 - Request: headline "A simple fact about your mornings", image changed: no, exposures per arm: 20000, standard error of the future estimate: 0.110 percentage points
 
 ## Evidence
 
 - Admitted rows in the cell visible at the origin: 7593
-- Effective number of precedents: 3.0
+- Effective number of precedents: 1393.2
 - Base rate of significant positive results in the cell (P0): 0.101
 
 ## Prediction
 
-- P(significant and positive): 0.274
-- Point estimate: -0.06 percentage points
-- 80 percent interval for the true effect: -0.63 to 0.51 percentage points
-- P(true effect above 0): 0.446
-- Rung: P2, weight on precedents 0.1
-
+- P(significant and positive): 0.195
+- Point estimate: -0.09 percentage points
+- 80 percent interval for the true effect: -0.55 to 0.37 percentage points
+- 80 percent interval for the result of the test at the planned standard error: -0.57 to 0.40 percentage points
+- P(true effect above 0): 0.388
+- Rung: P2, weight on precedents 0.4
 ```
 
 This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).
@@ -144,12 +145,12 @@ These commands produce the remaining tables of [Results](../results.md). They ar
 
 | Command | Produces |
 |---|---|
-| `make challengers` | the gradient-boosted, local and text-only comparisons (about 6 minutes) |
-| `make ablations` | one-setting-at-a-time changes, including the abstention triggers (the longest run) |
+| `make challengers` | the gradient-boosted, local and text-only comparisons, each with a recalibrated row (about 6 minutes) |
+| `make ablations` | one-setting-at-a-time changes, each also with the admission guard off, and the abstention triggers (the longest run) |
 | `make learning-curve` | skill against the amount of history used |
 | `make replay` | the weekly replay of the archive |
 | `make audit` | a post-hoc leakage audit of a backtest |
-| `make power` | the gate simulation (about a minute) |
+| `make power` | `moot simulate gate-power`: the gates sized by test at three base rates (about ten minutes) |
 
 The run-time table at the end of [Results](../results.md) has the measured times of the stages.
 

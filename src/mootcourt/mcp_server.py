@@ -78,9 +78,27 @@ def build_server(models_dir, reports_dir, now=None):
         from mcp.server.fastmcp import FastMCP as Server
     state = ServingState(models_dir, reports_dir, now)
     server = Server("mootcourt", instructions=BOUNDARY_SENTENCE)
+    try:
+        from mcp.server.mcpserver.exceptions import ToolError
+    except ImportError:  # mcp 1.x
+        from mcp.server.fastmcp.exceptions import ToolError
+    from mootcourt.service import UnknownSourceError
+
+    def refusing(fn):
+        """A refusal (a bad row id, an unknown source, a cell to name) reaches the client as its one-line message, not as 'Error executing tool'."""
+        import functools
+
+        @functools.wraps(fn)
+        def wrapped(*a, **k):
+            try:
+                return fn(*a, **k)
+            except (ValueError, UnknownSourceError) as exc:
+                raise ToolError(str(exc.args[0]) if isinstance(exc, KeyError) and exc.args else str(exc)) from None
+        return wrapped
 
     @server.tool(name="get_card", description="Issue a read-only pre-trial card for a proposed experiment. Nothing is frozen or written. "
                                               "Leave the headline out for a ledger without headline text, and name the cell.")
+    @refusing
     def get_card(source: str, impressions: int, headline: str = "", image_changed: bool = False, origin: str | None = None,
                  cell: str | None = None, headline_changed: bool = True, row_id: str | None = None, test_id: str | None = None,
                  variant_id: str | None = None, reference_headline: str = "", impressions_variant: int | None = None) -> str:
@@ -88,11 +106,13 @@ def build_server(models_dir, reports_dir, now=None):
                              reference_headline, impressions_variant)
 
     @server.tool(name="list_precedents", description="Top-k weighted precedents (row id, weight, kernel, y, s, test id) for a proposed headline.")
+    @refusing
     def list_precedents(source: str, headline: str = "", image_changed: bool = False, k: int = 5, origin: str | None = None,
                         cell: str | None = None, headline_changed: bool = True) -> str:
         return tool_list_precedents(state, source, headline, image_changed, k, origin, cell, headline_changed)
 
     @server.tool(name="reliability_report", description="The per-cell rolling reliability report of a source.")
+    @refusing
     def reliability_report(source: str) -> str:
         return tool_reliability_report(state, source)
 

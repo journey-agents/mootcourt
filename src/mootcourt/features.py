@@ -300,7 +300,11 @@ class FeatureSpace:
             text = np.hstack([u_var, u_ref, u_var - u_ref])
         else:
             text = u_var
-        raw = np.hstack([text, self._structured_matrix(heads, imgs, logexp, refs if self.pairwise else None)])
+        struct = self._structured_matrix(heads, imgs, logexp, refs if self.pairwise else None)
+        if self.pairwise and no_reference:
+            # no reference given: the pair features are neutral too, the fit-set means (a standardized zero), as the reference vector is (REV-L-014)
+            struct[:, -len(PAIR_FEATURES):] = self.mean[-len(PAIR_FEATURES):]
+        raw = np.hstack([text, struct])
         full = (raw - self.mean) / self.std
         return full if self.feature_set == "both" else full[:, self._columns()]
 

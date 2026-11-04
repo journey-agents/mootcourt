@@ -13,6 +13,7 @@ from __future__ import annotations
 import datetime as dt
 import importlib.metadata as md
 import json
+import shlex
 import shutil
 import sys
 import urllib.error
@@ -110,7 +111,7 @@ def init_project(directory: Path | str, data_root: Path | str | None = None, cel
     if not gates.exists():
         simulate.write_gates(gates, target=load_settings(d)["gate"]["target_power"], reps=QUICK_GATE["reps"], B=QUICK_GATE["B"],
                              with_table=False)
-    commands = [f"moot ingest --format generic --input {sample} --source-name sample",
+    commands = [f"moot ingest --format generic --input {shlex.quote(str(sample))} --source-name sample",
                 "moot fit --source sample && moot backtest --source sample",
                 "moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00"]
     return {"config": str(cfg), "data_root": str(root), "sample_ledger": str(sample), "gates": str(gates), "gate_replicates": QUICK_GATE["reps"],

@@ -1,0 +1,103 @@
+{
+ "all_exit_codes_zero": true,
+ "compute_seconds": 1451.9,
+ "data_stage_kind": "download",
+ "download_seconds": 17.3,
+ "downloaded_bytes": 15470807,
+ "downloaded_files": 3,
+ "main_pipeline_seconds": 1098.2,
+ "meta": {
+  "commit": "d9510b3 plus uncommitted changes (the digest above identifies the files that ran)",
+  "data": "downloaded 3 file(s), 15470807 bytes, from OSF in this run",
+  "files": "460",
+  "machine": "Apple M1, 8 cores",
+  "python": "Python 3.13.9",
+  "run": "clean copy of the files git would commit, data root /Volumes/Crucial X10/mootcourt-data/timed-run-n2/root; the data line below says whether anything was downloaded; the Python environment came from the uv cache, so the setup stage is not a cold install",
+  "seed": "0 for fit and backtest; 20261102 for the power run",
+  "tree_sha256_16": "b005ad1d7fd0f02a",
+  "uv": "uv 0.10.5 (5fa874f03 2026-02-24)"
+ },
+ "stages": [
+  {
+   "exit_code": 0,
+   "seconds": 1.2,
+   "stage": "setup"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 69.1,
+   "stage": "data"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 730.8,
+   "stage": "power"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 32.3,
+   "stage": "fit-upworthy"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 221.1,
+   "stage": "backtest-upworthy"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 2.8,
+   "stage": "fit-asos"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 10.6,
+   "stage": "backtest-asos"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 3.7,
+   "stage": "fit-synthetic"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 26.6,
+   "stage": "backtest-synthetic"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 342.9,
+   "stage": "challenger-gbm"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 3.1,
+   "stage": "audit-upworthy"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 0.6,
+   "stage": "audit-asos"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 0.6,
+   "stage": "audit-synthetic"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 3.7,
+   "stage": "inventory"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 9.8,
+   "stage": "data-verify"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 10.3,
+   "stage": "latency"
+  }
+ ],
+ "total_seconds": 1469.2
+}

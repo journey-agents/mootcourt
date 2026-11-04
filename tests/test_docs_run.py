@@ -241,8 +241,7 @@ def test_the_command_guide_covers_every_command_with_purpose_example_and_reads_a
         assert "**Purpose.**" in body, name
         assert "**Reads" in body or "**Writes" in body, name
         assert "```bash run" in body, f"{name}: no example that runs"
-        if name not in ("storage", "ledger formats", "simulators list", "simulate ledger", "simulate power", "mcp", "serve", "doctor"):
-            assert "Common errors" in body or "**Common errors" in body, f"{name}: no common errors"
+        assert "**Common errors" in body, f"{name}: no common errors"      # every command, with a real error or a sentence saying there is none
 
 
 def test_the_command_guide_runs_each_command_it_documents():
@@ -300,3 +299,153 @@ def test_the_results_page_holds_the_generated_block_and_the_readme_links_to_it()
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "moot-results:start" not in readme and "docs/results.md" in readme
     assert len(readme.split("\n")) <= 225, "the README is a reader's entry point of about 220 lines"
+
+
+# ------------------------------------------------------------------------------------------- T-055: the documentation pass after chunk L
+def _doc(rel: str) -> str:
+    return (ROOT / rel).read_text(encoding="utf-8")
+
+
+def test_every_command_has_exactly_one_common_errors_entry_and_the_five_named_by_the_verification_have_theirs():
+    text = _doc("docs/commands.md")
+    sections = {s.split("\n", 1)[0].strip().removeprefix("`moot ").removesuffix("`"): s for s in re.split(r"^### ", text, flags=re.M)[1:]}
+    assert len(re.findall(r"^\*\*Common errors", text, re.M)) == len(_commands()) == len(sections)
+    for name in ("storage", "ledger formats", "simulators list", "simulate ledger", "simulate power"):
+        assert sections[name].count("**Common errors") == 1, name
+        entry = sections[name].split("**Common errors", 1)[1]
+        assert len(entry.strip()) > 60, f"{name}: the common errors entry is empty"
+
+
+def test_the_troubleshooting_page_covers_a_clone_on_an_exfat_volume():
+    text = _doc("docs/troubleshooting.md")
+    low = text.lower()
+    assert "## working from a clone on an exfat volume" in low
+    section = low.split("## working from a clone on an exfat volume", 1)[1].split("\n## ", 1)[0]
+    assert "._" in section and "sidecar" in section and "find . -name" in section and "-delete" in section       # the cleanup command
+    assert "uv_project_environment" in section and "internal disk" in section                                    # the virtualenv elsewhere
+    assert "test" in section and "unicodedecodeerror" in section                                                  # what the sidecars break
+
+
+def test_the_troubleshooting_page_explains_the_service_clock_and_no_longer_says_an_origin_cures_staleness():
+    text = _doc("docs/troubleshooting.md")
+    line = next(ln for ln in text.splitlines() if ln.startswith("- **A card from the service abstains"))
+    assert "Pass an `origin` in the request, or join fresh results" not in text
+    low = line.lower()
+    assert "clock" in low and "14 days" in low and "origin" in low and "does not" in low        # the staleness rule and why an origin does not help
+    assert "moot join" in low or "join fresh" in low
+
+
+def test_the_weekly_join_pages_describe_the_row_id_the_three_interfaces_take_and_tutorial_four_has_no_python_workaround():
+    t4 = _doc("docs/tutorials/04-weekly-loop.md")
+    assert "--row-id" in t4 or "--test-id" in t4
+    assert "does not take a row id yet" not in t4 and "Until a `--row-id` option exists" not in t4
+    assert "from mootcourt import card" not in t4 and "issue_cards.py" not in t4 and "```python" not in t4
+    for rel in ("README.md", "docs/concepts.md"):
+        text = _doc(rel)
+        assert "row id" in text.lower() and "--row-id" in text, rel
+    for iface in ("`POST /card`", "MCP"):
+        assert iface in _doc("docs/concepts.md") or iface in _doc("docs/tutorials/05-serve-http-and-mcp.md")
+    t5 = _doc("docs/tutorials/05-serve-http-and-mcp.md")
+    assert "row_id" in t5
+
+
+def test_the_rung_wording_states_what_the_guard_does_and_does_not_claim_a_rung_must_beat_the_one_below():
+    forbidden = re.compile(r"(used|admitted)[^.]{0,40}only (if|when)[^.]{0,30}beats? the (rung|one) below", re.I)
+    for rel in ("README.md", "docs/concepts.md", "docs/faq.md", "docs/tutorials/02-your-own-archive.md", "docs/results.md"):
+        assert not forbidden.search(_doc(rel)), f"{rel}: a rung is used only if it beats the one below"
+    concepts = _doc("docs/concepts.md")
+    assert "P2 equals P1 exactly at a weight of zero" in concepts or "reduces to P1" in concepts
+    assert "does not promise" in concepts or "not a promise" in concepts
+    faq = _doc("docs/faq.md")
+    assert "P2 can score below P1" in faq or "P2 can score worse than P1" in faq
+    t2 = _doc("docs/tutorials/02-your-own-archive.md")
+    assert "admission guard" in t2 and "out of time" in t2
+
+
+def test_the_serve_readiness_loops_have_a_time_limit():
+    for rel in ("docs/commands.md", "docs/tutorials/05-serve-http-and-mcp.md"):
+        text = _doc(rel)
+        waits = [b.body for b in rds.parse_blocks(text) if b.is_run and "/health" in b.body and "moot serve" in b.body]
+        assert waits, rel
+        for body in waits:
+            assert not re.search(r"\b(until|while)\b", body), f"{rel}: an unbounded readiness loop"
+            assert re.search(r"for \w+ in \$\(seq 1 \d+\)", body) and "break" in body, f"{rel}: the readiness wait has no time limit"
+
+
+def test_a_block_that_times_out_ends_the_page_and_stops_everything_it_started(tmp_path, monkeypatch):
+    monkeypatch.setattr(rds, "BLOCK_TIMEOUT_S", 2)
+    pidfile = tmp_path / "bg.pid"
+    p = _page(tmp_path, f"```bash run\nsleep 300 &\necho $! > {pidfile}\nuntil false; do sleep 1; done\n```\n\n```bash run\necho never\n```\n")
+    fr = rds.run_file(p)
+    assert [r.status for r in fr.results] == ["timeout", "skipped"] and "timed out" in fr.results[1].note
+    pid = int(pidfile.read_text().strip())
+    import time as _time
+
+    for _ in range(50):
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            break
+        _time.sleep(0.1)
+    else:
+        raise AssertionError("the background process of the page survived the timeout")
+
+
+def test_the_output_mask_hides_how_many_days_old_but_not_the_staleness_limit():
+    assert rds.mask("reliability: 3 entries are stale (limit 14 days, oldest 489 days old)") == rds.mask(
+        "reliability: 3 entries are stale (limit 14 days, oldest 12 days old)")
+    assert rds.mask("stale (limit 14 days, oldest 5 days old)") != rds.mask("stale (limit 30 days, oldest 5 days old)")
+
+
+def test_the_drift_definition_carries_its_margin_and_minimum_wherever_it_is_defined():
+    for rel in ("docs/concepts.md", "docs/tutorials/04-weekly-loop.md"):
+        text = _doc(rel)
+        drift = [ln for ln in text.splitlines() if "drift" in ln.lower() and ("two joins" in ln or "two in a row" in ln or "two consecutive" in ln)]
+        assert drift, rel
+        assert all("0.10" in ln and "ten outcomes" in ln for ln in drift), f"{rel}: drift without the 0.10-nat margin and the ten-outcome minimum"
+
+
+def test_the_p0_wording_calls_it_the_base_rate_forecaster_with_zero_skill_by_construction():
+    for rel in ("docs/concepts.md", "docs/results.md"):
+        text = _doc(rel)
+        assert "base-rate forecaster" in text and "zero by construction" in text, rel
+        assert "P0 predicts the cell base rate" not in text, rel
+    assert "Normal distribution of the cell's observed effects" not in _doc("docs/concepts.md")
+
+
+# What a user meets, where. Each pair is (page, a phrase that page must carry) for one behaviour change of chunk L.
+CHUNK_L_BEHAVIOURS = {
+    "P0 as the base-rate forecaster": ("docs/concepts.md", "empirical base-rate forecaster"),
+    "the P2 Student-t predictive": ("docs/concepts.md", "Student-t"),
+    "card fields for the predictive and both intervals": ("docs/concepts.md", "interval for the observed estimate"),
+    "card schema version 2": ("docs/reference/card.md", "schema_version"),
+    "the card skill line with interval and gate verdict": ("docs/concepts.md", "skill line"),
+    "the row id on the three interfaces": ("docs/commands.md", "--row-id"),
+    "the row id on POST /card": ("docs/tutorials/05-serve-http-and-mcp.md", "row_id"),
+    "the live join recording abstained cards": ("docs/concepts.md", "sealed"),
+    "the champion-refresh rule": ("docs/concepts.md", "method_id"),
+    "the gates file with two base rates": ("docs/concepts.md", "base rate"),
+    "the decision table columns": ("docs/concepts.md", "difference from random order"),
+    "coverage by precision decile": ("docs/concepts.md", "realized over the planned standard error"),
+    "the guard-off ablations": ("docs/results.md", "+p2-guard-off"),
+    "the prelaunch admission option": ("docs/commands.md", "--admission prelaunch"),
+    "the positive-control synthetic archive": ("docs/commands.md", "--text-effect"),
+    "the adjusted intervals": ("docs/concepts.md", "Bonferroni"),
+    "the gate-power command": ("docs/commands.md", "moot simulate gate-power"),
+}
+
+
+@pytest.mark.parametrize("what", sorted(CHUNK_L_BEHAVIOURS))
+def test_every_behaviour_change_of_chunk_l_is_documented_where_a_user_meets_it(what):
+    rel, phrase = CHUNK_L_BEHAVIOURS[what]
+    page = ROOT / rel
+    assert page.exists(), f"{what}: {rel} does not exist"
+    assert phrase in page.read_text(encoding="utf-8"), f"{what}: {rel} lacks {phrase!r}"
+
+
+def test_the_card_reference_page_exists_is_in_the_nav_and_lists_the_prediction_fields():
+    text = _doc("docs/reference/card.md")
+    for field in ("family", "df", "location", "scale", "s_star", "interval_80", "interval_90", "interval_80_y", "interval_90_y", "withheld",
+                  "row_id", "schema_version"):
+        assert f"`{field}`" in text, field
+    assert "reference/card.md" in _doc("mkdocs.yml")

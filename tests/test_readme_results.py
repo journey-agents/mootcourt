@@ -98,3 +98,84 @@ def test_no_reader_naming_or_personal_process_wording():
         assert hiring not in words and not [w for w in words if w.startswith(recruit)], rel
         pairs = list(zip(words, words[1:], strict=False))
         assert (applying, "for") not in pairs and ("job", application) not in pairs, rel
+
+
+# ----------------------------------------------------------------------------------- T-055: the renderer on the chunk L report layout
+def test_the_sentence_that_each_rung_generalizes_the_one_below_is_replaced_by_what_each_rung_adds():
+    for rel in ("README.md", "docs/results.md", "docs/concepts.md"):
+        text = _read(rel)
+        assert "generalizes the one below" not in text and "generalization of the one below" not in text, rel
+    results = _read("docs/results.md")
+    assert "P1 adds a fitted partially pooled Student-t prior" in results
+    assert "P2 adds kernel-weighted precedents under an admission guard" in results
+    assert re.search(r"P2 adds kernel-weighted precedents", _read("README.md")), "the README says what each rung adds"
+
+
+def test_the_results_block_carries_the_chunk_l_tables():
+    block = _read("docs/results.md").split(START, 1)[1].split(END, 1)[0]
+    for needle in ("Challengers, Upworthy", "GBM+cal", "Positive control, synthetic", "Admission and the exposure proxy", "Weekly replay",
+                   "realized over planned standard error", "difference from random order", "Bonferroni-adjusted", "percentile, clustered null",
+                   "tests for skill 0.20", "base rate", "+p2-guard-off", "admission-prelaunch", "Tests: ", "P2 admission guard: ",
+                   "weight on precedents forced to 0.5"):
+        assert needle in block, f"the results block lacks {needle!r}"
+    assert "95 percent bootstrap interval for the Brier gain clears zero, base rate 0.3" not in block
+    assert "reports/challengers" not in block
+    assert "zero by construction" in block                                  # P0's Brier skill is never read as a deficit
+    assert "-0.1237" not in block
+
+
+def test_the_renderer_filters_decision_value_to_one_budget_and_the_challengers_come_from_the_main_report():
+    spec = importlib.util.spec_from_file_location("render_readme_results", ROOT / "scripts" / "render_readme_results.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    def row(policy, rung, budget, cap, lo, hi, diff, dlo, dhi, const):
+        return {"origin": "ALL", "policy": policy, "rung": rung, "budget": budget, "captured_fraction": cap, "captured_fraction_lo": lo,
+                "captured_fraction_hi": hi, "diff_random": diff, "diff_random_lo": dlo, "diff_random_hi": dhi, "constant_within_cell": const}
+
+    doc = {"header": {"primary_rung": "P2"}, "tables": {"decision_value": [
+        row("random", "all", 0.1, 0.1, 0.1, 0.1, 0.0, 0.0, 0.0, None), row("random", "all", 0.25, 0.25, 0.25, 0.25, 0.0, 0.0, 0.0, None),
+        row("p_win", "P2", 0.25, 0.3, 0.2, 0.4, 0.05, 0.01, 0.09, False), row("oracle", "all", 0.25, 0.7, 0.6, 0.8, 0.45, 0.4, 0.5, None)]}}
+    table = "\n".join(mod.decision_table(doc))
+    assert "0.1000" not in table and "0.2500" in table and "+0.0500 (+0.0100 to +0.0900)" in table
+    sentence = mod.decision_sentence(doc)
+    assert "a difference from random order of +0.0500" in sentence and "No interval is computed" not in sentence
+    src = (ROOT / "scripts" / "render_readme_results.py").read_text(encoding="utf-8")
+    assert '/ "challengers"' not in src and "challenger-gbm" not in src
+
+
+@pytest.mark.realdata
+def test_verify_readme_numbers_finds_no_mismatch_and_does_not_crash_on_the_chunk_l_reports():
+    import subprocess
+    import sys
+
+    env = dict(__import__("os").environ, MOOTCOURT_DATA_ROOT=str(real_paths().root))
+    cmd = [sys.executable, str(ROOT / "scripts" / "verify_readme_numbers.py")]
+    done = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=ROOT)
+    assert done.returncode == 0, done.stdout[-1500:] + done.stderr[-1500:]
+    assert re.search(r"total checked \d+, mismatches 0", done.stdout)
+    assert "not checked (no table handler)" not in done.stdout
+
+
+@pytest.mark.realdata
+def test_render_readme_results_check_passes_for_the_page_and_the_headline():
+    import subprocess
+    import sys
+
+    env = dict(__import__("os").environ, MOOTCOURT_DATA_ROOT=str(real_paths().root))
+    cmd = [sys.executable, str(ROOT / "scripts" / "render_readme_results.py"), "--check"]
+    done = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=ROOT)
+    assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_the_renderer_checks_every_marker_before_it_writes_anything(tmp_path):
+    page, front = tmp_path / "page.md", tmp_path / "front.md"
+    page.write_text("x\n" + START + "\nold\n" + END + "\n", encoding="utf-8")
+    front.write_text("no markers here\n", encoding="utf-8")
+    import subprocess
+    import sys
+
+    cmd = [sys.executable, str(ROOT / "scripts" / "render_readme_results.py"), "--write", "--page", str(page), "--front", str(front),
+           "--reports-dir", str(tmp_path / "no-reports")]
+    done = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
+    assert done.returncode == 2 and "lacks the" in done.stderr
+    assert "old" in page.read_text(encoding="utf-8"), "the page was rewritten although the other file lacks its markers"

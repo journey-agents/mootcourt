@@ -37,8 +37,8 @@ Each outcome carries a typed miss: `abstained_but_clear`, `confident_but_wrong`,
 The reliability report holds, per cell, the rolling log score and Brier skill over the trailing eight weeks. A cell is below
 threshold at a join when its rolling log score is more than 0.10 nats under the base-rate predictor on the same rows, with at
 least ten outcomes in the window. After two such joins in a row the cell is marked drifted and every card for that cell
-abstains until a join that is not below threshold clears the mark. A join that brought no new outcomes only moves the
-report's date.
+abstains until a join that is not below threshold clears the mark. A join that brought no new outcomes carries every counter
+unchanged and refreshes a cell's date only while the cell's window still holds outcomes, so a cell that stops receiving outcomes ages.
 
 A card also abstains when the cell's reliability report is missing or more than 14 days old.
 
@@ -85,9 +85,10 @@ argument of the MCP tool name that row. The tool never freezes a card, so it onl
 
 ## Champion refresh
 
-Each fit records its `method_id`, a hash of the method version and the fixed hyperparameters (never of the data). A fit with the champion's `method_id` and a later fit time is the same method on newer data: it becomes the champion
-without the challenger margin, unless its backtest Brier skill interval lies entirely below the champion's, in which case it is a challenger and the history says why. A fit with another `method_id` is a different method and
-needs the margin and the gate (`moot promote`).
+Each fit records its `method_id`, a hash of the method version, the fixed hyperparameters and the kind and size of the feature space (never of the data), and `data_through`, the latest result it saw. A fit with the champion's `method_id` on strictly newer data is the same method on newer data: it becomes the champion
+without the challenger margin, unless its backtest Brier skill interval lies entirely below the champion's. The fit time only breaks a tie between equal data, and a refit of an older snapshot never takes the champion back, whatever its fit time.
+A same-method fit that has no backtest yet (the usual state right after new rows arrive) is held as the challenger and marked pending; when `moot backtest` attaches its summary the check runs, and the champion is refreshed or the history records `refresh_refused`.
+Every route to the challenger writes its reason in the history. A fit with another `method_id` is a different method and needs the margin and the gate (`moot promote`).
 
 ## The skill line on a card
 

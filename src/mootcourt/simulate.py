@@ -21,6 +21,12 @@ by-test, 90 percent version. The gates are written at one or several base rates,
 a Brier skill of 0.10 is a much smaller absolute difference than at 0.30, and the harness reads each group's gate at the base rate
 nearest to the group's own event rate (``select_gates``).
 
+Dependence within a test (review L, REV-L-008). With ``icc`` above zero the outcomes of one test are no longer independent given the
+forecast: they share a latent Gaussian factor whose correlation is chosen so that the BINARY correlation of two outcomes of a test equals
+``icc`` (``latent_rho_for_icc``), which is the within-test correlation the harness measures from the design effect. The released gates use
+the measured values of each source (``SOURCE_DEPENDENCE``): rows per test and binary correlation from the Upworthy backtest at base rate
+0.09, from ASOS at 0.14, and the Upworthy values at 0.30 where no archive exists.
+
 Units: probabilities and Brier skill are unitless. The seed is fixed per call, so a result is a pure
 function of its arguments.
 """
@@ -40,6 +46,8 @@ SYNTHETIC_LABEL = "synthetic"
 DEFAULT_BASE = 0.30
 DEFAULT_ROWS_PER_TEST = 3.5     # Upworthy: 13,247 scored rows over 3,797 tests
 DEFAULT_LEVEL = 0.90            # the harness's interval
+# (rows per test, binary within-test correlation of the event) measured on the archives (round 00 backtests; docs/method.md call 170)
+SOURCE_DEPENDENCE = {0.09: (3.5, 0.13), 0.14: (5.0, 0.67), 0.30: (3.5, 0.13)}
 LEGACY_LEVEL = 0.95             # the per-row simulation of earlier versions
 DEFAULT_TARGET = 0.90          # the release gate: the decision target for decidable or undecidable
 RESEARCH_TARGET = 0.80         # the research screen, reported beside the release gate
@@ -77,8 +85,26 @@ def _beta_params(base: float, skill: float) -> tuple[float, float] | None:
     return base * k, (1.0 - base) * k
 
 
+def latent_rho_for_icc(p: float, icc: float) -> float:
+    """Latent Gaussian correlation whose thresholding at ``Phi^-1(p)`` gives two outcomes with binary correlation ``icc``."""
+    if icc <= 0.0:
+        return 0.0
+    from scipy import optimize, special
+    from scipy.stats import multivariate_normal
+
+    t = float(special.ndtri(p))
+
+    def binary_corr(rho: float) -> float:
+        c = float(multivariate_normal.cdf([t, t], mean=[0.0, 0.0], cov=[[1.0, rho], [rho, 1.0]])) - p * p
+        return c / (p * (1.0 - p))
+
+    if binary_corr(0.999) <= icc:
+        return 0.999
+    return float(optimize.brentq(lambda r: binary_corr(r) - icc, 0.0, 0.999, xtol=1e-6))
+
+
 def gate_power(n: int, skill: float, base: float = DEFAULT_BASE, reps: int = DEFAULT_REPS, B: int = DEFAULT_BOOTSTRAP,
-               seed: int = DEFAULT_SEED, rows_per_test: float = 1.0, level: float = LEGACY_LEVEL) -> float:
+               seed: int = DEFAULT_SEED, rows_per_test: float = 1.0, level: float = LEGACY_LEVEL, icc: float = 0.0) -> float:
     """Share of ``reps`` simulated gates whose ``level`` bootstrap interval for the Brier gain clears zero.
 
     ``n`` units per replicate (rows when ``rows_per_test`` is 1, else tests of that mean size), true Brier skill ``skill`` against the
@@ -92,6 +118,7 @@ def gate_power(n: int, skill: float, base: float = DEFAULT_BASE, reps: int = DEF
         raise ValueError("rows_per_test must be at least 1 and level in (0, 1)")
     rng = np.random.default_rng(seed)
     ab = _beta_params(base, skill)
+    rho = latent_rho_for_icc(base, icc) if rows_per_test > 1.0 else 0.0
     lo_pct = 100.0 * (1.0 - level) / 2.0
     passed = 0
     for _ in range(reps):
@@ -107,7 +134,13 @@ def gate_power(n: int, skill: float, base: float = DEFAULT_BASE, reps: int = DEF
             tot = int(m.sum())
             test_of = np.repeat(np.arange(n), m)
             p = pt[test_of]
-            e = (rng.random(tot) < p).astype(np.float64)
+            if rho > 0.0:
+                from scipy import special
+
+                z = np.sqrt(rho) * rng.standard_normal(n)[test_of] + np.sqrt(1.0 - rho) * rng.standard_normal(tot)
+                e = (z < special.ndtri(np.clip(p, 1e-12, 1.0 - 1e-12))).astype(np.float64)
+            else:
+                e = (rng.random(tot) < p).astype(np.float64)
             d_t = np.bincount(test_of, weights=(base - e) ** 2 - (p - e) ** 2, minlength=n)
             counts = rng.multinomial(n, np.full(n, 1.0 / n), size=B).astype(np.float64)
             means = (counts @ d_t) / (counts @ m.astype(np.float64))
@@ -118,7 +151,7 @@ def gate_power(n: int, skill: float, base: float = DEFAULT_BASE, reps: int = DEF
 
 def n_for_power(skill: float, target: float = DEFAULT_TARGET, base: float = DEFAULT_BASE, reps: int = DEFAULT_REPS,
                 B: int = DEFAULT_BOOTSTRAP, seed: int = DEFAULT_SEED, grid=None, deadline: float | None = None, memo: dict | None = None,
-                rows_per_test: float = 1.0, level: float = LEGACY_LEVEL) -> int:
+                rows_per_test: float = 1.0, level: float = LEGACY_LEVEL, icc: float = 0.0) -> int:
     """Smallest ``n`` on ``grid`` whose simulated power reaches ``target`` (power is assumed monotone in n).
 
     A bisection over the sorted grid, so the answer is the smallest grid value that meets the target and
@@ -139,7 +172,7 @@ def n_for_power(skill: float, target: float = DEFAULT_TARGET, base: float = DEFA
         if memo is not None and key in memo:
             power = memo[key]
         else:
-            power = gate_power(ns[mid], skill, base=base, reps=reps, B=B, seed=seed, rows_per_test=rows_per_test, level=level)
+            power = gate_power(ns[mid], skill, base=base, reps=reps, B=B, seed=seed, rows_per_test=rows_per_test, level=level, icc=icc)
             if memo is not None:
                 memo[key] = power
         if power >= target:
@@ -152,10 +185,11 @@ def n_for_power(skill: float, target: float = DEFAULT_TARGET, base: float = DEFA
 
 
 def power_table(ns=TABLE_NS, skills=TABLE_SKILLS, base: float = DEFAULT_BASE, reps: int = DEFAULT_REPS,
-                B: int = DEFAULT_BOOTSTRAP, seed: int = DEFAULT_SEED, rows_per_test: float = 1.0, level: float = LEGACY_LEVEL) -> list[dict]:
+                B: int = DEFAULT_BOOTSTRAP, seed: int = DEFAULT_SEED, rows_per_test: float = 1.0, level: float = LEGACY_LEVEL,
+                icc: float = 0.0) -> list[dict]:
     """Power by n and skill, as a list of rows ``{"n", "skill", "power"}`` (synthetic)."""
     return [{"n": int(n), "skill": float(k),
-             "power": gate_power(int(n), float(k), base=base, reps=reps, B=B, seed=seed, rows_per_test=rows_per_test, level=level)}
+             "power": gate_power(int(n), float(k), base=base, reps=reps, B=B, seed=seed, rows_per_test=rows_per_test, level=level, icc=icc)}
             for k in skills for n in ns]
 
 
@@ -174,25 +208,33 @@ RELEASE_BASE_RATES = (0.09, 0.14, 0.30)     # the Upworthy archive (event rate a
 
 
 def _entry(base: float, target: float, reps: int, B: int, seed: int, grid, with_table: bool, deadline: float, rows_per_test: float,
-           level: float) -> dict:
+           level: float, icc: float = 0.0) -> dict:
     """The gate sizes at one base rate: ``n_200``, ``n_400`` and ``by_target`` (both power targets) and the optional power table."""
     targets = sorted({RESEARCH_TARGET, float(target)})
     memo: dict = {}
-    by_target = {f"{t:.2f}": {key: n_for_power(skill, t, base, reps, B, seed, grid, deadline, memo, rows_per_test, level)
+    by_target = {f"{t:.2f}": {key: n_for_power(skill, t, base, reps, B, seed, grid, deadline, memo, rows_per_test, level, icc)
                               for key, skill in GATE_SKILLS.items()} for t in targets}
-    out = {**by_target[f"{float(target):.2f}"], "base_rate": float(base), "by_target": by_target}
+    out = {**by_target[f"{float(target):.2f}"], "base_rate": float(base), "by_target": by_target, "rows_per_test": float(rows_per_test),
+           "icc": float(icc), "latent_rho": latent_rho_for_icc(base, icc) if rows_per_test > 1.0 else 0.0}
     if with_table:
         ns = sorted(set(TABLE_NS) | {n for v in by_target.values() for n in v.values()})
-        out["table"] = power_table(ns, TABLE_SKILLS, base, reps, B, seed, rows_per_test, level)
+        out["table"] = power_table(ns, TABLE_SKILLS, base, reps, B, seed, rows_per_test, level, icc)
         if time.monotonic() > deadline:
             raise PowerBudgetExceeded("the power run passed its time cap; lower --reps or --bootstrap")
     return out
 
 
+def _at(value, base: float) -> float:
+    """``value`` for a base rate: the number itself, or the entry of a dict keyed by base rate (the nearest key)."""
+    if isinstance(value, dict):
+        return float(value[min(value, key=lambda k: abs(k - base))])
+    return float(value)
+
+
 def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_TARGET, reps: int = DEFAULT_REPS,
                 B: int = DEFAULT_BOOTSTRAP, seed: int = DEFAULT_SEED, grid=None, with_table: bool = True,
-                max_seconds: float = MAX_SECONDS, base_rates=None, rows_per_test: float = 1.0, level: float = LEGACY_LEVEL,
-                table_all: bool = False) -> dict:
+                max_seconds: float = MAX_SECONDS, base_rates=None, rows_per_test=1.0, level: float = LEGACY_LEVEL,
+                table_all: bool = False, icc=0.0) -> dict:
     """Run the power simulation and write ``gates.json``; returns the document.
 
     Two power targets are read from one simulated power curve: the research screen (``RESEARCH_TARGET``) and the
@@ -202,8 +244,9 @@ def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_T
 
     ``base_rates`` (default: just ``base``) writes the gates at several base rates: ``by_base_rate`` is keyed like ``"0.09"`` and
     holds the same fields per base rate, and the top level is a copy of the first. ``rows_per_test`` above 1 simulates tests of that
-    mean size and bootstraps by test (``n`` is then a number of tests); ``level`` is the interval whose lower end must clear zero. The power
-    table is written for the first base rate only unless ``table_all``.
+    mean size and bootstraps by test (``n`` is then a number of tests); ``level`` is the interval whose lower end must clear zero. ``rows_per_test``
+    and ``icc`` (the binary within-test correlation of the event) may each be a number or a dict keyed by base rate (``SOURCE_DEPENDENCE``); each base
+    rate's entry records the values it used. The power table is written for the first base rate only unless ``table_all``.
     """
     start = time.monotonic()
     rates = [float(b) for b in (base_rates if base_rates is not None else (base,))]
@@ -213,12 +256,15 @@ def write_gates(path=None, base: float = DEFAULT_BASE, target: float = DEFAULT_T
     for i, b in enumerate(rates):
         # the power table is the slow part (n up to 2000 at every skill) and is printed for the first base rate only; the sizes are at every rate
         entries[f"{b:.2f}"] = _entry(b, target, reps, B, seed, grid, with_table and (i == 0 or table_all), time.monotonic() + max_seconds,
-                                     rows_per_test, level)
+                                     _at(rows_per_test, b), level, _at(icc, b))
     first = entries[f"{rates[0]:.2f}"]
     doc = {
         **{k: v for k, v in first.items() if k != "table"}, "target_power": float(target), "decision_target": float(target),
         "research_target": RESEARCH_TARGET, "reps": reps, "bootstrap": B, "seed": seed, "label": SYNTHETIC_LABEL, "skills": dict(GATE_SKILLS),
-        "interval": {"level": float(level), "by": "test" if rows_per_test > 1.0 else "row", "rows_per_test": float(rows_per_test)},
+        "interval": {"level": float(level), "by": "test" if first["rows_per_test"] > 1.0 else "row", "rows_per_test": first["rows_per_test"],
+                     "icc": first["icc"],
+                     "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive "
+                                   "of that rate (docs/method.md call 170)"},
         "note": "n_200 and n_400 are the values this run produced on synthetic data at the decision target; by_target holds both "
                 "targets, which read the same power curve at different levels. Nothing downstream hardcodes any of these sizes. "
                 "by_base_rate holds the same sizes at each simulated base rate; the top level is the first of them.",

@@ -14,7 +14,7 @@ The ledger is a file in the format of `docs/ledger-format.md`, written by `moot 
 one with `--source`. The command runs the standard protocol and nothing else:
 
 - rolling quarterly origins, so every row is scored by models fitted only on rows that were final before its origin;
-- the ladder: P0 (cell base rate), P1 (pooled shrinkage) and P2 (weighted precedents), plus P3 when the ledger carries a
+- the ladder: P0 (the empirical base-rate forecaster, whose Brier skill is zero by construction), P1 (pooled shrinkage that accounts for measurement error) and P2 (weighted precedents under an admission guard), plus P3 when the ledger carries a
   team forecast;
 - gates at both power targets, read from `reports/gates.json`; when that file is missing, a quick simulation writes `reports/benchmark/gates-quick.json` instead and the card says so (the shared gates file is never created by this command);
 - calibration by precision, abstention and decision value.

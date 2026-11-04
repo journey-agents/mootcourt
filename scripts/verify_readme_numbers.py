@@ -105,6 +105,11 @@ def check_triple(sec, label, tok, point, lo, hi):
 
 
 # ------------------------------------------------------------------ backtest sections
+def pair_tokens(tok: str) -> list[str]:
+    """'-0.0048 to 0.0077' -> two tokens."""
+    return NUM.findall(tok)
+
+
 def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
     text = "\n".join(lines)
     snap = re.search(r"Snapshot (\S+?),", text).group(1)
@@ -116,6 +121,12 @@ def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
     check(sec, "header", m.group(1), hdr["scored_rows"])
     check(sec, "header", m.group(2), hdr["origins_scored"])
     check(sec, "header", m.group(3), hdr["admitted_rows"])
+    m = re.search(r"Tests: (\d+) in the ledger, (\d+) admitted, (\d+) scored", text)
+    check(sec, "tests in the ledger", m.group(1), hdr["tests_in_ledger"])
+    check(sec, "tests admitted", m.group(2), hdr["tests_admitted"])
+    check(sec, "tests scored", m.group(3), hdr["tests_scored"])
+    m = re.search(r"P2 admission guard: ([\d.]+) standard errors", text)
+    check(sec, "p2 guard", m.group(1), hdr["p2_guard"])
     scores_path = glob.glob(str(reports / f"scores-{source}-{snap}.parquet"))
     sc = pd.read_parquet(scores_path[0]) if scores_path else None
     for head, rows in parse_tables(lines):
@@ -129,18 +140,50 @@ def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
                     check(sec, f"{label} {cell}/{rung} logscore", r[3], j["logscore"])
                     check_triple(sec, f"{label} {cell}/{rung} brier skill", r[4], skill(j),
                                  j["brier_skill_lo"], j["brier_skill_hi"])
-                    c = tri(r[8])
+                    c = tri(r[10])
                     check(sec, f"{label} {cell}/{rung} cov80", c[0], j["coverage_80"])
                     check(sec, f"{label} {cell}/{rung} cov90", c[1], j["coverage_90"])
-                check(sec, f"{label} {cell}/{rung} abstention", r[9], j["abstention_rate"])
+                check(sec, f"{label} {cell}/{rung} gate base rate", r[6], j["gate_base_rate"])
+                for col, key in ((5, "decidable_by_tests"), (7, "decidable_by_tests_base_0.3"), (8, "decidable"), (9, "decidable_research_by_tests")):
+                    short = {"decidable at skill 0.20 and 0.10": "yes, both skills", "decidable at skill 0.20 only": "skill 0.20 only",
+                             "decidable at skill 0.10 only": "skill 0.10 only", "undecidable at this n": "undecidable"}.get(j[key], j[key])
+                    RESULTS.append((sec, f"{label} {cell}/{rung} {key}", r[col], short, r[col] == short))
+                check(sec, f"{label} {cell}/{rung} abstention", r[11], j["abstention_rate"])
                 if sc is not None and rung in ("P0", "P1", "P2"):
                     s = sc[sc["rung"] == rung] if cell == "ALL" else sc[(sc["rung"] == rung) & (sc["cell"] == cell)]
                     check(sec, f"scores parquet {cell}/{rung} n", r[2], len(s))
                     check(sec, f"scores parquet {cell}/{rung} logscore", r[3], s["logscore"].mean())
-                    check(sec, f"scores parquet {cell}/{rung} abstention", r[9], s["abstain"].mean())
+                    check(sec, f"scores parquet {cell}/{rung} abstention", r[11], s["abstain"].mean())
                     inside90 = ((s["y"] >= s["lo90"]) & (s["y"] <= s["hi90"])).mean()
                     check(sec, f"scores parquet {cell}/{rung} cov90", c[1], inside90)
-        elif head[:2] == ["rung", "decile"]:
+        elif head[:2] == ["rung", "tests"]:
+            for r in rows:
+                j = a[("ALL", r[0])]
+                check(sec, f"adjusted {r[0]} tests", r[1], j["n_tests"])
+                check_triple(sec, f"adjusted {r[0]} skill", r[2], skill(j), j["brier_skill_lo"], j["brier_skill_hi"])
+                t = pair_tokens(r[3]) or ["n/a", "n/a"]               # a rung with no width (P0) has no adjusted bounds
+                check(sec, f"adjusted {r[0]} skill adjusted lo", t[0], j["adjusted_lo"])
+                check(sec, f"adjusted {r[0]} skill adjusted hi", t[1], j["adjusted_hi"])
+                check_triple(sec, f"adjusted {r[0]} logscore", r[4], j["logscore"], j["logscore_lo"], j["logscore_hi"])
+                t = pair_tokens(r[5]) or ["n/a", "n/a"]
+                check(sec, f"adjusted {r[0]} logscore adjusted lo", t[0], j["logscore_adjusted_lo"])
+                check(sec, f"adjusted {r[0]} logscore adjusted hi", t[1], j["logscore_adjusted_hi"])
+                check(sec, f"adjusted {r[0]} family", r[6], j["family_size"])
+        elif head[:2] == ["rung", "AUC of the event (90% interval)"]:
+            for r in rows:
+                j = a[("ALL", r[0])]
+                check_triple(sec, f"auc {r[0]}", r[1], j["auc_event"], j["auc_event_lo"], j["auc_event_hi"])
+                check(sec, f"resolution {r[0]}", r[2], j["resolution_event"])
+                check(sec, f"mean p_sig {r[0]}", re.match(r"([-\d.]+)", r[3]).group(1), j["p_sig_mean"])
+                check(sec, f"planned event rate {r[0]}", r[4], j["event_rate_planned"])
+                check_triple(sec, f"planned skill {r[0]}", r[5], j["brier_skill_planned"], j["brier_skill_planned_lo"], j["brier_skill_planned_hi"])
+        elif head[:2] == ["rung", "ECE"]:
+            for r in rows:
+                j = a[("ALL", r[0])]
+                for col, key in ((1, "ece"), (2, "ece_percentile"), (3, "ece_percentile_independent"), (4, "ece_equal_mass"),
+                                 (5, "ece_equal_mass_percentile"), (6, "design_effect"), (7, "icc")):
+                    check(sec, f"calibration {r[0]} {key}", r[col], j[key])
+        elif head[:2] == ["rung", "decile"] and head[2] == "planned exposures per arm":
             for r in rows:
                 rung, dec = r[0], int(r[1])
                 j = next(x for x in rep["tables"]["calibration_by_precision"] if x["rung"] == rung and x["decile"] == dec)
@@ -148,13 +191,42 @@ def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
                 check(sec, f"calibration {rung} d{dec} mean p_sig", r[5], j["mean_p_sig"])
                 check(sec, f"calibration {rung} d{dec} event rate", r[6], j["event_rate"])
                 check(sec, f"calibration {rung} d{dec} cov90", r[7], j["coverage_90"])
+        elif head[:2] == ["rung", "decile"] and head[2].startswith("realized over planned"):
+            for r in rows:
+                rung, dec = r[0], int(r[1])
+                j = next(x for x in rep["tables"]["coverage_by_se_ratio"] if x["rung"] == rung and x["decile"] == dec)
+                lo, hi = pair_tokens(r[2])
+                check(sec, f"ratio {rung} d{dec} lo", lo, j["ratio_lo"])
+                check(sec, f"ratio {rung} d{dec} hi", hi, j["ratio_hi"])
+                for col, key in ((3, "n"), (4, "mean_ratio"), (5, "mean_p_sig"), (6, "event_rate"), (7, "coverage_80"), (8, "coverage_90")):
+                    check(sec, f"ratio {rung} d{dec} {key}", r[col], j[key])
         elif head[:2] == ["rung", "kind"] and "ceiling" in head:
             for r in rows:
                 j = a[("ALL", r[0])]
                 t = tri(r[2])
-                check(sec, f"direction {r[0]}", t[0], j["direction_accuracy"])
-                check(sec, f"direction {r[0]} lo", t[1], j["direction_accuracy_lo"])
+                if t:
+                    check(sec, f"direction {r[0]}", t[0], j["direction_accuracy"])
+                    check(sec, f"direction {r[0]} lo", t[1], j["direction_accuracy_lo"])
+                else:
+                    check(sec, f"direction {r[0]}", "n/a", j["direction_accuracy"])
                 check(sec, f"direction {r[0]} ceiling", r[3], j["direction_ceiling"])
+                check(sec, f"direction {r[0]} decisive rows", r[4], j.get("n_decisive") or 0)
+                check(sec, f"direction {r[0]} decisive accuracy", r[5], j.get("direction_accuracy_decisive"))
+        elif head[0] == "policy":
+            dv = rep["tables"]["decision_value"]
+            for r in rows:
+                pol, rung = r[0], r[1]
+                allrow = next(x for x in dv if x["origin"] == "ALL" and x["policy"] == pol and x["rung"] == rung and abs(x["budget"] - 0.25) < 1e-9)
+                per = [x for x in dv if x["origin"] != "ALL" and x["policy"] == pol and x["rung"] == rung and abs(x["budget"] - 0.25) < 1e-9]
+                t = tri(r[2])
+                pooled_fraction = sum(x["captured"] for x in per) / sum(x["total"] for x in per)
+                check(sec, f"decision {pol}/{rung} captured (pooled from the origins)", t[0], pooled_fraction)
+                check(sec, f"decision {pol}/{rung} captured lo", t[1], allrow["captured_fraction_lo"])
+                check(sec, f"decision {pol}/{rung} captured hi", t[2], allrow["captured_fraction_hi"])
+                t = tri(r[3])
+                check(sec, f"decision {pol}/{rung} difference", t[0], allrow["diff_random"])
+                check(sec, f"decision {pol}/{rung} difference lo", t[1], allrow["diff_random_lo"])
+                check(sec, f"decision {pol}/{rung} difference hi", t[2], allrow["diff_random_hi"])
         elif head[:2] == ["cell", "rows"]:
             tab = {x["cell"]: x for x in rep["tables"]["abstention"]}
             for r in rows:
@@ -165,17 +237,25 @@ def verify_backtest(sec: str, lines: list[str], reports: Path, source: str):
                     check(sec, f"trigger {r[0]} {name}", r[3 + k], j[name])
     # sentences
     dv = rep["tables"]["decision_value"]
-    m = re.search(r"random captures ([\d.]+) of the total .* P2 p_win captures ([\d.]+), .* captures ([\d.]+)\.", text)
+    m = re.search(r"random order captures ([\d.]+) of the total .* P2 p_win captures ([\d.]+) \(a difference from random order of ([-+\d.]+), "
+                  r"interval ([-+\d.]+) to ([-+\d.]+)\), and an oracle .* captures ([\d.]+)\.", text)
     if m:
         def pooled(policy, rung):
-            sel = [x for x in dv if x["policy"] == policy and (rung is None or x["rung"] == rung)]
+            sel = [x for x in dv if x["origin"] != "ALL" and x["policy"] == policy and abs(x["budget"] - 0.25) < 1e-9
+                   and (rung is None or x["rung"] == rung)]
             return sum(x["captured"] for x in sel) / sum(x["total"] for x in sel)
+        pw = next(x for x in dv if x["origin"] == "ALL" and x["policy"] == "p_win" and x["rung"] == "P2" and abs(x["budget"] - 0.25) < 1e-9)
         check(sec, "decision value random", m.group(1), pooled("random", None))
         check(sec, "decision value p_win", m.group(2), pooled("p_win", "P2"))
-        check(sec, "decision value oracle", m.group(3), pooled("oracle", None))
+        check(sec, "decision value difference", m.group(3), pw["diff_random"])
+        check(sec, "decision value difference lo", m.group(4), pw["diff_random_lo"])
+        check(sec, "decision value difference hi", m.group(5), pw["diff_random_hi"])
+        check(sec, "decision value oracle", m.group(6), pooled("oracle", None))
     m = re.search(r"Log score on all rows: P0 ([-\d.]+), P1 ([-\d.]+), P2 ([-\d.]+)\.", text)
     for k, rung in enumerate(["P0", "P1", "P2"]):
         check(sec, f"sentence logscore {rung}", m.group(1 + k), a[("ALL", rung)]["logscore"])
+    m = re.search(r"P2 minus P1 is ([-+\d.]+),", text)
+    check(sec, "sentence P2 minus P1", m.group(1), a[("ALL", "P2")]["logscore"] - a[("ALL", "P1")]["logscore"])
 
 
 # ------------------------------------------------------------------ the other sections
@@ -183,33 +263,42 @@ def verify_gates(sec, lines, reports):
     g = jload(str(reports / "gates.json"))
     by_skill_n = {(r["skill"], r["n"]): r["power"] for r in g["table"]}
     for head, rows in parse_tables(lines):
-        if head[0] == "power target":
+        if head[0] == "base rate":
             for r in rows:
-                key = "0.80" if r[0].startswith("0.80") else "0.90"
-                check(sec, f"rows for skill 0.20 at {key}", r[1], g["by_target"][key]["n_200"])
-                check(sec, f"rows for skill 0.10 at {key}", r[2], g["by_target"][key]["n_400"])
+                key = "0.80" if r[1].startswith("0.80") else "0.90"
+                sizes = g["by_base_rate"][r[0]]["by_target"][key]
+                check(sec, f"tests for skill 0.20 at {key}, base rate {r[0]}", r[2], sizes["n_200"])
+                check(sec, f"tests for skill 0.10 at {key}, base rate {r[0]}", r[3], sizes["n_400"])
         else:
             ns = [int(x) for x in head[1:]]
             for r in rows:
                 sk = float(r[0])
                 for n, tok in zip(ns, r[1:]):
                     check(sec, f"power skill {sk} n {n}", tok, by_skill_n[(sk, n)])
-    m = re.search(r"base rate ([\d.]+), (\d+) replicates, seed (\d+)", "\n".join(lines))
+    text = "\n".join(lines)
+    m = re.search(r"base rate ([\d.]+), (\d+) replicates, seed (\d+)", text)
     check(sec, "base rate", m.group(1), g["base_rate"])
     check(sec, "replicates", m.group(2), g["reps"])
     check(sec, "seed", m.group(3), g["seed"])
+    m = re.search(r"whose (\d+) percent bootstrap interval .* tests of ([\d.]+) rows on average", text)
+    check(sec, "interval level", m.group(1), g["interval"]["level"] * 100)
+    check(sec, "rows per test", m.group(2), g["interval"]["rows_per_test"])
 
 
 def verify_latency(sec, lines, reports):
     j = jload(str(reports / "card-latency.json"))
-    keys = {"in process, bundle preloaded": "in_process_ms", "HTTP service on loopback, bundle preloaded": "service_ms",
-            "command line, fresh process": "cli_fresh_process_ms"}
+    keys = {"in process, bundle preloaded": "in_process_ms", "in process, weight on precedents forced to 0.5": "in_process_lambda_0.5_ms",
+            "HTTP service on loopback, bundle preloaded": "service_ms", "command line, fresh process": "cli_fresh_process_ms"}
     for _head, rows in parse_tables(lines):
         for r in rows:
             for col, name in zip(r[1:], ("p50", "p95", "max")):
                 check(sec, f"{r[0]} {name}", col, j[keys[r[0]]][name])
-    check(sec, "model id (as number of characters)", str(len(re.search(r"model (\w+)\.", "\n".join(lines)).group(1))),
-          len(j["model_id"]))
+    text = "\n".join(lines)
+    check(sec, "model id (as number of characters)", str(len(re.search(r"model (\w+)\.", text).group(1))), len(j["model_id"]))
+    m = re.search(r"Of (\d+) made-up headlines, (\d+) abstained at the fitted weight on precedents and (\d+) with the weight forced to 0.5", text)
+    check(sec, "headlines", m.group(1), sum(j["statuses"].values()))
+    check(sec, "abstained at the fitted weight", m.group(2), j["statuses"].get("abstain", 0))
+    check(sec, "abstained at 0.5", m.group(3), j["statuses_lambda_0.5"].get("abstain", 0))
 
 
 def verify_runtime(sec, lines, reports):
@@ -242,8 +331,8 @@ def latest_snapshot(reports: Path, source: str) -> str:
 
 
 def verify_challengers(sec, lines, reports, source):
-    f = sorted(glob.glob(str(reports / "challengers" / f"backtest-{source}-*.json")))[-1]
-    a = agg(jload(f))
+    rep = jload(str(reports / f"backtest-{source}-{latest_snapshot(reports, source)}.json"))
+    a = agg(rep)
     for _head, rows in parse_tables(lines):
         for r in rows:
             j = a[("ALL", r[0])]
@@ -252,12 +341,18 @@ def verify_challengers(sec, lines, reports, source):
             if r[4] != "n/a (n/a to n/a)":
                 check_triple(sec, f"{r[0]} skill", r[4], skill(j), j["brier_skill_lo"], j["brier_skill_hi"])
             check(sec, f"{r[0]} direction", r[5], j["direction_accuracy"])
-            check(sec, f"{r[0]} abstention", r[6], j["abstention_rate"])
+            check(sec, f"{r[0]} decisive direction", r[6], j.get("direction_accuracy_decisive"))
+            check(sec, f"{r[0]} abstention", r[7], j["abstention_rate"])
     text = "\n".join(lines)
     for name in ("GBM", "local_eb"):
         m = re.search(rf"{name} minus P2 log score is ([-+\d.]+)", text)
         if m:
             check(sec, f"{name} minus P2", m.group(1), a[("ALL", name)]["logscore"] - a[("ALL", "P2")]["logscore"])
+    named = re.search(r"Challenger rows whose Brier skill interval excludes zero: ([^.]*)\.", text)
+    want = sorted(n for n in rep["header"]["challengers"] if a[("ALL", n)]["brier_skill_lo"] is not None and skill(a[("ALL", n)]) is not None
+                  and a[("ALL", n)]["brier_skill_lo"] > 0)
+    got = sorted(x.strip() for x in named.group(1).split(",")) if named else []
+    RESULTS.append((sec, "challenger rows whose interval excludes zero", ",".join(got), ",".join(want), got == want))
 
 
 def ablation_file(reports: Path, source: str, setting: str) -> str:
@@ -271,14 +366,26 @@ def verify_ablations(sec, lines, reports, source):
     for head, rows in parse_tables(lines):
         if head[0] == "setting" and "P1 log score" in head:
             for r in rows:
-                a = agg(jload(ablation_file(reports, source, r[0])))
+                doc = jload(ablation_file(reports, source, r[0]))
+                a = agg(doc)
                 p1, p2 = a[("ALL", "P1")], a[("ALL", "P2")]
-                check(sec, f"{r[0]} P1 logscore", r[1], p1["logscore"])
-                check(sec, f"{r[0]} P2 logscore", r[2], p2["logscore"])
-                check(sec, f"{r[0]} P2 minus P1", r[3], p2["logscore"] - p1["logscore"])
-                check_triple(sec, f"{r[0]} P2 skill", r[4], skill(p2), p2["brier_skill_lo"], p2["brier_skill_hi"])
-                check(sec, f"{r[0]} P2 direction", r[5], p2["direction_accuracy"])
-                check(sec, f"{r[0]} P2 coverage90", r[6], p2["coverage_90"])
+                want = doc["header"].get("p2_guard")
+                check(sec, f"{r[0]} guard", r[1], want) if want != "off" else RESULTS.append((sec, f"{r[0]} guard", r[1], want, r[1] == "off"))
+                check(sec, f"{r[0]} n", r[2], p2["n"])
+                check(sec, f"{r[0]} P1 logscore", r[3], p1["logscore"])
+                check(sec, f"{r[0]} P2 logscore", r[4], p2["logscore"])
+                check(sec, f"{r[0]} P2 minus P1", r[5], p2["logscore"] - p1["logscore"])
+                check_triple(sec, f"{r[0]} P2 skill", r[6], skill(p2), p2["brier_skill_lo"], p2["brier_skill_hi"])
+                check(sec, f"{r[0]} P2 direction", r[7], p2["direction_accuracy"])
+                check(sec, f"{r[0]} P2 coverage90", r[8], p2["coverage_90"])
+        elif head[0] == "setting" and "mean lambda" in head:
+            for r in rows:
+                doc = jload(ablation_file(reports, source, r[0]))
+                j = next(x for x in doc["tables"]["p2_selection_by_cell"] if x["cell"] == r[1])
+                check(sec, f"{r[0]} {r[1]} origins", r[3], j["origins"])
+                check(sec, f"{r[0]} {r[1]} mean lambda", r[4], j["lambda_mean"])
+                check(sec, f"{r[0]} {r[1]} lambda zero", r[5], j["share_lambda_zero"])
+                check(sec, f"{r[0]} {r[1]} bandwidth", r[6], j["bandwidth_mult_mean"])
 
 
 def verify_guard(sec, lines, reports, source):
@@ -347,6 +454,86 @@ def verify_learning(sec, lines, reports, source):
                 check(sec, tag + " direction", r[6], x["direction_accuracy"])
 
 
+def verify_positive_control(sec, lines, reports):
+    rep = jload(sorted(glob.glob(str(reports / "positive-control" / "backtest-synthetic-*.json")))[-1])
+    a = agg(rep)
+    sens = jload(sorted(glob.glob(str(reports / "paper-extras-synthetic-*.json")))[-1])["positive_control_sensitivity"]
+    text = "\n".join(lines)
+    m = re.search(r"(\d+) rows scored over (\d+) origins", text)
+    check(sec, "header", m.group(1), rep["header"]["scored_rows"])
+    check(sec, "header", m.group(2), rep["header"]["origins_scored"])
+    for head, rows in parse_tables(lines):
+        if head[:2] == ["cell", "rung"]:
+            for r in rows:
+                j = a[(r[0], r[1])]
+                check(sec, f"{r[0]}/{r[1]} n", r[2], j["n"])
+                check(sec, f"{r[0]}/{r[1]} logscore", r[3], j["logscore"])
+                check_triple(sec, f"{r[0]}/{r[1]} skill", r[4], skill(j), j["brier_skill_lo"], j["brier_skill_hi"])
+        elif head[:2] == ["cell", "origins"]:
+            for r in rows:
+                j = next(x for x in rep["tables"]["p2_selection_by_cell"] if x["cell"] == r[0])
+                check(sec, f"selection {r[0]} origins", r[1], j["origins"])
+                check(sec, f"selection {r[0]} mean lambda", r[2], j["lambda_mean"])
+                check(sec, f"selection {r[0]} lambda zero", r[3], j["share_lambda_zero"])
+                check(sec, f"selection {r[0]} held by the guard", r[4], j["share_guard_held"])
+        elif head[0] == "tests in the ledger":
+            for r in rows:
+                j = next(x for x in sens["rows"] if x["n_tests"] == int(r[0]) and abs(x["text_effect_strength"] - float(r[1])) < 1e-9)
+                check(sec, f"sensitivity {r[0]} {r[1]} strength over prior sd", r[2], j["strength_over_prior_sd"]["headline_only"])
+                check(sec, f"sensitivity {r[0]} {r[1]} cell fits", r[3], j["cells"])
+                check(sec, f"sensitivity {r[0]} {r[1]} admitted", r[4], j["admitted"])
+                check(sec, f"sensitivity {r[0]} {r[1]} share", r[5], j["admitted"] / j["cells"])
+    check(sec, "multiplier", re.search(r"multiplier ([\d.]+)", text).group(1), sens["multiplier"])
+
+
+def verify_proxy(sec, lines, reports):
+    for _head, rows in parse_tables(lines):
+        for r in rows:
+            src = {"Upworthy": "upworthy", "ASOS": "asos"}[r[0]]
+            c = jload(sorted(glob.glob(str(reports / f"paper-extras-{src}-*.json")))[-1])["impressions_effect_correlation"]
+            check(sec, f"{r[0]} rows", r[1], c["n_rows"])
+            check(sec, f"{r[0]} corr abs z", r[2], c["corr_log_impressions_abs_z"])
+            check(sec, f"{r[0]} corr event", r[3], c["corr_log_impressions_event"])
+            check(sec, f"{r[0]} corr run length", r[4], c.get("corr_log_run_length_abs_z"))
+
+
+def verify_replay(sec, lines, reports):
+    for _head, rows in parse_tables(lines):
+        for r in rows:
+            src = {"Upworthy": "upworthy", "ASOS": "asos"}[r[0]]
+            d = jload(sorted(glob.glob(str(reports / f"replay-{src}-*.json")))[-1])
+            t, m = d["totals"], d["totals"]["miss_counts"]
+            cov, n = re.match(r"([\d.]+) \((\d+)\)", r[6]).groups()
+            check(sec, f"{r[0]} weeks", r[1], d["header"]["n_weeks"])
+            check(sec, f"{r[0]} cards", r[2], t["cards_issued"])
+            check(sec, f"{r[0]} outcomes", r[3], t["outcomes_joined"])
+            check(sec, f"{r[0]} abstained", r[4], t["abstained"])
+            check(sec, f"{r[0]} flagged weeks", r[5], t["n_flagged_weeks"])
+            check(sec, f"{r[0]} coverage", cov, t["coverage_90_all"])
+            check(sec, f"{r[0]} coverage n", n, t["coverage_90_all_n"])
+            for col, key in ((7, "hit"), (8, "magnitude_miss"), (9, "direction_miss"), (10, "confident_but_wrong"), (11, "abstained_but_clear")):
+                check(sec, f"{r[0]} {key}", r[col], m[key])
+
+
+def verify_guard_pairs(sec, lines, reports, source):
+    g = jload(sorted(glob.glob(str(reports / f"paper-extras-{source}-*.json")))[-1])["guard_pairs"]
+    for head, rows in parse_tables(lines):
+        if head[0] == "cell":
+            for r in rows:
+                j = next(x for x in g["rows"] if x["cell"] == r[0] and x["origin"][:10] == r[1])
+                for col, key in ((2, "lambda"), (3, "in_selection_gain"), (4, "in_selection_gain_se"), (5, "n_scored_rows"), (6, "n_scored_tests"),
+                                 (7, "realized_p2_minus_p1")):
+                    check(sec, f"pair {r[0]} {r[1]} {key}", r[col], j[key])
+    sm = g["summary"]
+    text = "\n".join(lines)
+    m = re.search(r"Pairs admitted: (\d+) of (\d+); mean in-selection gain ([-\d.]+); pairs with a negative realized difference: (\d+)\. "
+                  r"Pooled over the scored rows \((\d+) rows, (\d+) tests\) the realized difference is ([-+\d.]+) \(([-+\d.]+) to ([-+\d.]+),", text)
+    keys = ("pairs_admitted", "pairs_in_selection", "mean_in_selection_gain", "pairs_with_negative_realized", "pooled_rows", "pooled_tests",
+            "pooled_realized_p2_minus_p1", "pooled_lo", "pooled_hi")
+    for k, key in enumerate(keys):
+        check(sec, f"guard pairs {key}", m.group(1 + k), sm[key])
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     here = Path(__file__).resolve().parents[1]
@@ -362,12 +549,16 @@ def main() -> int:
         "ASOS backtest": lambda s, ln: verify_backtest(s, ln, reports, "asos"),
         "Synthetic backtest (synthetic data, known truth)": lambda s, ln: verify_backtest(s, ln, reports, "synthetic"),
         "Synthetic gate power (synthetic data only)": lambda s, ln: verify_gates(s, ln, reports),
-        "Challengers (GBM, local_eb, text_lr), Upworthy": lambda s, ln: verify_challengers(s, ln, reports, "upworthy"),
+        "Challengers, Upworthy": lambda s, ln: verify_challengers(s, ln, reports, "upworthy"),
         "Ablations, Upworthy": lambda s, ln: verify_ablations(s, ln, reports, "upworthy"),
         "P2 admission guard, Upworthy": lambda s, ln: verify_guard(s, ln, reports, "upworthy"),
         "Ablations, Asos": lambda s, ln: verify_ablations(s, ln, reports, "asos"),
         "P2 admission guard, Asos": lambda s, ln: verify_guard(s, ln, reports, "asos"),
+        "Guard pairs, Upworthy": lambda s, ln: verify_guard_pairs(s, ln, reports, "upworthy"),
+        "Positive control, synthetic": lambda s, ln: verify_positive_control(s, ln, reports),
+        "Admission and the exposure proxy": lambda s, ln: verify_proxy(s, ln, reports),
         "The cautionary run": lambda s, ln: verify_cautionary(s, ln, reports),
+        "Weekly replay": lambda s, ln: verify_replay(s, ln, reports),
         "Learning curve, Asos": lambda s, ln: verify_learning(s, ln, reports, "asos"),
         "Learning curve, Upworthy": lambda s, ln: verify_learning(s, ln, reports, "upworthy"),
         "Card latency": lambda s, ln: verify_latency(s, ln, reports),

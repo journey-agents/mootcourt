@@ -183,7 +183,7 @@ def _second_opinion_table(scores: pd.DataFrame, meta: dict, gates: dict, B: int,
         for r in agg[agg["cell"] == "ALL"].to_dict(orient="records"):
             out.append({"origins": label, **{k: r.get(k) for k in ("rung", "n", "n_tests", "brier", "brier_lo", "brier_hi", "brier_base",
                                                                     "brier_skill", "brier_skill_lo", "brier_skill_hi", "ece",
-                                                                    "direction_accuracy", "decidable", "decidable_by_tests")}})
+                                                                    "direction_accuracy", "decidable_by_tests")}})
     return out
 
 
@@ -376,6 +376,14 @@ _AGG_GROUPS = [
      ["cell", "rung", "ece", "ece_percentile", "ece_percentile_independent", "ece_equal_mass", "ece_equal_mass_percentile", "design_effect", "icc"]),
     ("Bonferroni-adjusted bounds for the family of intervals of this table (descriptive intervals are the unadjusted ones above)",
      ["cell", "rung", "family_size", "brier_skill", "adjusted_lo", "adjusted_hi", "logscore", "logscore_adjusted_lo", "logscore_adjusted_hi"]),
+    ("Discrimination apart from skill: AUC of p_sig for the event and of the direction probability for y > 0, and the Murphy resolution term "
+     "(mean squared deviation of the forecast from the group's own event rate)",
+     ["cell", "rung", "auc_event", "auc_event_lo", "auc_event_hi", "resolution_event", "resolution_event_lo", "resolution_event_hi",
+      "auc_direction", "auc_direction_lo", "auc_direction_hi", "resolution_direction"]),
+    ("Sensitivity of the event definition: the same forecasts scored against y > z s_star on the planned standard error (the headline uses "
+     "the realized one)",
+     ["cell", "rung", "event_rate_planned", "p_sig_mean", "brier_planned", "brier_base_planned", "brier_skill_planned",
+      "brier_skill_planned_lo", "brier_skill_planned_hi"]),
     ("Direction accuracy and coverage of the intervals for y",
      ["cell", "rung", "direction_accuracy", "direction_accuracy_lo", "direction_accuracy_hi", "n_decisive", "direction_accuracy_decisive",
       "direction_ceiling",
@@ -475,7 +483,7 @@ def render_markdown(doc: dict) -> str:
                 f"The rung `{so['base_rung']} on agent rows` is the base rung on the rows where the agent gave an opinion. "
                 "Compare the agent with it, not with the base rung on all rows.", ""]
         out += _table(t.get("second_opinion", []), ["origins", "rung", "n", "brier", "brier_lo", "brier_hi", "brier_base", "brier_skill",
-                                                    "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "decidable_by_tests", "decidable"])
+                                                    "brier_skill_lo", "brier_skill_hi", "direction_accuracy", "decidable_by_tests"])
     for key, title in (("local_eb", "Local empirical Bayes"), ("selection", "P2 selection"), ("learning_curve", "Learning curve")):
         if key in notes:
             out += [f"## {title}", "", notes[key], ""]

@@ -30,6 +30,26 @@ Everything heavy lives under one folder, the **data root**. These are the questi
 
 External drives are often formatted as exFAT. Moot Court works on them: it needs no symlinks, no hard links and no permission changes, and a permission change that the volume refuses is skipped quietly. On macOS an exFAT volume gets a binary companion file called `._NAME` next to many files. The package ignores every dot file when it lists a folder, so these do not confuse it. If a script of your own globs a folder under the data root, skip names that start with a dot. Do not copy a data root between volumes with a tool that follows symlinks into it, and do not put a symlink inside it.
 
+## Working from a clone on an exFAT volume
+
+If the repository itself sits on an exFAT drive, two things differ from an internal disk.
+
+- **macOS sidecar files fail tests.** macOS writes a `._NAME` sidecar file next to files it copies or edits on such a drive. Several tests read the docs, reports and source folders as text, and stop with `UnicodeDecodeError: ... byte 0xb0` when they reach one, so a fresh clone or copy shows about twenty failures that have nothing to do with the code. Delete the sidecar files before you run the tests, and again after anything that copies files onto the drive:
+
+  ```bash
+  find . -name '._*' -type f -delete
+  ```
+
+- **Keep the uv virtualenv on the internal disk.** `uv sync` into a virtualenv on the drive fails with `failed to copy ... ._ttx.1`, a `._` file inside a wheel. Point uv at an environment on the internal disk, and leave the clone and the data root where they are:
+
+  ```bash
+  export UV_PROJECT_ENVIRONMENT="$HOME/.venvs/mootcourt"
+  uv sync --extra dev
+  uv run pytest -q
+  ```
+
+  The environment takes a few hundred megabytes of the internal disk. Keep the variable set in every shell that runs `uv run` in that clone.
+
 ## A card abstains
 
 An abstained card is the intended answer when the ledger has no standing to give an opinion. It lists every reason that fired. There are four triggers.
@@ -38,19 +58,19 @@ An abstained card is the intended answer when the ledger has no standing to give
 |---|---|---|
 | `support` | Fewer than 30 admitted rows of this cell are visible at the card's origin. | Import more history, or check that the cell name is right (see below). |
 | `novelty` | The proposal is unlike every precedent in the cell. | Nothing is wrong: the ledger has nothing to say about a change this unusual. Run the test and add it to the ledger. |
-| `reliability` | The cell's reliability report is missing, more than 14 days old, or marks the cell drifted. | Run `moot backtest` once to seed it, and `moot join` weekly to keep it current. For a static archive, pass `--now` at the end of its history. A drifted cell clears at the first join that is not below threshold. |
+| `reliability` | The cell's reliability report is missing, more than 14 days older than the card's issue time, or marks the cell drifted. | Run `moot backtest` once to seed it, and `moot join` weekly to keep it current; the join scores abstained cards too, so a stale cell recovers as its outcomes arrive. For a static archive, pass `--now` at the end of its history (the service has no `--now`: it uses its own clock). A drifted cell clears at the first join that is not below threshold. |
 | `instability` | Dismissing a few precedents would move the forecast across the action threshold. | The evidence is thin or split. Report the card as undecided, and run the test. |
 
 A backtest reports the abstention rate and the share by trigger, so you know how often to expect each.
 
-**The card says `Cell: headline_only` and `no admitted rows in cell headline_only`.** The ledger's cells are metrics, and you did not name one. Pass `--cell NAME` (the names are in `[cells]` and in the ingest summary). Today the command does not stop and ask; it forecasts a cell that the ledger does not have and abstains for lack of support.
+**`moot card` says `this ledger's cells are ...; the card needs --cell`.** The ledger's cells are metrics, and you did not name one. The command stops with one line that lists the cells; pass `--cell NAME` with one of them (the names are also in `[cells]` and in the ingest summary). The check is in the card builder, so `POST /card` and the MCP tool apply it too; there the cell is the `cell` field.
 
 ## Ids differ between machines
 
-A card carries three ids: the card id, the model id and a feature hash. They are digests of content that includes the fitted parameters. The same fit on another operating system or linear algebra build can differ in the last bits of its parameters (about 1e-15) and so produce a different model id and feature hash, while every score agrees to about eleven digits. Two consequences:
+A card carries three ids: the card id, the model id and a feature hash. They are digests of content that includes the fitted parameters, and the model id also covers the snapshot id, whose first part is the date of the import, so the same fit on another day has another model id. The same fit on another operating system or linear algebra build can differ in the last bits of its parameters (about 1e-15) and so produce a different model id and feature hash, while every score agrees to about eleven digits. Two consequences:
 
 - Compare cards, models and snapshots **by their stored ids**, never by refitting and recomputing. A card file stores the ids of the snapshot and the model it used.
-- Do not expect the model id in a tutorial to match yours on another platform. Compare the scores, which are the substance. The snapshot id has a date prefix and a digest of the ledger rows; the digest part is a function of the rows alone.
+- Do not expect the model id in a tutorial to match yours on another day or platform. Compare the scores, which are the substance. The snapshot id has a date prefix and a digest of the ledger rows; the digest part is a function of the rows alone.
 
 ## Rows are missing from the ledger, or not used
 
@@ -73,9 +93,15 @@ The ledger is a Parquet file with a schema version. A new release can tighten a 
 
 An unfamiliar error that mentions `schema_version` after an upgrade means the same thing.
 
-## Backtest stops with `KeyError: 'cell'`
+## Backtest says the ledger is too small
 
-A ledger with fewer than about 20 admitted rows before its first quarterly origin cannot be back-tested. Today the command stops with a Python traceback that ends in `KeyError: 'cell'` instead of a sentence. The cure is more history: a few dozen experiments per metric make a first backtest possible, and the gates in its report say how many are needed for a comparison to mean anything.
+A backtest scores a quarter only when at least 20 admitted rows are usable before it starts. A ledger with fewer admitted rows than that cannot be back-tested, and `moot backtest` ends in one line that names the minimum:
+
+```text
+Invalid value: the ledger is too small to backtest: 18 admitted rows, and a quarter is scored only when at least 20 admitted rows are usable before it starts
+```
+
+Earlier releases ended in a Python traceback that finished with `KeyError: 'cell'` instead; if you see that, you are running an old version. The cure is more history: a few dozen experiments per metric make a first backtest possible, and the gates in its report say how many are needed for a comparison to mean anything. A model can still be fitted, and a card issued, on such a ledger; only the backtest, and so the reliability record that it seeds, is missing.
 
 ## The service and the MCP server
 
@@ -83,8 +109,8 @@ A ledger with fewer than about 20 admitted rows before its first quarterly origi
 - **HTTP 400 on every request.** On a loopback bind the service accepts only loopback names in the `Host` header (a defense against DNS rebinding). Call it as `127.0.0.1` or `localhost`.
 - **HTTP 404 `no model is registered for source ...`.** The source has no fitted model, or you fitted after starting the service, which reads models at start. Fit and restart.
 - **HTTP 422.** A required field is missing: `source` and `impressions`.
-- **A card from the service abstains although the CLI card did not.** The service issues cards as of its machine's clock, and a static ledger's reliability report is old. Pass an `origin` in the request, or join fresh results.
-- **An MCP client says `Error executing tool get_card`.** The server refused the request, and the reason is in the server's log, not in the client's message. The usual cause is an `origin` earlier than the date the model was fitted on, because the parameters were fitted on rows that origin should not see.
+- **A card from the service abstains although the CLI card did not.** The card abstains for `reliability` when the cell's report is more than 14 days older than the card's issue time, or is dated after it. The command line issues cards as of `--now` (the machine's clock by default). The service always uses its own clock, and a request has no `now` field. An `origin` in the request does not help: it chooses which ledger rows the forecaster may see and leaves the clock alone. A static ledger such as the sample has an old report, so the service's card abstains. For a live ledger, run `moot join` on fresh results, which refreshes the report (abstained cards are scored by the join too, so a stale cell collects the evidence to recover). To see a full card from a static archive, use `moot card --now` at the end of its history.
+- **An MCP client says the tool failed.** The server refuses a bad request as a tool error, and the message is one line that names the cause. The usual cause is an `origin` earlier than the date the model was fitted on, because the parameters were fitted on rows that origin should not see.
 - **The client says the server exited.** `moot mcp` must run from the project folder, or with `MOOTCOURT_DATA_ROOT` set, to find its models.
 
 ## My numbers differ from the published ones

@@ -491,6 +491,11 @@ class P2Predictor:
             recency = np.exp2(-age / hl)
         kern_all = np.exp(d2 * inv) * recency
         peak = float(kern_all.max())
+        if peak == 0.0:
+            # The kernel underflows to exactly zero for every precedent: the query is far from all of them, the fit-time validation never saw
+            # such a query (it drops them), and a weight chosen on in-support queries applied to one dissimilar precedent would be an
+            # unvalidated forecast. The state is empty with a weight of zero, so the predictive is P1's (REV-L-021).
+            return NeighborState((), np.zeros(0), np.zeros(0), np.zeros(0), (), par["mu"], tau, 0.0, 0.0, nu=par["nu"])
         if peak < _KERNEL_FLOOR:
             # A query far from every precedent (a small bandwidth in many standardized dimensions reaches this, and a few hundred history rows reach
             # it with the pairwise features): the moments depend only on ratios of the weights, so measure every distance from the nearest

@@ -38,6 +38,7 @@ import queue
 import re
 import shlex
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -155,7 +156,7 @@ class _Shell:
     def __init__(self, home: Path, env: dict[str, str]):
         self.home = home
         self.p = subprocess.Popen(["bash", "--noprofile", "--norc"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                  text=True, bufsize=1, cwd=home, env=env)
+                                  text=True, bufsize=1, cwd=home, env=env, start_new_session=True)
         self.q: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, daemon=True).start()
         self.p.stdin.write("set -o pipefail\n")
@@ -189,9 +190,18 @@ class _Shell:
             out.append(line)
 
     def close(self) -> None:
+        """Stop the shell and everything it started. A block that timed out leaves bash busy, so the whole process group is killed."""
         try:
             self.p.stdin.write("kill $(jobs -p) 2>/dev/null; exit\n")
             self.p.stdin.flush()
+            self.p.wait(timeout=10)
+        except Exception:
+            pass
+        try:
+            os.killpg(self.p.pid, signal.SIGKILL)               # the shell led its own session: nothing it started survives
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
             self.p.wait(timeout=10)
         except Exception:
             self.p.kill()
@@ -213,8 +223,7 @@ _MASKS = [
     (re.compile(r"\b\d+\.\d+\.\d+\b"), "<version>"),
     (re.compile(r"\b\d+(\.\d+)? (s|seconds)\b"), "<time>"),
     (re.compile(r"\b\d+(\.\d+)? (KB|MB|GB|TB)\b"), "<size>"),
-    (re.compile(r"\b\d+ days old\b"), "<n> days old"),
-    (re.compile(r"\b\d+ days\b"), "<n> days"),
+    (re.compile(r"\b\d+ days old\b"), "<n> days old"),     # only the age: a limit such as "limit 14 days" is part of the claim and is not masked
 ]
 
 
@@ -263,8 +272,12 @@ def run_file(path: Path, *, slow: bool = False, keep: bool = False, workdir: Pat
     shell = _Shell(home, env)
     try:
         shell.run("python -c 'import matplotlib.pyplot' > /dev/null 2>&1", 120)       # the font cache is built once, out of sight of the pages
+        stuck = False
         for b in blocks:
             if not b.is_run:
+                continue
+            if stuck:                                          # a block that timed out leaves its session in an unknown state
+                fr.results.append(Result(b, "skipped", note="an earlier block of this page timed out"))
                 continue
             want = int(b.option("exit", 0))
             if b.option("needs") == "archives" and archives_present() is None:
@@ -278,6 +291,7 @@ def run_file(path: Path, *, slow: bool = False, keep: bool = False, workdir: Pat
             t0 = time.monotonic()
             rc, out, timed_out = shell.run(b.body.replace(DOC_PORT, port), BLOCK_TIMEOUT_S)
             status = "timeout" if timed_out else ("ok" if rc == want else "failed")
+            stuck = stuck or timed_out
             note = "" if status == "ok" else f"exit {rc}, wanted {want}"
             flat = re.sub(r"[\s\u2500-\u257f]+", " ", display_text(out, home, port))
             for text in b.options("expect"):

@@ -193,10 +193,23 @@ class Predictive:
 
     # ------------------------------------------------------------- scoring
     def logscore(self, y, s_star):
-        """Log of the exact mixture density of y* at ``y`` (higher is better; units: log per unit y)."""
+        """Log density of y* at ``y`` (higher is better; units: log per unit y).
+
+        A predictive built from a location-scale family (it has a ``spec``) is scored by its ANALYTIC marginal: the density of
+        ``theta + Normal(0, s*^2)`` with ``theta ~ t(location, scale, df)`` (the Normal when ``df`` is None), by the same scale-mixture
+        integral the P1 likelihood and the lambda selection use. The grid serves intervals, probabilities and the CRPS only. Scoring on the
+        grid would drop every bit of t mass beyond its edge (review L, REV-L-002: at three degrees of freedom that cost P1 0.025 nats on
+        Upworthy and 0.099 on ASOS against the quantity the selection maximizes). A predictive without a spec is scored by its exact grid mixture.
+        """
         y = np.asarray(y, dtype=np.float64)
         s = _check_s(s_star)
         yb, sb = np.broadcast_arrays(y, s)
+        if self.spec is not None and self.spec.get("family") in ("student_t", "normal"):
+            from mootcourt.predictors.p1 import marginal_logpdf_rows
+
+            nu = math.inf if self.spec.get("df") is None else float(self.spec["df"])
+            out = marginal_logpdf_rows(yb, sb * sb, float(self.spec["location"]), max(float(self.spec["scale"]), 1e-12), nu)
+            return float(out) if yb.ndim == 0 else np.asarray(out).reshape(yb.shape)
         out = np.empty(yb.size)
         yf, sf = yb.ravel(), sb.ravel()
         with np.errstate(divide="ignore"):

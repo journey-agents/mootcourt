@@ -41,7 +41,16 @@ import numpy as np
 import pandas as pd
 
 from mootcourt import scale
-from mootcourt.config import BANDWIDTH_MULTIPLIERS, KAPPA, LAMBDA_GRID, NU_GRID, P2_GUARD_MULT, P2_SELECTION_DEFAULT
+from mootcourt.config import (
+    BANDWIDTH_MULTIPLIERS,
+    HALF_LIFE_DAYS,
+    KAPPA,
+    LAMBDA_GRID,
+    NU_GRID,
+    P2_GUARD_MULT,
+    P2_SELECTION_DEFAULT,
+    TOP_M_NEIGHBORS,
+)
 from mootcourt.features import FeatureSpace, feature_hash, use_cell_only
 from mootcourt.ledger import ADMITTED, series_ns, visible_rows
 from mootcourt.predictors.base import Predictive
@@ -51,6 +60,7 @@ from mootcourt.predictors.p2 import NeighborState, P2Predictor
 from mootcourt.storage import visible_iterdir
 
 BUNDLE_FORMAT = 1
+MAX_EXPOSURE = 1e12         # a planned exposure above this is a typo, and its standard error overflows nothing but means nothing
 # raised when the method changes in a way that makes a refit a different method (round 00: P0, P2 predictive family, pairwise features)
 METHOD_VERSION = 2
 _ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -163,6 +173,8 @@ class ModelBundle:
         n_var = impressions if impressions_variant is None else impressions_variant
         if impressions <= 0 or n_var <= 0:
             raise ValueError("impressions per arm must be positive")
+        if impressions > MAX_EXPOSURE or n_var > MAX_EXPOSURE:
+            raise ValueError(f"impressions per arm must be at most {MAX_EXPOSURE:.0e}")
         if self.source == "upworthy":
             return float(scale.upworthy_s_star(impressions, n_var, self.median_ctr_ref(cell)))
         if self.source == "asos":
@@ -188,7 +200,12 @@ def method_id(space: FeatureSpace | None = None) -> str:
         "guard": P2_GUARD_MULT,
         "selection": P2_SELECTION_DEFAULT,
         "pairwise": bool(space.pairwise) if space is not None else False,
+        "top_m": TOP_M_NEIGHBORS,
+        "half_lives": [str(h) for h in HALF_LIFE_DAYS],
     }
+    if space is not None:  # the kind and size of the feature space: a source that gains headline text changes the method (REV-L-023)
+        payload.update({"cell_only": bool(space.cell_only), "svd_dims": int(space.svd_dims), "min_df": int(space.min_df),
+                        "backend": space.backend, "feature_set": space.feature_set})
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:12]
 
 

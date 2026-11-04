@@ -156,6 +156,7 @@ class Prediction:
     interval_80_y: tuple | None = None        # 80 percent interval for the observed estimate at the planned standard error
     interval_90_y: tuple | None = None
     predictive: dict | None = None            # family, df, location, scale, grid and s_star: everything a later score needs
+    p0_var: float | None = None               # P0's variance of y: with p0_mean, the baseline log score of the join is the card's own (REV-L-019)
 
 
 @dataclass(frozen=True)
@@ -277,12 +278,13 @@ def robustness_dismissals(st: NeighborState, s_star: float, threshold: float = A
     order = np.argsort(-w, kind="stable")
     sw, swy = float(w.sum()) + st.tail[0], float((w * st.y).sum()) + st.tail[1]
     sw2v = float((w * w * var).sum()) + st.tail[2]
+    w_total = float(w.sum()) + st.tail[0]          # relative to the weight the state started with, so the kernel's absolute scale does not matter
     start_above = _p_sig_closed(sw, swy, sw2v, st.lam, st.mu, st.tau, st.tau_res2, s_star, st.nu) >= threshold
     for step, i in enumerate(order[:k], start=1):
         sw -= w[i]
         swy -= w[i] * st.y[i]
         sw2v -= w[i] * w[i] * var[i]
-        if sw <= 1e-12 * max(1.0, w.sum()):
+        if sw <= 1e-12 * w_total:
             return None
         above = _p_sig_closed(sw, swy, sw2v, st.lam, st.mu, st.tau, st.tau_res2, s_star, st.nu) >= threshold
         if above != start_above:
@@ -373,6 +375,7 @@ def build_card(
     prediction = Prediction(
         "P2", state.lam, main.p_sig(s_star), main.mean(), tuple(main.interval(0.8)), tuple(main.interval(0.9)),
         main.p_win(0.0), None if p0 is None else p0.p_sig, None if p0 is None else p0.mean, iv80_y, iv90_y, _predictive_block(main, s_star),
+        None if p0 is None else p0.var,
     )
     k = max(1, int(round(n_eff))) if n_eff else 0
     inst = check_instability(state, s_star, seed=0, config=cfg)
@@ -455,7 +458,10 @@ def gate_verdict(n_tests: int | None, lo, hi, gates: dict | None, base_rate: flo
             if lo <= 0.0 <= hi
             else (", and its interval is above zero" if lo > 0 else ", and its interval is below zero")
         )
-    need = f" (the gate needs {sel['n_400']} tests for a skill of 0.10 and {sel['n_200']} for 0.20{where})"
+    unit = (gates.get("interval") or {}).get("by")
+    caveat = "" if unit == "test" else " (this gates file was simulated per row, which overstates what tests can decide)"
+    word = "tests" if unit == "test" else "rows"
+    need = f" (the gate needs {sel['n_400']} {word} for a skill of 0.10 and {sel['n_200']} for 0.20{where}){caveat}"
     return f"{n_tests} tests: {st['label']}{need}{side}"
 
 
@@ -514,7 +520,7 @@ def to_json(card: Card) -> dict:
     ``withheld`` is for the weekly join and the replay, which score it for reliability; ``public_json`` drops it for every response.
     """
     p = card.prediction
-    p0 = None if p.p0_p_sig is None else {"p_sig": p.p0_p_sig, "mean": p.p0_mean}
+    p0 = None if p.p0_p_sig is None else {"p_sig": p.p0_p_sig, "mean": p.p0_mean, "var": p.p0_var}
     if _issued(card):
         prediction = {
             "rung": p.rung, "lambda": p.lam, "p_sig": p.p_sig, "point": p.point,

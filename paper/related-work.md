@@ -246,6 +246,64 @@ Relation: cited for partial pooling terminology.
 
 No fetchable paper was found that applies kernel-weighted or nearest-neighbour pooling of past experiments on text plus structured features to forecast a new experiment; the nearest is 7.1 (comparison sets) and 2.6 (embedding similarity used for allocation).
 
+## 8. Added in paper pass 3 (3 November 2026): the fetch-verified survey items
+
+Source: `.claude/fleet/muse-survey-verified.md`, where every item was opened on 3 November 2026 at the URL given; the four items the survey marked partly verified (8.5, 8.6, 8.7, 8.10) were opened again on 3 November 2026 for this pass and their identifiers resolve to the works described (8.5: title and the author line as shown, submitted 2 July 2026; 8.6: comment field "Accepted as a workshop paper" at the Workshop on Agent Behavior, v1 3 August 2026; 8.7: title and the six authors as shown, submitted 13 March 2026; 8.10: the Crossref record gives the journal, volume 16, issue 4, pages 437 to 450, 2000; its abstract is not served by any open record, so no specific comparison is attributed to it).
+
+8.1 Kevin Lee, Benjamin Letham, Zhiyuan Jerry Lin, Elodie Samson, Eric Onofrey, Poppy Zhang, Shawndra Hill, Eytan Bakshy. Offline-to-Online Creative Optimization with Generative Models and Adaptive Testing. arXiv:2607.23696, 2026. Fetched: https://arxiv.org/abs/2607.23696 (verified).
+Claim: an archive-trained ranker chooses which generated ad creatives enter a 50-arm live test; offline it recovers most of the above-mean creatives in its top 30, and in the live test its top pick finished 43rd, so the authors steer the slate rather than pick the winner.
+Relation: the nearest industrial instance of selecting experiments from pre-launch information; it reports offline recall and one live rank, not a calibrated outcome distribution, an abstention rule or proper scores against live results on a public archive. First of the three screening systems R5 asked us to cite.
+
+8.2 Han Li and nineteen co-authors. SimGym: A Framework for A/B Test Simulation in E-Commerce with Traffic-Grounded VLM Agents. arXiv:2605.19219, 2026. Fetched: https://arxiv.org/abs/2605.19219 (verified).
+Claim: vision-language agents grounded in production clickstream simulate storefront tests and reach 77 percent directional agreement with observed add-to-cart shifts on 50 live tests.
+Relation: screening by simulation rather than precedent; direction only, no abstention, no scored probability. Second of the three screening systems.
+
+8.3 Samuele Mazzanti. How Yelp Built a Back-Testing Engine for Safer, Smarter Ad Budget Allocation. Engineering blog post, 2 February 2026. Fetched: https://engineeringblog.yelp.com/2026/02/how-yelp-built-a-back-testing-engine-for-safer-smarter-ad-budget-allocation.html (verified).
+Claim: a back-testing engine replays historical campaign data through the production budgeting code with learned outcome models to preview allocation changes, keeping the live test for final validation.
+Relation: archive replay for one algorithm family; never scores a forecast of a product experiment. Third of the three screening systems; cited as a blog post.
+
+8.4 Zhengmian Hu, Lei Shi, Ritwik Sinha, Justin Grover, David Arbour. Experimentation Accelerator: Interpretable Insights and Creative Recommendations for A/B Testing with Content-Aware Ranking. arXiv:2602.13852, 2026. Fetched: https://arxiv.org/abs/2602.13852 (verified).
+Claim: a deployed content-aware ranking model trained on historical experiment outcomes prioritizes which variants to test and flags under-expressed attributes.
+Relation: evaluated by offline ranking quality on customer experiments, not by calibrated pre-launch probabilities scored against live outcomes.
+
+8.5 T. Dooskin and Squoosh Technical Staff. The Judge Knows When It Knows: Calibrated Abstention for LLM-Based A/B-Test Prediction. arXiv:2608.07517, 2026. Fetched: https://arxiv.org/abs/2608.07517 (partly verified by the survey: the spelling Dooskin and kappa 0.14 in the abstract; re-fetched for this pass).
+Claim: a multimodal judge predicting winners from screenshots reaches a kappa of 0.14 on 330 real tests; a vote-margin gate that abstains on about half of them lifts agreement to 0.31.
+Relation: direct evidence that abstention, not a better prompt, is the operating point for pre-launch prediction; our four triggers extend the gate from vote margin to support, novelty, reliability and decision instability.
+
+8.6 Stefan Hut, Lorenzo Masoero. Can AI Agents Simulate A/B Test Outcomes? A Validation Framework for Agentic Experimentation. Workshop paper, Workshop on Agent Behavior (co-located with COLM 2026); arXiv:2608.02345. Fetched: https://arxiv.org/abs/2608.02345 (partly verified by the survey: workshop paper, not proceedings; re-fetched for this pass).
+Claim: on 67 historical marketing tests a validation framework separates agent error from subsampling error; calibration on a pre-period of realized outcomes cuts squared error about 77-fold.
+Relation: validates a simulator against an archive, where we validate a precedent prior; we add abstention and proper scoring.
+
+8.7 Richard Mudd, Abbas Zaidi, Rina Friedberg, Ilya Gorbachev, Anchal Choubey, Houssam Nassif. Breaking the Winner's Curse with Bayesian Hybrid Shrinkage. arXiv:2603.12867, 2026. Fetched: https://arxiv.org/abs/2603.12867 (partly verified by the survey: 167 experiments, production not claimed; re-fetched for this pass).
+Claim: a global prior fit from past experiments and an experiment-specific local shrinkage factor correct the winner's curse, evaluated on 167 experiments at a large platform.
+Relation: like the rest of Section 1 it corrects the estimate of a completed test; our P1 prior is scored as a forecast of a test that has not run.
+
+8.8 Marten Schultzberg. When Can You Ship on Evals Alone? Trial-Level Surrogacy for Offline Evaluation of LLM Systems. arXiv:2610.10142, 2026. Fetched: https://arxiv.org/abs/2610.10142 (verified).
+Claim: trial-level surrogacy yields a closed-form ship, test or kill rule from historical launch logs; on 183 Upworthy interventions the gate sends every intervention to a live test.
+Relation: the decidability bar a pre-launch gate must clear on our own archive; our abstention triggers and gates are the analogue for a precedent prior.
+
+8.9 Vickie Zhang, Michael Zhao, Maria Dimakopoulou, Anh Le, Nathan Kallus. Evaluating the Surrogate Index as a Decision-Making Tool Using 200 A/B Tests at Netflix. arXiv:2311.11922, 2023. Fetched: https://arxiv.org/abs/2311.11922 (verified).
+Claim: on 200 tests with 1,098 arms, decisions from a 14-day surrogate index agree with 63-day decisions about 95 percent of the time.
+Relation: a worked calibration of an early-signal decision rule against realized outcomes, the protocol we apply at time zero rather than at day 14.
+
+8.10 Leonard J. Tashman. Out-of-sample tests of forecasting accuracy: an analysis and review. International Journal of Forecasting 16(4): 437-450, 2000. Fetched: https://api.crossref.org/works/10.1016/S0169-2070(00)00065-0 and https://ideas.repec.org/a/eee/intfor/v16y2000i4p437-450.html (bibliographic record verified; abstract not served).
+Claim: the forecasting literature's treatment of out-of-sample accuracy tests, including evaluation from a rolling origin.
+Relation: cited for the rolling-origin protocol by name, the credit R5 asked for; no specific comparison is attributed to it because its text could not be fetched.
+
+8.11 James Bisbee, Joshua D. Clinton, Cassy Dorff, Brenton Kenkel, Jennifer M. Larson. Synthetic Replacements for Human Survey Data? The Perils of Large Language Models. Political Analysis 32(4): 401-416, 2024. Fetched: https://api.crossref.org/works/10.1017/pan.2024.5 (verified; publisher page returned 403).
+Claim: persona-prompted language models reproduce survey averages with less variance, different regression coefficients, prompt sensitivity and drift over months.
+Relation: the failure modes a synthetic-respondent rung must rule out before it earns weight, which is why the stacked second opinion starts at weight zero.
+
+8.12 Joon Sung Park and ten co-authors. LLM Agents Grounded in Self-Reports Enable General-Purpose Simulation of Individuals. arXiv:2411.10109, v1 2024, v3 2026. Fetched: https://arxiv.org/abs/2411.10109 (verified).
+Claim: agents built from two-hour interviews with 1,052 people reproduce held-out survey and experimental responses at 83 to 86 percent of participants' own test-retest consistency.
+Relation: respondent grounding buys a simulator measurable fidelity on self-report, not on a live product experiment.
+
+8.13 Aliasgar Khimani. Fine-tuning OpenJev on 62,695 A/B Tests. Technical write-up and model release, 23 September 2026 (corrections 24 September 2026). Fetched: https://khimani.dev/blog/fine-tuning-openjev-on-62695-ab-tests/ (partly verified by the survey: the 62,695 are Upworthy arms, not tests; the byline is a handle the site root resolves to the author).
+Claim: a fine-tuned text ranker orders held-out Upworthy headline pairs with 0.689 accuracy (0.843 on pairs from significant tests) and falls to 0.522 out of domain.
+Relation: a third text-only winner ranker on our archive, scored by pairwise accuracy; it belongs beside 2.6 and 2.7 as a comparator on matched splits.
+
+Credit lines R5 asked for were open at the end of pass 3 and are closed in Section 9 below (added in pass 4, each fetch-verified on 3 November 2026 before it entered the bibliography).
+
 ## UNVERIFIED items (not fetchable after two attempts; no details claimed)
 
 U.1 A refinement of the Microsoft empirical Bayes prior attributed to "Deng et al. (2018)" by search summaries of 1.9. Not located. UNVERIFIED.
@@ -265,13 +323,35 @@ Clearly prior art that the paper must cite as such:
 - Scoring, decomposition, consistency bars, selective prediction and conformal validity: 5.1 to 5.10.
 - The two datasets and their documented splits: 6.1, 6.4.
 
-What appears not to exist in the verified literature:
-- A pre-launch forecast card for a single proposed experiment that outputs a full outcome distribution and a win probability, abstains under four named triggers (support, novelty, reliability, decision instability), and is scored against the live result on public archives with log score, CRPS, Brier skill against the base rate with its irreducible floor, calibration against a perfect-calibration null, and interval coverage. Prior work either corrects estimates after the test (1.1 to 1.7, 7.1), allocates traffic during the test (2.6, 6.7, 6.8), or forecasts without abstention or calibration scoring (2.7, 2.10).
-- Decision-value evaluation of prioritizing which experiments to run, using only information available before launch, measured as test-and-roll regret on public ledgers. 4.6 is the nearest work and evaluates rules that consume the experiment's own data; 4.5 changes allocation and thresholds rather than selection.
+## 9. Added in paper pass 4 (3 November 2026): the credit-line references
+
+Fetch-verified in citations round 01 (`.claude/fleet/citations-round01.md`): every record was opened with WebFetch at the URLs listed there (Crossref, OpenAlex, RePEc, Europe PMC, the arXiv API, the Oxford University Press and PLOS landing pages; the ACM, Taylor and Francis and Wiley landing pages returned 403 and were replaced by the open records). Seven verified, one partly (the KDD 2011 conference version of 9.1 rests on the Crossref record alone; the journal version is verified). Where each is cited in `paper/sections/related-work.tex`:
+
+9.1 Shachar Kaufman, Saharon Rosset, Claudia Perlich and Ori Stitelman. Leakage in Data Mining: Formulation, Detection, and Avoidance. ACM Transactions on Knowledge Discovery from Data 6(4): 1 to 21, 2012. DOI 10.1145/2382577.2382579 (conference version KDD 2011, pages 556 to 563, DOI 10.1145/2020408.2020496, three authors). Cited for the word leakage as a named failure of evaluation design, the frame of the cautionary run and the audit (paragraph on scoring and the protocol).
+
+9.2 Francis X. Diebold and Roberto S. Mariano. Comparing Predictive Accuracy. Journal of Business and Economic Statistics 13(3): 253 to 263, 1995. DOI 10.1080/07350015.1995.10524599. Cited with 9.3 for the paired comparison of predictive accuracy that the admission guard and the guarded-against-unguarded comparison are instances of.
+
+9.3 Raffaella Giacomini and Halbert White. Tests of Conditional Predictive Ability. Econometrica 74(6): 1545 to 1578, 2006. DOI 10.1111/j.1468-0262.2006.00718.x. Cited with 9.2.
+
+9.4 Alex Deng, Ulf Knoblich and Jiannan Lu. Applying the Delta Method in Metric Analytics: A Practical Guide with Novel Ideas. KDD 2018, pages 233 to 242. DOI 10.1145/3219819.3219919; arXiv 1803.06336. Cited for the in-test treatment of ratio metrics by the delta method, against which the cautionary run's pre-launch coupling is stated (first paragraph).
+
+9.5 Minyong R. Lee and Milan Shen. Winner's Curse: Bias Estimation for Total Effects of Features in Online Controlled Experiments. KDD 2018, pages 491 to 499. DOI 10.1145/3219819.3219905. Cited for the inflation of the oracle's value, the best positive observed lift among a test's arms (paragraph on decision value).
+
+9.6 Anthony O'Hagan, John W. Stevens and Michael J. Campbell. Assurance in Clinical Trial Design. Pharmaceutical Statistics 4(3): 187 to 201, 2005. DOI 10.1002/pst.175. Cited for the sense in which the card's significance probability is an assurance, a success probability averaged over a prior rather than a power at one assumed effect (paragraph on decision value).
+
+9.7 Sholom Wacholder, Stephen Chanock, Montserrat Garcia-Closas, Laure El Ghormli and Nathaniel Rothman. Assessing the Probability That a Positive Report is False: An Approach for Molecular Epidemiology Studies. Journal of the National Cancer Institute 96(6): 434 to 442, 2004. DOI 10.1093/jnci/djh075. Cited with 9.8 for the lineage of the base-rate-in-a-false-positive-risk computation that the success-rate prior descends from (paragraph on human forecasts and win rates).
+
+9.8 John P. A. Ioannidis. Why Most Published Research Findings Are False. PLoS Medicine 2(8): e124, 2005. DOI 10.1371/journal.pmed.0020124. Cited with 9.7.
+
+Summary count after pass 4: 79 references in `paper/references.bib` (70 from Sections 1 to 8 plus the nine entries above, the KDD 2011 version counted).
+
+What appears not to exist in the verified literature (narrowed on 3 November 2026 after the survey of Section 8):
+- A pre-launch forecast card for a single proposed experiment that outputs a full outcome distribution and a win probability, abstains under four named triggers (support, novelty, reliability, decision instability), and is scored against the live result on public archives with log score, CRPS, Brier skill against the base rate with its irreducible floor, calibration against a perfect-calibration null, and interval coverage. Prior work either corrects estimates after the test (1.1 to 1.7, 7.1, 8.7), allocates traffic during the test (2.6, 6.7, 6.8), forecasts without abstention or calibration scoring (2.7, 2.10, 8.2, 8.6), abstains on a vote margin without a scored outcome distribution (8.5), or screens candidates before a live test by offline ranking or replay without scoring a product experiment's outcome (8.1, 8.3, 8.4).
+- A decision-value evaluation of choosing which experiments to run from pre-launch information alone, with intervals against random order, on public ledgers. 8.1 chooses which creatives to test from pre-launch information and reports offline recall and one live rank, so the claim is narrowed to public archives of product experiments with proper scoring; 4.6 evaluates rules that consume the experiment's own data; 4.5 changes allocation and thresholds rather than selection.
 - The ladder design in which each rung generalizes the previous one (cell base rate, then cell prior, then kernel-weighted precedents shrunk to that prior, then a frozen human forecast, then a stacked second opinion at weight zero) with a leave-one-test-out mixing weight and a rolling-origin backtest over versioned ledger snapshots, so that a rung is admitted only when it beats the rung below out of sample. No verified paper combines these rungs or gates them this way.
 - Use of the ASOS checkpoint dataset for pre-launch outcome prediction; all verified uses (6.4, 6.6, 6.7, 6.8) concern sequential testing or bandits.
 
 Risks to the novelty claim that the paper should address directly: 7.1 (comparison-set pooling) and 2.6 plus 2.7 (text-based winner prediction on Upworthy) are close enough that the paper needs head-to-head numbers on matched splits, and 3.4 should be credited as the origin of the base-rate-as-prior idea.
 
-Summary: 57 references fetch-verified (10 in Section 1, 10 in Section 2, 7 in Section 3, 7 in Section 4, 10 in Section 5, 8 in Section 6, 5 in Section 7).
+Summary: 79 references fetch-verified (10 in Section 1, 10 in Section 2, 7 in Section 3, 7 in Section 4, 10 in Section 5, 8 in Section 6, 5 in Section 7, 13 in Section 8, 9 in Section 9).
 Unverified: 3 (U.1 to U.3); two dataset-usage details in 6.7 and 6.8 are flagged as not confirmed from the fetched page.

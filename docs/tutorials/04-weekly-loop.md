@@ -1,6 +1,6 @@
 # Tutorial 4: operate the weekly loop
 
-**You will:** issue cards before experiments launch, join the outcomes to those cards as the experiments conclude, read the reliability report that results, and promote a newly fitted model only if it earns it.
+**You will:** issue cards before experiments launch, each naming the ledger row that will hold its outcome, join the outcomes to those cards as the experiments conclude, read the reliability report that results, and promote a newly fitted model only if it earns it.
 
 **Prerequisites:** [tutorial 1](01-first-card.md) done (the steps below repeat its setup so that this page runs by itself).
 
@@ -8,7 +8,7 @@
 
 ## Why there is a loop
 
-A card is an opinion, and an opinion is worth what its record is worth. The loop keeps the record. Every card is **frozen** when it is issued, under a content digest, so nobody can adjust it after the result is known. When the experiment concludes, its result is joined to the card as a separate **outcome** file. The outcome says whether the card hit or missed, and how. The recent record of hits and misses is the **reliability report**, and it feeds back into the next card: a card **abstains** when its cell has no recent record, or when the cell has drifted (the forecasts have been worse than the plain base rate for two joins in a row).
+A card is an opinion, and an opinion is worth what its record is worth. The loop keeps the record. Every card is **frozen** when it is issued, under a content digest, so nobody can adjust it after the result is known. When the experiment concludes, its result is joined to the card as a separate **outcome** file. The outcome says whether the card hit or missed, and how. The recent record of hits and misses is the **reliability report**, and it feeds back into the next card: a card **abstains** when its cell has no recent record, or when the cell has drifted (at two joins in a row, with at least ten outcomes in the window, the rolling log score of the cards was more than 0.10 nats under the plain base rate).
 
 | Step | Cadence | Command | Writes |
 |---|---|---|---|
@@ -17,7 +17,7 @@ A card is an opinion, and an opinion is worth what its record is worth. The loop
 | Refit | nightly, or after a join | `moot fit --source NAME` | a new model, registered as the challenger |
 | Backtest | after a refit | `moot backtest --source NAME` | the challenger's report |
 | Promote | after the backtest | `moot promote --source NAME` | the registry, if the challenger earned it |
-| Issue | whenever a test is proposed | `moot card --source NAME --cell CELL --impressions N` | a frozen card |
+| Issue | whenever a test is proposed | `moot card --source NAME --cell CELL --impressions N --test-id T --variant-id V` | a frozen card that names its ledger row |
 
 `NAME` is the source name you gave at import. Schedule ingest, join, refit and backtest from cron or your scheduler. `moot doctor` exits non-zero when something has gone stale, which makes it a good last line of the job.
 
@@ -46,65 +46,46 @@ moot backtest --source sample | tail -n 4
   admitted: 300
 admitted by cell: checkout_conversion 100, pages_per_session 100, revenue_per_user 100
 final reads from 2023-01-23 to 2025-07-02
-snapshot 20261103-12617dfc4337 for sample
+snapshot 20261104-12617dfc4337 for sample
 ledger ~/moot-weekly/mootcourt-data/data/ledger/ledger.parquet: 300 rows
-fitted model ea8db7bd4a5c at snapshot 20261103-12617dfc4337 in 1.4 s; it is the champion for sample
+fitted model daff697c1c13 at snapshot 20261104-12617dfc4337 in 1.5 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-scored 270 rows over 9 origins in 3.3 s (report writing 2.2 s)
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261103-12617dfc4337.md
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261103-12617dfc4337.json
-wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261103-12617dfc4337.parquet
+scored 270 rows over 9 origins in 3.3 s (report writing 3.8 s)
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-12617dfc4337.md
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-12617dfc4337.json
+wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-12617dfc4337.parquet
 ```
 
 The backtest also **seeds the reliability report**: it records how the cards would have done on past experiments, so that the first live cards have a record to stand on.
 
 ## 2. Issue cards before the experiments launch
 
-Twelve experiments are about to launch. For each, we issue a card. A card must know which ledger row will hold its outcome, so that the join can find it. The row id of a ledger row is `source:experiment_id:variant_id::metric_id`: the source name you gave at import, the experiment id and variant id from your export, and the metric id joined to the variant with `::`. You know every part of it before launch.
-
-`moot card` does not take a row id yet, so this step calls the package's own card functions from a short Python script. They are the same code that `moot card` runs, but they are not a stable public interface, so keep the script in your repository and expect to revisit it after an upgrade. Until a `--row-id` option exists on `moot card`, this script is the way to issue a card that the join can find. (If your cards are issued over HTTP or the MCP tool, the same limit applies. Cards issued without a row id are frozen and valid, but `moot join` cannot attach an outcome to them.)
+Twelve experiments are about to launch. For each, we issue a card. A card must know which ledger row will hold its outcome, so that the join can find it. The row id of a ledger row is `source:test_id:variant_id`: the source name you gave at import, the experiment id from your export, and the variant id. In this sample ledger every row is one variant on one metric, and the variant id is the variant joined to the metric id with `::`, so the row of experiment 101 on the checkout metric is `sample:exp-101:treatment::checkout_conversion`. You know every part of it before launch. Give it to `moot card` as `--row-id`, or as `--test-id` with `--variant-id`, which build the same id. The HTTP service takes the same field as `row_id` and the MCP tool as its `row_id` argument ([tutorial 5](05-serve-http-and-mcp.md)).
 
 ```bash run
-cat > issue_cards.py <<'PY'
-import datetime as dt
-
-from mootcourt import card
-from mootcourt.bundle import load_bundle
-from mootcourt.cli import resolve_model_id
-from mootcourt.settings import abstain_config
-from mootcourt.storage import storage_paths
-
-paths = storage_paths()                                                                # where the data root's folders are
-bundle = load_bundle(resolve_model_id(paths.models, "sample"), paths.models)           # the champion model of the source "sample"
-reliability = card.load_reliability_report(paths.reports, "sample")                    # the recent record that the card checks
-now = dt.datetime(2025, 7, 3, tzinfo=dt.timezone.utc)                                  # the issue time: just after the history ends
-
-for n in range(101, 113):                      # the twelve experiments that are about to launch
-    request = card.CardRequest(source="sample", headline="", image_changed=False, impressions=20000, origin=now,
-                               cell="checkout_conversion", row_id=f"sample:exp-{n:03d}:treatment::checkout_conversion")
-    issued, _ = card.time_issue(bundle, request, reliability, now, config=abstain_config())     # build the card; nothing is written yet
-    frozen = card.freeze_or_load(issued, paths.cards)                                           # freeze it as a file under cards/
-    print(frozen["card_id"], frozen["abstention"]["status"], f"p_sig {frozen['prediction']['p_sig']:.3f}", frozen["request"]["row_id"])
-PY
-python issue_cards.py
+for n in $(seq 101 112); do
+  moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-07-03T00:00:00+00:00 \
+    --test-id exp-$n --variant-id treatment::checkout_conversion --json \
+    | python -c "import json, sys; c = json.load(sys.stdin); print(c['card_id'], c['abstention']['status'], 'p_sig', round(c['prediction']['p_sig'], 3), c['request']['row_id'])"
+done
 ```
 
 ```text output
-e46545e44bbd58c1 issue p_sig 0.209 sample:exp-101:treatment::checkout_conversion
-0af31d37ddad841e issue p_sig 0.209 sample:exp-102:treatment::checkout_conversion
-a981e990eb074688 issue p_sig 0.209 sample:exp-103:treatment::checkout_conversion
-467eef59ad6f832b issue p_sig 0.209 sample:exp-104:treatment::checkout_conversion
-38a275af4702b31e issue p_sig 0.209 sample:exp-105:treatment::checkout_conversion
-76c61dafe3818f27 issue p_sig 0.209 sample:exp-106:treatment::checkout_conversion
-e0d93c8d43113c7a issue p_sig 0.209 sample:exp-107:treatment::checkout_conversion
-b38e480eecd78c43 issue p_sig 0.209 sample:exp-108:treatment::checkout_conversion
-a5b007c3747c2182 issue p_sig 0.209 sample:exp-109:treatment::checkout_conversion
-d54205f0fe871d55 issue p_sig 0.209 sample:exp-110:treatment::checkout_conversion
-4058a1090f19d1dd issue p_sig 0.209 sample:exp-111:treatment::checkout_conversion
-8689afafdee13d42 issue p_sig 0.209 sample:exp-112:treatment::checkout_conversion
+bd2e60400d15c191 issue p_sig 0.209 sample:exp-101:treatment::checkout_conversion
+2fb63fbd618e3333 issue p_sig 0.209 sample:exp-102:treatment::checkout_conversion
+e36bdea1e788708d issue p_sig 0.209 sample:exp-103:treatment::checkout_conversion
+0f5f7ef37c5ad997 issue p_sig 0.209 sample:exp-104:treatment::checkout_conversion
+3184e07e57da4741 issue p_sig 0.209 sample:exp-105:treatment::checkout_conversion
+53d11b098753f388 issue p_sig 0.209 sample:exp-106:treatment::checkout_conversion
+967cc8ea1d652ead issue p_sig 0.209 sample:exp-107:treatment::checkout_conversion
+80d55ffd1ee7d107 issue p_sig 0.209 sample:exp-108:treatment::checkout_conversion
+e57b2a2d6b9b718c issue p_sig 0.209 sample:exp-109:treatment::checkout_conversion
+444d9d217105e9da issue p_sig 0.209 sample:exp-110:treatment::checkout_conversion
+6855e285dbdf2bd0 issue p_sig 0.209 sample:exp-111:treatment::checkout_conversion
+4d938a6427563437 issue p_sig 0.209 sample:exp-112:treatment::checkout_conversion
 ```
 
-To adapt the script to your own archive, change the source name (`"sample"`), the cell, `impressions` (the planned units per arm), `now` (the issue time) and the row id (your experiment and variant ids), and issue one card for each experiment you are about to launch.
+Each card is frozen under `cards/` with its row id inside. `--now` is the issue time: just after the history ends. To adapt the loop to your own archive, change the source name, the cell, `--impressions` (the planned units per arm), the issue time and the experiment and variant ids, and issue one card for each experiment you are about to launch. A card without a row id is frozen and valid, but `moot join` cannot attach an outcome to it. A card requested through the MCP tool is never frozen, so freeze through `moot card` or `POST /card`.
 
 All twelve cards issued an opinion and gave the same probability, because the twelve requests are identical: same cell, same planned exposure, no features that tell them apart. That is faithful to this ledger, which has no headline text. On a ledger with features, the cards differ.
 
@@ -122,7 +103,7 @@ moot ingest --format generic --input future.csv --source-name sample --ledger in
   admitted: 60
 admitted by cell: checkout_conversion 20, pages_per_session 20, revenue_per_user 20
 final reads from 2025-07-11 to 2025-12-29
-snapshot 20261103-5f0e42252332 for sample
+snapshot 20261104-5f0e42252332 for sample
 ledger incoming/ledger.parquet: 60 rows
 ```
 
@@ -136,7 +117,7 @@ done
 ```
 
 ```text output
-appended 60 rows, snapshot 20261103-80131c793938; attached 3 outcomes {"direction_miss": 2, "magnitude_miss": 1}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
+appended 60 rows, snapshot 20261104-80131c793938; attached 3 outcomes {"direction_miss": 2, "magnitude_miss": 1}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 3 outcomes {"direction_miss": 3}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 4 outcomes {"hit": 4}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 2 outcomes {"direction_miss": 2}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
@@ -154,7 +135,7 @@ Each line says how many rows were appended, how many outcomes were attached and 
 | `magnitude_miss` | the direction was right but the result fell outside the card's 90 percent interval |
 | `hit` | none of the above |
 
-A card file is never changed by a join. The outcome is a separate, read-only file under `cards/outcomes/`.
+A card that abstained is joined too. It keeps the forecast it withheld in a sealed block of its frozen file, and the join scores that forecast like an issued card's, flags the outcome as abstained and adds it to the reliability report. That is how a cell with a stale record recovers: its abstained cards still bring evidence. A card file is never changed by a join. The outcome is a separate, read-only file under `cards/outcomes/`.
 
 ## 4. Read the reliability report
 
@@ -174,15 +155,16 @@ PY
 ```text output
 report as of 2025-12-30T00:00:00+00:00
 cell                   as of          n  brier skill  log score  P0 log score  below drifted
-checkout_conversion    2025-12-01     5       -0.087      1.984         1.983      0 False
-pages_per_session      2025-07-02     7       -0.086      2.200         2.281      0 False
-revenue_per_user       2025-07-02     7        0.033      1.921         1.870      0 False
+checkout_conversion    2025-12-01     5       -0.087      1.984         1.978      0 False
+pages_per_session      2025-07-02     7       -0.086      2.200         2.268      0 False
+revenue_per_user       2025-07-02     7        0.033      1.921         1.910      0 False
 ```
 
 What to look at:
 
 - **as of, per cell.** Only the checkout cell has a recent date: it is the only cell that received outcomes. "Recent" here is relative to the join clock we set; `moot doctor`, below, compares with today's real date, which is why it still calls every entry stale. The other two carry the date of the backtest that seeded them, and a card for them abstains once that date is more than 14 days old. This is the intended behavior: a cell with no recent record has no standing.
-- **n.** The outcomes inside the rolling window, the trailing eight weeks before the join. A cell's counters, n included, are computed at a join that brings it outcomes, and a later join with none only refreshes the **as of** date (that is why the checkout cell reads 2025-12-01 and not 2025-11-01). For the checkout cell the last such join was on 1 November, so the window runs from 6 September. The twelve experiments concluded on 11 July, 20 July, 29 July, 7 August, 16 August, 25 August, 3 September, 12 September, 21 September, 30 September, 9 October and 18 October (the `ended_at` dates in `future.csv`), and five of them, 12 September to 18 October, fall inside the window: that is the 5. The other two cells still show the 7 outcomes that the backtest seeded them with.
+- **n.** The outcomes inside the rolling window, the trailing eight weeks before the join. A cell's counters, n included, are computed at a join that brings it outcomes. For the checkout cell the last such join was on 1 November, so the window runs from 6 September. The twelve experiments concluded on 11 July, 20 July, 29 July, 7 August, 16 August, 25 August, 3 September, 12 September, 21 September, 30 September, 9 October and 18 October (the `ended_at` dates in `future.csv`), and five of them, 12 September to 18 October, fall inside the window: that is the 5. The other two cells still show the 7 outcomes that the backtest seeded them with.
+- **Why the checkout cell reads 2025-12-01.** A join that brings a cell no outcomes carries its counters unchanged, and refreshes its **as of** date only while the cell's window still holds outcomes. The 1 December join looked back to 6 October, where the experiments of 9 and 18 October still counted, so the date moved to 1 December. The 30 December join looked back to 4 November, found no outcome and left the date alone. A cell that stops receiving outcomes therefore ages, and its cards abstain once the date is more than 14 days old.
 - **log score and P0 log score.** The rolling log score of the cards and of the plain base-rate predictor (P0) on the same rows; higher is better. A cell is below threshold at a join when the model is more than 0.10 nats (the unit of the natural-log score) under the base rate with at least ten outcomes in the window. After two joins in a row below threshold, the cell is marked **drifted** and every card for it abstains until a join that is not below clears the mark. Here no cell has ten outcomes in its window, so none can drift, and `below` is zero.
 - **brier skill.** Negative means the recent forecasts did worse than the base rate. With five outcomes, it says nothing yet.
 
@@ -195,15 +177,15 @@ tail -n 4 doctor.txt
 
 ```text output
 exit code: 1
-WARN  model sample: champion ea8db7bd4a5c was fit on snapshot 20261103-12617dfc4337, which no longer matches the ledger; run `moot fit`
-WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 489 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
+WARN  model sample: champion daff697c1c13 was fit on snapshot 20261104-12617dfc4337, which no longer matches the ledger; run `moot fit`
+WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 490 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 status: warn
 ```
 
 ## 5. Refit, back-test and promote
 
-New rows came in, so the model is out of date ("fit on a snapshot that no longer matches the ledger"). Refit. The new model is registered as the **challenger**; the old one stays the **champion** until the challenger earns the place.
+New rows came in, so the model is out of date ("fit on a snapshot that no longer matches the ledger"). Refit. A fit records the method it was made with (`method_id`, a hash of the method version and its fixed hyperparameters, never of the data) and the date of the latest result it saw (`data_through`). A fit with the champion's method on strictly newer data is a **champion refresh**: it takes the champion's place without the promotion margin, after a check that its backtest did not regress. Until its backtest summary is attached, the refresh is pending and the new model is listed as the challenger, which is why the backtest follows the fit. The registry history states the reason either way (`champion_refreshed` or `refresh_refused`). Any other later fit is registered as the **challenger**.
 
 ```bash run
 moot fit --source sample
@@ -212,15 +194,15 @@ moot promote --source sample
 ```
 
 ```text output
-fitted model 57a727de0c15 at snapshot 20261103-80131c793938 in 1.7 s; it is the challenger for sample
+fitted model 097a3bd3b39b at snapshot 20261104-80131c793938 in 1.5 s; it is the challenger for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261103-80131c793938.md
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261103-80131c793938.json
-wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261103-80131c793938.parquet
-not promoted: Brier skill gain 0.0075 is short by 0.0125 of the margin 0.0200; the challenger's backtest has 110 tests, below gate n = 400 tests for its skill
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-80131c793938.md
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-80131c793938.json
+wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-80131c793938.parquet
+not promoted: no challenger is registered, nothing to promote
 ```
 
-`moot promote` promotes the challenger only when two conditions hold. Its Brier skill must beat the champion's by a margin (0.02 by default, `--margin`), and the challenger's backtest must rest on at least as many distinct experiments as the gate for that skill. Otherwise it says which condition failed, as above: the gain is short of the margin, and the backtest of 110 experiments is below the gate of 400. That is the usual outcome with small ledgers and means the champion stays. The project is then left as it was: the champion is the old model, the challenger stays registered, and `moot doctor` keeps warning that the champion was fit on an older snapshot until a later fit and backtest earn the promotion. Nothing is broken.
+Read the first line of the fit output: it says which role the new model took when it was fitted. Here it says challenger, because the refresh is pending until the backtest has run; after the backtest the refresh is decided and goes through, which is why `promote` then finds no challenger. The backtest then attaches the summary and decides a pending refresh. `moot promote` looks at a challenger, and promotes it only when two conditions hold. Its Brier skill must beat the champion's by a margin (0.02 by default, `--margin`), and its backtest must rest on at least as many distinct experiments as the gate for that skill. Otherwise it says which condition failed, for example that the gain is short of the margin or that the backtest has too few tests. When the refresh went through there is no challenger, and `promote` says so. `moot doctor` keeps warning that the champion was fit on an older snapshot until a model fitted on the current ledger is the champion. Nothing is broken. The backtest after the fit also fills the new model's backtest summary, which the skill line of a card reads (its first line is cut off here by `tail`).
 
 ## 6. What the weekly job looks like
 

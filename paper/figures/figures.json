@@ -1,0 +1,7638 @@
+{
+ "cautionary_folder": "paper/data/run1-relative-lift",
+ "figures": [
+  {
+   "derived": [],
+   "file": "cautionary-upworthy.pdf",
+   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "keys": [
+    "tables.aggregate.brier_skill",
+    "tables.aggregate.brier_skill_hi",
+    "tables.aggregate.brier_skill_lo"
+   ],
+   "note": "same quantity (P1 Brier skill by cell) in the relative-lift run and the pre-launch-clean run",
+   "values": [
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.10741708573407305,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.11483036666232443,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.1010753586310012,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.1173562694919259,
+     "where": {
+      "cell": "headline_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.1250348989837009,
+     "where": {
+      "cell": "headline_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.11029565247043853,
+     "where": {
+      "cell": "headline_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.08617948975880685,
+     "where": {
+      "cell": "image_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.09671343051734362,
+     "where": {
+      "cell": "image_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.07582381703711695,
+     "where": {
+      "cell": "image_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.12997413059670682,
+     "where": {
+      "cell": "both",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.18031224833759446,
+     "where": {
+      "cell": "both",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json",
+     "table": "tables.aggregate",
+     "value": -0.09901258588811533,
+     "where": {
+      "cell": "both",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.0014727895194049934,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": -0.0018181929301026689,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.0047984950480917865,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": -0.004322710955801279,
+     "where": {
+      "cell": "headline_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": -0.00851689747163049,
+     "where": {
+      "cell": "headline_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": -0.0006249615331614182,
+     "where": {
+      "cell": "headline_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.009246036693207671,
+     "where": {
+      "cell": "image_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.0025228637306292877,
+     "where": {
+      "cell": "image_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.015389575792331658,
+     "where": {
+      "cell": "image_only",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.020920236845146878,
+     "where": {
+      "cell": "both",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_lo",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": -0.000340434805731005,
+     "where": {
+      "cell": "both",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "brier_skill_hi",
+     "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+     "table": "tables.aggregate",
+     "value": 0.04194632233182697,
+     "where": {
+      "cell": "both",
+      "rung": "P1"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "coverage-exposure-asos.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "keys": [
+    "tables.aggregate.coverage_90",
+    "tables.calibration_by_precision.coverage_90"
+   ],
+   "note": "tables.calibration_by_precision carries coverage_90 only (no 80 percent column); open markers are tables.aggregate[cell=ALL]",
+   "values": [
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.78125,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.5555555555555556,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.84375,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9696969696969697,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.75,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 1.0,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.78125,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.75,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.875,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 1.0,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8308605341246291,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9375,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.6944444444444444,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.84375,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 1.0,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.65625,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8611111111111112,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.96875,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.7777777777777778,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.875,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 1.0,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8605341246290801,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9375,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.6944444444444444,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.84375,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 1.0,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.65625,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8611111111111112,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.96875,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.7777777777777778,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.875,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 1.0,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8605341246290801,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "coverage-exposure-synthetic.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "keys": [
+    "tables.aggregate.coverage_90",
+    "tables.calibration_by_precision.coverage_90"
+   ],
+   "note": "tables.calibration_by_precision carries coverage_90 only (no 80 percent column); open markers are tables.aggregate[cell=ALL]",
+   "values": [
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8901098901098901,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.861878453038674,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8839779005524862,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8571428571428571,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8950276243093923,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8839779005524862,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9175824175824175,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8950276243093923,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8674033149171271,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8571428571428571,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8809261300992283,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9010989010989011,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8950276243093923,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9116022099447514,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8736263736263736,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9116022099447514,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9005524861878453,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9175824175824175,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8895027624309392,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8729281767955801,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8351648351648352,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8908489525909592,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9010989010989011,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8950276243093923,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9116022099447514,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8736263736263736,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9116022099447514,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9005524861878453,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9175824175824175,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8895027624309392,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8729281767955801,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8351648351648352,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8908489525909592,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "coverage-exposure-upworthy.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "keys": [
+    "tables.aggregate.coverage_90",
+    "tables.calibration_by_precision.coverage_90"
+   ],
+   "note": "tables.calibration_by_precision carries coverage_90 only (no 80 percent column); open markers are tables.aggregate[cell=ALL]",
+   "values": [
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8987915407854985,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8966037735849056,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8663141993957704,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9295454545454546,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9541008276899925,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9350943396226415,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.94947209653092,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9554043839758125,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9668174962292609,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9743396226415094,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.9326639993960897,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8746223564954683,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8633962264150944,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8293051359516617,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8848484848484849,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9036869826937547,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.889811320754717,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.916289592760181,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.90854119425548,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9313725490196079,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9433962264150944,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8945421604891673,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8783987915407855,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8641509433962264,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8323262839879154,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8946969696969697,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9187358916478555,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.8981132075471698,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9223227752639518,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9138321995464853,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9366515837104072,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.calibration_by_precision",
+     "value": 0.9449056603773585,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.9004302861025137,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "coverage-se-asos.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "keys": [
+    "tables.aggregate.coverage_80",
+    "tables.aggregate.coverage_90",
+    "tables.coverage_by_se_ratio.coverage_80",
+    "tables.coverage_by_se_ratio.coverage_90"
+   ],
+   "note": "open markers at all are pooled coverage, tables.aggregate[cell=ALL]; dashed grey is the nominal level",
+   "values": [
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9393939393939394,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8823529411764706,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9090909090909091,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7941176470588235,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9117647058823529,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.696969696969697,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.29411764705882354,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.058823529411764705,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.7477744807121661,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8235294117647058,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.48484848484848486,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.4411764705882353,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.08823529411764706,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.7833827893175074,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8235294117647058,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.48484848484848486,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.4411764705882353,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.08823529411764706,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.7833827893175074,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9696969696969697,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9411764705882353,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9090909090909091,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7941176470588235,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9411764705882353,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9090909090909091,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7647058823529411,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.08823529411764706,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8308605341246291,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9705882352941176,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7575757575757576,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6764705882352942,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.20588235294117646,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8605341246290801,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9705882352941176,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7575757575757576,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6764705882352942,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.20588235294117646,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8605341246290801,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "coverage-se-synthetic.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "keys": [
+    "tables.aggregate.coverage_80",
+    "tables.aggregate.coverage_90",
+    "tables.coverage_by_se_ratio.coverage_80",
+    "tables.coverage_by_se_ratio.coverage_90"
+   ],
+   "note": "open markers at all are pooled coverage, tables.aggregate[cell=ALL]; dashed grey is the nominal level",
+   "values": [
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7822491730981257,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.7822491730981257,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7833517089305403,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.7833517089305403,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7833517089305403,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.7833517089305403,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8809261300992283,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8809261300992283,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8908489525909592,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8908489525909592,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8908489525909592,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8908489525909592,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "coverage-se-upworthy.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "keys": [
+    "tables.aggregate.coverage_80",
+    "tables.aggregate.coverage_90",
+    "tables.coverage_by_se_ratio.coverage_80",
+    "tables.coverage_by_se_ratio.coverage_90"
+   ],
+   "note": "open markers at all are pooled coverage, tables.aggregate[cell=ALL]; dashed grey is the nominal level",
+   "values": [
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9932075471698113,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9879245283018868,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.972809667673716,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9373584905660377,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.904833836858006,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8762264150943396,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7643504531722054,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6875471698113208,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.5554716981132075,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.8479655771117989,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.999245283018868,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9773584905660377,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9425981873111783,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8822641509433963,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8527190332326284,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8233962264150944,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7396226415094339,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7235649546827795,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6505660377358491,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.5305660377358491,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.8121838906922322,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.999245283018868,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9826415094339622,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9607250755287009,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.900377358490566,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8738670694864048,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8339622641509434,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.759245283018868,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7341389728096677,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6581132075471698,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.5350943396226415,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_80",
+     "table": "tables.aggregate",
+     "value": 0.823733675549181,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.999245283018868,
+     "where": {
+      "decile": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9984905660377359,
+     "where": {
+      "decile": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9977341389728097,
+     "where": {
+      "decile": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9916981132075472,
+     "where": {
+      "decile": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9818731117824774,
+     "where": {
+      "decile": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.96,
+     "where": {
+      "decile": 6,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.930566037735849,
+     "where": {
+      "decile": 7,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9018126888217523,
+     "where": {
+      "decile": 8,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8332075471698113,
+     "where": {
+      "decile": 9,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7320754716981132,
+     "where": {
+      "decile": 10,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.9326639993960897,
+     "where": {
+      "cell": "ALL",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9984905660377359,
+     "where": {
+      "decile": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9939577039274925,
+     "where": {
+      "decile": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9683018867924529,
+     "where": {
+      "decile": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9448640483383686,
+     "where": {
+      "decile": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9184905660377358,
+     "where": {
+      "decile": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8626415094339622,
+     "where": {
+      "decile": 7,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8376132930513596,
+     "where": {
+      "decile": 8,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7660377358490567,
+     "where": {
+      "decile": 9,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6550943396226415,
+     "where": {
+      "decile": 10,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.8945421604891673,
+     "where": {
+      "cell": "ALL",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 1.0,
+     "where": {
+      "decile": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9984905660377359,
+     "where": {
+      "decile": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9947129909365559,
+     "where": {
+      "decile": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9720754716981133,
+     "where": {
+      "decile": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9539274924471299,
+     "where": {
+      "decile": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.9245283018867925,
+     "where": {
+      "decile": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8777358490566037,
+     "where": {
+      "decile": 7,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.8496978851963746,
+     "where": {
+      "decile": 8,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.7743396226415095,
+     "where": {
+      "decile": 9,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.coverage_by_se_ratio",
+     "value": 0.6588679245283019,
+     "where": {
+      "decile": 10,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "coverage_90",
+     "table": "tables.aggregate",
+     "value": 0.9004302861025137,
+     "where": {
+      "cell": "ALL",
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "decision-value-asos.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "keys": [
+    "tables.decision_value.captured_fraction",
+    "tables.decision_value.captured_fraction_hi",
+    "tables.decision_value.captured_fraction_lo"
+   ],
+   "note": "p_win policy, pooled origin ALL, bars are captured_fraction_lo to captured_fraction_hi (90 percent); random order is exact K over n",
+   "values": [
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.10491275907382848,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.4951448450233266,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.10491275907382848,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.10233155845675837,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.10693894476006176,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.10491275907382848,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.10233155845675837,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.10693894476006176,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.10491275907382848,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.10233155845675837,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.10693894476006176,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.08046180196119442,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.06342927598816009,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.14966452800474392,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.1294973153465579,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.09734633108154733,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.17460248392880084,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.26561068648320063,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.8351104208887967,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.26561068648320063,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.24967297158545773,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.28415775741765853,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.26561068648320063,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.24967297158545773,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.28415775741765853,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.26561068648320063,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.24967297158545773,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.28415775741765853,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.2699872920144002,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.19286505569635704,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.36213767410432757,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.3076005441255432,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.2475797061944884,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.3950644841327624,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5245637953691423,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.979233133359099,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5245637953691423,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5110720367904248,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5357011071605781,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5245637953691423,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5110720367904248,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5357011071605781,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5245637953691423,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5110720367904248,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5357011071605781,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.6187320318601297,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5105879258702658,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7214227613198129,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.6474865767327895,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.4692272294092251,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7190549677980433,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "decision-value-synthetic.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "keys": [
+    "tables.decision_value.captured_fraction",
+    "tables.decision_value.captured_fraction_hi",
+    "tables.decision_value.captured_fraction_lo"
+   ],
+   "note": "p_win policy, pooled origin ALL, bars are captured_fraction_lo to captured_fraction_hi (90 percent); random order is exact K over n",
+   "values": [
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.10144286483513577,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.3146479917793101,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.18054428285502946,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.17161897419425387,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.19059797199332426,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.18054428285502946,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.17161897419425387,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.19059797199332426,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.18054428285502946,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.17161897419425387,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.19059797199332426,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.17024013624802456,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.14989635403013882,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.187502044103078,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.1602207300823654,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.14149634312333256,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.1793830637068602,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.16924423690962132,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.147623346476186,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.1877855103005505,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.25018957824948895,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.6103981241105865,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.4453092321917424,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.42345744682342873,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.465719613022163,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.4453092321917424,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.42345744682342873,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.465719613022163,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.4453092321917424,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.42345744682342873,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.465719613022163,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.42018865262180166,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.38763073633981304,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.4435133790171552,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.41840570434558083,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.3876058972773897,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.4407970498588839,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.3750215773674173,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.3510290091328925,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.4035183887973012,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5016921548165243,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.896212867982857,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.7312918487814372,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.7135032194180991,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7489288219639323,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.7312918487814372,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.7135032194180991,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7489288219639323,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.7312918487814372,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.7135032194180991,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7489288219639323,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.7337903492944122,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.712082993587195,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7541507749987447,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.7191649717259272,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.6947207687103394,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7443727329075487,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.7008154487726769,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.6746394978810842,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.7275550641515722,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "decision-value-upworthy.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "keys": [
+    "tables.decision_value.captured_fraction",
+    "tables.decision_value.captured_fraction_hi",
+    "tables.decision_value.captured_fraction_lo"
+   ],
+   "note": "p_win policy, pooled origin ALL, bars are captured_fraction_lo to captured_fraction_hi (90 percent); random order is exact K over n",
+   "values": [
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.10036041904322153,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.3839731949120419,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.09988069110042401,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.09634288263995318,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.10317099348566068,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.09984791312442078,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.09580355679975192,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.10419591153051862,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.11585751068991515,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.1083942516618438,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.1226903805410573,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.1148712876079469,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.10395325262718637,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.12403533250088336,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.11768507664628139,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.10808278327580238,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.12881273228297246,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.13787028154487757,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.12612908962338196,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.15127549624138187,
+     "where": {
+      "budget": 0.1,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.25024177830395145,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.6823661174826827,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.24906307429553073,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.2399923849209778,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.2581102765866634,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.24891775295293514,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.24013567502865302,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.2589050507190281,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.26481795054932317,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.25306496628327935,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.2775056218983756,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.27404672540978353,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.2556752580094237,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.29031597114307783,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.28173232690762284,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.26922554052081354,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.29456284956047585,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.30045915710211996,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.28346243929440373,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.3160708368048932,
+     "where": {
+      "budget": 0.25,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5009924269656801,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "random",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.9396106159754342,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "oracle",
+      "rung": "all"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.49938879435411127,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.48582329184450085,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5127524363048549,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5007044718587716,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.48521080481484175,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5150176324154049,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5183313489399884,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5027175234347566,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5347090091059009,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5344938001144732,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.515553675049072,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5501707984664939,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5185203560893917,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5049334592369551,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5337762647781621,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "captured_fraction",
+     "table": "tables.decision_value",
+     "value": 0.5501900524170303,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_lo",
+     "table": "tables.decision_value",
+     "value": 0.5308073858841048,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "captured_fraction_hi",
+     "table": "tables.decision_value",
+     "value": 0.5660941562773002,
+     "where": {
+      "budget": 0.5,
+      "origin": "ALL",
+      "policy": "p_win",
+      "rung": "text_lr"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "learning-curve-asos.pdf",
+   "json": "paper/data/run4-review-l-fixes/learning-curve-asos-20261103-6bb5a15c5ff0.json",
+   "keys": [
+    "rows.skill",
+    "rows.skill_hi",
+    "rows.skill_lo"
+   ],
+   "note": "line is the mean over seeds, band is skill_lo to skill_hi (percentile bootstrap of the seed mean); bands are clipped at the axis",
+   "values": [
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.145699383263816,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.2734133175235884,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.04514254800236314,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.12074987667748545,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.28080033656512954,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.02795419126063452,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.11667536126533921,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.21417761692805204,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.014284601399785024,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.14201615185145627,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.2712096919646794,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.0264265122190513,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.18243099241109606,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.5000806030047102,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.03682913737813248,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.14569938326381585,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.27341331752358833,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.04514254800236322,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.12074987667748541,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.28080033656512954,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.02795419126063453,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.11691457569873916,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.21184492908869784,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.019077224882183073,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.14201615185145627,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.2712096919646794,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.026426512219051276,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.18243099241109584,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.5000806030047106,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.036829137378132475,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.23450809676602533,
+     "where": {
+      "fraction": 0.05,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.8031698069767798,
+     "where": {
+      "fraction": 0.05,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.018589739621484594,
+     "where": {
+      "fraction": 0.05,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.19769172616760544,
+     "where": {
+      "fraction": 0.1,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.6728724047678358,
+     "where": {
+      "fraction": 0.1,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.009529703742736307,
+     "where": {
+      "fraction": 0.1,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.21176540968298277,
+     "where": {
+      "fraction": 0.25,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.7521944501935155,
+     "where": {
+      "fraction": 0.25,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.01143494140281305,
+     "where": {
+      "fraction": 0.25,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.24919763770613743,
+     "where": {
+      "fraction": 0.5,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.9105580104978861,
+     "where": {
+      "fraction": 0.5,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.004852641645878641,
+     "where": {
+      "fraction": 0.5,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.12109646686963904,
+     "where": {
+      "fraction": 1.0,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.6585296349073311,
+     "where": {
+      "fraction": 1.0,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.0649583859513001,
+     "where": {
+      "fraction": 1.0,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.20242513420167726,
+     "where": {
+      "fraction": 0.05,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -1.4536897365024894,
+     "where": {
+      "fraction": 0.05,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.1700807779478165,
+     "where": {
+      "fraction": 0.05,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.26815195498015265,
+     "where": {
+      "fraction": 0.1,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -2.0049257208158506,
+     "where": {
+      "fraction": 0.1,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.19201048737013568,
+     "where": {
+      "fraction": 0.1,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.2950770463332452,
+     "where": {
+      "fraction": 0.25,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -2.15509557386563,
+     "where": {
+      "fraction": 0.25,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.19071483550107227,
+     "where": {
+      "fraction": 0.25,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.3454448489666635,
+     "where": {
+      "fraction": 0.5,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -2.1525224183517255,
+     "where": {
+      "fraction": 0.5,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.15267197427511195,
+     "where": {
+      "fraction": 0.5,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.3584729902876751,
+     "where": {
+      "fraction": 1.0,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -2.2332536742143505,
+     "where": {
+      "fraction": 1.0,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.15483255768365276,
+     "where": {
+      "fraction": 1.0,
+      "rung": "GBM"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [],
+   "file": "learning-curve-upworthy.pdf",
+   "json": "paper/data/run4-review-l-fixes/learning-curve-upworthy-20261103-4bfb354b87e3.json",
+   "keys": [
+    "rows.skill",
+    "rows.skill_hi",
+    "rows.skill_lo"
+   ],
+   "note": "line is the mean over seeds, band is skill_lo to skill_hi (percentile bootstrap of the seed mean); bands are clipped at the axis",
+   "values": [
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.06785234375612127,
+     "where": {
+      "fraction": 0.01,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.04643426890219471,
+     "where": {
+      "fraction": 0.01,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.09374592306727002,
+     "where": {
+      "fraction": 0.01,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.03661817940532874,
+     "where": {
+      "fraction": 0.02,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.021749578711131194,
+     "where": {
+      "fraction": 0.02,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.05538128073242574,
+     "where": {
+      "fraction": 0.02,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.03522373605012518,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.016625977928845997,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.05766539089694491,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.031629605904373734,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.01533093076592352,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.0533382229993973,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.029953078970644635,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.014623535287335529,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.05019046961835704,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.030655028458027173,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.014874674631060071,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.050609490869806345,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.02950606399583422,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.014113957196257949,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.04919447753953642,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.06775697255101734,
+     "where": {
+      "fraction": 0.01,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.046260771018324966,
+     "where": {
+      "fraction": 0.01,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.0936431868780984,
+     "where": {
+      "fraction": 0.01,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.036393709006513224,
+     "where": {
+      "fraction": 0.02,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.02169222987139861,
+     "where": {
+      "fraction": 0.02,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.054772520414954014,
+     "where": {
+      "fraction": 0.02,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.03514410766958245,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.01664427593294594,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.05762644731125854,
+     "where": {
+      "fraction": 0.05,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.03182332742986743,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.01595188947936758,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.052806390797966916,
+     "where": {
+      "fraction": 0.1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.029373687949762917,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.014760321614294997,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.0470674567376897,
+     "where": {
+      "fraction": 0.25,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.030243341330587637,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.015612676647473596,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.04756482976867823,
+     "where": {
+      "fraction": 0.5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.031149209098764175,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.017349089290079684,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.05106814998929577,
+     "where": {
+      "fraction": 1.0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.018418306770864527,
+     "where": {
+      "fraction": 0.01,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.0075364131134735635,
+     "where": {
+      "fraction": 0.01,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.0328119320849341,
+     "where": {
+      "fraction": 0.01,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.017062338264365894,
+     "where": {
+      "fraction": 0.02,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.00600563016122587,
+     "where": {
+      "fraction": 0.02,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.035301111552779554,
+     "where": {
+      "fraction": 0.02,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.027425921819221995,
+     "where": {
+      "fraction": 0.05,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.014117603617630831,
+     "where": {
+      "fraction": 0.05,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.048741369538735965,
+     "where": {
+      "fraction": 0.05,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.016326203368258924,
+     "where": {
+      "fraction": 0.1,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.0055226877670362965,
+     "where": {
+      "fraction": 0.1,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.03151964910547596,
+     "where": {
+      "fraction": 0.1,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.020224608365941393,
+     "where": {
+      "fraction": 0.25,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.006025939579879802,
+     "where": {
+      "fraction": 0.25,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.039497282422942585,
+     "where": {
+      "fraction": 0.25,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.026935720692120385,
+     "where": {
+      "fraction": 0.5,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.009103042212819634,
+     "where": {
+      "fraction": 0.5,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.050684697584550104,
+     "where": {
+      "fraction": 0.5,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.03662677653311741,
+     "where": {
+      "fraction": 1.0,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.006204927055531025,
+     "where": {
+      "fraction": 1.0,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.07337437338315794,
+     "where": {
+      "fraction": 1.0,
+      "rung": "local_eb"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.12323138848430368,
+     "where": {
+      "fraction": 0.01,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.1975329008232404,
+     "where": {
+      "fraction": 0.01,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.06859363391606953,
+     "where": {
+      "fraction": 0.01,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.0759160380434805,
+     "where": {
+      "fraction": 0.02,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.13794894513715036,
+     "where": {
+      "fraction": 0.02,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.03220328312423837,
+     "where": {
+      "fraction": 0.02,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.06598228983950599,
+     "where": {
+      "fraction": 0.05,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.11074309877901868,
+     "where": {
+      "fraction": 0.05,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.028419692600654144,
+     "where": {
+      "fraction": 0.05,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.08261895954081429,
+     "where": {
+      "fraction": 0.1,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.13960339307826952,
+     "where": {
+      "fraction": 0.1,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.037110209591288065,
+     "where": {
+      "fraction": 0.1,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.06789367260930079,
+     "where": {
+      "fraction": 0.25,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.11803002330123105,
+     "where": {
+      "fraction": 0.25,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.028182467188353842,
+     "where": {
+      "fraction": 0.25,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.06655957802502774,
+     "where": {
+      "fraction": 0.5,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.11744942265038912,
+     "where": {
+      "fraction": 0.5,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.02735164023997713,
+     "where": {
+      "fraction": 0.5,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": -0.0684714578834722,
+     "where": {
+      "fraction": 1.0,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.12208301248032301,
+     "where": {
+      "fraction": 1.0,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": -0.020744140572936488,
+     "where": {
+      "fraction": 1.0,
+      "rung": "GBM"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.04533742187533051,
+     "where": {
+      "fraction": 0.01,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.033064160454603024,
+     "where": {
+      "fraction": 0.01,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.05882431668046939,
+     "where": {
+      "fraction": 0.01,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.006250746827723247,
+     "where": {
+      "fraction": 0.02,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": 0.0013591537888933676,
+     "where": {
+      "fraction": 0.02,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.012816804150060207,
+     "where": {
+      "fraction": 0.02,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.004016171240398003,
+     "where": {
+      "fraction": 0.05,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.006047615913849814,
+     "where": {
+      "fraction": 0.05,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.014383359459417603,
+     "where": {
+      "fraction": 0.05,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.004526066355812003,
+     "where": {
+      "fraction": 0.1,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.0038616111373256656,
+     "where": {
+      "fraction": 0.1,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.013960802479164548,
+     "where": {
+      "fraction": 0.1,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.005554883399868199,
+     "where": {
+      "fraction": 0.25,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.006460887364299158,
+     "where": {
+      "fraction": 0.25,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.016870464335128857,
+     "where": {
+      "fraction": 0.25,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.0065944213830632535,
+     "where": {
+      "fraction": 0.5,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.011181447076528328,
+     "where": {
+      "fraction": 0.5,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.02399910286859493,
+     "where": {
+      "fraction": 0.5,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill",
+     "table": "rows",
+     "value": 0.010381919080414193,
+     "where": {
+      "fraction": 1.0,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_lo",
+     "table": "rows",
+     "value": -0.019869024162471646,
+     "where": {
+      "fraction": 1.0,
+      "rung": "text_lr"
+     }
+    },
+    {
+     "field": "skill_hi",
+     "table": "rows",
+     "value": 0.034066289659348804,
+     "where": {
+      "fraction": 1.0,
+      "rung": "text_lr"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.3,
+     "lo": 0.0,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.17777777777777778,
+     "lo": 0.10740740740740741,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.37142857142857144,
+     "lo": 0.14285714285714285,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 3,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.5454545454545454,
+     "lo": 0.09090909090909091,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 5,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.7272727272727273,
+     "lo": 0.2727272727272727,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.0859375,
+     "lo": 0.0234375,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.20930232558139536,
+     "lo": 0.08139534883720931,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.35185185185185186,
+     "lo": 0.14814814814814814,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 3,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.4418604651162791,
+     "lo": 0.20930232558139536,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 4,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.6875,
+     "lo": 0.25,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 5,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 1.0,
+     "lo": 0.0,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 6,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.875,
+     "lo": 0.375,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.0859375,
+     "lo": 0.0234375,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.20930232558139536,
+     "lo": 0.08139534883720931,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.35185185185185186,
+     "lo": 0.14814814814814814,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 3,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.4418604651162791,
+     "lo": 0.20930232558139536,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 4,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.6875,
+     "lo": 0.25,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 5,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 1.0,
+     "lo": 0.0,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 6,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.875,
+     "lo": 0.375,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    }
+   ],
+   "file": "reliability-asos.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "keys": [
+    "tables.reliability_bins.freq",
+    "tables.reliability_bins.mean_p",
+    "tables.reliability_bins.n"
+   ],
+   "note": "bins are equal width ([0.1]), empty bins dropped; wide light bars are the central 90 percent interval of the observed frequency under perfect calibration, from Binomial(n, mean_p), which treats rows as independent",
+   "values": [
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 10,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.09615384615384616,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.3,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 270,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.14343669133824147,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.12962962962962962,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 35,
+     "where": {
+      "bin": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.24910052910052918,
+     "where": {
+      "bin": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.11428571428571428,
+     "where": {
+      "bin": 2,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 11,
+     "where": {
+      "bin": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.33333333333333337,
+     "where": {
+      "bin": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.18181818181818182,
+     "where": {
+      "bin": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 11,
+     "where": {
+      "bin": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.5,
+     "where": {
+      "bin": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.2727272727272727,
+     "where": {
+      "bin": 5,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 128,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.053867886983268554,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.140625,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 86,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.142597988051053,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.18604651162790697,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 54,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.2463866600325225,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.05555555555555555,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 43,
+     "where": {
+      "bin": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.33102131105802257,
+     "where": {
+      "bin": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.06976744186046512,
+     "where": {
+      "bin": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 16,
+     "where": {
+      "bin": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.4523929092098245,
+     "where": {
+      "bin": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.1875,
+     "where": {
+      "bin": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 2,
+     "where": {
+      "bin": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.5166166900930835,
+     "where": {
+      "bin": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.0,
+     "where": {
+      "bin": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 8,
+     "where": {
+      "bin": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.6460328307606438,
+     "where": {
+      "bin": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.5,
+     "where": {
+      "bin": 6,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 128,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.05386788698326856,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.140625,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 86,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.14259798805105303,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.18604651162790697,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 54,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.2463866600325225,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.05555555555555555,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 43,
+     "where": {
+      "bin": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.3310213110580226,
+     "where": {
+      "bin": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.06976744186046512,
+     "where": {
+      "bin": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 16,
+     "where": {
+      "bin": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.45239290920982456,
+     "where": {
+      "bin": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.1875,
+     "where": {
+      "bin": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 2,
+     "where": {
+      "bin": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.5166166900930836,
+     "where": {
+      "bin": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.0,
+     "where": {
+      "bin": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 8,
+     "where": {
+      "bin": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.6460328307606436,
+     "where": {
+      "bin": 6,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.5,
+     "where": {
+      "bin": 6,
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.03881987577639751,
+     "lo": 0.017080745341614908,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.16608996539792387,
+     "lo": 0.11937716262975778,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 3,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.41517857142857145,
+     "lo": 0.3392857142857143,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 4,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.4791666666666667,
+     "lo": 0.3402777777777778,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.05571847507331378,
+     "lo": 0.030791788856304986,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.17647058823529413,
+     "lo": 0.11990950226244344,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.2901960784313726,
+     "lo": 0.2,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 3,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.40329218106995884,
+     "lo": 0.3004115226337449,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 4,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.5058823529411764,
+     "lo": 0.38235294117647056,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 5,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.6818181818181818,
+     "lo": 0.36363636363636365,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.05571847507331378,
+     "lo": 0.030791788856304986,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.17647058823529413,
+     "lo": 0.11990950226244344,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.2901960784313726,
+     "lo": 0.2,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 3,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.40329218106995884,
+     "lo": 0.3004115226337449,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 4,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.5058823529411764,
+     "lo": 0.38235294117647056,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 5,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.6818181818181818,
+     "lo": 0.36363636363636365,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    }
+   ],
+   "file": "reliability-synthetic.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "keys": [
+    "tables.reliability_bins.freq",
+    "tables.reliability_bins.mean_p",
+    "tables.reliability_bins.n"
+   ],
+   "note": "bins are equal width ([0.1]), empty bins dropped; wide light bars are the central 90 percent interval of the observed frequency under perfect calibration, from Binomial(n, mean_p), which treats rows as independent",
+   "values": [
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 644,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.02732375488637889,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.04813664596273292,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 578,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.14249679976603113,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.1643598615916955,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 448,
+     "where": {
+      "bin": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.3773313770522026,
+     "where": {
+      "bin": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.41517857142857145,
+     "where": {
+      "bin": 3,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 144,
+     "where": {
+      "bin": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.40854844637063936,
+     "where": {
+      "bin": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.3402777777777778,
+     "where": {
+      "bin": 4,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 682,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.04303513798823925,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.04105571847507331,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 442,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.14803805464490544,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.17873303167420815,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 255,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.24560550485318738,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.3176470588235294,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 243,
+     "where": {
+      "bin": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.351248027949149,
+     "where": {
+      "bin": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.38271604938271603,
+     "where": {
+      "bin": 3,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 170,
+     "where": {
+      "bin": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.4444508930044068,
+     "where": {
+      "bin": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.4117647058823529,
+     "where": {
+      "bin": 4,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 22,
+     "where": {
+      "bin": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.5257988769929159,
+     "where": {
+      "bin": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.45454545454545453,
+     "where": {
+      "bin": 5,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 682,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.04303513798823925,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.04105571847507331,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 442,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.14803805464490544,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.17873303167420815,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 255,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.24560550485318738,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.3176470588235294,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 243,
+     "where": {
+      "bin": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.351248027949149,
+     "where": {
+      "bin": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.38271604938271603,
+     "where": {
+      "bin": 3,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 170,
+     "where": {
+      "bin": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.4444508930044068,
+     "where": {
+      "bin": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.4117647058823529,
+     "where": {
+      "bin": 4,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 22,
+     "where": {
+      "bin": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.5257988769929159,
+     "where": {
+      "bin": 5,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.45454545454545453,
+     "where": {
+      "bin": 5,
+      "rung": "P2"
+     }
+    }
+   ]
+  },
+  {
+   "derived": [
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.08581842279655401,
+     "lo": 0.06958250497017893,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.12454785414018965,
+     "lo": 0.1140873985726855,
+     "rung": "P0",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.08406676783004552,
+     "lo": 0.07314112291350532,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.13491087891825446,
+     "lo": 0.12123540258143822,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.2751677852348993,
+     "lo": 0.1610738255033557,
+     "rung": "P1",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 0,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.08767027593433462,
+     "lo": 0.07579462102689487,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 1,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.13533631073216945,
+     "lo": 0.12261469752334551,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    },
+    {
+     "bin": 2,
+     "from": [
+      "n",
+      "mean_p"
+     ],
+     "hi": 0.2727272727272727,
+     "lo": 0.1590909090909091,
+     "rung": "P2",
+     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
+    }
+   ],
+   "file": "reliability-upworthy.pdf",
+   "json": "paper/data/run4-review-l-fixes/backtest-upworthy-20261103-4bfb354b87e3.json",
+   "keys": [
+    "tables.reliability_bins.freq",
+    "tables.reliability_bins.mean_p",
+    "tables.reliability_bins.n"
+   ],
+   "note": "bins are equal width ([0.1]), empty bins dropped; wide light bars are the central 90 percent interval of the observed frequency under perfect calibration, from Binomial(n, mean_p), which treats rows as independent",
+   "values": [
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 3018,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.07767920434790496,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.06660039761431412,
+     "where": {
+      "bin": 0,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 10229,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.11929537688618358,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.09825007332095025,
+     "where": {
+      "bin": 1,
+      "rung": "P0"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 6590,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.07857059361922741,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.07890743550834597,
+     "where": {
+      "bin": 0,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 6508,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.12805125380894467,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.10279655808236017,
+     "where": {
+      "bin": 1,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 149,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.2177389991905113,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.11409395973154363,
+     "where": {
+      "bin": 2,
+      "rung": "P1"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 5726,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.08174265935907168,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.0745721271393643,
+     "where": {
+      "bin": 0,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 7389,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.128951951066804,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.10285559615644878,
+     "where": {
+      "bin": 1,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "n",
+     "table": "tables.reliability_bins",
+     "value": 132,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "mean_p",
+     "table": "tables.reliability_bins",
+     "value": 0.21264987769383062,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    },
+    {
+     "field": "freq",
+     "table": "tables.reliability_bins",
+     "value": 0.14393939393939395,
+     "where": {
+      "bin": 2,
+      "rung": "P2"
+     }
+    }
+   ]
+  }
+ ],
+ "generated_by": "scripts/paper_figures.py",
+ "run_folder": "paper/data/run4-review-l-fixes",
+ "skipped": [
+  {
+   "file": "learning-curve-synthetic.pdf",
+   "reason": "no learning-curve-synthetic-*.json in paper/data/run4-review-l-fixes"
+  }
+ ]
+}
