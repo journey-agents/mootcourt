@@ -33,7 +33,7 @@
 
 \section{The Deployment-Shaped Archive in Detail}
 \label{app:asos}
-Every table of the headline archive is produced for the deployment-shaped archive as well (Tables~\ref{tab:main-asos}, \ref{tab:ablations-asos}, \ref{tab:abstention-asos}, \ref{tab:calibration-asos}, \ref{tab:ece-asos}, \ref{tab:decision-intervals-asos}, \ref{tab:drift-asos}, \ref{tab:replay-asos}, \ref{tab:learning-asos} and \ref{tab:trigger-released-asos}); with 68 scored experiments and a nominal calendar none of them decides anything, and this appendix records what they show.
+Every table of the headline archive is produced for the deployment-shaped archive as well (Tables~\ref{tab:main-asos}, \ref{tab:ablations-asos}, \ref{tab:selection-asos}, \ref{tab:abstention-asos}, \ref{tab:trigger-ablation-asos}, \ref{tab:trigger-released-asos}, \ref{tab:calibration-asos}, \ref{tab:ece-asos}, \ref{tab:discrimination-asos}, \ref{tab:event-definition-asos}, \ref{tab:decision-intervals-asos}, \ref{tab:drift-asos}, \ref{tab:replay-asos} and \ref{tab:learning-asos}); with 68 scored experiments and a nominal calendar none of them decides anything, and this appendix records what they show.
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells; $RUN6/ablations/p2-guard-asos.json unguarded.share_lambda_zero 0.5357 (13 of 28 pairs admitted), unguarded.logscore 4.7172 against guarded.logscore 4.7088 (0.008 nats), difference.logscore -0.0083 (-0.0233, 0.0029); tables.aggregate[cell=ALL] rung=GBM brier_skill -0.7184, rung=local_eb -0.3832, rung=GBM+cal -0.0090 (-0.0756, 0.0446), rung=local_eb+cal 0.0150 (-0.0351, 0.0691); tables.decision_value origin=ALL budget=0.25 diff_random GBM 0.0420 (-0.0243, 0.1352), local_eb 0.0044 (-0.0660, 0.0934); $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation corr_log_impressions_abs_z 0.2152; $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json corr_log_impressions_abs_z 0.0994
 P2 equals P1, as expected for a feature space of metric and number of variants only (the guard holds $\lambda$ at zero everywhere; without it the rung admits a weight in 13 of 28 pairs and gains 0.008 nats, an interval that spans zero). The two challengers that run without text are far below the base rate raw (minus 0.718 and minus 0.383) and at it recalibrated (minus 0.009 and 0.015, intervals spanning zero), and their decision value against random order (plus 0.042 and plus 0.004) spans zero too. The exposure stand-in is worse here: the user count at the final checkpoint of a run of varying length correlates 0.215 with the absolute standardized effect, against 0.099 on the headline archive.
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows cell=ALL n 81, n_tests 19, brier_skill -0.1371 (-0.4231, 0.0637), logscore 5.2467 against issued_in_main.logscore_nonabstained 4.6029, direction_accuracy 0.6296 against 0.5301; $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json trigger_ablation_released_rows runs[support] issued_in_main.abstention_rate 0.4570, issued_in_ablation.abstention_rate 0.2166 (tables/trigger-released-asos.tex)
@@ -48,11 +48,11 @@ On the deployment-shaped archive the final origin holds 56 rows in 9 tests, 17 o
 \section{Synthetic Truth}
 \label{app:synthetic}
 % src: src/mootcourt/sources/synthetic.py _DEFAULT_CELLS headline_only (2.0, 3.0), image_only (-1.0, 1.5), both (0.5, 2.0); text_effect_strength 0.0; $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json header.admitted_rows 2000, header.scored_rows 1814, header.tests_scored 907, header.origins_scored 8, header.tests_in_ledger 1000
-The synthetic archive has 2,000 contrasts in 1,000 two-arm tests from three cells with known means and spreads (2.0 and 3.0, minus 1.0 and 1.5, 0.5 and 2.0 percent lift) and no text signal; 1,814 contrasts from 907 tests are scored over eight origins.
+The synthetic archive has 2,000 contrasts in 1,000 two-arm tests from three cells with known means and spreads (2.0 and 3.0, minus 1.0 and 1.5, 0.5 and 2.0 percent lift) and no text signal; 1,814 contrasts from 907 tests are scored over eight origins; its tables are Tables~\ref{tab:main-synthetic}, \ref{tab:calibration-synthetic}, \ref{tab:abstention-synthetic}, \ref{tab:discrimination-synthetic}, \ref{tab:event-definition-synthetic} and \ref{tab:decision-intervals-synthetic} (Appendix~\ref{app:tables}).
 % src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.split_half n_odd/n_even 292/312, 302/278, 280/284 (mean 291, about 290 rows per half); cell=headline_only mu_odd 2.02 mu_even 1.86 tau_odd 2.97 tau_even 3.10; cell=image_only mu -0.86 and -0.97, tau 1.25 and 1.34; cell=both mu 0.43 and 0.46, tau 1.74 and 1.81
 The pooled prior recovers the generator: fit on odd and even tests separately, the cell means come back as 2.02 and 1.86, minus 0.86 and minus 0.97, and 0.43 and 0.46, and the spreads as 2.97 and 3.10, 1.25 and 1.34, and 1.74 and 1.81, each within a few tenths of its true value; with about 290 rows per half the standard error of a cell mean is of the order of a tenth to two tenths, so the gaps are inside sampling noise.
-% src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.7834, coverage_90 0.8908, ece 0.0265, ece_percentile 95.2, ece_percentile_independent 97.8, brier_skill 0.0023 (-0.0128, 0.0168), gate_base_rate 0.14, decidable_by_tests "decidable at skill 0.20 and 0.10"; rung=GBM brier_skill -0.0573, rung=local_eb -0.0097, rung=text_lr -0.0359; tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells (tables/main-synthetic.tex, tables/selection-synthetic.tex)
-Its intervals cover 78 and 89 percent, its expected calibration error of 0.027 sits at the 95th percentile of the clustered null (98th independent), on the rejection line of Section~\ref{sec:protocol}, its Brier skill is 0.002 (minus 0.013 to 0.017) and decidable at both targets at the gate for base rate 0.14, and P2 equals P1 at every origin because the guard correctly finds no text signal to admit; the challengers, with nothing to learn, score below the base rate (the boosted model minus 0.057, the local comparison set minus 0.010, the text classifier minus 0.036).
+% src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.7834, coverage_90 0.8908, ece 0.026493, ece_percentile 95.2, ece_percentile_independent 97.8, brier_skill 0.0023 (-0.0128, 0.0168), gate_base_rate 0.14, decidable_by_tests "decidable at skill 0.20 and 0.10"; rung=GBM brier_skill -0.0573, rung=local_eb -0.0097, rung=text_lr -0.0359; tables.p2_selection_by_cell share_lambda_zero 1.00 in all cells (tables/main-synthetic.tex, tables/selection-synthetic.tex)
+Its intervals cover 78 and 89 percent, its expected calibration error of 0.026 sits at percentile 95.2 of the clustered null (97.8 independent), just past the rejection line of Section~\ref{sec:protocol}, its Brier skill is 0.002 (minus 0.013 to 0.017) and decidable at both targets at the gate for base rate 0.14, and P2 equals P1 at every origin because the guard correctly finds no text signal to admit; the challengers, with nothing to learn, score below the base rate (the boosted model minus 0.057, the local comparison set minus 0.010, the text classifier minus 0.036).
 % src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.decision_value origin=ALL budget=0.25 captured_fraction random 0.2502, P1 0.4453, diff_random 0.1951 (0.1732, 0.2156), oracle 0.6104 (tables/decision-intervals-synthetic.tex)
 Here, unlike on the headline archive, ranking by $\pwin$ has decision value for the prior itself, 0.445 of the positive lift against 0.250 for random order (plus 0.195, 0.173 to 0.216) and 0.610 for the oracle, because the three cells differ in their means and the cell is known before launch: the measure responds to between-cell differences the ledger can see as well as to within-cell differences a rung can rank.
 
@@ -98,7 +98,7 @@ Tables in this appendix are generated by the same script as those in the body an
 
 \begin{table}[tp]
 \centering\small
-\caption{Ledger row.}
+\caption{Ledger row: the fields of the released exchange format (Section~\ref{sec:setting}); a format, not a measurement.}
 \label{tab:schema}
 \resizebox{\columnwidth}{!}{\begin{tabular}{ll}
 \toprule
@@ -117,7 +117,7 @@ features & pre-launch fields; post-launch block kept apart \\
 % src: docs/landscape.md, the tooling survey (fetch-verified entries; paper/related-work.md); the only digits are the year of the three cited 2026 systems, no run number
 \begin{table}[tp]
 \centering\small
-\caption{Capabilities against tools (Y yes, P partial, N no). Columns: pre-launch outcome distribution; calibrated win probability; abstention; precedent retrieval; scoring against live results; learned prior from the organization's own archive; experiment memory; open source. The screening row is the three 2026 systems of Section~\ref{sec:related} \cite{lee2026offline,hu2026experimentation,mazzanti2026backtesting}.}
+\caption{Capabilities against tools (Y yes, P partial, N no). Columns: pre-launch outcome distribution; calibrated win probability; abstention; precedent retrieval; scoring against live results; learned prior from the organization's own archive; experiment memory; open source (OSS). LLM is large language model. The screening row is the three 2026 systems of Section~\ref{sec:related} \cite{lee2026offline,hu2026experimentation,mazzanti2026backtesting}.}
 \label{tab:landscape}
 \resizebox{\columnwidth}{!}{\begin{tabular}{lcccccccc}
 \toprule
@@ -135,13 +135,13 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{The cautionary run on the headline archive (relative lift, realized precision), by decile of realized standard error. Effects in percent relative lift.}
+\caption{The cautionary run on the headline archive (relative lift, realized precision), by decile of realized standard error. Effects in percent relative lift. From the cautionary report's decile rows (\texttt{cautionary\_deciles}); the columns are decile medians, means and rates, without intervals.}
 \label{tab:cautionary}
 \resizebox{\columnwidth}{!}{\input{tables/cautionary-upworthy}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{Calibration by decile of planned exposure per arm (headline archive).}
+\caption{Calibration by decile of planned exposure per arm (headline archive), from the backtest report's \texttt{calibration\_by\_precision}: the mean forecast probability, the realized event rate and the 90 percent coverage in each decile, without intervals.}
 \label{tab:calibration-upworthy}
 \resizebox{\columnwidth}{!}{\input{tables/calibration-upworthy}}
 \end{table}
@@ -159,13 +159,13 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Captured share of positive lift at a quarter of each period's tests, averaged over the nine origins (headline archive).}
+\caption{Captured share of positive lift at a quarter of each period's tests, averaged over the nine origins (headline archive), from the backtest report's \texttt{decision\_value}; the intervals and adjusted bounds are in Table~\ref{tab:decision-intervals-upworthy}.}
 \label{tab:decision-upworthy}
 \resizebox{\columnwidth}{!}{\input{tables/decision-upworthy}}
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Abstention triggers (headline archive). A row can fire several triggers.}
+\caption{Abstention triggers (headline archive), from the backtest report's \texttt{abstention}: rows, the abstention rate and the rows each trigger fired on; a row can fire several triggers; counts, without intervals.}
 \label{tab:abstention-upworthy}
 \resizebox{\columnwidth}{!}{\input{tables/abstention-upworthy}}
 \end{table}
@@ -183,33 +183,33 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{One abstention trigger switched off at a time (deployment-shaped archive), issued cards.}
+\caption{One abstention trigger switched off at a time (deployment-shaped archive), issued cards; columns as in Table~\ref{tab:trigger-ablation}, from the deployment-shaped trigger ablations.}
 \label{tab:trigger-ablation-asos}
 \resizebox{\columnwidth}{!}{\input{tables/trigger-ablation-asos}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{The rows each trigger withheld, scored when it is switched off (deployment-shaped archive).}
+\caption{The rows each trigger withheld, scored when it is switched off (deployment-shaped archive); columns as in Table~\ref{tab:trigger-released}, with 90 percent intervals by test.}
 \label{tab:trigger-released-asos}
 \resizebox{\columnwidth}{!}{\input{tables/trigger-released-asos}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
 % src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.score_by_year family_size 156
-\caption{Skill by calendar year of the test's start (headline archive), all cells pooled; the Bonferroni family of this table has 156 intervals.}
+\caption{Skill by calendar year of the test's start (headline archive), all cells pooled, from the backtest report's \texttt{score\_by\_year}: rows, tests, the event rate, the log score and Brier skill with 90 percent intervals by test, direction accuracy and abstention; the Bonferroni family of this table has 156 intervals.}
 \label{tab:drift}
 \resizebox{\columnwidth}{!}{\input{tables/drift-upworthy}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{Admission on realized clicks (the main run) against admission on exposure only (headline archive).}
+\caption{Admission on realized clicks (the main run) against admission on exposure only (headline archive), from the main and the admission-ablation backtest reports: scored rows, event rate, log score and Brier skill with 90 percent intervals by test.}
 \label{tab:admission}
 \resizebox{\columnwidth}{!}{\input{tables/admission-upworthy}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
 % src: $RUN6/positive-control/backtest-synthetic-20261104-8cc34d3af720.json header.command (text_effect_strength 1.0) (tables/positive-control.tex)
-\caption{The positive control: a synthetic archive with a planted text lift of 1.0 percent, scored by the full protocol; mean weight on precedents and the share of origins with the weight at zero, per cell.}
+\caption{The positive control: a synthetic archive with a planted text lift of 1.0 percent, scored by the full protocol, from the positive-control backtest report: log score, Brier skill with 90 percent intervals by test, the mean weight on precedents and the share of origins with the weight at zero, per cell.}
 \label{tab:positive-control}
 \resizebox{\columnwidth}{!}{\input{tables/positive-control}}
 \end{table}
@@ -265,22 +265,22 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 
 % src: tables/discrimination-asos.tex, tables/discrimination-synthetic.tex, tables/event-definition-asos.tex, tables/event-definition-synthetic.tex from $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json and $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate, same keys
 \begin{table}[tp]\centering\scriptsize
-\caption{Discrimination on the deployment-shaped archive, columns as in Table~\ref{tab:discrimination}.}
+\caption{Discrimination on the deployment-shaped archive, columns as in Table~\ref{tab:discrimination}, from the deployment-shaped backtest report; 90 percent intervals by test.}
 \label{tab:discrimination-asos}
 \resizebox{\columnwidth}{!}{\input{tables/discrimination-asos}}
 \end{table}
 \begin{table}[tp]\centering\scriptsize
-\caption{Discrimination on the synthetic archive, columns as in Table~\ref{tab:discrimination}.}
+\caption{Discrimination on the synthetic archive, columns as in Table~\ref{tab:discrimination}, from the synthetic backtest report; 90 percent intervals by test.}
 \label{tab:discrimination-synthetic}
 \resizebox{\columnwidth}{!}{\input{tables/discrimination-synthetic}}
 \end{table}
 \begin{table}[tp]\centering\scriptsize
-\caption{The two event definitions on the deployment-shaped archive, columns as in Table~\ref{tab:event-definition}; the planned and realized events coincide.}
+\caption{The two event definitions on the deployment-shaped archive, columns as in Table~\ref{tab:event-definition}, from the deployment-shaped backtest report with 90 percent intervals by test; the planned and realized events coincide.}
 \label{tab:event-definition-asos}
 \resizebox{\columnwidth}{!}{\input{tables/event-definition-asos}}
 \end{table}
 \begin{table}[tp]\centering\scriptsize
-\caption{The two event definitions on the synthetic archive, columns as in Table~\ref{tab:event-definition}; the planned and realized events coincide.}
+\caption{The two event definitions on the synthetic archive, columns as in Table~\ref{tab:event-definition}, from the synthetic backtest report with 90 percent intervals by test; the planned and realized events coincide.}
 \label{tab:event-definition-synthetic}
 \resizebox{\columnwidth}{!}{\input{tables/event-definition-synthetic}}
 \end{table}
@@ -294,51 +294,51 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 
 % src: tables/walltime.tex, written by build_tables.py from $RUN6/run-log.json stages[].stage and .seconds, main_pipeline_seconds, total_seconds stages[].stage and .seconds, main_pipeline_seconds 1098.2, total_seconds 1469.2
 \begin{table}[tp]\centering\scriptsize
-\caption{Stages of the timed run (\texttt{reports/run-log.json}), seconds; all exit codes zero; the data stage downloaded the three archive files and verified their checksums.}
+\caption{Stages of the timed run (\texttt{reports/run-log.json}), seconds; all exit codes zero; the data stage downloaded the three archive files and verified their checksums. Wall-clock seconds of one run, without intervals.}
 \label{tab:walltime}
 \input{tables/walltime}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{Calibration by decile of planned exposure per arm (synthetic archive).}
+\caption{Calibration by decile of planned exposure per arm (synthetic archive); columns as in Table~\ref{tab:calibration-upworthy}, from the synthetic backtest report, without intervals.}
 \label{tab:calibration-synthetic}
 \resizebox{\columnwidth}{!}{\input{tables/calibration-synthetic}}
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Abstention triggers (synthetic archive).}
+\caption{Abstention triggers (synthetic archive); columns as in Table~\ref{tab:abstention-upworthy}, from the synthetic backtest report; counts, without intervals.}
 \label{tab:abstention-synthetic}
 \resizebox{\columnwidth}{!}{\input{tables/abstention-synthetic}}
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Precedent-weight selection by cell, averaged over origins (headline archive). \emph{loto} is leave-one-test-out.}
+\caption{Precedent-weight selection by cell, averaged over origins (headline archive), from the backtest report's \texttt{p2\_selection\_by\_cell}: the selection rule, the mean chosen weight, the share of origins with the weight at zero, the mean bandwidth multiplier and the origins; averages, without intervals. \emph{loto} is leave-one-test-out.}
 \label{tab:selection-upworthy}
 \resizebox{\columnwidth}{!}{\input{tables/selection-upworthy}}
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Precedent-weight selection by cell, averaged over origins (deployment-shaped archive).}
+\caption{Precedent-weight selection by cell, averaged over origins (deployment-shaped archive); columns as in Table~\ref{tab:selection-upworthy}, from the deployment-shaped backtest report, without intervals.}
 \label{tab:selection-asos}
 \resizebox{\columnwidth}{!}{\input{tables/selection-asos}}
 \end{table}
 
 \begin{table}[tp]\centering\small
 % src: tables.aggregate[cell=ALL,rung=P1] logscore of $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--p2-guard-off.json 4.7088 (and every other unchanged file of the folder), $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json 4.3318, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-0.0.json 4.6927, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-5.0.json 4.7007, $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-80.0.json 4.7162
-\caption{Ablations on the deployment-shaped archive, one setting changed per row; pooled scores of the precedent rung. P1 scores 4.709 in every row except \emph{prior-normal} (4.332) and the $\kappa$ rows (4.693, 4.701, 4.716).}
+\caption{Ablations on the deployment-shaped archive, one setting changed per row; pooled scores of the precedent rung, columns as in Table~\ref{tab:ablations-upworthy}, from the deployment-shaped ablation reports with 90 percent intervals by test. P1 scores 4.709 in every row except \emph{prior-normal} (4.332) and the $\kappa$ rows (4.693, 4.701, 4.716).}
 \label{tab:ablations-asos}
 \resizebox{\columnwidth}{!}{\input{tables/ablations-asos}}
 \end{table}
 
 \begin{table}[tp]\centering\small
-\caption{Abstention triggers (deployment-shaped archive).}
+\caption{Abstention triggers (deployment-shaped archive); columns as in Table~\ref{tab:abstention-upworthy}, from the deployment-shaped backtest report; counts, without intervals.}
 \label{tab:abstention-asos}
 \resizebox{\columnwidth}{!}{\input{tables/abstention-asos}}
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.scored_rows 337 over ten deciles (about 34 rows each)
-\caption{Calibration by decile of planned exposure per arm (deployment-shaped archive; about 34 rows per decile).}
+\caption{Calibration by decile of planned exposure per arm (deployment-shaped archive; about 34 rows per decile); columns as in Table~\ref{tab:calibration-upworthy}, from the deployment-shaped backtest report, without intervals.}
 \label{tab:calibration-asos}
 \resizebox{\columnwidth}{!}{\input{tables/calibration-asos}}
 \end{table}
@@ -351,7 +351,7 @@ This work & Y & P & Y & Y & Y & Y & Y & Y \\
 
 \begin{table}[tp]\centering\scriptsize
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year family_size 110
-\caption{Skill by nominal year (deployment-shaped archive; the calendar is nominal; the Bonferroni family has 110 intervals).}
+\caption{Skill by nominal year (deployment-shaped archive; the calendar is nominal); columns as in Table~\ref{tab:drift}, from the deployment-shaped backtest report with 90 percent intervals by test; the Bonferroni family has 110 intervals.}
 \label{tab:drift-asos}
 \resizebox{\columnwidth}{!}{\input{tables/drift-asos}}
 \end{table}
@@ -387,7 +387,7 @@ LaTeX tables and figures & \texttt{make tables}, \texttt{make paper-figures} (bo
 
 \begin{table*}[t]\centering\scriptsize
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate gate_base_rate 0.14 (tables/main-asos.tex)
-\caption{Deployment-shaped archive, pooled over origins and metric cells; gates read at base rate 0.14. Logarithmic scores are positive because the standardized effects and their standard errors are small numbers.}
+\caption{Deployment-shaped archive, pooled over origins and metric cells; gates read at base rate 0.14; columns as in Table~\ref{tab:main-upworthy}, from the deployment-shaped backtest report, with 90 percent intervals by test. Logarithmic scores are positive because the standardized effects and their standard errors are small numbers.}
 \label{tab:main-asos}
 \resizebox{\textwidth}{!}{\input{tables/main-asos}}
 \end{table*}
@@ -413,7 +413,7 @@ LaTeX tables and figures & \texttt{make tables}, \texttt{make paper-figures} (bo
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
-\caption{Recorded checksums of the downloaded files (\texttt{data/CHECKSUMS.json}).}
+\caption{Recorded checksums of the downloaded files (\texttt{data/CHECKSUMS.json}), verified offline by \texttt{make data}; a record, not a measurement.}
 \label{tab:checksums}
 \begin{tabular}{lrl}
 \toprule
@@ -428,7 +428,7 @@ file under \texttt{data/raw/} & bytes & sha256 \\
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
-\caption{Synthetic archive with known truth and no planted text signal, pooled over origins and cells.}
+\caption{Synthetic archive with known truth and no planted text signal, pooled over origins and cells; columns as in Table~\ref{tab:main-upworthy}, from the synthetic backtest report, with 90 percent intervals by test.}
 \label{tab:main-synthetic}
 \resizebox{\textwidth}{!}{\input{tables/main-synthetic}}
 \end{table*}

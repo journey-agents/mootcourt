@@ -28,6 +28,16 @@ stage() {
   printf "%s %s %.1f\n" "$name" "$rc" "$(echo "$t1 - $t0" | bc)" >> "$STAGES"
   return $rc
 }
+# SEED_RAW_FROM=<data root>: copy the archives (raw files and CHECKSUMS.json) into the fresh root instead of downloading them; the copy time is
+# recorded in the run log in place of the fetch time (the data stage then verifies checksums and downloads nothing).
+LOAD_START=$(uptime | sed 's/.*load averages*: //')
+SEED_NOTE=""
+if [ -n "${SEED_RAW_FROM:-}" ] && [ -n "${MOOTCOURT_DATA_ROOT:-}" ]; then
+  c0=$(date +%s.%N)
+  mkdir -p "$MOOTCOURT_DATA_ROOT/data"
+  cp -R "$SEED_RAW_FROM/data/raw" "$MOOTCOURT_DATA_ROOT/data/raw" && cp "$SEED_RAW_FROM/data/CHECKSUMS.json" "$MOOTCOURT_DATA_ROOT/data/CHECKSUMS.json" || exit 1
+  SEED_NOTE="archives copied from $SEED_RAW_FROM, not downloaded; copy time $(printf '%.1f' "$(echo "$(date +%s.%N) - $c0" | bc)") s (in place of a fetch time)"
+fi
 stage setup make setup || exit 1
 stage data make data || exit 1
 stage power make power || exit 1
@@ -47,6 +57,7 @@ uv run python scripts/run_log.py --stages "$STAGES" --data-log "$LOGS/data.log" 
   --meta "run=clean copy of the files git would commit, $ROOT_NOTE; the data line below says whether anything was downloaded; the Python environment came from the uv cache, so the setup stage is not a cold install" \
   --meta "tree_sha256_16=$TREE" --meta "files=$(wc -l < "$WORK/filelist.txt" | tr -d ' ')" --meta "python=$PYV" \
   --meta "machine=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || uname -m), $(sysctl -n hw.ncpu 2>/dev/null || nproc) cores" \
-  --meta "commit=$COMMIT_NOTE" \
+  --meta "commit=$COMMIT_NOTE" --meta "load_start=$LOAD_START" --meta "load_end=$(uptime | sed 's/.*load averages*: //')" \
+  ${SEED_NOTE:+--meta "archives=$SEED_NOTE"} \
   --meta "seed=0 for fit and backtest; 20261102 for the power run" --meta "uv=$(uv --version)"
 echo "done: $CLONE/reports/run-log.md"

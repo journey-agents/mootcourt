@@ -77,6 +77,20 @@ def test_the_diff_ignores_model_ids_creation_times_snapshot_dates_and_seconds_fi
     assert qc.diff_reports(a, b) == ["tables.x[0].v: present in one report only"]
 
 
+def test_percentile_fields_have_a_tolerance_of_two_points_and_nothing_else_does(qc):
+    a = {"tables": {"aggregate": [{"ece_percentile": 90.0, "ece_percentile_independent": 50.0, "ece_equal_mass_percentile": 10.0, "logscore": 1.0}]}}
+
+    def moved(**kw):
+        b = json.loads(json.dumps(a))
+        b["tables"]["aggregate"][0].update(kw)
+        return qc.diff_reports(a, b)
+
+    assert moved(ece_percentile=91.0, ece_percentile_independent=48.5, ece_equal_mass_percentile=11.9) == []
+    assert moved(ece_percentile=93.0) == ["tables.aggregate[0].ece_percentile: 90.0 != 93.0"]
+    assert len(moved(ece_percentile_independent=53.0)) == 1 and len(moved(ece_equal_mass_percentile=7.0)) == 1
+    assert len(moved(logscore=1.0001)) == 1, "every other field is still compared exactly"
+
+
 # ---------------------------------------------------------------------------------------------- assemble_run_folder --update
 def _report(model_id: str, snap="20261103-aaaaaaaaaaaa", gates=None):
     gates = gates or {"0.90": {"n_200": 175, "n_400": 250}}

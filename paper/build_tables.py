@@ -165,7 +165,7 @@ def decision_table(rep, source, out):
     per_origin = [r for r in t if r["origin"] != "ALL" and r.get("budget", 0.25) == 0.25]
     if not per_origin:
         raise ValueError(f"{rep['_path']} has no per-origin decision value rows (only the pooled ALL row)")
-    keys = sorted({(r["policy"], r["rung"]) for r in per_origin}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
+    keys = sorted({(r["policy"], r["rung"]) for r in per_origin}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[0], k[1]))
     lines = [r"\begin{tabular}{llrr}", r"\toprule", r"policy & model & captured fraction (mean over origins) & regret (mean) \\", r"\midrule"]
     for pol, rg in keys:
         rows = [r for r in per_origin if r["policy"] == pol and r["rung"] == rg]
@@ -203,7 +203,7 @@ def decision_intervals_table(rep, source, out):
     ]
     for bud in budgets:
         rows = [r for r in pooled if r.get("budget", 0.25) == bud]
-        keys = sorted({(r["policy"], r["rung"]) for r in rows}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[1]))
+        keys = sorted({(r["policy"], r["rung"]) for r in rows}, key=lambda k: (k[0] != "random", k[0] != "p_win", k[0], k[1]))
         for pol, rg in keys:
             r = next(x for x in rows if x["policy"] == pol and x["rung"] == rg)
             cf = f"{f3(r['captured_fraction'])} ({f3(r.get('captured_fraction_lo'))}, {f3(r.get('captured_fraction_hi'))})"

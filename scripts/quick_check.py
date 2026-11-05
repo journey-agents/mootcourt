@@ -7,7 +7,13 @@ project (its own data root, so nothing under the real data root is read or writt
 leaves the diff empty; any other result is a number that moved and the change belongs to Tier C.
 
 The diff ignores what differs between runs by design: the header field ``model_id``, any ``created_at``, any field whose name ends in
-``_seconds``, and the date prefix of a snapshot id (the digest after it is compared). Floats match to a relative 1e-9.
+``_seconds``, and the date prefix of a snapshot id (the digest after it is compared). Floats match to a relative 1e-9, except the fields
+whose names end in ``_percentile`` or ``_percentile_independent``, which match to 2.0 percentile points. Those are ranks of the observed
+calibration error within a Monte Carlo null of 500 draws, and the rank is not stable across platforms: a draw that reproduces the observed
+per-bin event counts is a mathematical tie with the observed error, and whether floating point rounding puts it just below, equal or just
+above depends on the order of the additions, which differs between CPU builds of numpy. Such draws count whole or half, so the percentile
+moves by 0.2 points per draw; the Linux runs of the continuous integration differ from the Mac reference by up to 1.4 points and nothing
+else differs. The null itself is drawn the same on both (a seeded PCG64 stream; no Cholesky factor and no matrix product).
 
     python scripts/quick_check.py                     # exit 0 when the diff is empty, 1 otherwise; prints the wall time
     python scripts/quick_check.py --write-reference   # regenerate the committed report (after a deliberate change of numbers)
@@ -32,6 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = Path("tests") / "fixtures" / "quick-check" / "backtest-sample.json"
 SNAPSHOT = re.compile(r"\b\d{8}-([0-9a-f]{12})\b")
 MAX_DIFFS = 40
+PERCENTILE_TOLERANCE = 2.0          # percentile points, for the fields ending in _percentile or _percentile_independent
 STEPS = (
     ("moot", "init", "--dir", "."),
     ("moot", "ingest", "--format", "generic", "--input", "mootcourt-data/data/sample-ledger.csv", "--source-name", "sample"),
@@ -55,7 +62,11 @@ def _norm(value):
     return SNAPSHOT.sub(r"SNAPSHOT-\1", value) if isinstance(value, str) else value
 
 
-def diff_reports(ref, new, path: str = "") -> list[str]:
+def _is_percentile(key: str) -> bool:
+    return key.endswith(("_percentile", "_percentile_independent"))
+
+
+def diff_reports(ref, new, path: str = "", key: str = "") -> list[str]:
     """The differences between two report documents, one line each, apart from what the module docstring says is ignored."""
     out: list[str] = []
     if isinstance(ref, dict) and isinstance(new, dict):
@@ -66,16 +77,17 @@ def diff_reports(ref, new, path: str = "") -> list[str]:
             if k not in ref or k not in new:
                 out.append(f"{where}: present in one report only")
             else:
-                out += diff_reports(ref[k], new[k], where)
+                out += diff_reports(ref[k], new[k], where, k)
     elif isinstance(ref, list) and isinstance(new, list):
         if len(ref) != len(new):
             out.append(f"{path}: {len(ref)} entries != {len(new)} entries")
         else:
             for i, (a, b) in enumerate(zip(ref, new)):
-                out += diff_reports(a, b, f"{path}[{i}]")
+                out += diff_reports(a, b, f"{path}[{i}]", key)
     elif isinstance(ref, float) or isinstance(new, float):
         same = isinstance(ref, (int, float)) and isinstance(new, (int, float)) and not isinstance(ref, bool) and not isinstance(new, bool) \
-            and (ref == new or math.isclose(ref, new, rel_tol=1e-9, abs_tol=1e-12) or (math.isnan(ref) and math.isnan(new)))
+            and (ref == new or math.isclose(ref, new, rel_tol=1e-9, abs_tol=1e-12) or (math.isnan(ref) and math.isnan(new))
+                 or (_is_percentile(key) and abs(ref - new) <= PERCENTILE_TOLERANCE * (1 + 1e-9)))
         if not same:
             out.append(f"{path}: {ref!r} != {new!r}")
     elif _norm(ref) != _norm(new) or type(ref) is not type(new):

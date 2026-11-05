@@ -51,11 +51,11 @@ moot init
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (10 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (21 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (22 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (27 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (20 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (21 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (26 s elapsed)
 wrote ~/moot-first/mootcourt.toml
 data root ~/moot-first/mootcourt-data (layout created)
 sample ledger ~/moot-first/mootcourt-data/data/sample-ledger.csv (synthetic)
@@ -79,7 +79,7 @@ moot ingest --format generic --input mootcourt-data/data/sample-ledger.csv --sou
   admitted: 360
 admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_user 120
 final reads from 2023-01-23 to 2025-12-29
-snapshot 20261104-b04b5b1dd18c for sample
+snapshot 20261105-b04b5b1dd18c for sample
 ledger ~/moot-first/mootcourt-data/data/ledger/ledger.parquet: 360 rows
 ```
 
@@ -93,15 +93,15 @@ moot backtest --source sample
 ```
 
 ```text output
-fitted model 3017254bf6f0 at snapshot 20261104-b04b5b1dd18c on 360 rows usable at 2026-11-04T23:08:37.713047+00:00 in 1.3 s; it is the champion for sample
+fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T00:32:51.314806+00:00 in 1.2 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 gates read from ~/moot-first/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
-filled the backtest summary of model 3017254bf6f0
-scored 330 rows over 11 origins in 4.3 s (report writing 15.5 s; the whole run 19.8 s)
-wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261104-b04b5b1dd18c.md
-wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261104-b04b5b1dd18c.json
-wrote ~/moot-first/mootcourt-data/reports/scores-sample-20261104-b04b5b1dd18c.parquet
+filled the backtest summary of model 6b43ae900d91
+scored 330 rows over 11 origins in 3.7 s (report writing 13.8 s; the whole run 17.5 s)
+wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
+wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
+wrote ~/moot-first/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
 ```
 
 `fit` makes the forecaster from the ledger. The level of each period (quarter) in the fit is taken from the last complete quarter, because the latest quarter of a ledger is usually thin; the backtest, which fits at quarter starts, is unaffected. The first model for a source becomes its **champion**. The line "no backtest exists" is expected the first time: the backtest then fills that slot, as the next lines say. The backtest takes about ten seconds here and minutes on a ledger with tens of thousands of rows.
@@ -121,12 +121,12 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 ```text output
 # Moot Court card
 
-- Card id: fd359b14b8944225
+- Card id: e82a47f74a9d5158
 - Source: sample
 - Cell: checkout_conversion
 - Origin: 2025-12-30T00:00:00+00:00
-- Ledger snapshot: 20261104-b04b5b1dd18c
-- Model: 3017254bf6f0
+- Ledger snapshot: 20261105-b04b5b1dd18c
+- Model: 6b43ae900d91
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: planned units per arm: 20000, standard error of the future estimate: 0.015 units of the ledger's effect
@@ -202,17 +202,17 @@ OK    package fastapi: 0.162.0 (needs 0.110 or newer)
 OK    package uvicorn: 0.54.0 (needs 0.29 or newer)
 OK    package mcp: 2.3.0 (needs 1.2 or newer)
 OK    package matplotlib: 3.11.2 (needs 3.8 or newer)
-OK    environment: no sidecar files under /Users/yingjieli/codes/mootcourt/.venv/lib/python3.11/site-packages
-OK    data root: ~/moot-first/mootcourt-data; free space 12.0 GB
+OK    environment: no sidecar files under <env>/lib/python3.11/site-packages
+OK    data root: ~/moot-first/mootcourt-data; free space 12.8 GB
 OK    ledger: ~/moot-first/mootcourt-data/data/ledger/ledger.parquet conforms
-OK    model sample: champion 3017254bf6f0 on snapshot 20261104-b04b5b1dd18c
-WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 310 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
+OK    model sample: champion 6b43ae900d91 on snapshot 20261105-b04b5b1dd18c
+WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 311 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 WARN  cards sample: 0 scored outcomes, 0 post-hoc cards (issued after their test started: recorded, never scored), 0 reissues (a later card for a row another card scores); no join scores these as they stand, cards with no row id: 1
 status: warn
 ```
 
-The exit code is 0 when everything is healthy, 1 with warnings and 2 with failures. Here it is 1. The first warning is correct: the **reliability report** (the record of how well issued cards have done lately, seeded by the backtest) is dated at the end of the sample history, which is long before today. Cards for a live ledger abstain when that report is older than 14 days. You will refresh it in [tutorial 4](04-weekly-loop.md). The second, on `cards sample`, counts the card you issued in step 5, which names no ledger row (`cards with no row id: 1`), so no join could score it; tutorial 4 issues cards that name their row.
+The exit code is 0 when everything is healthy, 1 with warnings and 2 with failures. The `python` and `package` lines show the versions installed in your environment, and the `environment` line its path (shown here as `<env>`), so yours will differ. Here the exit code is 1. The first warning is correct: the **reliability report** (the record of how well issued cards have done lately, seeded by the backtest) is dated at the end of the sample history, which is long before today. Cards for a live ledger abstain when that report is older than 14 days. You will refresh it in [tutorial 4](04-weekly-loop.md). The second, on `cards sample`, counts the card you issued in step 5, which names no ledger row (`cards with no row id: 1`), so no join could score it; tutorial 4 issues cards that name their row.
 
 ## What you have
 

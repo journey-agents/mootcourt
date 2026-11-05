@@ -268,13 +268,30 @@ def ece_null(p, draws: int = NULL_DRAWS, seed: int = 0, n_bins: int = 10, test_i
 def ece_percentile(
     p, event, draws: int = NULL_DRAWS, seed: int = 0, n_bins: int = 10, test_ids=None, icc: float = 0.0, equal_mass: bool = False
 ) -> float:
-    """Percentile (0 to 100) of the observed ECE within the perfect-calibration null; ties count half.
+    """Percentile (0 to 100) of the observed ECE within the perfect-calibration null; ties count half (``null_percentile``, call 255).
 
     A value of 100 means the observed ECE is above every draw; ``draws`` draws resolve percentiles only up to ``100 (draws - 1) / draws``.
     """
     obs = ece_equal_mass(p, event, n_bins) if equal_mass else ece(p, event, n_bins)
     null = ece_null(p, draws, seed, n_bins, test_ids, icc, equal_mass)
-    return float(100.0 * (np.mean(null < obs) + 0.5 * np.mean(null == obs)))
+    return null_percentile(null, obs)
+
+
+NULL_TIE_TOL = 1e-9      # relative; the ECE is a sum of a few hundred terms of size 1e-3 to 1e-1, so rounding is near 1e-16
+
+
+def null_percentile(null, observed: float) -> float:
+    """Mid-rank percentile (0 to 100) of ``observed`` within the null draws.
+
+    Draws within ``1e-9 * max(1, |observed|)`` of the observed value are ties and count half; draws below it count whole. A draw that
+    reproduces the observed per-bin event counts is a mathematical tie, and floating point decides on which side of the observed value
+    its sum falls according to the order of the additions (call 255), so a strict comparison moved the percentile with the platform.
+    """
+    null = np.asarray(null, float)
+    tol = NULL_TIE_TOL * max(1.0, abs(float(observed)))
+    below = float(np.sum(null < observed - tol))
+    tied = float(np.sum(np.abs(null - observed) <= tol))
+    return float(100.0 * (below + 0.5 * tied) / null.size)
 
 
 # ----------------------------------------------------------------- coverage

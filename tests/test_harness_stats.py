@@ -186,3 +186,42 @@ def test_aggregation_of_20000_rows_with_B500_under_30_seconds(imp):
     t = time.perf_counter()
     imp("mootcourt.harness_stats").aggregate_scores(df, gates={"n_200": 200, "n_400": 400}, B=500)
     assert time.perf_counter() - t < 30
+
+
+# ---- call 255: ties of the calibration null are mid-ranked within a relative tolerance, so the percentile is the same on every platform
+def test_draws_that_tie_with_the_observed_error_count_half(imp):
+    hs = imp("mootcourt.harness_stats")
+    null = np.array([0.0, 1.0, 1.0, 1.0, 2.0])
+    assert hs.null_percentile(null, 1.0) == pytest.approx(50.0)           # (1 below + 0.5 * 3 tied) / 5
+    assert hs.null_percentile(np.full(8, 0.3), 0.3) == pytest.approx(50.0)
+
+
+def test_rounding_noise_in_the_draws_or_in_the_observed_value_leaves_the_percentile_unchanged(imp, monkeypatch):
+    hs = imp("mootcourt.harness_stats")
+    rng = np.random.default_rng(3)
+    p = rng.beta(2, 5, 300)
+    event = rng.random(300) < p
+    base_null = hs.ece_null(p, draws=200, seed=3)
+    obs = hs.ece(p, event)
+    # make 12 draws tie mathematically with the observed value, as draws with the observed bin counts do
+    null = base_null.copy()
+    null[:12] = obs
+    expect = hs.null_percentile(null, obs)
+    for noise in (1e-12, -1e-12):
+        assert hs.null_percentile(null + noise * rng.random(null.size), obs) == pytest.approx(expect)
+    ulps = null.copy()
+    ulps[:12] = obs + rng.integers(-3, 4, 12) * np.spacing(obs)
+    assert hs.null_percentile(ulps, obs) == pytest.approx(expect)
+    assert hs.null_percentile(null, obs + 5 * np.spacing(obs)) == pytest.approx(expect)
+    # through the public function, with the null replaced by the noisy one
+    monkeypatch.setattr(hs, "ece_null", lambda *a, **k: ulps)
+    assert hs.ece_percentile(p, event, draws=200, seed=3) == pytest.approx(expect)
+
+
+def test_without_ties_the_percentile_is_the_share_of_draws_below(imp):
+    hs = imp("mootcourt.harness_stats")
+    rng = np.random.default_rng(0)
+    null = rng.random(500)
+    for obs in (0.05, 0.5, 0.97):
+        assert hs.null_percentile(null, obs) == pytest.approx(100.0 * np.mean(null < obs))
+    assert hs.null_percentile(null, 2.0) == pytest.approx(100.0) and hs.null_percentile(null, -1.0) == pytest.approx(0.0)

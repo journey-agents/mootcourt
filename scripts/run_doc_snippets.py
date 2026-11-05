@@ -212,6 +212,8 @@ def display_text(raw: str, home: Path, port: str | None = None) -> str:
     text = raw
     for h in sorted({str(home), str(home.resolve())}, key=len, reverse=True):
         text = text.replace(h, "~")
+    env_root = str(Path(sys.executable).parent.parent)                 # the environment path is the runner's own
+    text = text.replace(env_root, "<env>")
     if port:
         text = text.replace(f"127.0.0.1:{port}", f"127.0.0.1:{DOC_PORT}").replace(f"localhost:{port}", f"localhost:{DOC_PORT}")
     return "\n".join(ln.rstrip() for ln in text.rstrip("\n").split("\n")) if text.strip() else ""
@@ -223,6 +225,8 @@ _MASKS = [
     (re.compile(r"\b\d+\.\d+\.\d+\b"), "<version>"),
     (re.compile(r"\b\d+(\.\d+)? (s|seconds)\b"), "<time>"),
     (re.compile(r"\b\d+(\.\d+)? (KB|MB|GB|TB)\b"), "<size>"),
+    (re.compile(r"((?:package [\w.-]+|python): )[\d.]+"), r"\1<version>"),   # whatever the version scheme: a doctor line shows what is installed
+    (re.compile(r"python3\.\d+"), "python3.<minor>"),               # the interpreter minor version in the environment path
     (re.compile(r"usable at \d{4}-\d\d-\d\dT[\d:.]+\+00:00"), "usable at <clock>"),   # the fit clock is the time of the run
     (re.compile(r"^(progress: |.*: still running, ).*\n?", re.M), ""),                          # progress lines: their number depends on the machine
     (re.compile(r"\b\d+ days old\b"), "<n> days old"),     # only the age: a limit such as "limit 14 days" is part of the claim and is not masked

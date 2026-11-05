@@ -262,3 +262,7 @@ def test_update_refuses_a_stale_dependent(tmp_run_dir):
 ## How to read progress
 
 After every round, the summary's convergence table must show each of these moving the right way, or the plan is revised rather than another round run: open blocking (must be 0), open major (falling), rubric items passed per role (rising to all), claims supported as written (rising to all), numbers changed since the previous round (falling to 0 apart from an intended Tier C stage).
+
+## Change log
+
+- 4 Nov 2026, evening. Task 1 landed as commit 27c7b25 (pull request 7), with Tasks 2, 4, 5, 6 and the register of Task 3 folded in. The clean clone and CI found three defects: the table builder ordered policy rows by hash seed (fixed, with a determinism test), the first-card page printed machine-specific values (masked in the renderer, with tests), and the calibration null's percentile depended on floating-point tie order across platforms (fixed at the source by a mid-rank rule with a tolerance, call 255). The tie rule moves the percentile fields, so run 7 repeats run 6 on the committed tree overnight into paper/data/run7-tie-rank; the paper, docs and register switch to run 7 on Thursday morning. The schedule holds: round 02 Thursday evening.

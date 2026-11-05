@@ -398,6 +398,24 @@ def test_the_mask_hides_the_fit_clock_and_the_number_of_progress_lines_and_nothi
     assert rds.mask("fitted on 360 rows usable at 2026-11-04T17:42:00+00:00") != rds.mask("fitted on 361 rows usable at 2026-11-04T17:42:00+00:00")
 
 
+def test_the_mask_hides_installed_versions_and_the_environment_path_of_the_doctor_and_nothing_else():
+    a = ("OK    python: 3.11.14 (needs 3.11 or newer)\nOK    package numpy: 2.4.6 (needs 1.26 or newer)\n"
+         "OK    environment: no sidecar files under <env>/lib/python3.11/site-packages")
+    b = ("OK    python: 3.13.9 (needs 3.11 or newer)\nOK    package numpy: 2.5 (needs 1.26 or newer)\n"
+         "OK    environment: no sidecar files under <env>/lib/python3.13/site-packages")
+    assert rds.mask(a) == rds.mask(b)
+    assert rds.mask("OK    package numpy: 2.4.6 (needs 1.26 or newer)") != rds.mask("OK    package numpy: 2.4.6 (needs 1.27 or newer)")
+
+
+def test_the_mask_hides_free_disk_space_and_the_home_folder_of_the_doctor_block():
+    a = "data root: ~/moot-first/mootcourt-data; free space 12.0 GB\nstale (limit 14 days, oldest 310 days old)"
+    b = "data root: ~/moot-first/mootcourt-data; free space 1.3 TB\nstale (limit 14 days, oldest 12 days old)"
+    assert rds.mask(a) == rds.mask(b)
+    home = Path("/home/someone/x")
+    shown = rds.display_text(f"data root: {home}/moot-first/mootcourt-data", home)
+    assert shown == "data root: ~/moot-first/mootcourt-data"
+
+
 def test_the_output_mask_hides_how_many_days_old_but_not_the_staleness_limit():
     assert rds.mask("reliability: 3 entries are stale (limit 14 days, oldest 489 days old)") == rds.mask(
         "reliability: 3 entries are stale (limit 14 days, oldest 12 days old)")
