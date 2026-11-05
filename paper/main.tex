@@ -3,9 +3,9 @@
 % reproduced on a one-entry article); the aux, bbl and out files are identical between runs, so the output is complete.
 % For submission switch the class options to [sigconf,review,anonymous].
 % Source comments: a line beginning "% src:" names the report JSON path, table and key behind the sentence that follows it.
-% $RUN6 = paper/data/run6-forward-chaining (the final run: every experiment downstream of P2 rerun from one code state under the forward-chaining default of docs/method.md call 206; run 5 is kept in paper/data/run5-period-rule); the same files sit under the data root as reports/.
+% $RUN6 = paper/data/run7-tie-rank (the final run: run 6, in which every experiment downstream of P2 was rerun from one code state under the forward-chaining default of docs/method.md call 206, repeated on commit 82ba862 under the mid-rank tie rule of the calibration percentile, call 255; the macro keeps its name because scripts/paper_audit.py resolves it; runs 5 and 6 are kept beside it under paper/data); the same files sit under the data root as reports/.
 % The planted-ledger backtests with every rung (positive_control_rungs) sit under $RUN6/positive-control/rungs/{n2000,n11100}; the held-out gain of the positive control is docs/method.md call 230 and the rung comparison call 231.
-% No marker remains: the timed run at the final commit sits in the run folder as run-log.json, and every source line names a file under $RUN6 (three cite code or documentation).
+% No marker remains: the timed run of run 7 sits in the run folder as run-log.json, and every source line names a file under $RUN6 (a few cite code or documentation).
 \documentclass[sigconf,nonacm]{acmart}
 \usepackage{booktabs}
 \usepackage{graphicx}

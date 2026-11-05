@@ -1,0 +1,120 @@
+{
+ "source": "upworthy",
+ "scores": "scores-upworthy-20261103-4bfb354b87e3.parquet",
+ "ledger": "ledger.parquet",
+ "rungs": [
+  {
+   "rung": "GBM",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "GBM+cal",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P0",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P1",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P2",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "always_reference",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "always_variant",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "local_eb",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "local_eb+cal",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "text_lr",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "text_lr+cal",
+   "origins": 9,
+   "scored_rows": 13247,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  }
+ ],
+ "post_launch_fields_in_features": "0",
+ "total_violations": 0,
+ "pass": true
+}

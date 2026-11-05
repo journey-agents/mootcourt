@@ -802,10 +802,10 @@ Upworthy cards, 20000 impressions per arm, model dd73c75e92bd. Milliseconds.
 
 | path | p50 | p95 | max |
 |---|---|---|---|
-| in process, bundle preloaded | 27.1 | 28.0 | 44.9 |
-| in process, weight on precedents forced to 0.5 | 27.1 | 27.7 | 28.4 |
-| HTTP service on loopback, bundle preloaded | 29.2 | 31.1 | 55.8 |
-| command line, fresh process | 1049.6 | 1050.2 | 1050.2 |
+| in process, bundle preloaded | 29.6 | 30.9 | 47.6 |
+| in process, weight on precedents forced to 0.5 | 29.7 | 31.1 | 31.9 |
+| HTTP service on loopback, bundle preloaded | 31.9 | 37.5 | 40.5 |
+| command line, fresh process | 1255.3 | 1507.7 | 1535.8 |
 
 Of 30 made-up headlines, 0 abstained at the fitted weight on precedents and 0 with the weight forced to 0.5.
 
@@ -814,23 +814,23 @@ Of 30 made-up headlines, 0 abstained at the fitted weight on precedents and 0 wi
 | stage | seconds |
 |---|---|
 | setup | 1.4 |
-| data | 69.2 |
-| power | 963.5 |
-| fit-upworthy | 40.9 |
-| backtest-upworthy | 289.0 |
-| fit-asos | 3.1 |
-| backtest-asos | 23.8 |
-| fit-synthetic | 4.2 |
-| backtest-synthetic | 35.5 |
-| challenger-gbm | 584.5 |
-| audit-upworthy | 7.5 |
-| audit-asos | 0.9 |
-| audit-synthetic | 0.9 |
-| inventory | 4.8 |
-| data-verify | 10.7 |
-| latency | 12.1 |
+| data | 41.9 |
+| power | 836.7 |
+| fit-upworthy | 34.6 |
+| backtest-upworthy | 279.2 |
+| fit-asos | 3.5 |
+| backtest-asos | 26.1 |
+| fit-synthetic | 4.4 |
+| backtest-synthetic | 36.1 |
+| challenger-gbm | 706.1 |
+| audit-upworthy | 11.9 |
+| audit-asos | 1.1 |
+| audit-synthetic | 1.3 |
+| inventory | 8.4 |
+| data-verify | 13.3 |
+| latency | 18.2 |
 
-Clean-clone download 15.6 s (3 files, 15470807 bytes), compute 2036.4 s, total 2052.0 s.
+Checksum verification 3.8 s (no download in this run), compute 2020.4 s, total 2024.2 s.
 <!-- moot-results:end -->
 
 ## Why a ladder and not a gradient-boosted regressor

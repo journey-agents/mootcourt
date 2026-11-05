@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (5.4 s)
-snapshot 20261104-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 5.8 s
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (6.6 s)
+snapshot 20261105-4bfb354b87e3 for upworthy
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 7.1 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,7 +59,7 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 97f42709799d at snapshot 20261104-4bfb354b87e3 on 13453 rows usable at 2026-11-04T21:45:45.964913+00:00 in 26.0 s; it is the champion for upworthy
+fitted model 25cd2b6c38d9 at snapshot 20261105-4bfb354b87e3 on 13453 rows usable at 2026-11-05T05:59:43.868587+00:00 in 26.7 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -86,8 +86,8 @@ progress: origin 2014-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'alwa
 backtest of upworthy: still running, 60 s elapsed
 backtest of upworthy: still running, 70 s elapsed
 backtest of upworthy: still running, 80 s elapsed
-progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 90 s elapsed
+progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 100 s elapsed
 backtest of upworthy: still running, 110 s elapsed
 backtest of upworthy: still running, 120 s elapsed
@@ -100,17 +100,17 @@ backtest of upworthy: still running, 170 s elapsed
 backtest of upworthy: still running, 180 s elapsed
 backtest of upworthy: still running, 190 s elapsed
 backtest of upworthy: still running, 200 s elapsed
-backtest of upworthy: still running, 210 s elapsed
 progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
+backtest of upworthy: still running, 210 s elapsed
 backtest of upworthy: still running, 220 s elapsed
 backtest of upworthy: still running, 230 s elapsed
 backtest of upworthy: still running, 240 s elapsed
 progress: origin 2015-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 13132 rows, scoring 270
-filled the backtest summary of model 97f42709799d
-scored 13247 rows over 9 origins in 314.2 s (report writing 53.4 s; the whole run 367.6 s)
-wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.md
-wrote ~/mootcourt-data/reports/backtest-upworthy-20261104-4bfb354b87e3.json
-wrote ~/mootcourt-data/reports/scores-upworthy-20261104-4bfb354b87e3.parquet
+filled the backtest summary of model 25cd2b6c38d9
+scored 13247 rows over 9 origins in 307.2 s (report writing 53.0 s; the whole run 360.2 s)
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.md
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.json
+wrote ~/mootcourt-data/reports/scores-upworthy-20261105-4bfb354b87e3.parquet
 ```
 
 The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about 3 and a half minutes). That quick file sizes the gate at one base rate (0.3), so the backtest ends with a note, and the decidability columns of your report will differ from the published ones. The published tables read gates sized by test at the base rate of each cell: run `moot simulate gate-power` (`make power`, about ten minutes) and then the backtest again to get the same columns. The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
@@ -142,12 +142,12 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 ```text output
 # Moot Court card
 
-- Card id: 590cd9a242fbc9d0
+- Card id: 8dce15903f770d58
 - Source: upworthy
 - Cell: headline_only
 - Origin: 2015-05-07T00:00:00+00:00
-- Ledger snapshot: 20261104-4bfb354b87e3
-- Model: 97f42709799d
+- Ledger snapshot: 20261105-4bfb354b87e3
+- Model: 25cd2b6c38d9
 - Feature hash: b4b031b2f77e
 - Issued at: 2015-05-07T00:00:00+00:00
 - Request: headline "A simple fact about your mornings", image changed: no, planned units per arm: 20000, standard error of the future estimate: 0.110 percentage points

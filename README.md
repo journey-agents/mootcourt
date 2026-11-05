@@ -185,7 +185,7 @@ The exit code printed on the first line is 0 when healthy, 1 with warnings and 2
 - ASOS, 337 scored rows: Brier skill against the base rate on all rows is -0.1073 (-0.2366 to -0.0020) for P1 (worse than the constant base rate) and -0.1073 (-0.2366 to -0.0020) for P2 (worse than the constant base rate); 4 of 4 cells are undecidable at this n at the release gate.
 <!-- moot-headline:end -->
 
-The full tables (calibration, abstention, decision value, challengers, ablations, the cautionary first run and run times) are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run6-forward-chaining` for the published ones.
+The full tables (calibration, abstention, decision value, challengers, ablations, the cautionary first run and run times) are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run7-tie-rank` for the published ones.
 
 ## Learn more
 

@@ -115,14 +115,14 @@ selfcheck:
 	$(PY) scripts/review_selfcheck.py
 
 # Regenerates the paper's figures (vector PDFs and figures.json) from a run folder; no data root or network needed.
-# Usage: make paper-figures [RUN=paper/data/run6-forward-chaining] [FIGURES=paper/figures]
-RUN ?= paper/data/run6-forward-chaining
+# Usage: make paper-figures [RUN=paper/data/run7-tie-rank] [FIGURES=paper/figures]
+RUN ?= paper/data/run7-tie-rank
 FIGURES ?= paper/figures
 paper-figures:
 	$(PY) scripts/paper_figures.py --run $(RUN) --out $(FIGURES)
 
 # Rebuilds every LaTeX table of the paper from the run folder (no data root needed); each table's first line names its source relative
-# to that folder. Usage: make tables [RUN=paper/data/run6-forward-chaining]
+# to that folder. Usage: make tables [RUN=paper/data/run7-tie-rank]
 tables:
 	$(PY) paper/build_tables.py --reports $(RUN) --out paper/tables
 

@@ -12,7 +12,7 @@ whose names end in ``_percentile`` or ``_percentile_independent``, which match t
 calibration error within a Monte Carlo null of 500 draws, and the rank is not stable across platforms: a draw that reproduces the observed
 per-bin event counts is a mathematical tie with the observed error, and whether floating point rounding puts it just below, equal or just
 above depends on the order of the additions, which differs between CPU builds of numpy. Such draws count whole or half, so the percentile
-moves by 0.2 points per draw; the Linux runs of the continuous integration differ from the Mac reference by up to 1.4 points and nothing
+moves by 0.2 points per draw; the Linux runs of the continuous integration differ from the Mac reference by up to 1.1 points and nothing
 else differs. The null itself is drawn the same on both (a seeded PCG64 stream; no Cholesky factor and no matrix product).
 
     python scripts/quick_check.py                     # exit 0 when the diff is empty, 1 otherwise; prints the wall time

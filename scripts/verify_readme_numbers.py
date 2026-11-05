@@ -579,7 +579,7 @@ def main() -> int:
     reports = Path(args.reports) if args.reports else (Path(root) / "reports" if root else here / "reports")
     if not reports.is_dir() or not list(reports.glob("backtest-*.json")):
         sys.exit(f"no backtest reports in {reports}: set MOOTCOURT_DATA_ROOT to a data root that holds them, or pass --reports DIR "
-                 "(for the published reports of the paper, --reports paper/data/run6-forward-chaining)")
+                 "(for the published reports of the paper, --reports paper/data/run7-tie-rank)")
     try:
         page_text = Path(args.readme).read_text(encoding="utf-8")
     except OSError as exc:
@@ -614,7 +614,7 @@ def main() -> int:
             fn(name, sections[name])
         except MissingInput as exc:
             sys.exit(f"missing under {reports}: {Path(str(exc)).name} (needed by the section {name!r}); pass --reports DIR with the reports the page "
-                     "was written from (for the published reports of the paper, --reports paper/data/run6-forward-chaining)")
+                     "was written from (for the published reports of the paper, --reports paper/data/run7-tie-rank)")
     bad = [r for r in RESULTS if not r[4]]
     print(f"page: {args.readme}\nreports: {reports}\n")
     print(f"{'section':<52}{'checked':>9}{'mismatch':>10}")
