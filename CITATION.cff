@@ -1,5 +1,4 @@
-# Citation metadata for the software (Citation File Format 1.2.0). Add the arXiv identifier of the paper and the Zenodo DOI of the
-# release under identifiers once they exist.
+# Citation metadata for the software (Citation File Format 1.2.0). Add the arXiv identifier of the paper under identifiers once it exists.
 cff-version: 1.2.0
 message: "If you use Moot Court in your work, please cite it as below."
 type: software
@@ -24,10 +23,14 @@ keywords:
   - empirical Bayes
   - benchmark
   - abstention
-# identifiers:
-#   - type: doi
-#     value: "10.5281/zenodo.XXXXXXX"
-#     description: "The Zenodo record of release 1.0.0"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23988587"
+    description: "The Zenodo record of release 1.0.0"
+  - type: doi
+    value: "10.5281/zenodo.23988586"
+    description: "The Zenodo concept DOI, resolving to the latest release"
+# arXiv identifier of the paper: to be added after upload
 #   - type: other
 #     value: "arXiv:YYMM.NNNNN"
 #     description: "The paper"

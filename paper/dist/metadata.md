@@ -51,5 +51,5 @@ value with its report path) is the one file worth attaching.
 
 ## Other fields
 
-- Report number: none. Journal reference: none. DOI: the Zenodo DOI of the software release, once minted (see the release checklist).
+- Report number: none. Journal reference: none. DOI field: leave empty (it is for the paper's own DOI); the software release's Zenodo DOI 10.5281/zenodo.23988587 is cited in Section 10 and the README.
 - ACM class (optional): G.3 Probability and Statistics; I.2.6 Learning.
