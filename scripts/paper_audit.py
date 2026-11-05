@@ -5,8 +5,10 @@ Convention: a comment line that starts with ``% src:`` (with continuation commen
 where that sentence's numbers come from; ``$RUN6/`` in it stands for the current run folder.
 
 ``number_audit(paper_dir, run_dir)``: for every sentence below a ``% src:`` comment, each number in the sentence is matched, at the sentence's
-precision (or times 100 for a percent), against, in order, the numbers quoted in the comment, the numbers of every ``tables/<name>.tex`` the
-comment names, and the numeric leaves of every ``$RUN6/<file>.json`` the comment names. A number that matches none is listed as unmatched.
+precision (or times 100 for a percent), against, in order, the numeric leaves of every ``$RUN6/<file>.json`` the comment names, the numbers of
+every ``tables/<name>.tex`` the comment names, and the numbers quoted in the comment. A number that matches none is listed as unmatched. A
+number that matches only a number quoted in the comment is also unmatched when that quoted number is itself a rounding of a leaf of the named
+reports: a rounded comment cannot vouch for a double-rounded number (round 03). A derived number that no leaf carries passes on its comment.
 
 ``source_resolution(paper_dir, run_dir)``: every path in a ``% src`` line (a run-folder path, ``paper/data/``, ``tables/``, ``src/mootcourt/``,
 ``DATA.md``, ``data/CHECKSUMS`` or an absolute path) must exist. A line that names no JSON report is counted apart (``nojson``) and is not a failure.
@@ -90,6 +92,11 @@ def _close(cand: float, v: float, d: int) -> bool:
     return abs(round(cand, d) - v) < 1e-9 or abs(cand - v) < 0.5 * 10 ** (-d) + 1e-12
 
 
+def _traces_to_leaf(value: float, decimals: int, leaves: set[float]) -> bool:
+    """True when ``value``, a number quoted in a comment at ``decimals`` places, is a rounding of some numeric leaf of the named reports."""
+    return any(_close(c, value, decimals) for w in leaves for c in (w, w * 100, w / 100, abs(w)))
+
+
 def _src_block(lines: list[str], i: int) -> tuple[str, int]:
     """The ``% src:`` comment starting at line ``i`` with its continuation comment lines, and the index of the first line after it."""
     src, j = lines[i], i + 1
@@ -137,6 +144,7 @@ def number_audit(paper_dir: Path, run_dir: Path) -> NumberAudit:
                 sc = re.sub(r"\\put\([^)]*\)", " ", sc)
                 sc = re.sub(r"\$[^$]*\$", " ", sc)
                 srcn = [v for _, v in _nums(src)]
+                srcdec = [(v, _decimals(t)) for t, v in _nums(src) if _decimals(t) >= 1]
                 tabn: list[float] = []
                 for name in re.findall(r"tables/([\w\-]+)\.tex", src):
                     tabn += table_numbers(name)
@@ -148,10 +156,14 @@ def number_audit(paper_dir: Path, run_dir: Path) -> NumberAudit:
                         continue
                     res.checked += 1
                     d, tier = _decimals(tok), None
-                    for cands, name in ((srcn, "src"), (tabn, "table"), (jsn, "json")):
+                    # the report leaf first, then the tables, then the comment: a comment that carries rounded digits cannot vouch for a number
+                    # that its own leaf does not round to (round 03, decision 30)
+                    for cands, name in ((jsn, "json"), (tabn, "table"), (srcn, "src")):
                         if any(_close(c, v, d) for w in cands for c in (w, w * 100, w / 100, abs(w))):
                             tier = name
                             break
+                    if tier == "src" and any(_traces_to_leaf(ct, cd, jsn) for ct, cd in srcdec if _close(ct, v, d)):
+                        tier = None      # the comment's digits are a rounding of a leaf, and the printed number is not a rounding of that leaf
                     if tier:
                         res.tiers[tier] += 1
                     else:

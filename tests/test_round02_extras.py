@@ -91,3 +91,43 @@ def test_the_extras_hold_the_paired_forward_minus_loto_comparison_pooled_and_by_
     assert all(r["difference"] == pytest.approx(0.004) for r in on["by_origin"])
     assert got["guard_off"]["pooled"]["difference"] == pytest.approx(0.002) and got["bootstrap_resamples"] == 500
     assert pe.p2_selection_comparison(tmp_path, "upworthy", "MISSING") is None
+
+
+def _by_origin_scores(n_tests=40):
+    rng = np.random.default_rng(3)
+    rows = []
+    for oi, o in enumerate(("2014-01-01", "2014-04-01", "2014-07-01")):
+        for t in range(n_tests):
+            for k in range(2):
+                ev = float(rng.random() < 0.1)
+                p = float(np.clip(0.1 + 0.05 * rng.standard_normal(), 0.01, 0.9))
+                rid = f"o{oi}t{t}k{k}"
+                for rung, shift, ab in (("P0", -0.1, False), ("P1", 0.0, bool(k == 1 and t % 5 == 0))):
+                    rows.append({"row_id": rid, "test_id": f"t{oi}-{t}", "cell": "headline_only", "origin": pd.Timestamp(o, tz="UTC"), "rung": rung,
+                                 "logscore": -1.0 + shift + 0.05 * (t % 4), "event": ev, "p_sig": p, "abstain": ab})
+    return pd.DataFrame(rows)
+
+
+def test_the_extras_hold_the_paired_p1_minus_p0_difference_by_origin(tmp_path):
+    pe = _load()
+    _by_origin_scores().to_parquet(tmp_path / "scores-upworthy-SID.parquet")
+    (tmp_path / "backtest-upworthy-SID.json").write_text(json.dumps({"header": {"bootstrap_resamples": 50, "seed": 0}, "tables": {}}))
+    got = pe.p1_minus_p0_by_origin(tmp_path, "upworthy", "SID")
+    assert [r["origin"][:10] for r in got["by_origin"]] == ["2014-01-01", "2014-04-01", "2014-07-01"]
+    for r in got["by_origin"]:
+        assert r["difference"] == pytest.approx(0.1) and r["lo"] <= r["difference"] + 1e-9 and r["hi"] >= r["difference"] - 1e-9
+        assert r["n_rows"] == 80 and r["n_tests"] == 40
+    assert got["bootstrap_resamples"] == 50 and got["by_origin_clear_of_zero"] == 3
+    assert pe.p1_minus_p0_by_origin(tmp_path, "upworthy", "MISSING") is None
+
+
+def test_the_extras_hold_the_ece_percentile_of_the_issued_cards_by_origin(tmp_path):
+    pe = _load()
+    _by_origin_scores().to_parquet(tmp_path / "scores-upworthy-SID.parquet")
+    (tmp_path / "backtest-upworthy-SID.json").write_text(json.dumps({"header": {"bootstrap_resamples": 50, "seed": 0}, "tables": {}}))
+    got = pe.issued_ece_by_origin(tmp_path, "upworthy", "SID")
+    issued = got["issued"]
+    assert len(issued["by_origin"]) == 3 and all(0.0 <= r["ece_percentile"] <= 100.0 for r in issued["by_origin"])
+    assert issued["by_origin"][0]["n_rows"] == 80 - 8 and issued["pooled"]["n_rows"] == 3 * 72
+    assert issued["origins_inside_central_90"] == sum(1 for r in issued["by_origin"] if 5.0 <= r["ece_percentile"] <= 95.0)
+    assert got["all_rows"]["pooled"]["n_rows"] == 240 and got["null_draws"] == 500

@@ -4,7 +4,7 @@
 
 **Prerequisites:** [tutorial 1](01-first-card.md) done, or at least `moot` installed. An export of concluded tests from your experimentation platform or warehouse. If you have none yet, this tutorial makes a stand-in export in step 1, so that you can follow every command.
 
-**Time:** about 20 minutes with a stand-in export. Preparing a real export is the part that takes the time, and it depends on your platform. The commands themselves run in under a minute on a few hundred experiments, and in minutes on tens of thousands.
+**Time:** about 20 minutes with a stand-in export. Preparing a real export is the part that takes the time, and it depends on your platform. The commands themselves run in about a minute and a half on a few hundred experiments, and in minutes on tens of thousands.
 
 ## What you need from your archive
 
@@ -74,12 +74,11 @@ head -3 my-export.csv
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (12 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (10 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (24 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (26 s elapsed)
-the quick gates simulation (synthetic data): still running, 30 s elapsed
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (31 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (21 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (22 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (26 s elapsed)
 experiment,variant,control,metric,delta,delta_low,delta_high,control_units,variant_units,start,end
 exp-001,treatment,control,checkout_conversion,-1.4001,-3.1395999999999993,0.33939999999999976,57135,57135,2023-01-09T00:00:00Z,2023-01-23T00:00:00Z
 exp-001,treatment,control,pages_per_session,-3.4189,-4.578436,-2.2593639999999997,57135,57135,2023-01-09T00:00:00Z,2023-01-23T00:00:00Z
@@ -180,18 +179,18 @@ moot backtest --source mine
 ```
 
 ```text output
-fitted model c2c6c9f4066d at snapshot 20261105-36befd8be469 on 360 rows usable at 2026-11-05T11:04:51.580811+00:00 in 1.7 s; it is the champion for mine
+fitted model c2c6c9f4066d at snapshot 20261105-36befd8be469 on 360 rows usable at 2026-11-05T15:40:07.546965+00:00 in 1.2 s; it is the champion for mine
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 filled the backtest summary of model c2c6c9f4066d
-scored 330 rows over 11 origins in 5.0 s (report writing 16.7 s; the whole run 21.6 s)
+scored 330 rows over 11 origins in 3.9 s (report writing 14.7 s; the whole run 18.6 s)
 wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261105-36befd8be469.md
 wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261105-36befd8be469.json
 wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261105-36befd8be469.parquet
 ```
 
-Time: about ten to fifteen seconds here on the internal disk (several times longer with the data root on an exFAT volume). It grows roughly with the number of rows times the number of origins; a ledger of a million contrasts is measured in [Scale](../scale.md).
+Time: about twenty seconds here on the internal disk (several times longer with the data root on an exFAT volume). It grows roughly with the number of rows times the number of origins; a ledger of a million contrasts is measured in [Scale](../scale.md).
 
 The gates came from `reports/gates.json`, which `moot init` wrote with a quick simulation at one base rate (0.09), in tests; the backtest prints the sizes after the gates line. Run `moot simulate gate-power --source mine` to size the gates by experiment at your own ledger's rate. `--source` measures on that ledger the base rate (the share of your experiments that end significant and positive), the rows per test and the within-test correlation of the event, and the command prints what it used ("assumptions at base rate B: rows per test R, within-test correlation C (where)") before it simulates. Without `--source` the last two default to the values measured on the public archive nearest the rate (for example 5.0 and 0.67 near 0.14), and the command says so; pass `--rows-per-test` and `--icc` to set them by hand. The command takes ten minutes or more (one rate, on a loaded machine, took 751 s); `--no-table` skips the power table, which is the slow part and not needed for the sizes, and after 10 seconds it prints progress lines on standard error. The next backtest reads the result. The sizes can differ from the quick gates by more than a factor of two, so the decidable verdicts of your first report can change once you follow this advice.
 

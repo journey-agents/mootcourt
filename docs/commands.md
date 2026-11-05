@@ -26,11 +26,11 @@ moot init
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (12 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (23 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (24 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (29 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (22 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (23 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (28 s elapsed)
 wrote ~/moot-commands/mootcourt.toml
 data root ~/moot-commands/mootcourt-data (layout created)
 sample ledger ~/moot-commands/mootcourt-data/data/sample-ledger.csv (synthetic)
@@ -64,7 +64,7 @@ tail -n 5 doctor.txt
 
 ```text output
 exit code: 1
-OK    data root: ~/moot-commands/mootcourt-data; free space 13.7 GB
+OK    data root: ~/moot-commands/mootcourt-data; free space 13.0 GB
 WARN  ledger: no ledger at ~/moot-commands/mootcourt-data/data/ledger/ledger.parquet; import results with `moot ingest`
 WARN  models: no registry; run `moot fit --source NAME`
 WARN  reliability: no reliability report; `moot backtest` seeds one and `moot join` keeps it current
@@ -97,13 +97,13 @@ moot storage
 
 ```text output
 data root: ~/moot-commands/mootcourt-data  [set MOOTCOURT_DATA_ROOT or storage.data_root in mootcourt.toml]
-raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 13.7 GB
-ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 13.7 GB
-reports     ~/moot-commands/mootcourt-data/reports  size 3.5 KB  free 13.7 GB
-models      ~/moot-commands/mootcourt-data/models  size 0 B  free 13.7 GB
-cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 13.7 GB
-cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 13.7 GB
-experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 13.7 GB
+raw         ~/moot-commands/mootcourt-data/data/raw  size 0 B  free 13.0 GB
+ledger      ~/moot-commands/mootcourt-data/data/ledger  size 0 B  free 13.0 GB
+reports     ~/moot-commands/mootcourt-data/reports  size 3.5 KB  free 13.0 GB
+models      ~/moot-commands/mootcourt-data/models  size 0 B  free 13.0 GB
+cards       ~/moot-commands/mootcourt-data/cards  size 0 B  free 13.0 GB
+cache       ~/moot-commands/mootcourt-data/cache  size 0 B  free 13.0 GB
+experiments ~/moot-commands/mootcourt-data/experiments  size 0 B  free 13.0 GB
 ```
 
 **Common errors.** The command only reads, so nothing in your data makes it fail. A folder that does not exist yet is shown as `(not created yet)` with size 0, which is normal before `moot init` and means the first line names the wrong data root if you expected existing data: the line says whether the root came from the variable, the file or the working directory. `No such option: --nope` (exit 2) for any option; the command takes none.
@@ -213,7 +213,7 @@ moot fit --source sample
 ```
 
 ```text output
-fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T11:01:44.282626+00:00 in 1.6 s; it is the champion for sample
+fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T15:37:30.535171+00:00 in 1.4 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -231,7 +231,7 @@ moot fit --source nope
 
 **Purpose.** Replay the history quarter by quarter and score every rung on rows it could not have seen. This tells you whether the cards can be trusted, and it seeds the reliability report that cards check.
 
-**Reads** the ledger and `reports/gates.json`. When the gates file is missing it runs a gate simulation first, which takes about a minute. **Writes** `reports/backtest-<source>-<snapshot>.md` and `.json`, the score table (`scores-...parquet`) and figures. **Time** about 10 seconds for a few hundred rows and about 3 minutes for 18,000 rows.
+**Reads** the ledger and `reports/gates.json`. When the gates file is missing it runs a gate simulation first, which takes about a minute. **Writes** `reports/backtest-<source>-<snapshot>.md` and `.json`, the score table (`scores-...parquet`) and figures. **Time** about 20 to 25 seconds for a few hundred rows, most of it writing the report, and about 5 minutes for 18,000 rows.
 
 **Options you will use.** `--progress-after SECONDS` (default 10) for progress lines on standard error during a long run, and the last line of the run reports "the whole run N s". `--challenger gbm` (also `local_eb`, `text_lr`) to compare with another model; `--second-opinion FILE` ([tutorial 6](tutorials/06-simulation-agent.md)); `--bootstrap N` for the interval resamples; `--primary-metric` for a ledger with several metrics; the ablation flags (`--features`, `--lambda`, `--kappa`, `--drop-trigger`, `--p2-guard off`, `--pairwise off`) in the [method page](method.md). `--drop-trigger NAME` removes an abstention trigger; alone it also computes the rows that the trigger would have released, and combined with another ablation flag or a second opinion it still scores and writes the report but says, in the header notes (`released_rows_skipped`) and on screen, that released rows are not computed. `--admission prelaunch` scores every contrast with a finite estimate whatever its realized clicks, as an ablation beside the main run. A challenger gets a raw row and a recalibrated one (`GBM+cal`).
 
@@ -243,7 +243,7 @@ moot backtest --source sample
 gates read from ~/moot-commands/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 filled the backtest summary of model 6b43ae900d91
-scored 330 rows over 11 origins in 5.3 s (report writing 18.1 s; the whole run 23.4 s)
+scored 330 rows over 11 origins in 4.2 s (report writing 15.7 s; the whole run 19.8 s)
 wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
 wrote ~/moot-commands/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
 wrote ~/moot-commands/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
@@ -309,7 +309,8 @@ A ledger can carry several metrics per experiment. Each metric is its own cell, 
 | `Invalid value: --image-changed must be true or false, got ...` (exit 2) | Pass `true` or `false`. |
 | `error: this ledger's cells are A, B, C; the card needs --cell (or the cell field) to name one of them` (exit 2) | The ledger's cells are metrics and you named none. Pass `--cell` with one of the listed names. |
 | `error: give either a row id or a test id with a variant id, not both` (exit 2) | Name the row once: `--row-id`, or `--test-id` with `--variant-id`. A `--test-id` without `--variant-id` is refused too. |
-| `error: row id ... is in the ledger with cell A, but this card is for cell B: the join would score it against another metric's result; give the cell of the row (A) or the id of the row of cell B` (exit 1; the service answers 422) | The row id names a row of another metric. Give the cell of that row, or the row id of the cell you mean. Nothing was frozen. A card whose row is not in the ledger yet is never refused. |
+| `error: row id ... is in the ledger with cell A, but this card is for cell B: the join would score it against another metric's result; give the cell of the row (A) or the id of the row of cell B` (exit 2; the service answers 422) | The row id names a row of another metric. Give the cell of that row, or the row id of the cell you mean. Nothing was frozen. A card whose row is not in the ledger yet is never refused. |
+| `error: row id ... is in the ledger with its result; a card for it would not be pre-launch evidence` (exit 2; the service answers 422) | The test has already concluded and its result is in the ledger, so a card for it can no longer be pre-launch evidence. Nothing was frozen. |
 | `error: card ... is frozen with different content` (exit 1) | The card id covers the content; a clash fails loudly instead of replacing a record. |
 | a card with `Reason reliability: reliability report is older than 14 days` | Not an error: the cell has no recent record. See [troubleshooting](troubleshooting.md#a-card-abstains). |
 
@@ -566,7 +567,7 @@ skill \ n       100     125     175     225     250     500    1000    2000
 0.30           0.85    0.90    1.00    1.00    1.00    1.00    1.00    1.00
 power 0.80: n_200 = 125 (skill 0.20), n_400 = 100 (skill 0.10)
 power 0.90: n_200 = 175 (skill 0.20), n_400 = 225 (skill 0.10)
-release gate = power 0.90; reps 20, bootstrap 20, 1.4 s. Synthetic data. Wrote gates-by-test.json
+release gate = power 0.90; reps 20, bootstrap 20, 1.1 s. Synthetic data. Wrote gates-by-test.json
 ```
 
 The lines to read are again `n_200` and `n_400` at power 0.90 and 0.80, now in tests. A small run is noisy; use the default for a decision. `--rows-per-test` sets the mean rows per test (3.5 for Upworthy; use the figure of your ledger), `--icc` the within-test correlation of the event (by default the measured value of each base rate: 0.13 for Upworthy, 0.67 for ASOS; contrasts of one test move together, so a ledger with more rows per test or a higher correlation needs more tests) and `--level` the interval (0.9). `gates.json` records the rows per test, the correlation and the latent correlation behind it for every base rate.

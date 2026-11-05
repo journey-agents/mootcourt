@@ -35,6 +35,8 @@ MARKER = {"P0": "o", "P1": "s", "P2": "^", "local_eb": "D", "GBM": "v", "text_lr
 GREY = "#777777"
 COL_W = 3.4   # inches, one column
 WIDE_W = 6.9  # inches, both columns
+INCLUDE_FRACTION = 0.62   # Figures 1 and 2 are included at 0.62 of the column (paper/sections/results.tex), so they are drawn at that width
+BODY_RC = {"font.size": 8, "axes.labelsize": 8, "xtick.labelsize": 7.5, "ytick.labelsize": 7.5, "legend.fontsize": 7.5, "lines.markersize": 3.6}
 RC = {
     "font.family": "DejaVu Sans", "font.size": 6.5, "axes.labelsize": 6.5, "xtick.labelsize": 6, "ytick.labelsize": 6,
     "legend.fontsize": 6, "axes.linewidth": 0.5, "xtick.major.width": 0.5, "ytick.major.width": 0.5, "xtick.major.size": 2.0,
@@ -127,9 +129,14 @@ def rungs_present(rows, wanted):
 
 # 1 and 2 -------------------------------------------------------------------------------------------------------------------------
 def fig_coverage_se(figs, doc, source, used):
+    with plt.rc_context(BODY_RC):      # drawn at the included width with the body type size (round 03, R7), the two panels stacked
+        _fig_coverage_se(figs, doc, source, used)
+
+
+def _fig_coverage_se(figs, doc, source, used):
     t = doc["tables"]["coverage_by_se_ratio"]
     rungs = rungs_present(t, LADDER)
-    fig, axes = plt.subplots(1, 2, figsize=(COL_W, 1.9))
+    fig, axes = plt.subplots(2, 1, figsize=(COL_W * INCLUDE_FRACTION, 3.6), sharex=True)
     for ax, (level, field) in zip(axes, ((80, "coverage_80"), (90, "coverage_90"))):
         ax.axhline(level / 100, color=GREY, lw=0.8, ls="--", zorder=1)
         for rg in rungs:
@@ -143,11 +150,11 @@ def fig_coverage_se(figs, doc, source, used):
         ax.set_xticklabels(["1", "3", "5", "7", "9", "all"])
         ax.set_xlim(0.4, 12.3)
         ax.set_ylim(0.4, 1.02)
-        ax.set_xlabel("Decile of realized over\nplanned standard error")
-        ax.set_ylabel(f"Coverage, {level} percent interval")
+        ax.set_ylabel(f"Coverage, {level} percent")
         style_axes(ax)
+    axes[1].set_xlabel("Decile of realized over planned\nstandard error")
     axes[0].legend(frameon=False, loc="lower left", handlelength=1.4)
-    fig.tight_layout(pad=0.4, w_pad=0.8)
+    fig.tight_layout(pad=0.4, h_pad=0.6)
     figs.save(fig, f"coverage-se-{source}.pdf", used,
               "open markers at all are pooled coverage, tables.aggregate[cell=ALL]; dashed grey is the nominal level")
 
@@ -179,11 +186,16 @@ def fig_coverage_exposure(figs, doc, source, used):
 
 # 3 -------------------------------------------------------------------------------------------------------------------------------
 def fig_decision(figs, doc, source, used):
+    with plt.rc_context(BODY_RC):      # drawn at the included width with the body type size (round 03, R7)
+        _fig_decision(figs, doc, source, used)
+
+
+def _fig_decision(figs, doc, source, used):
     t = [r for r in doc["tables"]["decision_value"] if r["origin"] == "ALL"]
     budgets = sorted({r["budget"] for r in t if r["budget"] in (0.1, 0.25, 0.5)})
     pw = [r for r in t if r["policy"] == "p_win"]
     models = [m for m in ("P0", "P1", "P2", "local_eb", "GBM", "text_lr") if any(r["rung"] == m for r in pw)]
-    fig, ax = plt.subplots(figsize=(COL_W, 2.3))
+    fig, ax = plt.subplots(figsize=(COL_W * INCLUDE_FRACTION, 3.5))
     step = 1.0
     width = 0.74
     offs = np.linspace(-width / 2, width / 2, len(models))
@@ -192,7 +204,7 @@ def fig_decision(figs, doc, source, used):
         rnd = used.get(doc, "tables.decision_value", {"origin": "ALL", "policy": "random", "rung": "all", "budget": b}, "captured_fraction")
         orc = used.get(doc, "tables.decision_value", {"origin": "ALL", "policy": "oracle", "rung": "all", "budget": b}, "captured_fraction")
         ax.plot([x0 - width / 2 - 0.08, x0 + width / 2 + 0.08], [rnd, rnd], color=GREY, ls="--", lw=0.8, zorder=1,
-                label="random order (K over n)" if bi == 0 else None)
+                label="random order" if bi == 0 else None)
         ax.plot([x0], [orc], color="black", marker="*", ms=5, ls="none", zorder=4, label="oracle" if bi == 0 else None)
         for mi, m in enumerate(models):
             w = {"origin": "ALL", "policy": "p_win", "rung": m, "budget": b}
@@ -203,12 +215,13 @@ def fig_decision(figs, doc, source, used):
                         capthick=0.6, ls="none", zorder=3, label=m if bi == 0 else None)
     ax.set_xticks([bi * step * 1.25 for bi in range(len(budgets))])
     ax.set_xticklabels([f"{int(round(b * 100))}" for b in budgets])
-    ax.set_xlabel("Budget, percent of tests chosen")
-    ax.set_ylabel("Captured fraction of positive lift")
+    ax.set_xlabel("Budget, percent of tests")
+    ax.set_ylabel("Captured fraction of lift")
     ax.set_ylim(0, 1.0)
     style_axes(ax)
-    ax.legend(frameon=False, ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.24), handlelength=1.2, columnspacing=0.9)
-    fig.tight_layout(pad=0.4)
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, ncol=2, loc="lower center", handlelength=1.0, columnspacing=0.8)
+    fig.tight_layout(pad=0.4, rect=(0, 0.26, 1, 1))
     figs.save(fig, f"decision-value-{source}.pdf", used,
               "p_win policy, pooled origin ALL, bars are captured_fraction_lo to captured_fraction_hi (90 percent); random order is exact K over n")
 

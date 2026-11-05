@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (5.5 s)
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (3.8 s)
 snapshot 20261105-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 5.9 s
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 4.2 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,7 +59,7 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 25cd2b6c38d9 at snapshot 20261105-4bfb354b87e3 on 13453 rows usable at 2026-11-05T11:05:41.742874+00:00 in 19.9 s; it is the champion for upworthy
+fitted model 25cd2b6c38d9 at snapshot 20261105-4bfb354b87e3 on 13453 rows usable at 2026-11-05T15:40:48.608054+00:00 in 15.9 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -72,49 +72,46 @@ moot backtest --source upworthy
 ```
 
 ```text output
-~/mootcourt-data/reports/gates.json is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the simulated base rate nearest this ledger's 0.092); run `moot simulate gate-power` for the full gates, which the adjusted bounds of the report also read
+~/mootcourt-data/reports/gates.json is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the simulated base rate nearest this ledger's 0.092); run `moot simulate gate-power` for the full gates. The adjusted bounds of the report do not read the gates: they depend on the family of intervals, 20 intervals for the ladder alone and 52 with the challengers
 gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 backtest of upworthy: still running, 10 s elapsed
 progress: origin 2013-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 2158 rows, scoring 1096
 backtest of upworthy: still running, 20 s elapsed
-backtest of upworthy: still running, 30 s elapsed
 progress: origin 2014-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 3335 rows, scoring 1315
-backtest of upworthy: still running, 40 s elapsed
+backtest of upworthy: still running, 30 s elapsed
 progress: origin 2014-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 4534 rows, scoring 1907
+backtest of upworthy: still running, 40 s elapsed
 backtest of upworthy: still running, 50 s elapsed
+progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 60 s elapsed
 backtest of upworthy: still running, 70 s elapsed
-progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 80 s elapsed
 backtest of upworthy: still running, 90 s elapsed
 backtest of upworthy: still running, 100 s elapsed
+progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9139 rows, scoring 2640
 backtest of upworthy: still running, 110 s elapsed
 backtest of upworthy: still running, 120 s elapsed
 backtest of upworthy: still running, 130 s elapsed
-progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9139 rows, scoring 2640
 backtest of upworthy: still running, 140 s elapsed
+progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
 backtest of upworthy: still running, 150 s elapsed
 backtest of upworthy: still running, 160 s elapsed
 backtest of upworthy: still running, 170 s elapsed
-backtest of upworthy: still running, 180 s elapsed
-progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
-backtest of upworthy: still running, 190 s elapsed
-backtest of upworthy: still running, 200 s elapsed
-backtest of upworthy: still running, 210 s elapsed
 progress: origin 2015-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 13132 rows, scoring 270
+backtest of upworthy: still running, 180 s elapsed
 filled the backtest summary of model 25cd2b6c38d9
-scored 13247 rows over 9 origins in 248.3 s (report writing 44.5 s; the whole run 292.8 s)
+scored 13247 rows over 9 origins in 207.3 s (report writing 39.1 s; the whole run 246.5 s)
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.md
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.json
 wrote ~/mootcourt-data/reports/scores-upworthy-20261105-4bfb354b87e3.parquet
 ```
 
-The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about five minutes, of which about one is writing the report). That quick file sizes the gate at one base rate (0.3), so the backtest ends with a note, and the decidability columns of your report will differ from the published ones. The published tables read gates sized by test at the base rate of each cell: run `moot simulate gate-power` (`make power`, about ten minutes) and then the backtest again to get the same columns. The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
+The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about five minutes, of which about one is writing the report). That quick file is sized by test at the simulated base rate nearest the archive's own (0.09, the rate the published gates read too), so the decidability columns already match the published ones. The Bonferroni-adjusted bounds of the pooled table differ in the fourth decimal until the challengers are in the table (`make challengers`, about 6 minutes), because the family of intervals then grows from 20 to 52, the number the results page prints as "intervals in the family". The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
 
 ## 5. Compare with the published tables
 
-Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare its tables with the Upworthy tables in [Results](../results.md). With the same data and the same seed (`--seed 0` is the default), the scores of the report match the published ones to every printed digit, apart from timing lines. The decidability columns match too once the gates come from `moot simulate gate-power`. The rows to compare:
+Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare its tables with the Upworthy tables in [Results](../results.md). With the same data and the same seed (`--seed 0` is the default), the scores of the report match the published ones to every printed digit, apart from timing lines. The decidability columns match too. The adjusted bounds of the pooled table match once the challengers are in the table (`make challengers`), because the Bonferroni family of 52 intervals of the published report counts them and the family of 20 of a ladder-only run does not. The rows to compare:
 
 | Rung | What it is | Brier skill on all rows (90% interval) |
 |---|---|---|

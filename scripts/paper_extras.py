@@ -1321,6 +1321,74 @@ def p2_selection_comparison(
             "inputs": {"forward": [f.name for f, _ in pairs.values()], "loto": [f.name for _, f in pairs.values()]}}
 
 
+def p1_minus_p0_by_origin(
+    reports_dir: Path, source: str, snapshot_id: str, level: float = 0.9, B: int | None = None, seed: int | None = None
+) -> dict | None:
+    """H1 part 1: the paired log-score difference of P1 over P0 at each origin, with a by-test interval (round 03, R1.15).
+
+    Per row, ``logscore(P1) - logscore(P0)`` (nats, the same row under both rungs), pooled and at each origin; ``B`` and ``seed`` default to the main
+    report's header (500 and 0). ``by_origin_clear_of_zero`` counts the origins whose interval excludes zero.
+    None without the report or its scores."""
+    from mootcourt import harness_stats as hs
+
+    reports_dir = Path(reports_dir)
+    rep, sco = reports_dir / f"backtest-{source}-{snapshot_id}.json", reports_dir / f"scores-{source}-{snapshot_id}.parquet"
+    if not (rep.exists() and sco.exists()):
+        return None
+    header = json.loads(rep.read_text(encoding="utf-8"))["header"]
+    B, seed = int(B if B is not None else header["bootstrap_resamples"]), int(seed if seed is not None else header["seed"])
+    sc = pd.read_parquet(sco, columns=["row_id", "test_id", "origin", "rung", "logscore"])
+    a, b = sc[sc["rung"] == "P1"].set_index("row_id"), sc[sc["rung"] == "P0"].set_index("row_id")
+    common = a.index.intersection(b.index)
+    d = pd.DataFrame({"test_id": a.loc[common, "test_id"], "origin": pd.to_datetime(a.loc[common, "origin"], utc=True),
+                      "d": a.loc[common, "logscore"] - b.loc[common, "logscore"]}).reset_index(drop=True)
+
+    def one(frame: pd.DataFrame) -> dict:
+        iv = hs.bootstrap_by_test(frame, "d", B=B, seed=seed, level=level)
+        return {"difference": float(iv.estimate), "lo": float(iv.lo), "hi": float(iv.hi), "n_rows": int(len(frame)),
+                "n_tests": int(frame["test_id"].nunique())}
+
+    by_origin = [{"origin": pd.Timestamp(o).isoformat(), **one(g)} for o, g in d.groupby("origin", sort=True)]
+    return {"pooled": one(d), "by_origin": by_origin, "by_origin_clear_of_zero": int(sum(1 for r in by_origin if r["lo"] > 0 or r["hi"] < 0)),
+            "bootstrap_resamples": B, "level": level, "unit": "nats per row of log score, P1 minus P0",
+            "inputs": {"scores": sco.name, "rule": "H1 part 1: P1 beats P0 on log score at every origin after burn-in"}}
+
+
+def issued_ece_by_origin(reports_dir: Path, source: str, snapshot_id: str, rung: str = "P1") -> dict | None:
+    """H3 part 1: the ECE of the issued cards and its percentile in the perfect-calibration null, at each origin (round 03, R1.15).
+
+    The null is the clustered one the main report uses, drawn at each origin's own design effect (``NULL_DRAWS`` draws, the report's seed): the
+    rows of ``rung`` that were issued (abstain false) at the origin, and for comparison all rows. ``origins_inside_central_90`` counts the
+    origins whose percentile lies between 5 and 95. None without the report or its scores."""
+    from mootcourt import harness_stats as hs
+
+    reports_dir = Path(reports_dir)
+    rep, sco = reports_dir / f"backtest-{source}-{snapshot_id}.json", reports_dir / f"scores-{source}-{snapshot_id}.parquet"
+    if not (rep.exists() and sco.exists()):
+        return None
+    seed = int(json.loads(rep.read_text(encoding="utf-8"))["header"]["seed"])
+    sc = pd.read_parquet(sco, columns=["test_id", "origin", "rung", "event", "p_sig", "abstain"])
+    sc = sc[(sc["rung"] == rung) & np.isfinite(sc["p_sig"].to_numpy(float))].copy()
+    sc["origin"] = pd.to_datetime(sc["origin"], utc=True)
+
+    def one(g: pd.DataFrame) -> dict:
+        p, e, t = g["p_sig"].to_numpy(float), g["event"].to_numpy(float), g["test_id"].to_numpy()
+        de = hs.design_effect(p, e, t)
+        rho = hs.latent_rho_for_design_effect(p, t, de["design_effect"], seed=seed)
+        return {"n_rows": int(len(g)), "n_tests": int(len(set(t))), "ece": float(hs.ece(p, e)), "design_effect": float(de["design_effect"]),
+                "ece_percentile": float(hs.ece_percentile(p, e, draws=hs.NULL_DRAWS, seed=seed, test_ids=t, icc=rho))}
+
+    def block(frame: pd.DataFrame) -> dict:
+        rows = [{"origin": pd.Timestamp(o).isoformat(), **one(g)} for o, g in frame.groupby("origin", sort=True) if len(g) >= 2]
+        return {"pooled": one(frame), "by_origin": rows,
+                "origins_inside_central_90": int(sum(1 for r in rows if 5.0 <= r["ece_percentile"] <= 95.0)), "origins": len(rows)}
+
+    return {"rung": rung, "issued": block(sc[~sc["abstain"].astype(bool)]), "all_rows": block(sc), "null_draws": hs.NULL_DRAWS,
+            "inputs": {"scores": sco.name,
+                       "rule": "H3 part 1: the ECE of issued cards falls inside the central 90 percent of the null at most origins",
+                       "null": "clustered by test at the design effect of each origin's rows, as the main report draws it"}}
+
+
 def guard_pairs(reports_dir: Path, source: str, snapshot_id: str, level: float = 0.9, B: int = SENSITIVITY_BOOTSTRAP, seed: int = 0) -> dict | None:
     """Per (origin, cell) pair where the guard admitted a positive weight: in-selection gain, lambda and the realized P2 minus P1 log score.
 
@@ -1505,6 +1573,8 @@ def build_extras(
     doc["guard_pairs"] = guard_pairs(reports_dir, source, snapshot_id)
     doc["issued_row_brier_skill"] = issued_row_brier_skill(reports_dir, source, snapshot_id)
     doc["p2_selection_comparison"] = p2_selection_comparison(reports_dir, source, snapshot_id)
+    doc["p1_minus_p0_by_origin"] = p1_minus_p0_by_origin(reports_dir, source, snapshot_id)
+    doc["issued_ece_by_origin"] = issued_ece_by_origin(reports_dir, source, snapshot_id)
     doc["guard_pairs_rows"] = guard_pairs_rows(reports_dir, source, snapshot_id, ledger, verbose=verbose)
     doc["cautionary_deciles"] = cautionary_deciles(reports_dir, source, snapshot_id)
     return clean(doc)

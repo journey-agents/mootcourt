@@ -41,9 +41,9 @@ moot init
 the quick gates simulation (synthetic data): still running, 10 s elapsed
 progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (23 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (24 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (29 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (21 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (23 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (27 s elapsed)
 wrote ~/moot-demo/mootcourt.toml
 data root ~/moot-demo/mootcourt-data (layout created)
 sample ledger ~/moot-demo/mootcourt-data/data/sample-ledger.csv (synthetic)
@@ -68,7 +68,7 @@ admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_us
 final reads from 2023-01-23 to 2025-12-29
 snapshot 20261105-b04b5b1dd18c for sample
 ledger ~/moot-demo/mootcourt-data/data/ledger/ledger.parquet: 360 rows
-fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T11:00:26.139977+00:00 in 1.7 s; it is the champion for sample
+fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T15:36:20.949406+00:00 in 1.3 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -82,13 +82,13 @@ moot backtest --source sample
 gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 filled the backtest summary of model 6b43ae900d91
-scored 330 rows over 11 origins in 4.3 s (report writing 17.7 s; the whole run 22.1 s)
+scored 330 rows over 11 origins in 3.9 s (report writing 16.3 s; the whole run 20.3 s)
 wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
 wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
 wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
 ```
 
-The first two lines say which gates the backtest read. `moot init` wrote them with a quick simulation, in tests, at one base rate (0.09). `moot simulate gate-power` sizes the gates at the base rate of your own archive; for this walk-through you can ignore it. Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "undecidable at this n", meaning that the 110 scored tests are below the gate of 175 tests for even a skill difference of 0.20. `decidable_research_by_tests` is the same reading at the power 0.80 screen. The columns `decidable` and `decidable_research` beside it carry the same verdict in the unit of the gates (by tests, when the gates count tests). That is the right reading of a sample with no structure, and it is what the report is for.
+The first two lines say which gates the backtest read. `moot init` wrote them with a quick simulation, in tests, at one base rate (0.09). `moot simulate gate-power` sizes the gates at the base rate of your own archive; for this walk-through you can ignore it. Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "undecidable at this n", meaning that the 110 scored tests are below the gate of 175 tests for even a skill difference of 0.20. `decidable_research_by_tests` is the same reading at the power 0.80 screen. That is the right reading of a sample with no structure, and it is what the report is for.
 
 Ask for a card (about a second). The sample is static, so `--now` issues it as of the end of its history; on a live ledger you leave `--now` out:
 

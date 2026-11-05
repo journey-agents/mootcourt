@@ -46,4 +46,4 @@ The benchmark is maintained through this repository, by issues and pull requests
 
 ## Release
 
-The checklist is in `docs/release.md`; `make release-check` runs it locally.
+The checklist is in `docs/release.md`; `make release-check` runs it locally. The outputs shown in the README, the command guide and the tutorials are regenerated in one pass with `python3 scripts/render_tutorial_outputs.py --write --slow`, so their snapshot ids carry one date. Re-run it before a release and put its date in the release notes.

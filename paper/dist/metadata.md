@@ -12,11 +12,11 @@ Arguing from Precedent: A Benchmark and Protocol for Scored, Gated Pre-Launch Fo
 
 ## Abstract
 
-Teams rarely consult their ledger of concluded experiments before the next launch. We release a benchmark and protocol that ask it about a proposed test: a rolling-origin backtest over versioned snapshots in which no in-test measurement reaches a pre-launch forecast, proper scores, a clustered calibration null, gates and decision value against random order, on the Upworthy Research Archive (3,797 headline tests) and the ASOS Digital Experiments Dataset (78 experiments).
+Teams rarely consult their ledger of concluded experiments before the next launch. We release a benchmark and protocol that ask it about a proposed test: a rolling-origin backtest over versioned snapshots in which no in-test outcome reaches a pre-launch forecast (one stand-in, realized exposure, its leak measured), proper scores, a clustered calibration null, gates and decision value, on the Upworthy Research Archive (3,797 headline tests) and the ASOS Digital Experiments Dataset (78 experiments).
 
-The first finding is a powered negative. On the headline archive an empirical-Bayes prior gains 0.149 nats of log score over the base rate, yet its Brier skill is 0.001 (minus 0.002 to 0.005) on 3,797 tests against a gate of 250, its probabilities sit at the null's 100th percentile, and its coverage runs from 1.00 to 0.66 across deciles of realized over planned standard error. Guarded precedents in the prior's family are no better than it (plus 0.0004 nats of log score, minus 0.0003 to 0.0012); in a positive control the guard admits a planted lift at the largest cell's size and the rung recovers a fifth of it pooled, a tenth in the cell shaped like the real one. Ranking by win probability beats an arm-count-matched random order for a TF-IDF text classifier (3.9 points, 2.2 to 5.4); the prior equals it by construction. A first run scoring relative lift at realized precision reversed the calibration gradient: leakage. The deployment-shaped archive is undecidable at every gate, by design. Moot Court, the open-source system, regenerates every table from the reports.
+The first finding is a powered negative. On the headline archive an empirical-Bayes prior gains 0.149 nats of log score over the base rate, yet its Brier skill is 0.001 (minus 0.002 to 0.005) on 3,797 tests against a gate of 250, its probabilities sit at the null's 100th percentile, and its coverage runs from 1.00 to 0.66 across deciles of realized over planned standard error. Guarded precedents in the prior's family are no better than it (plus 0.0004 nats, minus 0.0003 to 0.0012); in a positive control the guard admits a planted lift at the largest cell's size and the rung recovers about a fifth pooled, a tenth in the real-shaped cell. Ranking by win probability beats an arm-count-matched random order for a TF-IDF classifier (3.9 points, 2.2 to 5.4); the prior, one number per cell, sits at it (minus 0.004, within noise). A first run scoring relative lift at realized precision reversed the calibration gradient: leakage. The deployment-shaped archive is undecidable at every gate. Moot Court, the open-source system, regenerates every table from the reports.
 
-(Check the abstract against `paper/main.tex` at upload: the text above is the 250-word abstract of pass 11, 5 November 2026, on the run 7 sources.)
+(Check the abstract against `paper/main.tex` at upload: the text above is the 250-word abstract of pass 12, 5 November 2026, on the run 7 sources.)
 
 ## Categories
 
@@ -32,7 +32,7 @@ The first finding is a powered negative. On the headline archive an empirical-Ba
 
 ## Comments line
 
-29 pages including the appendix, 6 figures, 53 tables. Code, the data pipeline and the run folders behind every table:
+30 pages including the appendix, 6 figures, 56 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The analysis plan was fixed in writing before the final runs:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 

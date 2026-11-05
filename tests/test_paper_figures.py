@@ -119,3 +119,18 @@ def test_cautionary_figure_uses_both_runs_and_a_missing_file_is_skipped(pf, tmp_
     assert not (out / "cautionary-upworthy.pdf").exists()
     assert [s["file"] for s in doc["skipped"] if s["file"].startswith("cautionary")] == ["cautionary-upworthy.pdf"]
     assert CAUTIONARY.is_dir()
+
+
+def test_figures_one_and_two_are_drawn_at_the_width_they_are_included_at_with_the_body_type_size(pf, two_runs):
+    """Round 03, R7: Figures 1 and 2 are included at 0.62 of the column, so a figure drawn at the full column shrinks to about 4 pt type."""
+    import re
+
+    a, _ = two_runs
+    want = pf.COL_W * 0.62 * 72
+    for name in ("coverage-se-upworthy.pdf", "decision-value-upworthy.pdf"):
+        head = (a / name).read_bytes()
+        width = float(re.search(rb"/MediaBox\s*\[\s*0\s+0\s+([0-9.]+)\s+([0-9.]+)", head).group(1))
+        assert abs(width - want) < 1.0, (name, width, want)
+    assert pf.BODY_RC["font.size"] >= 8 and pf.INCLUDE_FRACTION == 0.62
+    included_at = re.search(r"0\.62\\columnwidth\]\{figures/coverage-se-upworthy", (ROOT / "paper" / "sections" / "results.tex").read_text())
+    assert included_at, "the width the figure is drawn at is the width results.tex includes it at"

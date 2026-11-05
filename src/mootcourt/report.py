@@ -396,11 +396,18 @@ def _fmt(v) -> str:
 
 
 def _table(rows: list[dict], columns: list[str]) -> list[str]:
-    cols = [c for c in columns if any(c in r for r in rows)]
+    def empty(v) -> bool:
+        return v is None or (isinstance(v, float) and v != v)
+
+    present = [c for c in columns if any(c in r for r in rows)]
+    cols = [c for c in present if not all(empty(r.get(c)) for r in rows)]
+    left_out = [c for c in present if c not in cols]      # null on every row: not computed here, named below the table (round 03, R6)
     if not cols:
         return []
     lines = ["| " + " | ".join(cols) + " |", "|" + "|".join(["---"] * len(cols)) + "|"]
     lines += ["| " + " | ".join(_fmt(r.get(c)) for c in cols) + " |" for r in rows]
+    if left_out:
+        lines += ["", f"Columns not computed (null on every row) and left out: {', '.join(left_out)}."]
     return lines + [""]
 
 

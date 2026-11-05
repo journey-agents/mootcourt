@@ -103,11 +103,11 @@ def test_r2_moot_card_refuses_a_row_id_whose_ledger_row_has_another_cell_and_fre
     common = ["--models-dir", str(layout.models), "--cards-dir", str(layout.cards), "--reports-dir", str(layout.reports)]
     args = ["card", "--source", "sample", "--impressions", "20000", "--row-id", REVENUE_ROW, "--now", "2025-07-10T00:00:00+00:00", *common]
     res = CliRunner().invoke(app, [*args, "--cell", "checkout_conversion"], env={"MOOTCOURT_DATA_ROOT": str(layout.root)})
-    assert res.exit_code != 0
+    assert res.exit_code == 2
     assert "revenue_per_user" in res.output and "checkout_conversion" in res.output and "cell" in res.output, res.output
     assert list(layout.cards.glob("*.json")) == []
     ok = CliRunner().invoke(app, [*args, "--cell", "revenue_per_user"], env={"MOOTCOURT_DATA_ROOT": str(layout.root)})
-    assert ok.exit_code == 0, ok.output
+    assert ok.exit_code == 2 and "in the ledger with its result" in ok.output, "the right cell is refused too, for the held row (call 268)"
 
 
 def test_r2_post_card_refuses_a_row_id_whose_ledger_row_has_another_cell(tmp_path):
@@ -122,7 +122,8 @@ def test_r2_post_card_refuses_a_row_id_whose_ledger_row_has_another_cell(tmp_pat
     res = client.post("/card", json=payload)
     assert res.status_code == 422 and "revenue_per_user" in res.json()["error"], res.text
     assert list(layout.cards.glob("*.json")) == []
-    assert client.post("/card", json={**payload, "cell": "revenue_per_user"}).status_code == 200
+    again = client.post("/card", json={**payload, "cell": "revenue_per_user"})
+    assert again.status_code == 422 and "in the ledger with its result" in again.json()["error"]
 
 
 # ------------------------------------------------------------------ R2-F2: the card's cell verdict is the cell's own-dependence verdict
@@ -289,6 +290,8 @@ def test_r6_moot_backtest_without_a_gates_file_runs_the_same_quick_simulation_as
 
     assert seen["base_rate"] == pytest.approx(ledger_dependence(ledger)["base_rate"])
     assert "quick gate simulation" in res.output and "moot simulate gate-power" in res.output, res.output
+    assert "also read" not in res.output, "the adjusted bounds do not read the gates file (call 258, corrected)"
+    assert "adjusted bounds" in res.output and "20 intervals for the ladder alone" in res.output and "52 with the challengers" in res.output
 
 
 # ------------------------------------------------------------------ R6-F5 and R6-s2: help text a newcomer can read
@@ -375,3 +378,84 @@ def test_r3_the_backtest_header_records_the_p2_selection_rule_in_force():
         scores.attrs["selections"] = [{"rung": "P2", "cell": "a", "selection": rule, "lambda": 0.1}]
         assert report.selection_setting(scores) == rule
     assert report.selection_setting(pd.DataFrame({"x": [1]})) is None
+
+
+# ------------------------------------------------------------------ round 03, R2.15 (decision 13) and the exit code (decision 14)
+HELD_ROW = "sample:exp-116:treatment::checkout_conversion"
+
+
+def _held_world(tmp_path):
+    layout, ledger, bundle = _sample_world(tmp_path)
+    assert HELD_ROW in set(ledger["row_id"]), "the reproduction's row is in the ledger with its result"
+    return layout, ledger, bundle
+
+
+def test_r3_moot_card_refuses_a_row_whose_result_the_ledger_holds_even_at_a_backdated_now(tmp_path):
+    from mootcourt.cli import app
+
+    layout, ledger, bundle = _held_world(tmp_path)
+    args = ["card", "--source", "sample", "--cell", "checkout_conversion", "--impressions", "20000", "--row-id", HELD_ROW,
+            "--now", "2025-07-10T00:00:00+00:00", "--models-dir", str(layout.models), "--cards-dir", str(layout.cards),
+            "--reports-dir", str(layout.reports)]
+    res = CliRunner().invoke(app, args, env={"MOOTCOURT_DATA_ROOT": str(layout.root)})
+    assert res.exit_code == 2, res.output
+    assert HELD_ROW in res.output and "in the ledger with its result" in res.output and "not be pre-launch evidence" in res.output
+    assert list(layout.cards.glob("*.json")) == []
+    no_row = CliRunner().invoke(app, [a for a in args if a not in ("--row-id", HELD_ROW)], env={"MOOTCOURT_DATA_ROOT": str(layout.root)})
+    assert no_row.exit_code == 0, no_row.output
+
+
+def test_r3_post_card_refuses_a_row_whose_result_the_ledger_holds(tmp_path):
+    from fastapi.testclient import TestClient
+
+    from mootcourt.service import create_app
+
+    layout, ledger, bundle = _held_world(tmp_path)
+    client = TestClient(create_app(layout.models, layout.cards, reports_dir=layout.reports, now=lambda: dt.datetime(2025, 7, 10, tzinfo=UTC),
+                                   ledger_path=layout.ledger_path))
+    res = client.post("/card", json={"source": "sample", "impressions": 20000, "row_id": HELD_ROW, "cell": "checkout_conversion"})
+    assert res.status_code == 422 and "in the ledger with its result" in res.json()["error"], res.text
+    assert list(layout.cards.glob("*.json")) == []
+
+
+def test_r3_the_tool_refuses_a_row_whose_result_the_ledger_holds(tmp_path):
+    from mootcourt.mcp_server import tool_get_card
+    from mootcourt.service import ServingState
+
+    layout, ledger, bundle = _held_world(tmp_path)
+    state = ServingState(layout.models, layout.reports, now=lambda: dt.datetime(2025, 7, 10, tzinfo=UTC), ledger_path=layout.ledger_path)
+    with pytest.raises(ValueError, match="in the ledger with its result"):
+        tool_get_card(state, "sample", "", False, 20000, cell="checkout_conversion", row_id=HELD_ROW)
+
+
+def test_r3_the_cell_mismatch_refusal_exits_2_like_its_siblings(tmp_path):
+    from mootcourt.cli import app
+
+    layout, ledger, bundle = _sample_world(tmp_path)
+    res = CliRunner().invoke(app, ["card", "--source", "sample", "--impressions", "20000", "--row-id", REVENUE_ROW, "--cell", "checkout_conversion",
+                                   "--now", "2025-07-10T00:00:00+00:00", "--models-dir", str(layout.models), "--cards-dir", str(layout.cards),
+                                   "--reports-dir", str(layout.reports)], env={"MOOTCOURT_DATA_ROOT": str(layout.root)})
+    assert res.exit_code == 2, res.output
+
+
+# ------------------------------------------------------------------ round 03, R6: a report column that is null on every row is left out and named
+def test_r3_the_report_tables_omit_a_column_that_is_null_on_every_row_and_say_so():
+    from mootcourt.report import _table
+
+    rows = [{"a": 1, "dead": None, "b": 0.5, "nan": float("nan")}, {"a": 2, "dead": None, "b": None, "nan": float("nan")}]
+    lines = _table(rows, ["a", "dead", "b", "nan"])
+    assert lines[0] == "| a | b |"
+    assert any(ln == "Columns not computed (null on every row) and left out: dead, nan." for ln in lines)
+    full = _table([{"a": 1, "b": 2}], ["a", "b"])
+    assert full[0] == "| a | b |" and not any("left out" in ln for ln in full)
+
+
+def test_r3_the_p2_selection_table_of_the_sample_report_drops_its_all_null_half_life_column():
+    from mootcourt.report import render_markdown
+
+    doc = _sample_doc()
+    assert all(r.get("half_life_days_median") is None for r in doc["tables"]["p2_selection_by_cell"])
+    md = render_markdown(doc)
+    block = md.split("## P2 selection by cell")[1].split("\n## ")[0]
+    assert "half_life_days_median" not in block.split("Columns not computed")[0].split("| rung")[1]
+    assert "left out: half_life_days_median" in block or "half_life_days_median" in block.split("left out:")[1]

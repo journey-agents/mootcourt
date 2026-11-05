@@ -111,8 +111,13 @@ class RowCellMismatchError(ValueError):
     """A card names a ledger row whose cell is not the card's cell (round 02, R2: the join would score it against another metric)."""
 
 
+class RowHeldError(ValueError):
+    """A card names a ledger row whose result the ledger already holds (round 03, R2.15: a backdated card would score as pre-launch)."""
+
+
 def check_row_cell(ledger_path, row_id: str | None, cell: str) -> None:
-    """Raise ``RowCellMismatchError`` when the ledger holds ``row_id`` with a cell other than ``cell``.
+    """Refuse a card for a row the ledger holds: ``RowCellMismatchError`` when its cell is not ``cell`` (call 256), else ``RowHeldError``
+    (call 268: the row's result is in the ledger, so the card cannot be pre-launch evidence however its issue time is stated).
 
     Nothing is checked, and nothing raised, when there is no row id, no ledger file or no such row (a card for a test that has not
     concluded is the normal case). One filtered parquet read of two columns, so a service can call it on each request."""
@@ -123,7 +128,11 @@ def check_row_cell(ledger_path, row_id: str | None, cell: str) -> None:
     except (OSError, ValueError, KeyError):         # an unreadable ledger is the doctor's finding, not a reason to refuse a card
         return
     cells = sorted(set(found["cell"].astype(str)))
-    if cells and cell not in cells:
+    if cells and cell in cells:
+        raise RowHeldError(
+            f"row id {row_id} is in the ledger with its result; a card for it would not be pre-launch evidence (the join cannot tell that the "
+            "result was known when the card was requested), so it is not issued")
+    if cells:
         raise RowCellMismatchError(
             f"row id {row_id} is in the ledger with cell {cells[0]}, but this card is for cell {cell}: the join would score it against "
             f"another metric's result; give the cell of the row ({cells[0]}) or the id of the row of cell {cell}")

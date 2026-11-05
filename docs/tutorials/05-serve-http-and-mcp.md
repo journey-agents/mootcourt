@@ -47,13 +47,13 @@ curl -s http://127.0.0.1:8731/health | python3 -m json.tool
 
 ## 2. Ask for a card
 
-`POST /card` takes the fields of `moot card`: `source` and `impressions` are required, and `origin` is the time whose rows the forecaster may see (the `--origin` option of the command line, see [tutorial 1](01-first-card.md#5-ask-for-a-card)). The service has no `--now`: it uses the clock of the machine it runs on as the issue time, and the age of the reliability report is measured against that clock. An `origin` changes which rows the forecaster sees and does not change the clock. The sample ledger's reliability report is old, so this card will abstain, and the output shows why.
+`POST /card` takes the fields of `moot card`: `source` and `impressions` are required, and `origin` is the time whose rows the forecaster may see (the `--origin` option of the command line, see [tutorial 1](01-first-card.md#5-ask-for-a-card)). The service has no `--now`: it uses the clock of the machine it runs on as the issue time, and the age of the reliability report is measured against that clock. An `origin` changes which rows the forecaster sees and does not change the clock. To record your own forecast with the card, add `"team_forecast": {"p_win_team": 0.4, "point_team": 0.02}` to the request body: the probability of a significant positive result and the point estimate, both frozen with the card. The sample ledger's reliability report is old, so this card will abstain, and the output shows why.
 
-The request also carries `row_id`, the ledger row that the weekly join will attach the outcome to (`source:test_id:variant_id`; or give `test_id` with `variant_id`). Without it the card is valid but no join can find it. [Tutorial 4](04-weekly-loop.md) uses the same field. A ledger without headline text is served by naming the `cell`. The card is returned as JSON and frozen under `cards/`, exactly like a card from the command line.
+The request also carries `row_id`, the ledger row that the weekly join will attach the outcome to (`source:test_id:variant_id`; or give `test_id` with `variant_id`). The row is that of a test that has not concluded, here the made-up `exp-121`, which the sample ledger does not hold yet: a card for a row whose result the ledger already holds is refused, because it would not be pre-launch evidence. Without it the card is valid but no join can find it. [Tutorial 4](04-weekly-loop.md) uses the same field. A ledger without headline text is served by naming the `cell`. The card is returned as JSON and frozen under `cards/`, exactly like a card from the command line.
 
 ```bash run
 curl -s -X POST http://127.0.0.1:8731/card -H 'content-type: application/json' \
-  -d '{"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00", "row_id": "sample:exp-101:treatment::checkout_conversion"}' \
+  -d '{"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00", "row_id": "sample:exp-121:treatment::checkout_conversion"}' \
   | python3 -c "
 import json, sys
 card = json.load(sys.stdin)
@@ -68,7 +68,7 @@ print('rung      ', card['prediction']['rung'], 'p_sig', round(card['prediction'
 
 ```text output
 cell       checkout_conversion
-row id     sample:exp-101:treatment::checkout_conversion
+row id     sample:exp-121:treatment::checkout_conversion
 origin     2025-12-30T00:00:00+00:00
 status     abstain ['reliability']
 detail     reliability report is older than 14 days
@@ -161,7 +161,7 @@ async def main():
             tools = await session.list_tools()
             print("tools:", [t.name for t in tools.tools])
             args = {"source": "sample", "cell": "checkout_conversion", "impressions": 20000, "origin": "2025-12-30T00:00:00+00:00"}
-            row_id = "sample:exp-101:treatment::checkout_conversion"
+            row_id = "sample:exp-121:treatment::checkout_conversion"
             card = json.loads((await session.call_tool("get_card", {**args, "row_id": row_id})).content[0].text)
             print("card:", card["abstention"]["status"], card["abstention"]["reasons"], "rung", card["prediction"]["rung"], "row id", card["request"]["row_id"])
             precedents = json.loads((await session.call_tool("list_precedents", {**args, "k": 3})).content[0].text)
@@ -176,7 +176,7 @@ python3 mcp_demo.py
 
 ```text output
 tools: ['get_card', 'list_precedents', 'reliability_report']
-card: abstain ['reliability'] rung P0 row id sample:exp-101:treatment::checkout_conversion
+card: abstain ['reliability'] rung P0 row id sample:exp-121:treatment::checkout_conversion
 precedent: exp-003 weight 0.009 effect -0.015361 se 0.008696
 precedent: exp-105 weight 0.009 effect -0.044518 se 0.008751
 precedent: exp-115 weight 0.009 effect -0.071273 se 0.008771

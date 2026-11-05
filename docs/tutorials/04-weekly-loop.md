@@ -43,20 +43,20 @@ moot backtest --source sample | tail -n 4
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (10 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (22 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (24 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (29 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (21 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (22 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (27 s elapsed)
 300 rows from 100 experiments
   admitted: 300
 admitted by cell: checkout_conversion 100, pages_per_session 100, revenue_per_user 100
 final reads from 2023-01-23 to 2025-07-02
 snapshot 20261105-c14e001659bc for sample
 ledger ~/moot-weekly/mootcourt-data/data/ledger/ledger.parquet: 300 rows
-fitted model dbecf0d65cbf at snapshot 20261105-c14e001659bc on 300 rows usable at 2026-11-05T11:11:31.864823+00:00 in 1.4 s; it is the champion for sample
+fitted model dbecf0d65cbf at snapshot 20261105-c14e001659bc on 300 rows usable at 2026-11-05T15:45:44.308731+00:00 in 1.2 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-scored 270 rows over 9 origins in 3.4 s (report writing 13.2 s; the whole run 16.6 s)
+scored 270 rows over 9 origins in 3.1 s (report writing 12.3 s; the whole run 15.3 s)
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-c14e001659bc.md
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-c14e001659bc.json
 wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261105-c14e001659bc.parquet
@@ -195,7 +195,7 @@ moot promote --source sample
 ```
 
 ```text output
-fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T11:12:22.733396+00:00 in 1.5 s; it is the challenger for sample
+fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T15:46:27.013801+00:00 in 1.2 s; it is the challenger for sample
 a refresh of the champion is pending: same method, newer data; `moot backtest` decides it (no further `moot fit`)
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
 wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json

@@ -87,7 +87,7 @@ moot simulators run --provider my_agent --source sample --out agent.jsonl
 ```
 
 ```text output
-my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 10.6 s, wall 11.1 s
+my_agent 1.0: 330 requests, 330 called, 0 from the cache, 0 declined, 0 failed (recorded, not cached); cost 0.0000 dollars, agent latency 8.7 s, wall 9.1 s
 wrote agent.jsonl
 ```
 
@@ -120,7 +120,7 @@ grep -E '^\| all \| (P2|agent) ' mootcourt-data/reports/second-opinion-my_agent/
 - Provider: my_agent version 1.0, knowledge cutoff 1970-01-01
 - Weight in force: 0.0000 (zero until earned on the backtest)
 - Rows scored by the base rung P2: 330; with an opinion: 330; declined: 0; failed calls: 0; absent from the records file: 0
-- Cost of the recorded run: 0.0000 dollars, latency 10.6181 seconds in total
+- Cost of the recorded run: 0.0000 dollars, latency 8.7077 seconds in total
  P2 | 330 | 0.0620 | 0.0199 | -0.0007 | 0.0376
  P2 on agent rows | 330 | 0.0620 | 0.0199 | -0.0007 | 0.0376
  agent | 330 | 0.0633 | -0.0007 | -0.0714 | 0.0345

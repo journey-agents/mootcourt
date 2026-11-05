@@ -980,7 +980,7 @@
  },
  "guard_period_control": null,
  "header": {
-  "created_at": "2026-11-05T13:56:00.286636+00:00",
+  "created_at": "2026-11-05T15:25:42.700934+00:00",
   "created_by": "scripts/paper_extras.py",
   "differences_from_docs": [
    "guard_admission_rates: the one-off runs behind the documentation left no report file, so the cells are refit here on ledgers regenerated with the same generator, text effect zero, 300 tests of two variants per seed; the seeds and the settings are in inputs",
@@ -1008,6 +1008,177 @@
    "rows": "status == admitted"
   },
   "n_rows": 13453
+ },
+ "issued_ece_by_origin": {
+  "all_rows": {
+   "by_origin": [
+    {
+     "design_effect": 1.347110930233881,
+     "ece": 0.032234800237401856,
+     "ece_percentile": 95.0,
+     "n_rows": 781,
+     "n_tests": 281,
+     "origin": "2013-04-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.7474231713861565,
+     "ece": 0.02454048524301526,
+     "ece_percentile": 92.8,
+     "n_rows": 1273,
+     "n_tests": 437,
+     "origin": "2013-07-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.136794623717349,
+     "ece": 0.05515870344274798,
+     "ece_percentile": 100.0,
+     "n_rows": 1096,
+     "n_tests": 351,
+     "origin": "2013-10-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.7550065459984496,
+     "ece": 0.007963408869332013,
+     "ece_percentile": 30.3,
+     "n_rows": 1315,
+     "n_tests": 387,
+     "origin": "2014-01-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.4966173549631852,
+     "ece": 0.019693770489337126,
+     "ece_percentile": 95.6,
+     "n_rows": 1907,
+     "n_tests": 515,
+     "origin": "2014-04-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.0227345214830028,
+     "ece": 0.042519398689346385,
+     "ece_percentile": 100.0,
+     "n_rows": 2822,
+     "n_tests": 738,
+     "origin": "2014-07-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.925127700111849,
+     "ece": 0.02147539519396608,
+     "ece_percentile": 99.4,
+     "n_rows": 2640,
+     "n_tests": 689,
+     "origin": "2014-10-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.3100193536887472,
+     "ece": 0.0196726288793427,
+     "ece_percentile": 95.7,
+     "n_rows": 1143,
+     "n_tests": 318,
+     "origin": "2015-01-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 0.734772190415927,
+     "ece": 0.020796381894724707,
+     "ece_percentile": 82.7,
+     "n_rows": 270,
+     "n_tests": 83,
+     "origin": "2015-04-01T00:00:00+00:00"
+    }
+   ],
+   "origins": 9,
+   "origins_inside_central_90": 4,
+   "pooled": {
+    "design_effect": 1.4325554793097413,
+    "ece": 0.013740504168286358,
+    "ece_percentile": 100.0,
+    "n_rows": 13247,
+    "n_tests": 3797
+   }
+  },
+  "inputs": {
+   "null": "clustered by test at the design effect of each origin's rows, as the main report draws it",
+   "rule": "H3 part 1: the ECE of issued cards falls inside the central 90 percent of the null at most origins",
+   "scores": "scores-upworthy-20261103-4bfb354b87e3.parquet"
+  },
+  "issued": {
+   "by_origin": [
+    {
+     "design_effect": 1.7373065699275445,
+     "ece": 0.023658173287288455,
+     "ece_percentile": 92.2,
+     "n_rows": 1252,
+     "n_tests": 433,
+     "origin": "2013-07-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.0744730711115829,
+     "ece": 0.06940044685345155,
+     "ece_percentile": 100.0,
+     "n_rows": 850,
+     "n_tests": 282,
+     "origin": "2013-10-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.7008860044604142,
+     "ece": 0.008441213883359949,
+     "ece_percentile": 27.4,
+     "n_rows": 1249,
+     "n_tests": 382,
+     "origin": "2014-01-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.4740857558771683,
+     "ece": 0.01901178175781363,
+     "ece_percentile": 92.9,
+     "n_rows": 1789,
+     "n_tests": 505,
+     "origin": "2014-04-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.0080483187213272,
+     "ece": 0.04272093593905571,
+     "ece_percentile": 100.0,
+     "n_rows": 2674,
+     "n_tests": 720,
+     "origin": "2014-07-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.802670232416669,
+     "ece": 0.01701006572368097,
+     "ece_percentile": 95.8,
+     "n_rows": 2226,
+     "n_tests": 598,
+     "origin": "2014-10-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 1.1228074470007088,
+     "ece": 0.023398740154171455,
+     "ece_percentile": 99.6,
+     "n_rows": 1083,
+     "n_tests": 310,
+     "origin": "2015-01-01T00:00:00+00:00"
+    },
+    {
+     "design_effect": 0.7398028377996033,
+     "ece": 0.021118180207974586,
+     "ece_percentile": 79.3,
+     "n_rows": 250,
+     "n_tests": 79,
+     "origin": "2015-04-01T00:00:00+00:00"
+    }
+   ],
+   "origins": 8,
+   "origins_inside_central_90": 4,
+   "pooled": {
+    "design_effect": 1.3864622278704404,
+    "ece": 0.01507574603406033,
+    "ece_percentile": 100.0,
+    "n_rows": 11373,
+    "n_tests": 3307
+   }
+  },
+  "null_draws": 500,
+  "rung": "P1"
  },
  "issued_row_brier_skill": {
   "bootstrap_resamples": 500,
@@ -1083,6 +1254,97 @@
     }
    }
   }
+ },
+ "p1_minus_p0_by_origin": {
+  "bootstrap_resamples": 500,
+  "by_origin": [
+   {
+    "difference": 0.18961702625927937,
+    "hi": 0.29864331084637485,
+    "lo": 0.11322118987281306,
+    "n_rows": 781,
+    "n_tests": 281,
+    "origin": "2013-04-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.14026047149395302,
+    "hi": 0.2197507136256218,
+    "lo": 0.06491234879824768,
+    "n_rows": 1273,
+    "n_tests": 437,
+    "origin": "2013-07-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.12462571630807961,
+    "hi": 0.14953229810390137,
+    "lo": 0.09886244317663892,
+    "n_rows": 1096,
+    "n_tests": 351,
+    "origin": "2013-10-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.0774496824964274,
+    "hi": 0.12551420702558425,
+    "lo": 0.03436994740298954,
+    "n_rows": 1315,
+    "n_tests": 387,
+    "origin": "2014-01-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.12006256533466303,
+    "hi": 0.13742562024017094,
+    "lo": 0.10344374583835023,
+    "n_rows": 1907,
+    "n_tests": 515,
+    "origin": "2014-04-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.24909972220892326,
+    "hi": 0.26932867554583056,
+    "lo": 0.22887718031497908,
+    "n_rows": 2822,
+    "n_tests": 738,
+    "origin": "2014-07-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.14448811785006763,
+    "hi": 0.16600591861903832,
+    "lo": 0.12143436297849246,
+    "n_rows": 2640,
+    "n_tests": 689,
+    "origin": "2014-10-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.06810558775426759,
+    "hi": 0.09718289936737366,
+    "lo": 0.03838169707631782,
+    "n_rows": 1143,
+    "n_tests": 318,
+    "origin": "2015-01-01T00:00:00+00:00"
+   },
+   {
+    "difference": 0.07731308088738095,
+    "hi": 0.11091756358924386,
+    "lo": 0.043561035360651104,
+    "n_rows": 270,
+    "n_tests": 83,
+    "origin": "2015-04-01T00:00:00+00:00"
+   }
+  ],
+  "by_origin_clear_of_zero": 9,
+  "inputs": {
+   "rule": "H1 part 1: P1 beats P0 on log score at every origin after burn-in",
+   "scores": "scores-upworthy-20261103-4bfb354b87e3.parquet"
+  },
+  "level": 0.9,
+  "pooled": {
+   "difference": 0.1492538063871397,
+   "hi": 0.16209852237662137,
+   "lo": 0.13575533684703506,
+   "n_rows": 13247,
+   "n_tests": 3797
+  },
+  "unit": "nats per row of log score, P1 minus P0"
  },
  "p2_selection_comparison": {
   "bootstrap_resamples": 500,

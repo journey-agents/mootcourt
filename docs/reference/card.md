@@ -18,7 +18,7 @@ A card is one JSON file under `cards/`, named by its card id. The same content i
 | `robustness` | Whether the forecast survives dismissing precedents: `applicable`, `k` (the precedents it leans on), `dismissals_needed`, `resamples`, `bootstrap_same_side` and `action_threshold`. Not applicable where the weight on precedents is zero. |
 | `skill` | The skill line (its gate verdict names a base rate such as 0.30: that is the simulated base rate of the gates file nearest the cell's own, not a second measurement of the cell, whose own rate is `evidence.base_rate_sig_pos`; the line reads "at the nearest simulated base rate, 0.30 (this cell's own rate is 0.117)"): `available` (false, with a `reason`, when the reliability record has nothing to report), `brier_skill`, `brier_skill_lo`, `brier_skill_hi`, `n`, `n_tests`, `window_weeks`, `as_of`, `verdict`, and `backtest` (the champion's backtest figure: `scope` is `cell` when the card's own `cell` is decidable and `pooled` otherwise, with the `decidable` verdict and, for the pooled figure, the `reason`; `rung`, `brier_skill` with its interval, `n`, `n_tests`, `snapshot_id`). |
 | `abstention` | `status` (`issue` or `abstain`), `reasons` (the triggers that fired) and `details`. |
-| `team_forecast` | The team's own forecast, frozen with the card so that the join can score it beside the model's, or null when none was given (the Markdown card then prints "None provided"). It holds the team's probability of a significant positive result and its point estimate. `POST /card` takes it as the `team_forecast` field; `moot card` has no option for it. |
+| `team_forecast` | The team's own forecast, frozen with the card so that the join can score it beside the model's, or null when none was given (the Markdown card then prints "None provided"). It holds the team's probability of a significant positive result and its point estimate. `POST /card` takes it as the `team_forecast` field, an object with two keys, `"team_forecast": {"p_win_team": 0.4, "point_team": 0.02}`; `moot card` has no option for it. |
 | `withheld` | Only on an abstained card: the forecast that was withheld, kept in the frozen file. It has the same fields as `prediction`. No renderer, HTTP response or tool shows it; the weekly join scores it. |
 | `footer` | The boundary sentence: the card prioritizes and sizes the test, the live test decides. |
 
@@ -47,6 +47,8 @@ The weekly join finds a card by `request.row_id`, the ledger row (`source:test_i
 | MCP `get_card` | the `row_id` argument, or `test_id` with `variant_id` |
 
 Giving both forms is an error. A card without a row id is valid, but no outcome can be attached to it. The MCP tool never freezes a card, so it only echoes the key.
+
+On the headline archive the timing rule reads the contrast's start, the later of the two arms' creation times, so a card for a variant added to a running test counts as pre-launch evidence for that contrast. A card is refused for a row id the ledger already holds with its result (exit 2 on the command, 422 on the service).
 
 ## The outcome record
 

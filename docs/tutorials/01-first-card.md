@@ -42,7 +42,7 @@ moot --version
 
 ## 2. Create a project folder
 
-Make an empty folder and let `moot init` fill it. It takes about 20 seconds on a laptop with the data root on the internal disk, because it also simulates the quick gates file (on a very first run, with cold caches, or on a loaded machine it can take a minute). On an exFAT volume it can take 90 seconds, with no progress line.
+Make an empty folder and let `moot init` fill it. It takes about 30 seconds on a laptop with the data root on the internal disk, because it also simulates the quick gates file (on a very first run, with cold caches, or on a loaded machine it can take a minute). On an exFAT volume it can take 90 seconds, with no progress line.
 
 ```bash run
 mkdir moot-first && cd moot-first
@@ -51,12 +51,11 @@ moot init
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (12 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (25 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (26 s elapsed)
-the quick gates simulation (synthetic data): still running, 30 s elapsed
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (32 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (22 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (23 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (28 s elapsed)
 wrote ~/moot-first/mootcourt.toml
 data root ~/moot-first/mootcourt-data (layout created)
 sample ledger ~/moot-first/mootcourt-data/data/sample-ledger.csv (synthetic)
@@ -94,12 +93,12 @@ moot backtest --source sample
 ```
 
 ```text output
-fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T11:03:41.846471+00:00 in 1.7 s; it is the champion for sample
+fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T15:39:10.672256+00:00 in 1.3 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 gates read from ~/moot-first/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 filled the backtest summary of model 6b43ae900d91
-scored 330 rows over 11 origins in 5.0 s (report writing 18.7 s; the whole run 23.7 s)
+scored 330 rows over 11 origins in 4.1 s (report writing 15.7 s; the whole run 19.7 s)
 wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
 wrote ~/moot-first/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
 wrote ~/moot-first/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
@@ -109,7 +108,7 @@ wrote ~/moot-first/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.pa
 
 The backtest scored 330 rows over 11 quarterly origins. Open the Markdown report named in the last lines, `reports/backtest-sample-....md`, and read three things before you trust any card:
 
-1. **Brier skill** (section "Brier score of p_sig against the significant-positive event"): one minus the forecaster's Brier score over the Brier score of a constant base rate. Zero means no better than always forecasting the base rate. Look at the 90 percent bootstrap interval beside it (the columns `brier_skill_lo` and `brier_skill_hi`). In the row `ALL`, rung `P2`, the skill is about 0.02 and the interval (about 0.00 to 0.04, its lower end a hair below zero) does not clear zero. The sample ledger was generated with only a faint structure, so a skill that is barely distinguishable from nothing is the right answer. The report says it in the first table: the column `decidable_by_tests` reads "undecidable at this n" for every comparison, because 110 tests are below the gate of 175 for a skill difference of 0.20. The columns `decidable` and `decidable_research` beside it carry the same verdict in the unit of the gates (by tests, when the gates count tests).
+1. **Brier skill** (section "Brier score of p_sig against the significant-positive event"): one minus the forecaster's Brier score over the Brier score of a constant base rate. Zero means no better than always forecasting the base rate. Look at the 90 percent bootstrap interval beside it (the columns `brier_skill_lo` and `brier_skill_hi`). In the row `ALL`, rung `P2`, the skill is about 0.02 and the interval (about 0.00 to 0.04, its lower end a hair below zero) does not clear zero. The sample ledger was generated with only a faint structure, so a skill that is barely distinguishable from nothing is the right answer. The report says it in the first table: the column `decidable_by_tests` reads "undecidable at this n" for every comparison, because 110 tests are below the gate of 175 for a skill difference of 0.20.
 2. **Coverage** (section "Direction accuracy and coverage of the intervals for y"): the share of outcomes inside the central 80 and 90 percent intervals should be near 0.80 and 0.90. Judge it by the bootstrap interval printed beside it: if the interval contains 0.80 (or 0.90), the intervals are calibrated at this n; if it lies below, they are overconfident. On this sample P2's 80 percent coverage is 0.72 with an interval of 0.68 to 0.76, so the intervals are a little overconfident.
 3. **Gates**: the header gives two numbers of scored experiments, one for a skill difference of 0.20 and one for 0.10: 175 and 250 at the release gate. The release gate is the power 0.90 line of the header; the power 0.80 line below it is a research screen. A difference of that size cannot be told from zero with fewer experiments. The report scored 110 experiments (the `n_tests` column of the first table), which is below both, so the table says "undecidable at this n" (and the same at the power 0.80 screen, whose gates are 125 and 200). These numbers come from the quick gates file that `moot init` wrote: it sizes the gate in tests at one base rate (0.09, the base rate of the Upworthy archive, which the sample ledger is drawn to resemble), and the line after the "gates read" line lists the sizes. For your own archive, `moot simulate gate-power` sizes the gate in tests at your base rate ([tutorial 2](02-your-own-archive.md)).
 
@@ -205,7 +204,7 @@ OK    package uvicorn: 0.54.0 (needs 0.29 or newer)
 OK    package mcp: 2.3.0 (needs 1.2 or newer)
 OK    package matplotlib: 3.11.2 (needs 3.8 or newer)
 OK    environment: no sidecar files under <env>/lib/python3.11/site-packages
-OK    data root: ~/moot-first/mootcourt-data; free space 13.4 GB
+OK    data root: ~/moot-first/mootcourt-data; free space 13.0 GB
 OK    ledger: ~/moot-first/mootcourt-data/data/ledger/ledger.parquet conforms
 OK    model sample: champion 6b43ae900d91 on snapshot 20261105-b04b5b1dd18c
 WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 311 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined

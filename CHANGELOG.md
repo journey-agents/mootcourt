@@ -4,10 +4,9 @@ This project follows [semantic versioning](https://semver.org). Before 1.0.0 a m
 schema, the card schema or a command line option; the change is listed here and the schema versions are bumped.
 The format follows [Keep a Changelog](https://keepachangelog.com).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-05
 
-Release notes for 1.0.0, drafted from the two review rounds of the paper (round 00 and round 01); the heading becomes `## [1.0.0] - <date>`
-at the version bump.
+Release notes for 1.0.0, from the four review rounds of the paper (rounds 00 to 03).
 
 ### Changed
 
@@ -21,12 +20,19 @@ at the version bump.
 - Every score is the analytic Student-t marginal; the calibration null is clustered by test; coverage is reported within deciles of the
   ratio of realized to planned standard error; the gates are counted in tests at the archive's base rate with within-test dependence.
 - Decision value is measured against an exact random order with by-test intervals and Bonferroni-adjusted bounds, at three budgets.
-- Abstained cards keep their forecast sealed, are scored by the weekly join and feed the reliability report; a card issued at or after its
+- An abstained card keeps the forecast it withheld in its frozen file, the weekly join scores it and it feeds the reliability report; a card issued at or after its
   test's start is recorded as post-hoc and never scored; one card per row is scored, the earliest pre-launch one.
 - The card's skill line prints the cell's own gated figure when the cell is decidable, and the pooled one otherwise, saying so.
 - The sample ledger of `moot init` has a significant-positive rate near the headline archive's (0.09) and the quick gates are simulated at
   that rate; the Request line of a card without text prints no headline fields.
 - The source distribution holds the package, its examples and its tests; the paper's run folders stay in the repository.
+- The precedent rung selects its settings by forward chaining, from the origins before the one it forecasts (call 206); leave-one-test-out stays as the ablation `p2selection_loto`, and the paired forward minus leave-one-test-out difference of the rung's log score is a shipped report key (`p2_selection_comparison`).
+- The calibration null's percentile uses a mid-rank tie rule within a relative 1e-9 (call 255), so it is the same on every platform; under the previous strict comparison floating-point ties moved it by up to 1.1 points between macOS and ubuntu on the same seed.
+- A card whose cell differs from its ledger row's cell is recorded unscored at the join, counted by `moot doctor`, and refused at issue by `moot card`, the service and the tool (call 256).
+- The card prints the cell's own-dependence gate verdict, with the backtest line before the window line.
+- The seed is dated at the fit clock when the ledger's last result is within the staleness limit; the outcome record carries the ledger snapshot id that holds the outcome row; a join that attaches outcomes older than the trailing window says so (calls 248 to 250).
+- Backtest report headers record the selection rule in force (`p2_selection`).
+- Table output prints an unsigned zero, so a table built from a fresh run is byte-identical.
 
 ### Added
 
@@ -41,6 +47,11 @@ at the version bump.
 - `make tables`, `make paper` and `make arxiv`: the tables, the figures, the PDF and the arXiv source package from the run folder, with
   provenance lines relative to it; a per-platform score report from the continuous-integration job; a test that every caption number
   traces to a source.
+- `moot doctor` counts, per source, cards with no row id, with a row id absent from the ledger, with a passed horizon and no outcome, and cards on an unadmitted test (call 252).
+- `make quick-check` (the sample ledger's backtest regenerated and diffed against a committed reference, percentile fields within two points), `make selfcheck` (the release gate: markers, number audit, source resolution, writing rules, the paper build, table byte-identity, docs currency, the claims audit, the release check), `scripts/run_experiments.sh --list`, `--only` and `--dry-run` for stage-only reruns, and `scripts/assemble_run_folder.py --update`.
+- The claims register (`paper/reviews/claims.md`) and `scripts/claims_audit.py`, which checks every printed claim value against its report key.
+- The learning-curve detail tables print the raw Brier score, the base scores and the seed spread; the ablation table prints the paired difference column; the positive-control table prints the oracle interval.
+- The README verification script prints one line instead of a traceback when a report or the page is missing.
 
 ### Fixed
 
@@ -49,6 +60,9 @@ at the version bump.
 - A ledger ending inside a quarter gave P1 a period level from a few days of data, which the guard then read as a precedent gain.
 - The log score on the grid dropped the Student-t mass beyond the grid edge; the analytic marginal replaces it.
 - Storage: every heavy read goes through the data root; a run folder is read as a data root with the standard layout.
+- The table builder ordered the oracle and arm-count rows by hash seed; policy name is now the tiebreaker, with a determinism test.
+- The first-card tutorial printed the interpreter version, the environment path and the free space; the documentation runner masks them.
+- `aggregate_scores` no longer requires a row id column.
 
 ## [0.1.0] - unreleased
 
@@ -100,7 +114,7 @@ First release.
 
 - P0 is the empirical base-rate forecaster of the visible ledger (its `p_sig` is the visible event rate, so its Brier skill is zero by construction); the statement that each rung is a strict generalization of the one
   below is replaced by what each rung adds. The P2 predictive is a Student-t of P1's family at every lambda (moment matched), and the selection scores every candidate, the lambda 0 baseline included, with that predictive.
-- Card schema version 2: the card stores its predictive (family, degrees of freedom, location, scale, grid and the planned standard error), the interval for the true effect and the interval for the observed estimate, a sealed
+- Card schema version 2: the card stores its predictive (family, degrees of freedom, location, scale, grid and the planned standard error), the interval for the true effect and the interval for the observed estimate, a frozen
   `withheld` forecast on an abstained card, and a skill line with the interval, the test count and the gate verdict. The weekly join and the replay score outcomes with the stored predictive, and an abstained card is scored on the forecast it withheld (flagged,
   not dropped), so a stale or drifted cell recovers; the two paths share one code path.
 - `moot card`, `POST /card` and the MCP tool `get_card` accept a row id (or the ledger row key), the planned exposures of the two arms and the reference headline. Champion refresh: a refit of the same method on a newer fit replaces the

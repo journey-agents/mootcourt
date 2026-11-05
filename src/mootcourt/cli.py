@@ -229,13 +229,9 @@ def card(
     cfg = abstain_config()
     gates = _load_gates_or_none(reports_dir)
     issued, t_issue = card_mod.time_issue(bundle, request, report, now_t, config=cfg, gates=gates)
-    from mootcourt.ledger import RowCellMismatchError, check_row_cell
+    from mootcourt.ledger import check_row_cell
 
-    try:
-        check_row_cell(paths.ledger_path, issued.request.row_id, issued.cell)
-    except RowCellMismatchError as exc:
-        typer.echo(f"error: {exc}", err=True)
-        raise typer.Exit(code=1) from None
+    check_row_cell(paths.ledger_path, issued.request.row_id, issued.cell)      # a ValueError: one line and exit 2 like every refusal at issue
     if simulator is not None:
         issued = _attach_simulator(issued, simulator, source, models_dir, reference_headline, sim_config, allow_remote, paths.cache)
     try:
@@ -527,8 +523,9 @@ def backtest(
 
         own_rate = simulate.ledger_dependence(df)["base_rate"]
         typer.echo(f"{gates_path} is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the "
-                   f"simulated base rate nearest this ledger's {own_rate:.3f}); run `moot simulate gate-power` for the full gates, "
-                   "which the adjusted bounds of the report also read")
+                   f"simulated base rate nearest this ledger's {own_rate:.3f}); run `moot simulate gate-power` for the full gates. "
+                   "The adjusted bounds of the report do not read the gates: they depend on the family of intervals, 20 intervals for the "
+                   "ladder alone and 52 with the challengers")
         write_quick_gates(gates_path, own_rate, load_settings()["gate"]["target_power"])      # the configured power (REV-045)
     gates = simulate.load_gates(gates_path)
     typer.echo(f"gates read from {gates_path.resolve()}: {json.dumps({k: v for k, v in gates.items() if k != 'by_base_rate'}, sort_keys=True)}")

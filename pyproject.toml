@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mootcourt"
-version = "0.1.0"
+version = "1.0.0"
 description = "Argue the next experiment from precedent before the trial: a ledger of concluded tests, a predictor ladder, abstention and scored cards."
 readme = "README.md"
 requires-python = ">=3.11"

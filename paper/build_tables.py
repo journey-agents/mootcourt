@@ -374,7 +374,7 @@ def ablation_table(reports_dir, source, out):
             base = "p2-guard-off (main settings)"
         cells = [esc(base)]
         for run in (on, off):
-            cells += [f3(run[0]["logscore"]), interval(run[0], "brier_skill"), interval(run[0], "logscore_vs_p1", 4)] if run else ["", "", ""]
+            cells += [f3(run[0]["logscore"]), interval(run[0], "brier_skill"), interval(run[0], "logscore_vs_p1", 5)] if run else ["", "", ""]
         lines.append(" & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     resamples = sorted({v[2] for v in runs.values() if v[2]})
@@ -1053,23 +1053,28 @@ def guard_pairs_rows_table(reports_dir, out, source="upworthy"):
     decisive rows (|y| above z s) with their mean difference against the rest, and the location and scale parts of the mean difference.
     """
     path = latest(os.path.join(reports_dir, f"paper-extras-{source}-*.json"))
-    gpr = load(path).get("guard_pairs_rows") if path else None
+    extras = load(path) if path else {}
+    gpr = extras.get("guard_pairs_rows")
     if not gpr or not gpr.get("rows"):
         return
+    # one interval per quantity (round 03, R3): the pooled realized difference is Table guard-pairs' draw, read from the same key
+    pooled_iv = (extras.get("guard_pairs") or {}).get("summary") or {}
     lines = [
         r"\begin{tabular}{llrrrrrrrrr}",
         r"\toprule",
-        r"origin & cell & $\lambda$ & rows & P2 better (90\%) & median & mean (90\%) & decisive rows: n / mean & rest: mean & "
+        r"origin & cell & $\lambda$ & rows & P2 better (90\%) & median (90\%) & mean (90\%) & decisive rows: n / mean & rest: mean & "
         r"location part (90\%) & scale part (90\%) \\",
         r"\midrule",
     ]
 
-    def line(label_origin, label_cell, lam, r):
+    def line(label_origin, label_cell, lam, r, mean_iv=None):
         dec, rest = r.get("decisive") or {}, r.get("non_decisive") or {}
+        mlo, mhi = mean_iv if mean_iv else (r.get("mean_diff_lo"), r.get("mean_diff_hi"))
         return (
             f"{label_origin} & {esc(label_cell)} & {f3(lam, 2) if lam is not None else ''} & {r['rows']} & "
-            f"{f3(r['share_p2_better'])} ({f3(r.get('share_p2_better_lo'))}, {f3(r.get('share_p2_better_hi'))}) & {f3(r['median_diff'], 4)} & "
-            f"{f3(r['mean_diff'], 4)} ({f3(r.get('mean_diff_lo'), 4)}, {f3(r.get('mean_diff_hi'), 4)}) & "
+            f"{f3(r['share_p2_better'])} ({f3(r.get('share_p2_better_lo'))}, {f3(r.get('share_p2_better_hi'))}) & "
+            f"{f3(r['median_diff'], 4)} ({f3(r.get('median_diff_lo'), 4)}, {f3(r.get('median_diff_hi'), 4)}) & "
+            f"{f3(r['mean_diff'], 4)} ({f3(mlo, 4)}, {f3(mhi, 4)}) & "
             f"{dec.get('rows', '')} / {f3(dec.get('mean_diff'), 4)} & {f3(rest.get('mean_diff'), 4)} & "
             f"{f3(r.get('location_part'), 4)} ({f3(r.get('location_part_lo'), 4)}, {f3(r.get('location_part_hi'), 4)}) & "
             f"{f3(r.get('scale_part'), 4)} ({f3(r.get('scale_part_lo'), 4)}, {f3(r.get('scale_part_hi'), 4)}) \\\\"
@@ -1078,13 +1083,15 @@ def guard_pairs_rows_table(reports_dir, out, source="upworthy"):
     for r in gpr["rows"]:
         lines.append(line(str(r["origin"])[:10], r["cell"], r.get("lambda"), r))
     if gpr.get("pooled"):
-        lines += [r"\midrule", line(f"pooled ({len(gpr['rows'])} pairs)", "", None, gpr["pooled"])]
+        iv = (pooled_iv["pooled_lo"], pooled_iv["pooled_hi"]) if pooled_iv.get("pooled_lo") is not None else None
+        lines += [r"\midrule", line(f"pooled ({len(gpr['rows'])} pairs)", "", None, gpr["pooled"], iv)]
     lines += [r"\bottomrule", r"\end{tabular}"]
     dec = gpr.get("decomposition") or {}
     write(
         out,
         "guard-pairs-rows.tex",
-        f"{path} (guard_pairs_rows; P2 minus P1 log score per row, nats; decisive = |y| above z s; intervals by test, "
+        f"{path} (guard_pairs_rows; the pooled mean and its interval are guard_pairs.summary, one draw for both tables; "
+        "P2 minus P1 log score per row, nats; decisive = |y| above z s; intervals by test, "
         f"{(gpr.get('inputs') or {}).get('bootstrap_resamples')} resamples; location and scale parts as in docs/method.md call 233, "
         f"defined: {dec.get('defined')})",
         "\n".join(lines) + "\n",

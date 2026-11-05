@@ -30,7 +30,7 @@ citations, compiles three passes, reads the page count from the log and lists ev
 count differs from the ordinary build's (`paper/main.log`) or anything is undefined. The engine is `pdflatex` where it is installed (the
 way arXiv compiles) and otherwise tectonic in TeX-only passes (`--pass tex`, which leaves the `.bbl` untouched; tectonic's default pass
 would run its own BibTeX and rewrite it). On the packaging machine, 4 November 2026, pdflatex was not installed: the check ran with
-tectonic and gave 27 pages, the ordinary build's count, with no undefined reference and the `.bbl` unchanged. The pdflatex path is what
+tectonic and gave 30 pages, the ordinary build's count, with no undefined reference and the `.bbl` unchanged. The pdflatex path is what
 `tests/test_arxiv_package.py` runs wherever pdflatex is present and is the one to repeat before upload; the processor selected on arXiv
 is pdfLaTeX either way.
 
