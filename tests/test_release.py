@@ -19,7 +19,7 @@ def _load_release_check():
 
 
 def test_pyproject_is_release_ready():
-    assert PROJECT["name"] == "mootcourt" and PROJECT["version"] == "0.1.0" and PROJECT["requires-python"] == ">=3.11"
+    assert PROJECT["name"] == "mootcourt" and PROJECT["version"] == "1.0.0" and PROJECT["requires-python"] == ">=3.11"
     assert PROJECT["authors"][0]["name"] == "Yingjie Li" and "@" in PROJECT["authors"][0]["email"]
     assert PROJECT["license"]["text"] == "MIT" and "MIT" in (ROOT / "LICENSE").read_text(encoding="utf-8")[:40]
     assert "License :: OSI Approved :: MIT License" in PROJECT["classifiers"]

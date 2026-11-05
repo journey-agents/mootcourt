@@ -12,16 +12,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_package_imports_and_version(imp):
     pkg = imp("mootcourt")
-    assert pkg.__version__ == "0.1.0"
+    assert pkg.__version__ == "1.0.0"
 
 
-def test_cli_version_prints_0_1_0(imp):
+def test_cli_version_prints_1_0_0(imp):
     from typer.testing import CliRunner
 
     app = imp("mootcourt.cli").app
     result = CliRunner().invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.output
+    assert "1.0.0" in result.output
 
 
 def test_config_constants_exact(imp, spec_boundary_sentence):

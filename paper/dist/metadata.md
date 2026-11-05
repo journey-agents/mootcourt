@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Fill in the author line; everything else is as it should be pasted. The abstract is the one in `paper/main.tex` as plain text.
+Everything is as it should be pasted. The abstract is the one in `paper/main.tex` as plain text.
 
 ## Title
 
@@ -8,7 +8,7 @@ Arguing from Precedent: A Benchmark and Protocol for Scored, Gated Pre-Launch Fo
 
 ## Authors
 
-<author line: fill in at upload; the paper's author block is in paper/main.tex>
+Yingjie Li (Independent researcher)
 
 ## Abstract
 
@@ -20,9 +20,10 @@ The first finding is a powered negative. On the headline archive an empirical-Ba
 
 ## Categories
 
-- Primary: **stat.ML** (Machine Learning, Statistics). The contribution is a benchmark and a scoring protocol for probabilistic forecasts
-  (proper scores, calibration under a clustered null, coverage by precision, sample-size gates), with empirical-Bayes and kernel
-  estimators as the baselines; that is statistical machine learning rather than a learning algorithm.
+- Primary: **cs.AI** (Artificial Intelligence). The work asks how well an AI system's forecasts of experiment outcomes hold up, and how a team should
+  gate and audit them; the endorsement is for this category.
+- Cross-list: **stat.ML** (Machine Learning, Statistics). A benchmark and a scoring protocol for probabilistic forecasts (proper scores, calibration
+  under a clustered null, coverage by precision, sample-size gates), with empirical-Bayes and kernel estimators as the baselines.
 - Cross-list: **cs.LG** (Machine Learning). The benchmark, the challenger models (a boosted model, a text classifier), the leakage audit
   and the reproducibility packaging are the computer-science side of the same work, and the readers who run experimentation platforms
   are there.
