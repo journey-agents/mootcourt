@@ -41,7 +41,7 @@ jobs:
       # scripts/ci_score_report.py and kept as the artifact score-report-<python>; the paper names the artifact, not a number.
       - name: Score report on the bundled sample ledger
         run: uv run python scripts/ci_score_report.py --out score-report-${{ matrix.python-version }}.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: score-report-${{ matrix.python-version }}
           path: score-report-${{ matrix.python-version }}.json
@@ -65,7 +65,7 @@ jobs:
           uv venv --python 3.12 /tmp/wheel-check
           uv pip install --python /tmp/wheel-check/bin/python dist/*.whl
           /tmp/wheel-check/bin/moot --version
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist
           path: dist/
