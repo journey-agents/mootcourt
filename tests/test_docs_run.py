@@ -298,7 +298,7 @@ def test_the_results_page_holds_the_generated_block_and_the_readme_links_to_it()
     assert results.count("<!-- moot-results:start -->") == 1 and results.count("<!-- moot-results:end -->") == 1
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "moot-results:start" not in readme and "docs/results.md" in readme
-    assert len(readme.split("\n")) <= 225, "the README is a reader's entry point of about 220 lines"
+    assert len(readme.split("\n")) <= 320, "the README is a reader's entry point of about 300 lines, two diagrams and the quickstart outputs included"
 
 
 # ------------------------------------------------------------------------------------------- T-055: the documentation pass after chunk L

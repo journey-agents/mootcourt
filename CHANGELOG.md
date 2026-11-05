@@ -15,6 +15,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com).
 - Section 9 of the paper names the significant-positive event by its one name in its last place, and register row C52 quotes the
   sentence as the paper prints it.
 
+### Changed
+
+- The README is rewritten as a reader's entry point: a flowchart of how the pieces fit together, a sequence diagram of the weekly
+  loop, a table of the four ideas and a table of the ladder, a numbered quickstart whose commands and outputs are unchanged, and a
+  short guide to reading a card. Its length test now allows about 300 lines (320 newline-split pieces) instead of 225.
+
 ### Added
 
 - The confirmation pass of round 03 on release 1.0.0: `paper/reviews/round-03/confirmation-R1.md` to `confirmation-R7.md` and

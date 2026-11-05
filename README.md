@@ -1,36 +1,66 @@
 # Moot Court
 
-Moot Court is a Python package and command line for the people who plan A/B tests. It reads the record of your concluded experiments, forecasts what that record implies about a proposed experiment, scores every forecast against what the live test later showed, and declines to rule when the record has nothing to say. It is for a data scientist or an experimentation team with an archive of concluded tests, and it needs only aggregates: the effect, its standard error, the units per arm and the dates of each experiment, not user-level data.
+**Forecast the next A/B test from the record of the ones you already ran, and know when that record has nothing to say.**
+
+Moot Court is a Python package and command line for the people who plan A/B tests. It reads your concluded experiments, forecasts what that record implies about a proposed one, scores every forecast against what the live test later showed, and declines to rule when the record cannot carry an opinion. It is for a data scientist or an experimentation team with an archive of concluded tests, and it needs only aggregates: the effect, its standard error, the units per arm and the dates of each experiment. No user-level data.
 
 The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
 
 Skill on headline tests does not transfer to product deployments, and nothing here shows that it does.
 
-## How it works
+**Contents:** [How it fits together](#how-it-fits-together) | [The ladder of predictors](#the-ladder-of-predictors) | [Quickstart](#quickstart) | [Reading a card](#reading-a-card) | [The weekly loop](#the-weekly-loop) | [What the results show](#what-the-results-show-and-what-the-project-does-not-show) | [Learn more](#learn-more) | [More you can do](#more-you-can-do) | [Citing](#citing)
 
-The ideas, in the order you meet them:
+## How it fits together
 
-- **The ledger** is the table of your concluded experiments: one row per variant, per metric, per experiment. Importing results is one command, and rows that fail an admission rule are kept and counted, never dropped.
-- **A card** is the forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how fragile that opinion is. A card can also abstain, and then it says why. Cards are frozen under a digest of their content, so nobody can edit one after the result is known.
-- **Cells and rungs.** Experiments are grouped into **cells** (by default one per metric), and every forecast is made inside one cell. A **rung** is one predictor in a ladder from simple to richer, and each adds one thing to the one below it: P0 is the empirical base-rate forecaster of the cell, P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly; the guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests, and on Upworthy, with precedent weights chosen by forward chaining, P2 ends level with P1 out of time (the results page has the guard pairs and the positive-control sensitivity table, which says how often the guard admits a weight at each ledger size and strength of a planted text signal, and shows guarded and unguarded selection side by side). A card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
-- **The backtest** replays the ledger quarter by quarter, forecasts every past experiment using only what was final before it, and scores the forecast. It tells you whether the cards can be trusted, and how many experiments it takes to tell.
+```mermaid
+flowchart LR
+    A["Your archive of concluded A/B tests<br>effect, standard error, units per arm, dates"] -->|moot ingest| LG["Ledger<br>one row per variant, metric and test<br>grouped into cells"]
+    LG -->|moot fit| LAD["Ladder of predictors<br>P0 base rate, P1 pooled prior, P2 precedents<br>optional challengers"]
+    LG -->|moot backtest| BT["Backtest<br>replay by quarter, score every forecast<br>size the gates"]
+    LAD -->|moot card| CARD["Card for a proposed test<br>P(significant and positive), interval, fragility<br>or an abstention with its reason"]
+    BT --> REL["Reliability and gates<br>may the next card speak?"]
+    REL --> CARD
+    CARD -.->|the live test runs| OUT["Outcome lands in the ledger"]
+    OUT -->|moot join, weekly| REL
+    CARD --> SRV["moot serve and moot mcp<br>the same card over HTTP or MCP"]
+```
 
-A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak. The join finds a card by the ledger row it names: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`), and give `POST /card` and the MCP tool `get_card` the same `row_id`. A card without a row id is valid, but no outcome can be attached to it. Only a card issued, with its origin, at or before the test's start counts as evidence, and a row is scored once, by its earliest such card: a card issued later is recorded as post-hoc and never scored, and a card whose origin is after its issue time is refused. The [concepts page](docs/concepts.md) has the diagram and the glossary.
+Four ideas carry the whole package.
+
+| Idea | What it is |
+|---|---|
+| **Ledger** | The table of your concluded experiments: one row per variant, per metric, per experiment. One command imports results, and rows that fail an admission rule are kept and counted, never dropped. |
+| **Cell** | A group of experiments forecast together, by default one per metric. Every forecast is made inside one cell. |
+| **Card** | The forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how fragile that opinion is. A card can abstain, and then it says why. Cards are frozen under a digest of their content, so nobody can edit one after the result is known. |
+| **Backtest** | A replay of the ledger quarter by quarter: forecast every past experiment from what was final before it, score the forecast, size the gates. It says whether the cards can be trusted, and how many experiments it takes to tell. |
+
+## The ladder of predictors
+
+A **rung** is one predictor in a ladder from simple to richer. Each rung adds one thing to the one below it, and a card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
+
+| Rung | What it adds | Note |
+|---|---|---|
+| **P0** | The empirical base rate of significant positive results in the cell | The reference that every other rung is scored against |
+| **P1** | A fitted, partially pooled Student-t prior that accounts for measurement error | The cell prior |
+| **P2** | Kernel-weighted precedents, similar past experiments, under an admission guard | At a weight of zero on precedents P2 reduces to P1 exactly |
+| Challengers | A gradient-boosted regressor, a local empirical Bayes rung, a text classifier | Optional comparisons: `moot backtest --source sample --challenger gbm` |
+
+In one sentence: P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. The guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests: on Upworthy, with precedent weights chosen by forward chaining, P2 ends level with P1 out of time. The [results page](docs/results.md) shows guarded and unguarded selection side by side, with the guard pairs and the positive-control table, which says how often the guard admits a weight at each ledger size and strength of a planted text signal.
 
 ## Quickstart
 
-You need Python 3.11 or newer. Keep the clone and its environment on your **internal disk**. On an exFAT or other external volume macOS writes `._` sidecar files into the environment, and both install paths break: `pip install -e .` succeeds but `moot backtest` later fails with `Cannot decode configuration file ... .__classic_test_patch.mplstyle ... utf-8`, and `uv sync` fails with `RECORD file doesn't match wheel contents ... ._ruff`. The [troubleshooting page](docs/troubleshooting.md#working-from-a-clone-on-an-exfat-volume) has both error texts and the cure. The data root may live on an external drive, but sample-sized commands are several times slower there (one measurement: `moot init` 90 s and `moot backtest` 97 s, against 24 s and 12 s on the internal disk).
+**Requirements.** Python 3.11 or newer. Keep the clone and its environment on your **internal disk**: on an exFAT or other external volume macOS writes `._` sidecar files into the environment, and both install paths break (`pip install -e .` succeeds but `moot backtest` later fails with `Cannot decode configuration file ... .__classic_test_patch.mplstyle ... utf-8`; `uv sync` fails with `RECORD file doesn't match wheel contents ... ._ruff`). The [troubleshooting page](docs/troubleshooting.md#working-from-a-clone-on-an-exfat-volume) has both error texts and the cure. The data root may live on an external drive, but sample-sized commands are several times slower there (one measurement: `moot init` 90 s and `moot backtest` 97 s, against 24 s and 12 s on the internal disk).
 
-In the root of your clone of this repository, make and activate an environment and install the package:
+**1. Install.** In the root of your clone, make and activate an environment and install the package:
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
 
-With `uv`, run `uv sync --all-extras` in the clone instead (on an external volume, first set `UV_PROJECT_ENVIRONMENT` to a path on the internal disk). `uv run moot ...` finds the package only from inside the clone, so once you leave it, either activate the environment (`source /path/to/clone/.venv/bin/activate`, or the folder named by `UV_PROJECT_ENVIRONMENT`) and call `moot`, or write `uv run --project /path/to/clone moot ...` wherever the commands below say `moot ...`.
+With `uv`, run `uv sync --all-extras` in the clone instead (on an external volume, first set `UV_PROJECT_ENVIRONMENT` to a path on the internal disk). `uv run moot ...` finds the package only from inside the clone. Once you leave it, either activate the environment (`source /path/to/clone/.venv/bin/activate`, or the folder named by `UV_PROJECT_ENVIRONMENT`) and call `moot`, or write `uv run --project /path/to/clone moot ...` wherever the commands below say `moot ...`.
 
-Leave the clone (`cd ..`) and make a project folder next to it, not inside it. `moot init` writes the settings, the data folders, a synthetic sample ledger and a quick gates file:
+**2. Create a project** next to the clone, not inside it. `moot init` writes the settings, the data folders, a synthetic sample ledger and a quick gates file (about 30 seconds):
 
 ```bash run
 mkdir moot-demo && cd moot-demo
@@ -54,7 +84,7 @@ Next, from the project folder:
   3. moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
 ```
 
-Import the sample ledger and fit the forecaster (about 5 to 15 seconds). `ingest` reports how many rows were admitted to teach the models:
+**3. Import and fit** (5 to 15 seconds). `ingest` reports how many rows were admitted to teach the models:
 
 ```bash run
 moot ingest --format generic --input mootcourt-data/data/sample-ledger.csv --source-name sample
@@ -72,7 +102,9 @@ fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable a
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
-The model id covers the snapshot id, so yours differs on another day; compare the numbers. The last line of the `fit` output is expected: the new model has no backtest yet, and the backtest below fills that slot. You do not need to run `fit` again. Now back-test it (about 20 seconds with the data root on the internal disk, several times longer on an exFAT volume). This is the step that says whether to trust a card:
+The model id covers the snapshot id, so yours differs on another day; compare the numbers. The last line of `fit` is expected: the new model has no backtest yet, and the next step fills that slot. You do not need to run `fit` again.
+
+**4. Backtest** (about 20 seconds with the data root on the internal disk, several times longer on an exFAT volume). This is the step that says whether to trust a card:
 
 ```bash run
 moot backtest --source sample
@@ -88,9 +120,9 @@ wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.j
 wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
 ```
 
-The first two lines say which gates the backtest read. `moot init` wrote them with a quick simulation, in tests, at one base rate (0.09). `moot simulate gate-power` sizes the gates at the base rate of your own archive; for this walk-through you can ignore it. Open the report it names, `mootcourt-data/reports/backtest-sample-....md`. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig" (search the report for it), in the row `ALL`, rung `P2`. On this synthetic sample its interval contains zero. In the first table, read the column `decidable_by_tests`: it says "undecidable at this n", meaning that the 110 scored tests are below the gate of 175 tests for even a skill difference of 0.20. `decidable_research_by_tests` is the same reading at the power 0.80 screen. That is the right reading of a sample with no structure, and it is what the report is for.
+The first two lines say which gates the backtest read: `moot init` wrote them with a quick simulation at one base rate (0.09), and `moot simulate gate-power` sizes them at the base rate of your own archive. Open the report it names. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig", row `ALL`, rung `P2`. On this synthetic sample its interval contains zero, and the column `decidable_by_tests` of the first table reads "undecidable at this n": the 110 scored tests are below the gate of 175 tests for even a skill difference of 0.20 (`decidable_research_by_tests` is the same reading at the power 0.80 screen). That is the right reading of a sample with no structure, and it is what the report is for.
 
-Ask for a card (about a second). The sample is static, so `--now` issues it as of the end of its history; on a live ledger you leave `--now` out:
+**5. Ask for a card** (about a second). The sample is static, so `--now` issues it as of the end of its history; on a live ledger you leave `--now` out:
 
 ```bash run
 moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
@@ -148,9 +180,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
 ```
 
-Read `Abstention` first, then the probability against the base rate, then the interval. The card has two probabilities: `P(significant and positive)` is the chance that the live test will show a significant positive estimate, and `P(true effect above 0)` is the chance that the true effect is positive, whatever the test shows. The section `Skill at this n` is the card's own record, the skill line: how forecasts like it did recently and in the backtest, with intervals and the gate verdict. [Tutorial 1](docs/tutorials/01-first-card.md) explains each line.
-
-Check the setup. The output goes to a file so that the exit code can be printed; piping it into `tail` would hide the code:
+**6. Check the setup.** The output goes to a file so that the exit code can be printed; piping it into `tail` would hide the code:
 
 ```bash run head=6
 moot doctor > doctor.txt; echo "exit code: $?"
@@ -166,7 +196,37 @@ WARN  cards sample: 0 scored outcomes, 0 post-hoc cards (issued after their test
 status: warn
 ```
 
-The exit code printed on the first line is 0 when healthy, 1 with warnings and 2 with failures. The first warning is correct: the sample ledger ends in 2025, so its reliability report is old, and cards for a live ledger abstain when that report is older than 14 days. The second, on `cards sample`, counts the card you just issued, which names no ledger row (`cards with no row id: 1`), so no join could score it; give a card `--row-id` or `--test-id` with `--variant-id` when you want its outcome recorded.
+The exit code is 0 when healthy, 1 with warnings and 2 with failures. Both warnings are expected here. The sample ledger ends in 2025, so its reliability report is old, and cards for a live ledger abstain when that report is older than 14 days. The card you just issued names no ledger row (`cards with no row id: 1`), so no join could score it; give a card `--row-id` or `--test-id` with `--variant-id` when you want its outcome recorded.
+
+## Reading a card
+
+1. **Abstention** first. If the card declines, it says why, and nothing below it is an opinion.
+2. **`P(significant and positive)`**, read against the cell's base rate: the chance that the live test will show a significant positive estimate.
+3. **`P(true effect above 0)`**: the chance that the true effect is positive, whatever the test shows.
+4. **The intervals**, one for the true effect and one for the result the test will show at the planned standard error.
+5. **Skill at this n**, the card's own record: how forecasts like it did recently and in the backtest, with intervals and the gate verdict.
+
+[Tutorial 1](docs/tutorials/01-first-card.md) explains each line of the card.
+
+## The weekly loop
+
+A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak.
+
+```mermaid
+sequenceDiagram
+    participant You
+    participant MC as Moot Court
+    participant LT as Live test
+    You->>MC: moot card --row-id R, before the test starts
+    MC-->>You: the card, frozen under a digest of its content
+    You->>LT: run the test as you planned it
+    LT-->>MC: the row's result lands in the ledger
+    You->>MC: moot join, weekly
+    MC-->>You: scores the earliest pre-launch card for row R<br>a later card is post-hoc, recorded, never scored
+    MC->>MC: reliability report and gates decide whether the next card speaks or abstains
+```
+
+The join finds a card by the ledger row it names: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`), and give `POST /card` and the MCP tool `get_card` the same `row_id`. A card without a row id is valid, but no outcome can be attached to it. Only a card issued, with its origin, at or before the test's start counts as evidence, and a row is scored once, by its earliest such card: a card issued later is recorded as post-hoc and never scored, and a card whose origin is after its issue time is refused. The [concepts page](docs/concepts.md) has the glossary.
 
 ## What the results show, and what the project does not show
 
@@ -178,7 +238,7 @@ The exit code printed on the first line is 0 when healthy, 1 with warnings and 2
 - **Not every rung is exercised on real data.** The team-forecast rung needs a forecast frozen before the test, and no archive holds one. It runs on synthetic data only.
 - **It is not a decision tool.** No ship, rollout, allocation, ramp or stopping recommendation comes out of it.
 
-## Headline results
+### Headline results
 
 <!-- moot-headline:start -->
 - Upworthy, 13247 scored rows: Brier skill against the base rate on all rows is 0.0015 (-0.0018 to 0.0048) for P1 (not distinguishable from the constant base rate) and 0.0019 (-0.0018 to 0.0054) for P2 (not distinguishable from the constant base rate); 0 of 3 cells are undecidable at this n at the release gate.
@@ -213,7 +273,7 @@ The service has no authentication and binds to the loopback address by default: 
 
 To reproduce the published study on the two public archives, `make setup`, `make data`, `make fit` and `make backtest` run it end to end, as [tutorial 3](docs/tutorials/03-reproduce-upworthy.md) describes. Everything heavy goes under one data root: set `MOOTCOURT_DATA_ROOT` or `[storage] data_root` in `mootcourt.toml`, for example to an external volume for large runs (exFAT works for a data root, but small commands are several times slower there; the clone and its environment belong on the internal disk).
 
-## License and citations
+## License and data
 
 MIT. Data: Matias et al., Scientific Data 8, 195 (2021), doi 10.1038/s41597-021-00934-7 (Upworthy Research Archive, CC BY 4.0, Cornell University). Liu, Cardoso, Couturier and McCoy, NeurIPS 2021 Datasets and Benchmarks, arXiv 2111.10198 (ASOS Digital Experiments Dataset, CC BY 4.0, DOI 10.17605/OSF.IO/64JSB).
 
