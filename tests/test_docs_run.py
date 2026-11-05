@@ -447,7 +447,7 @@ CHUNK_L_BEHAVIOURS = {
     "the card skill line with interval and gate verdict": ("docs/concepts.md", "skill line"),
     "the row id on the three interfaces": ("docs/commands.md", "--row-id"),
     "the row id on POST /card": ("docs/tutorials/05-serve-http-and-mcp.md", "row_id"),
-    "the live join recording abstained cards": ("docs/concepts.md", "sealed"),
+    "the live join recording abstained cards": ("docs/concepts.md", "frozen file"),
     "the champion-refresh rule": ("docs/concepts.md", "method_id"),
     "the gates file with two base rates": ("docs/concepts.md", "base rate"),
     "the decision table columns": ("docs/concepts.md", "difference from random order"),
@@ -474,3 +474,41 @@ def test_the_card_reference_page_exists_is_in_the_nav_and_lists_the_prediction_f
                   "row_id", "schema_version"):
         assert f"`{field}`" in text, field
     assert "reference/card.md" in _doc("mkdocs.yml")
+
+
+# ------------------------------------------------------------------------------------------ round 02, R6.2: the uv form from outside the clone
+@pytest.mark.skipif(__import__("shutil").which("uv") is None, reason="uv is not on the path")
+def test_the_readmes_uv_run_project_form_runs_moot_from_a_folder_outside_the_clone(tmp_path):
+    """The README tells a uv user to write ``uv run --project /path/to/clone moot ...`` once they leave the clone; run its ``moot --version``."""
+    import subprocess
+
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "uv run --project /path/to/clone moot" in readme, "the instruction this test keeps honest is gone from the README"
+    from mootcourt import __version__
+
+    elsewhere = tmp_path / "moot-demo"
+    elsewhere.mkdir()
+    env = {**os.environ, "UV_OFFLINE": "1", "UV_FROZEN": "1"}          # no network, and the clone's lock file is left as it is
+    res = subprocess.run(["uv", "run", "--project", str(ROOT), "moot", "--version"], cwd=elsewhere, env=env, capture_output=True, text=True,
+                         timeout=120)
+    assert res.returncode == 0, res.stderr
+    assert res.stdout.strip() == __version__
+
+
+# ---------------------------------------------------------------------------- round 02, R6.4: gate sizes in prose match the block
+def test_every_gate_size_quoted_in_prose_beside_an_output_block_appears_in_that_block():
+    """A sentence that says "the gate of N tests" within ten lines after an output block must quote a number that block shows."""
+    bad = []
+    for page in RUN_PAGES:
+        text = page.read_text(encoding="utf-8")
+        blocks = [b for b in rds.parse_blocks(text) if b.is_output]
+        lines = text.split("\n")
+        fenced = {n for b in rds.parse_blocks(text) for n in range(b.start - 1, b.end + 1)}
+        for i, line in enumerate(lines, 1):
+            if i in fenced:
+                continue
+            for m in re.finditer(r"gate of (\d+) tests", line):
+                near = [b for b in blocks if 0 < i - b.end <= 10]
+                if near and not any(m.group(1) in b.body for b in near):
+                    bad.append(f"{page.name}:{i}: gate of {m.group(1)} tests is not in the output block above it")
+    assert bad == []

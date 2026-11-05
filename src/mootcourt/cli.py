@@ -174,7 +174,7 @@ def card(
         ..., "--impressions", help="Planned units per arm; the reference arm's when --impressions-variant is given."
     ),
     impressions_variant: int | None = typer.Option(
-        None, "--impressions-variant", help="Planned exposures of the variant arm; default: the same as --impressions."
+        None, "--impressions-variant", help="Planned units of the variant arm; default: the same as --impressions."
     ),
     origin: str | None = typer.Option(None, "--origin", help="ISO-8601 time with offset; default now."),
     models_dir: Path | None = typer.Option(None, "--models-dir", help="Default: the storage root."),
@@ -229,6 +229,13 @@ def card(
     cfg = abstain_config()
     gates = _load_gates_or_none(reports_dir)
     issued, t_issue = card_mod.time_issue(bundle, request, report, now_t, config=cfg, gates=gates)
+    from mootcourt.ledger import RowCellMismatchError, check_row_cell
+
+    try:
+        check_row_cell(paths.ledger_path, issued.request.row_id, issued.cell)
+    except RowCellMismatchError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=1) from None
     if simulator is not None:
         issued = _attach_simulator(issued, simulator, source, models_dir, reference_headline, sim_config, allow_remote, paths.cache)
     try:
@@ -515,10 +522,14 @@ def backtest(
     sid = ensure_snapshot(df, ledger_path.parent)
     gates_path = reports_dir / "gates.json"
     if not gates_path.exists():
-        typer.echo(f"{gates_path} is missing; running the gate power simulation first (synthetic data, same as `moot simulate power`)")
+        from mootcourt.onboarding import write_quick_gates
         from mootcourt.settings import load_settings
 
-        simulate.write_gates(gates_path, target=load_settings()["gate"]["target_power"])      # the configured power (REV-045)
+        own_rate = simulate.ledger_dependence(df)["base_rate"]
+        typer.echo(f"{gates_path} is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the "
+                   f"simulated base rate nearest this ledger's {own_rate:.3f}); run `moot simulate gate-power` for the full gates, "
+                   "which the adjusted bounds of the report also read")
+        write_quick_gates(gates_path, own_rate, load_settings()["gate"]["target_power"])      # the configured power (REV-045)
     gates = simulate.load_gates(gates_path)
     typer.echo(f"gates read from {gates_path.resolve()}: {json.dumps({k: v for k, v in gates.items() if k != 'by_base_rate'}, sort_keys=True)}")
     if gates.get("by_base_rate"):
@@ -951,6 +962,13 @@ def join(
     reports_dir = reports_dir if reports_dir is not None else paths.reports
     from mootcourt.loop import join_command
 
+    if new_rows is not None and not new_rows.is_file():
+        typer.echo(f"error: new rows file not found: {new_rows}; stage the week's results with moot ingest --ledger incoming/ledger.parquet first",
+                   err=True)
+        raise typer.Exit(code=2)
+    if not ledger_path.is_file():
+        typer.echo(f"error: ledger not found: {ledger_path}; build it with moot ingest first", err=True)
+        raise typer.Exit(code=2)
     res = join_command(source, ledger_path.parent, cards_dir, reports_dir, new_rows_path=new_rows,
                        now=_parse_time(now, "--now") or dt.datetime.now(dt.timezone.utc))
     extra = ""
@@ -958,6 +976,9 @@ def join(
         extra += f"; {res.n_post_hoc} post-hoc card{'s' if res.n_post_hoc != 1 else ''} recorded, not scored (issued after the test started)"
     if res.n_reissues:
         extra += f"; {res.n_reissues} reissue{'s' if res.n_reissues != 1 else ''} recorded, not scored (a row is scored once)"
+    if res.n_cell_mismatch:
+        extra += (f"; {res.n_cell_mismatch} card{'s' if res.n_cell_mismatch != 1 else ''} for a row of another cell recorded, not scored "
+                  "(the card's cell is not the cell of its ledger row)")
     typer.echo(f"appended {res.n_new_rows} rows" + (f", snapshot {res.snapshot_id}" if res.snapshot_id else "")
                + f"; attached {res.n_outcomes} outcomes {json.dumps(res.miss_counts, sort_keys=True)}{extra}; reliability in {res.reliability_path}")
     if res.n_outside_window:
@@ -1309,7 +1330,7 @@ def reliability(
     reports_dir: Path | None = typer.Option(None, "--reports-dir", help="Default: the storage root."),
     as_json: bool = typer.Option(False, "--json", help="Print the report as JSON instead of the table."),
 ) -> None:
-    """Print the weekly reliability report of a source: one line per cell, or the JSON (call 208)."""
+    """Print the weekly reliability report of a source: one line per cell, or the JSON."""
     paths = storage_paths()
     reports_dir = reports_dir if reports_dir is not None else paths.reports
     from mootcourt.card import load_reliability_report

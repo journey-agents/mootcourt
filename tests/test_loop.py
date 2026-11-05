@@ -130,7 +130,8 @@ def _setup(imp, tmp_path, make_synth, reliability_factory):
     now0 = origin + dt.timedelta(days=1)
     report = reliability_factory(as_of=now0 - dt.timedelta(days=1), n=500)
     cards = []
-    for r in new[new["started_at"] > now0].head(5).itertuples():  # issued before the test starts (call 220)
+    # issued before the test starts (call 220), for the cell of the row (call 256)
+    for r in new[(new["started_at"] > now0) & (new["cell"] == "headline_only")].head(5).itertuples():
         req = card_mod.CardRequest(source="synthetic", headline=json.loads(r.features_json)["headline"],
                                    image_changed=False, impressions=20000, origin=origin, row_id=r.row_id)
         c = card_mod.build_card(bundle, req, reliability=report, now=now0)

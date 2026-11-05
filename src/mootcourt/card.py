@@ -512,13 +512,17 @@ def backtest_view(summary: dict | None, cell: str) -> dict | None:
         reason = ("the backtest summary has no row for this cell (it was written before per-cell figures were stored)" if cells is None
                   else "the backtest has no row for this cell")
         return {**pooled, "scope": "pooled", "cell": cell, "decidable": None, "reason": reason}
-    label = own.get("decidable_by_tests")
+    label = own.get("decidable_by_tests_cell") or own.get("decidable_by_tests")     # the cell's own dependence first (call 257)
     if label and str(label).startswith("decidable"):
         return {"rung": summary.get("rung"), "brier_skill": own.get("brier_skill"), "brier_skill_lo": own.get("brier_skill_lo"),
                 "brier_skill_hi": own.get("brier_skill_hi"), "n_tests": own.get("n_tests"), "n": own.get("n"),
                 "snapshot_id": summary.get("snapshot_id"), "scope": "cell", "cell": cell, "decidable": str(label), "reason": None}
+    need = ""
+    if own.get("gate_cell_n_200") and own.get("gate_cell_n_400"):
+        need = (f" (at this cell's own dependence the gate needs {own['gate_cell_n_200']} tests for a skill of 0.20 and "
+                f"{own['gate_cell_n_400']} for 0.10; it has {own.get('n_tests')})")
     return {**pooled, "scope": "pooled", "cell": cell, "decidable": label,
-            "reason": f"this cell's own figure is {label}" if label else "this cell's own figure has no gate verdict"}
+            "reason": f"this cell's own figure is {label}{need}" if label else "this cell's own figure has no gate verdict"}
 
 
 def _skill(reliability: dict | None, cell: str, bundle=None, gates: dict | None = None, origin=None) -> Skill:
@@ -648,21 +652,11 @@ def _second_opinion_lines(card: Card) -> list[str]:
 
 
 def _skill_lines(sk: Skill) -> list[str]:
-    """The skill section: never a bare number, always its window, interval, test count and the gate verdict at that n."""
+    """The skill section: never a bare number, always its window, interval, test count and the gate verdict at that n.
+
+    The cell's latest gated backtest figure comes first, with its decidability, because it is the figure a decision can lean on; the
+    trailing window follows it and says it is descriptive, one window of many (call 257)."""
     out: list[str] = []
-    if sk.available:
-        if sk.brier_skill_lo is not None and sk.brier_skill_hi is not None:
-            iv = f" (90 percent interval {_num(sk.brier_skill_lo)} to {_num(sk.brier_skill_hi)}, by test)"
-        elif sk.n_tests is not None and sk.n_tests < 2:
-            iv = " (fewer than two tests in the window, so no interval can be computed and this number cannot be judged)"
-        else:
-            iv = " (no interval is recorded in this reliability report, so this number cannot be judged)"
-        win = f"trailing {sk.window_weeks} weeks" if sk.window_weeks else "trailing window"
-        tests = f" from {sk.n_tests} tests" if sk.n_tests is not None else ""
-        out += [f"- Brier skill against the cell base rate, {win}: {_num(sk.brier_skill)}{iv}, measured on {sk.n} rows{tests}, as of {sk.as_of}"]
-        out += [f"- Gate at this n: {sk.verdict or 'no verdict is available'}"]
-    else:
-        out += ["- Not measured: the reliability report has no entry for this cell."]
     if sk.backtest:
         b = sk.backtest
         lo, hi = b.get("brier_skill_lo"), b.get("brier_skill_hi")
@@ -677,6 +671,20 @@ def _skill_lines(sk: Skill) -> list[str]:
         else:
             why = f" because {b['reason']}" if b.get("reason") else ""
             out += [f"- Latest gated backtest, pooled over all cells{why}, {figure}"]
+    if sk.available:
+        if sk.brier_skill_lo is not None and sk.brier_skill_hi is not None:
+            iv = f" (90 percent interval {_num(sk.brier_skill_lo)} to {_num(sk.brier_skill_hi)}, by test)"
+        elif sk.n_tests is not None and sk.n_tests < 2:
+            iv = " (fewer than two tests in the window, so no interval can be computed and this number cannot be judged)"
+        else:
+            iv = " (no interval is recorded in this reliability report, so this number cannot be judged)"
+        win = f"trailing {sk.window_weeks} weeks" if sk.window_weeks else "trailing window"
+        tests = f" from {sk.n_tests} tests" if sk.n_tests is not None else ""
+        out += [f"- Brier skill against the cell base rate, {win}: {_num(sk.brier_skill)}{iv}, measured on {sk.n} rows{tests}, as of {sk.as_of}, "
+                "descriptive, one window of many"]
+        out += [f"- Gate at this n: {sk.verdict or 'no verdict is available'}"]
+    else:
+        out += ["- Not measured: the reliability report has no entry for this cell."]
     return out
 
 

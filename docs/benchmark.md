@@ -37,7 +37,7 @@ positive. A small base rate makes every probability score harder to move.
 
 **Gates.** For each power target, the number of scored tests at which a Brier skill difference of 0.20 (n at skill 0.20) or
 0.10 (n at skill 0.10) can be told from zero. They come from a simulation on synthetic data with a known base rate and say
-nothing about your ledger beyond its size. The section is headed "Tests needed" when the gates count tests (the report records the unit as `gates_unit`) and "Rows needed" when the gates are per row: a per-row gates file, or the quick fallback the report card simulates when `reports/gates.json` does not exist.
+nothing about your ledger beyond its size. The Gates heading line names the simulated base rate the sizes are read at: the nearest simulated rate to the ledger's own. The section is headed "Tests needed" when the gates count tests (the report records the unit as `gates_unit`) and "Rows needed" when the gates are per row: a per-row gates file, or the quick fallback the report card simulates when `reports/gates.json` does not exist.
 
 **Ladder.** One row per rung over all cells.
 

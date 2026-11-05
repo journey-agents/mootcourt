@@ -111,7 +111,7 @@ are checked again when a records file is read back, and a bad value stops the co
 The stacked probability is `(1 - w) p_sig + w p_AI`. The weight starts at zero. `moot earn-weight` puts the recorded rows
 with an opinion in time order and cuts them between two origins. It chooses `w` on a grid by Brier score on the origins
 before an inner cut and judges it on the later origins, never on the same rows. A positive weight is written to the registry only when,
-on the judged rows, the stacked Brier score beats `p_sig` by the promotion margin and those judged rows come from at least as many distinct tests as the gate's n (the gate counts tests, not rows, because rows of one test are not independent).
+on the judged rows, the stacked Brier score beats `p_sig` by the earn-weight margin (0.02) and those judged rows come from at least as many distinct tests as the gate's n (the gate counts tests, not rows, because rows of one test are not independent).
 Otherwise it stays zero, and a weight that no longer passes is reset to zero. The scores come from the backtest of the current
 ledger snapshot, found by its id.
 

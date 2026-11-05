@@ -35,7 +35,7 @@
 
 ## Skill at this n
 
-- Brier skill against the cell base rate, trailing window: 0.120 (no interval is recorded in this reliability report, so this number cannot be judged), measured on 500 rows, as of 2014-07-14T12:00:00+00:00
+- Brier skill against the cell base rate, trailing window: 0.120 (no interval is recorded in this reliability report, so this number cannot be judged), measured on 500 rows, as of 2014-07-14T12:00:00+00:00, descriptive, one window of many
 - Gate at this n: the number of tests in the window is not recorded, so the skill cannot be judged
 
 ## Abstention

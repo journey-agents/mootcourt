@@ -93,12 +93,26 @@ target_power = 0.90
 """
 
 
+def write_quick_gates(path, base_rate: float, target: float, progress=None) -> dict:
+    """Write the quick gates ``moot init`` and the backtest's missing-file fallback share (round 02, R6; call 258).
+
+    Simulated by test, at the simulated base rate nearest ``base_rate`` (the rates of ``simulate.SOURCE_DEPENDENCE``), with that rate's
+    measured rows per test and within-test correlation, at the interval level of the release gates, with the quick replicate counts and no
+    power table. Returns the gates document."""
+    from mootcourt import simulate
+
+    rate = min(simulate.SOURCE_DEPENDENCE, key=lambda b: abs(b - float(base_rate)))
+    rows_per_test, icc = simulate.SOURCE_DEPENDENCE[rate]
+    return simulate.write_gates(path, base=rate, base_rates=[rate], target=target, reps=QUICK_GATE["reps"], B=QUICK_GATE["B"], with_table=False,
+                                rows_per_test=rows_per_test, icc=icc, level=simulate.DEFAULT_LEVEL, progress=progress,
+                                dependence_source=f"the public archive at base rate {rate:.2f} (SOURCE_DEPENDENCE)")
+
+
 def init_project(directory: Path | str, data_root: Path | str | None = None, cells: list[str] | None = None, name: str | None = None,
                  force: bool = False, progress=None) -> dict:
     """Create the project files in ``directory``. Raises FileExistsError when mootcourt.toml exists and ``force`` is false.
 
     ``progress`` (a callable taking one line) receives the quick gate simulation's progress lines (call 207)."""
-    from mootcourt import simulate
     from mootcourt.importers.sample import METRICS, sample_exchange
 
     d = Path(directory).resolve()
@@ -117,11 +131,7 @@ def init_project(directory: Path | str, data_root: Path | str | None = None, cel
     sample_exchange().to_csv(sample, index=False)
     gates = layout.gates_path
     if not gates.exists():
-        rows_per_test, icc = simulate.SOURCE_DEPENDENCE[QUICK_GATE_BASE]
-        simulate.write_gates(gates, base=QUICK_GATE_BASE, base_rates=[QUICK_GATE_BASE], target=load_settings(d)["gate"]["target_power"],
-                             reps=QUICK_GATE["reps"], B=QUICK_GATE["B"], with_table=False, rows_per_test=rows_per_test, icc=icc,
-                             level=simulate.DEFAULT_LEVEL, progress=progress,
-                             dependence_source=f"the public archive at base rate {QUICK_GATE_BASE:.2f} (SOURCE_DEPENDENCE)")
+        write_quick_gates(gates, QUICK_GATE_BASE, load_settings(d)["gate"]["target_power"], progress=progress)
     commands = [f"moot ingest --format generic --input {shlex.quote(str(sample))} --source-name sample",
                 "moot fit --source sample && moot backtest --source sample",
                 "moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00"]
@@ -263,7 +273,8 @@ def check_reliability(paths, now: dt.datetime) -> list[dict]:
 
 def _card_problems(paths, now: dt.datetime) -> dict[str, dict[str, int]]:
     """Per source, the frozen cards no join will score: no row id, a row id absent from the ledger, a row id of an unadmitted test, and a
-    horizon that has passed at ``now`` with no outcome file yet (call 252). A card whose row has not concluded is not a finding."""
+    horizon that has passed at ``now`` with no outcome file yet (call 252), and a card whose cell is not the cell of its ledger row (call 256;
+    the join records it unscored). A card whose row has not concluded is not a finding."""
     import pandas as pd
 
     from mootcourt.ledger import ADMITTED, read_ledger
@@ -280,7 +291,8 @@ def _card_problems(paths, now: dt.datetime) -> dict[str, dict[str, int]]:
             card = json.loads(f.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        c = out.setdefault(str(card.get("source", "unknown")), {"no_row_id": 0, "unknown_row": 0, "past_horizon": 0, "unadmitted": 0})
+        c = out.setdefault(str(card.get("source", "unknown")), {"no_row_id": 0, "unknown_row": 0, "past_horizon": 0, "unadmitted": 0,
+                                                                                          "cell_mismatch": 0})
         row_id = (card.get("request") or {}).get("row_id")
         if not row_id:
             c["no_row_id"] += 1
@@ -290,6 +302,8 @@ def _card_problems(paths, now: dt.datetime) -> dict[str, dict[str, int]]:
             c["unknown_row"] += 1
         elif ledger.loc[row_id, "status"] != ADMITTED:
             c["unadmitted"] += 1
+        elif card.get("cell") is not None and str(ledger.loc[row_id, "cell"]) != str(card["cell"]):
+            c["cell_mismatch"] += 1
         elif pd.Timestamp(ledger.loc[row_id, "usable_after"]) <= pd.Timestamp(now) and not (paths.cards / "outcomes" / f"{f.stem}.json").exists():
             c["past_horizon"] += 1
     return out
@@ -298,7 +312,8 @@ def _card_problems(paths, now: dt.datetime) -> dict[str, dict[str, int]]:
 def check_cards(paths, now: dt.datetime | None = None) -> list[dict]:
     """Per source: scored outcomes, post-hoc cards (issued after their test started, recorded and never scored; a warning, since the record
     was filled after the fact), reissues (a later card for a row another card scores), and the cards no join will score (no row id, a row id
-    absent from the ledger, a passed horizon with no outcome, an unadmitted test; each a warning). A source with none of these is not listed."""
+    absent from the ledger, a passed horizon with no outcome, an unadmitted test, a row of another cell; each a warning). A source with none of
+    these is not listed."""
     now = now or dt.datetime.now(dt.timezone.utc)
     out_dir = paths.cards / "outcomes"
     counts: dict[str, dict[str, int]] = {}
@@ -322,7 +337,8 @@ def check_cards(paths, now: dt.datetime | None = None) -> list[dict]:
         detail = (f"{c['scored']} scored outcomes, {c['post_hoc']} post-hoc cards (issued after their test started: recorded, never scored), "
                   f"{c['reissue']} reissues (a later card for a row another card scores)")
         labels = (("no_row_id", "cards with no row id"), ("unknown_row", "cards with a row id absent from the ledger"),
-                  ("past_horizon", "cards past their horizon with no outcome"), ("unadmitted", "cards on an unadmitted test"))
+                  ("past_horizon", "cards past their horizon with no outcome"), ("unadmitted", "cards on an unadmitted test"),
+                  ("cell_mismatch", "cards for a row of another cell"))
         found = [f"{label}: {p[key]}" for key, label in labels if p.get(key)]
         if found:
             detail += "; no join scores these as they stand, " + ", ".join(found)

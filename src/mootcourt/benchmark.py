@@ -32,6 +32,7 @@ import pandas as pd
 from mootcourt.config import BOOTSTRAP_RESAMPLES
 from mootcourt.harness_stats import LEVEL
 from mootcourt.settings import load_settings
+from mootcourt.simulate import select_gates
 
 SCALE_SCHEMA_VERSION = 1
 DEFAULT_CARDS = 1000
@@ -269,6 +270,7 @@ def build_report_card(doc: dict, scores: pd.DataFrame, *, ledger_stem: str, snap
                        "decidable_research": r["decidable_research_by_tests"]})
     prim = next(r for r in ladder if r["rung"] == primary)
     events = scores.loc[scores["rung"] == primary, "event"].astype(float)
+    sel = select_gates(gates, float(events.mean()) if len(events) else None)      # the sizes at the simulated rate nearest the ledger's
     ab = next((r for r in t["abstention"] if r["cell"] == "ALL"), {})
     dv = [{"policy": r["policy"], "rung": r["rung"], "K": r["K"], "n_tests": r["n_tests"], "captured_fraction": r["captured_fraction"]}
           for r in t["decision_value"] if r["origin"] == "ALL" and r.get("budget", 0.25) == 0.25
@@ -282,7 +284,8 @@ def build_report_card(doc: dict, scores: pd.DataFrame, *, ledger_stem: str, snap
                    "n_cells": int(scores["cell"].nunique()), "origins_scored": h["origins_scored"],
                    "first_origin": h["first_origin"], "last_origin": h["last_origin"],
                    "base_rate": float(events.mean()), "synthetic": bool(h["synthetic"])},
-        "gates": {k: {kk: int(vv) for kk, vv in v.items()} for k, v in (gates.get("by_target") or {}).items()},
+        "gates": {k: {kk: int(vv) for kk, vv in v.items()} for k, v in (sel.get("by_target") or {}).items()},
+        "gates_base_rate": sel.get("base_rate"),
         "gates_source": gates_source, "decision_target": gates.get("decision_target"), "research_target": _research_target(gates),
         "gates_unit": "test" if (gates.get("interval") or {}).get("by") == "test" else "row",
         "interval_level": LEVEL,
@@ -305,7 +308,11 @@ def card_markdown(card: dict) -> str:
               f"- Scored rows: {led['n_scored']} over {led['origins_scored']} quarterly origins, "
               f"{str(led['first_origin'])[:10]} to {str(led['last_origin'])[:10]}",
               f"- Base rate of a significant positive result: {_num(led['base_rate'])}", ""]
-    lines += ["## Gates", "", gates_heading(card), "",
+    rate_note = ""
+    if card.get("gates_base_rate") is not None:       # the sizes are read at one simulated base rate; say which, beside the ledger's own
+        rate_note = (f" Simulated at base rate {float(card['gates_base_rate']):.2f}, the nearest simulated rate to this ledger's "
+                     f"{_num(led['base_rate'])}.")
+    lines += ["## Gates", "", gates_heading(card) + rate_note, "",
               "| power target | n at skill 0.20 | n at skill 0.10 |", "|---|---|---|"]
     for target, g in sorted(card["gates"].items()):
         lines.append(f"| {target} | {g.get('n_200', 'n/a')} | {g.get('n_400', 'n/a')} |")

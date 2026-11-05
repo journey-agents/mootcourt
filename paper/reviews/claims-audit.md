@@ -161,7 +161,7 @@ Sections outside the register's stated scope, listed because they repeat a weake
 
 ## Output of `scripts/claims_audit.py`
 
-Command: `cd /Users/yingjieli/codes/mootcourt && export MOOTCOURT_DATA_ROOT="/Volumes/Crucial X10/mootcourt-data" && .venv/bin/python scripts/claims_audit.py paper/reviews/claims.md paper/data/run6-forward-chaining`, exit status 1.
+Command: `export MOOTCOURT_DATA_ROOT="/Volumes/Crucial X10/mootcourt-data" && .venv/bin/python scripts/claims_audit.py paper/reviews/claims.md paper/data/run6-forward-chaining`, exit status 1.
 
 A first invocation at 15:01 reported "report ... not found in paper/data/run6-forward-chaining" for all 102 rows with a key; the files were present with 13:42 timestamps and a second invocation at 15:03 resolved every path, so the first result is recorded here and not explained. The second invocation printed:
 

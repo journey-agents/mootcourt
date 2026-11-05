@@ -33,6 +33,8 @@ A row compares one variant with one baseline on one metric at the final read of 
 | `srm_flag` | true when a sample ratio mismatch check failed; the row becomes `imbalance_flag` |
 | `headline` and `feature_*` | pre-launch features, kept for forecasting (the `feature_` prefix is dropped) |
 
+The deployment-shaped archive (ASOS) keeps two post-launch display fields, `n_checkpoints` and `final_offset_days`, at the top level of its features instead of inside the `post_launch` block. They stay there because the identifiers of the run folders cite them; the feature allow-list keeps them out of every forecast, and they move into the block at the next release that changes snapshot ids.
+
 ### Provenance columns
 
 | column | meaning |

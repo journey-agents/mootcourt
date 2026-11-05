@@ -15,12 +15,16 @@ import statistics
 
 
 def f3(x, nd=3):
-    return "" if x is None else f"{x:.{nd}f}"
+    """``x`` to ``nd`` places; a value that rounds to zero prints as an unsigned zero, so no table holds "-0.0000"."""
+    if x is None:
+        return ""
+    text = f"{x:.{nd}f}"
+    return text[1:] if text.startswith("-") and float(text) == 0.0 else text
 
 
 def fr(x):
     """Regret in the units of y: one decimal when large (Upworthy), three when small (ASOS), never a printed 0.0 for a nonzero value."""
-    return "" if x is None else (f"{x:.1f}" if abs(x) >= 10 else f"{x:.3f}")
+    return "" if x is None else (f"{x:.1f}" if abs(x) >= 10 else f3(x, 3))
 
 
 def interval(r, key, nd=3):
@@ -185,8 +189,11 @@ def decision_table(rep, source, out):
 def decision_intervals_table(rep, source, out):
     """The pooled decision value with its intervals, at every budget (tables.decision_value, origin ALL).
 
-    Columns: captured_fraction with captured_fraction_lo and captured_fraction_hi, diff_random (the captured fraction minus the random policy's)
-    with diff_random_lo and diff_random_hi, regret with regret_lo and regret_hi, and constant_within_cell. Every interval is a 90 percent bootstrap
+    Columns: captured_fraction with captured_fraction_lo and captured_fraction_hi, diff_matched (the captured fraction minus the arm-count-matched
+    random policy's, the baseline H5 reads) with its interval and Bonferroni-adjusted bounds, regret with regret_lo and regret_hi, and
+    constant_within_cell. The difference from plain random order stays in the JSON (diff_random) and is the captured fraction minus the random
+    policy's row of the same table (round 02, R5: the matched columns are the ones read, and the table had ten columns).
+    Every interval is a 90 percent bootstrap
     that resamples whole tests within each origin; random order is exact (K over n); a rung whose p_win is constant within a cell chooses by
     cell and then at random.
     """
@@ -195,9 +202,9 @@ def decision_intervals_table(rep, source, out):
         return
     budgets = sorted({r.get("budget", 0.25) for r in pooled}, key=lambda b: (b != 0.25, b))
     lines = [
-        r"\begin{tabular}{llrrrrrrrr}",
+        r"\begin{tabular}{llrrrrrr}",
         r"\toprule",
-        r"budget & policy & model & captured fraction (90\%) & minus random (90\%) & minus random, Bonferroni-adjusted ($m$) "
+        r"budget & policy & model & captured fraction (90\%) "
         r"& minus arm-count-matched random (90\%) & minus matched, Bonferroni-adjusted ($m$) & regret (90\%) & const.\ in cell \\",
         r"\midrule",
     ]
@@ -207,12 +214,6 @@ def decision_intervals_table(rep, source, out):
         for pol, rg in keys:
             r = next(x for x in rows if x["policy"] == pol and x["rung"] == rg)
             cf = f"{f3(r['captured_fraction'])} ({f3(r.get('captured_fraction_lo'))}, {f3(r.get('captured_fraction_hi'))})"
-            dr = ""
-            if r.get("diff_random_lo") is not None:
-                dr = f"{f3(r.get('diff_random'))} ({f3(r.get('diff_random_lo'))}, {f3(r.get('diff_random_hi'))})"
-            adj = ""
-            if r.get("diff_random_adjusted_lo") is not None:
-                adj = f"({f3(r['diff_random_adjusted_lo'])}, {f3(r['diff_random_adjusted_hi'])}) $m={r['family_size']}$"
             mt, madj = "", ""
             if r.get("diff_matched") is not None:
                 mt = f"{f3(r['diff_matched'])} ({f3(r.get('diff_matched_lo'))}, {f3(r.get('diff_matched_hi'))})"
@@ -221,7 +222,7 @@ def decision_intervals_table(rep, source, out):
             if r.get("regret_lo") is not None:
                 rgt += f" ({fr(r.get('regret_lo'))}, {fr(r.get('regret_hi'))})"
             const = "" if r.get("constant_within_cell") is None else ("yes" if r["constant_within_cell"] else "no")
-            lines.append(f"{bud:g} & {esc(pol)} & {esc(rg)} & {cf} & {dr} & {adj} & {mt} & {madj} & {rgt} & {const} \\\\")
+            lines.append(f"{bud:g} & {esc(pol)} & {esc(rg)} & {cf} & {mt} & {madj} & {rgt} & {const} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     note = (
         f"{rep['_path']} (tables.decision_value, origin ALL; intervals are 90 percent bootstrap by test within each origin; random order is "
@@ -359,9 +360,11 @@ def ablation_table(reports_dir, source, out):
     bases = sorted({base_of(k) for k in runs})
     guard_off = {base_of(k): k for k in runs if "p2-guard-off" in k.split("+") and k != "p2-guard-off"}
     lines = [
-        r"\begin{tabular}{lrrrr}",
+        r"\begin{tabular}{lrrrrrr}",
         r"\toprule",
-        r"setting & log score, guard on & Brier skill, guard on & log score, guard off & Brier skill, guard off \\",
+        r"setting & log score, guard on & Brier skill, guard on & P2 minus P1 log score, guard on (90\%) "
+        r"& log score, guard off & Brier skill, guard off "
+        r"& P2 minus P1 log score, guard off (90\%) \\",
         r"\midrule",
     ]
     for base in bases:
@@ -371,7 +374,7 @@ def ablation_table(reports_dir, source, out):
             base = "p2-guard-off (main settings)"
         cells = [esc(base)]
         for run in (on, off):
-            cells += [f3(run[0]["logscore"]), interval(run[0], "brier_skill")] if run else ["", ""]
+            cells += [f3(run[0]["logscore"]), interval(run[0], "brier_skill"), interval(run[0], "logscore_vs_p1", 4)] if run else ["", "", ""]
         lines.append(" & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     resamples = sorted({v[2] for v in runs.values() if v[2]})
@@ -379,7 +382,7 @@ def ablation_table(reports_dir, source, out):
         out,
         f"ablations-{source}.tex",
         f"{reports_dir}/ablations/backtest-{source}-*.json ({len(files)} files; bootstrap resamples {resamples}; "
-        "guard setting from each header p2_guard)",
+        "guard setting from each header p2_guard; P2 minus P1 is the paired logscore_vs_p1 of each run, nats per row, interval by test)",
         "\n".join(lines) + "\n",
     )
 
@@ -852,8 +855,10 @@ def replay_table(path, source, out):
 
 
 def learning_detail_table(path, source, out):
-    """Per point of the learning curve: the history size, the scored tests (the count the gates are read against), and the skill of P1 and of the
-    local comparison set against the full-history base rate and against each point's own base rate (round 01, R1 blocking 2, R3)."""
+    """Per point of the learning curve: the history size, the scored tests (the count the gates are read against), P1's raw Brier score beside the
+    base Brier score of the full history and of the subsample's own base rate, and the skill of P1 and of the local comparison set against the
+    full-history base rate and against each point's own base rate, with P1's spread of skill over seeds (round 01, R1 blocking 2, R3;
+    round 02, R1)."""
     d = load(path)
     rows = d.get("rows", [])
     have = {r["rung"] for r in rows}
@@ -861,9 +866,10 @@ def learning_detail_table(path, source, out):
         return
     extra = [rg for rg in ("local_eb",) if rg in have]
     lines = [
-        r"\begin{tabular}{rrrrrr" + "r" * len(extra) + "}",
+        r"\begin{tabular}{rrrrrrrrrr" + "r" * len(extra) + "}",
         r"\toprule",
-        "fraction & history rows & history tests & scored tests & P1 skill, full-history base & P1 skill, own base"
+        "fraction & history rows & history tests & scored tests & P1 Brier score & base Brier score, full history & base Brier score, own "
+        "& P1 skill, full-history base & seed spread of the skill & P1 skill, own base"
         + "".join(f" & {esc(rg)} skill, full-history base" for rg in extra)
         + r" \\",
         r"\midrule",
@@ -877,7 +883,11 @@ def learning_detail_table(path, source, out):
             f"{p1['n_fit_rows']:.0f}",
             f"{p1.get('n_history_tests') or 0:.0f}",
             f"{p1['n_scored_tests']}",
+            f3(p1.get("brier"), 4),
+            f3(p1.get("base_brier_full"), 4),
+            f3(p1.get("base_brier_own"), 4),
             f3(p1["skill"], 4),
+            f3(p1.get("skill_seed_sd"), 4),
             f3(p1.get("skill_own_base"), 4),
         ]
         for rg in extra:
@@ -888,8 +898,8 @@ def learning_detail_table(path, source, out):
     write(
         out,
         f"learning-detail-{source}.tex",
-        f"{path} (skill against the P0 base rate of the full history; own base = each subsample's own; "
-        f"bootstrap resamples {d.get('bootstrap_resamples')})",
+        f"{path} (skill against the P0 base rate of the full history; own base = each subsample's own; brier, base_brier_full, base_brier_own and "
+        f"skill_seed_sd as the file holds them, P1 rows; bootstrap resamples {d.get('bootstrap_resamples')})",
         "\n".join(lines) + "\n",
     )
 
@@ -955,7 +965,8 @@ def positive_control_gain_table(reports_dir, out):
     lines = [
         r"\begin{tabular}{rrrrrrrrr}",
         r"\toprule",
-        r"tests & rows per cell & lift (\%) & share admitted & realized P2 $-$ P1 (90\%) & oracle $-$ P1 & recovered (90\%) & P1 skill & P2 skill \\",
+        r"tests & rows per cell & lift (\%) & share admitted & realized P2 $-$ P1 (90\%) & oracle $-$ P1 (90\%) "
+        r"& recovered (90\%) & P1 skill & P2 skill \\",
         r"\midrule",
     ]
     for r in sorted(rows, key=lambda x: (x["n_tests"], x["text_effect_strength"])):
@@ -964,9 +975,12 @@ def positive_control_gain_table(reports_dir, out):
             if r.get("recovered_fraction") is None
             else (f"{f3(r['recovered_fraction'], 2)} ({f3(r.get('recovered_fraction_lo'), 2)}, {f3(r.get('recovered_fraction_hi'), 2)})")
         )
+        oracle = f3(r["oracle_gain"], 4)
+        if r.get("oracle_gain_lo") is not None:          # the oracle is a refit, so it has a by-test interval beside it (round 02, R1)
+            oracle += f" ({f3(r['oracle_gain_lo'], 4)}, {f3(r.get('oracle_gain_hi'), 4)})"
         lines.append(
             f"{r['n_tests']:,} & {r.get('rows_per_cell', 0):,} & {f3(r['text_effect_strength'], 1)} & {f3(r['share_admitted'], 2)} & "
-            f"{f3(r['realized_gain'], 4)} ({f3(r['realized_gain_lo'], 4)}, {f3(r['realized_gain_hi'], 4)}) & {f3(r['oracle_gain'], 4)} & {rec} & "
+            f"{f3(r['realized_gain'], 4)} ({f3(r['realized_gain_lo'], 4)}, {f3(r['realized_gain_hi'], 4)}) & {oracle} & {rec} & "
             f"{f3(r.get('brier_skill_p1'), 4)} & {f3(r.get('brier_skill_p2'), 4)} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}"]

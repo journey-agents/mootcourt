@@ -119,3 +119,9 @@ A reviewer's section begins, in every round after the first it took part in, wit
 - A finding that names a claim id in `paper/reviews/claims.md` and shows that the evidence does not support the sentence is blocking; a finding that names a claim id and asks for a sharper or more qualified sentence is minor.
 - A finding that names no claim id and no rubric id is a suggestion. It is recorded in the response letter under "Suggestions", never fixed in the round, and never counted toward the stop condition. A further challenger beyond the fixed set, a new analysis no item names, and a change of design are suggestions.
 - A reviewer who believes the rubric is missing a check proposes the item in the review's Questions section; the launching team may add it to this file between rounds, dated, and the item applies from the next round.
+
+Added 5 November 2026 after round 02 (decision 7 of the round 02 decisions), applying from round 03:
+
+- [R1.15] Every part of every hypothesis is read by name with the measure the hypothesis names (skill means the Brier skill against the base rate), with its number and interval, before the verdict word. If it fails: minor. (From R1's round 02 question 4.)
+- [R2.15] A card for a row that the ledger holds at the moment of issue is refused on the command and the service, and on an archive whose contrasts of one test start at different times the timing rule names which start it reads. If it fails: minor. (From R2's round 02 question 1.)
+- [R6.13] The pages that print ids are regenerated in one pass before a release, so that the README and every tutorial print the same snapshot, model and card ids for the same commands, and the regeneration date is stated once. If it fails: nit. (From R6's round 02 question 3.)

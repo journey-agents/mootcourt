@@ -275,6 +275,7 @@ def build_document(scores: pd.DataFrame, *, ledger: pd.DataFrame, source: str, s
     header["not_scored_rows"] = header["admitted_rows"] - header["scored_rows"]
     header.update(test_counts(ledger, scores, primary))
     header["p2_guard"] = guard_setting(scores)
+    header["p2_selection"] = selection_setting(scores)
     if gates.get("by_base_rate"):
         header["gate_base_rates"] = sorted(gates["by_base_rate"])
         header["gate_by_base_rate"] = {f"{b:.2f}": {"n_200": v["n_200"], "n_400": v["n_400"]} for b, v in sorted(gates["by_base_rate"].items())}
@@ -329,6 +330,14 @@ def guard_setting(scores: pd.DataFrame):
         if r.get("rung") == "P2":
             g = r.get("guard")
             return "off" if g is None or (isinstance(g, float) and math.isnan(g)) else float(g)
+    return None
+
+
+def selection_setting(scores: pd.DataFrame):
+    """The rule P2 used to choose its weight and bandwidth (``forward`` or ``loto``); None when no P2 selection was recorded (round 02, R3)."""
+    for r in scores.attrs.get("selections") or []:
+        if r.get("rung") == "P2" and r.get("selection"):
+            return str(r["selection"])
     return None
 
 
@@ -439,6 +448,10 @@ _AGG_GROUPS = [
 ]
 
 
+_BY_ROW_COLUMNS = ("decidable", "decidable_research", "decidable_by_tests_base_0.3")      # repeat the by-test verdicts when the gates count tests
+_BY_TEST_FIRST_TITLE = "Rows, tests, gates and abstention (the gates count tests, so decidability is read by tests)"
+
+
 def render_markdown(doc: dict) -> str:
     """Render the report Markdown from the JSON document. Pure function of ``doc``."""
     h, notes, t = doc["header"], doc["notes"], doc["tables"]
@@ -476,6 +489,7 @@ def render_markdown(doc: dict) -> str:
             else []
         ),
         *([f"- P2 admission guard: {h['p2_guard']}"] if h.get("p2_guard") is not None else []),
+        *([f"- P2 selection rule: {h['p2_selection']}"] if h.get("p2_selection") else []),
         *(
             [
                 "- Gate sizes by base rate (tests): "
@@ -507,9 +521,12 @@ def render_markdown(doc: dict) -> str:
     out += ["## Scores by cell and rung", ""]
     seen: set[str] = set()
     agg = t["aggregate"]
+    by_test = (h.get("gate_interval") or {}).get("by") == "test"
     for title, cols in _AGG_GROUPS:
-        out += [f"### {title}", ""] + _table(agg, cols)
         seen.update(cols)
+        if by_test and cols is _AGG_GROUPS[0][1]:        # gates that count tests: the by-row columns would repeat the by-test ones (round 02, R6)
+            title, cols = _BY_TEST_FIRST_TITLE, [c for c in cols if c not in _BY_ROW_COLUMNS]
+        out += [f"### {title}", ""] + _table(agg, cols)
     rest = [c for c in (agg[0].keys() if agg else []) if c not in seen]
     if rest:
         out += ["### Other columns", ""] + _table(agg, ["cell", "rung"] + rest)

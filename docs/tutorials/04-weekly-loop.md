@@ -45,21 +45,21 @@ moot backtest --source sample | tail -n 4
 the quick gates simulation (synthetic data): still running, 10 s elapsed
 progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (23 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (22 s elapsed)
 progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (24 s elapsed)
 progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (29 s elapsed)
 300 rows from 100 experiments
   admitted: 300
 admitted by cell: checkout_conversion 100, pages_per_session 100, revenue_per_user 100
 final reads from 2023-01-23 to 2025-07-02
-snapshot 20261104-c14e001659bc for sample
+snapshot 20261105-c14e001659bc for sample
 ledger ~/moot-weekly/mootcourt-data/data/ledger/ledger.parquet: 300 rows
-fitted model d1c78aa708d9 at snapshot 20261104-c14e001659bc on 300 rows usable at 2026-11-04T21:58:54.085680+00:00 in 1.3 s; it is the champion for sample
+fitted model dbecf0d65cbf at snapshot 20261105-c14e001659bc on 300 rows usable at 2026-11-05T11:11:31.864823+00:00 in 1.4 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-scored 270 rows over 9 origins in 3.2 s (report writing 13.0 s; the whole run 16.2 s)
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-c14e001659bc.md
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-c14e001659bc.json
-wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-c14e001659bc.parquet
+scored 270 rows over 9 origins in 3.4 s (report writing 13.2 s; the whole run 16.6 s)
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-c14e001659bc.md
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-c14e001659bc.json
+wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261105-c14e001659bc.parquet
 ```
 
 The backtest also **seeds the reliability report**: it records how the cards would have done on past experiments, so that the first live cards have a record to stand on.
@@ -77,18 +77,18 @@ done
 ```
 
 ```text output
-63d512770ff86d31 issue p_sig 0.041 sample:exp-103:treatment::checkout_conversion
-dcf68036c076bdea issue p_sig 0.041 sample:exp-104:treatment::checkout_conversion
-baedd24c649f7032 issue p_sig 0.041 sample:exp-105:treatment::checkout_conversion
-2d395eedc2737a52 issue p_sig 0.041 sample:exp-106:treatment::checkout_conversion
-93d785b850bdf41a issue p_sig 0.041 sample:exp-107:treatment::checkout_conversion
-5264e914f31dc8b2 issue p_sig 0.041 sample:exp-108:treatment::checkout_conversion
-749b5d3543b02a63 issue p_sig 0.041 sample:exp-109:treatment::checkout_conversion
-623dc36a9f268ed0 issue p_sig 0.041 sample:exp-110:treatment::checkout_conversion
-4bb669171ece275b issue p_sig 0.041 sample:exp-111:treatment::checkout_conversion
-7b56d230aed081cd issue p_sig 0.041 sample:exp-112:treatment::checkout_conversion
-98bded34d90a5e8f issue p_sig 0.041 sample:exp-113:treatment::checkout_conversion
-21ac65b8639bf929 issue p_sig 0.041 sample:exp-114:treatment::checkout_conversion
+7b5db4126832ff0e issue p_sig 0.041 sample:exp-103:treatment::checkout_conversion
+2d1fd20f8284ef21 issue p_sig 0.041 sample:exp-104:treatment::checkout_conversion
+a6f47ecf121acf34 issue p_sig 0.041 sample:exp-105:treatment::checkout_conversion
+f675081c13407169 issue p_sig 0.041 sample:exp-106:treatment::checkout_conversion
+fd7fcd8e8fa0f4be issue p_sig 0.041 sample:exp-107:treatment::checkout_conversion
+dd91cce272238f50 issue p_sig 0.041 sample:exp-108:treatment::checkout_conversion
+9a93d41a26447060 issue p_sig 0.041 sample:exp-109:treatment::checkout_conversion
+05689c8d90d012f6 issue p_sig 0.041 sample:exp-110:treatment::checkout_conversion
+098b92000cc04f8a issue p_sig 0.041 sample:exp-111:treatment::checkout_conversion
+2c9eaedd3a9df2c8 issue p_sig 0.041 sample:exp-112:treatment::checkout_conversion
+2af878e7002088f5 issue p_sig 0.041 sample:exp-113:treatment::checkout_conversion
+615e2b9794f91414 issue p_sig 0.041 sample:exp-114:treatment::checkout_conversion
 ```
 
 Each card is frozen under `cards/` with its row id inside. A card is also refused if its origin is after its issue time (`--origin` later than `--now`), because it would stand on rows that were not yet usable. `--now` is the issue time: just after the history ends. To adapt the loop to your own archive, change the source name, the cell, `--impressions` (the planned units per arm), the issue time and the experiment and variant ids, and issue one card for each experiment you are about to launch. A card without a row id is frozen and valid, but `moot join` cannot attach an outcome to it. A card requested through the MCP tool is never frozen, so freeze through `moot card` or `POST /card`.
@@ -109,7 +109,7 @@ moot ingest --format generic --input future.csv --source-name sample --ledger in
   admitted: 60
 admitted by cell: checkout_conversion 20, pages_per_session 20, revenue_per_user 20
 final reads from 2025-07-11 to 2025-12-29
-snapshot 20261104-f10730f0adba for sample
+snapshot 20261105-f10730f0adba for sample
 ledger incoming/ledger.parquet: 60 rows
 ```
 
@@ -123,7 +123,7 @@ done
 ```
 
 ```text output
-appended 60 rows, snapshot 20261104-b04b5b1dd18c; attached 1 outcomes {"confident_but_wrong": 1}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
+appended 60 rows, snapshot 20261105-b04b5b1dd18c; attached 1 outcomes {"confident_but_wrong": 1}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 3 outcomes {"hit": 3}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 4 outcomes {"hit": 4}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 3 outcomes {"hit": 3}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
@@ -141,7 +141,7 @@ Each line says how many rows were appended, how many outcomes were attached and 
 | `magnitude_miss` | the direction was right but the result fell outside the card's 90 percent interval |
 | `hit` | none of the above |
 
-A card that abstained is joined too. It keeps the forecast it withheld in a sealed block of its frozen file, and the join scores that forecast like an issued card's, flags the outcome as abstained and adds it to the reliability report. That is how a cell with a stale record recovers: its abstained cards still bring evidence. A card file is never changed by a join. The outcome is a separate, read-only file under `cards/outcomes/`.
+A card that abstained is joined too. It keeps the forecast it withheld in the frozen file, which the join scores and no interface shows. The join scores that forecast like an issued card's, flags the outcome as abstained and adds it to the reliability report. That is how a cell with a stale record recovers: its abstained cards still bring evidence. A card file is never changed by a join. The outcome is a separate, read-only file under `cards/outcomes/`.
 
 ## 4. Read the reliability report
 
@@ -178,7 +178,7 @@ tail -n 4 doctor.txt
 
 ```text output
 exit code: 1
-WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 490 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
+WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 491 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 OK    cards sample: 12 scored outcomes, 0 post-hoc cards (issued after their test started: recorded, never scored), 0 reissues (a later card for a row another card scores)
 status: warn
@@ -195,15 +195,15 @@ moot promote --source sample
 ```
 
 ```text output
-fitted model 3017254bf6f0 at snapshot 20261104-b04b5b1dd18c on 360 rows usable at 2026-11-04T21:59:39.716989+00:00 in 1.3 s; it is the challenger for sample
+fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T11:12:22.733396+00:00 in 1.5 s; it is the challenger for sample
 a refresh of the champion is pending: same method, newer data; `moot backtest` decides it (no further `moot fit`)
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-b04b5b1dd18c.md
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261104-b04b5b1dd18c.json
-wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261104-b04b5b1dd18c.parquet
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
+wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
 not promoted: no challenger is registered, nothing to promote
 ```
 
-Read the first line of the fit output: it says which role the new model took when it was fitted. Here it says challenger and the next line announces that a refresh of the champion is pending (same method, newer data), which `moot backtest` decides; after the backtest the refresh is decided and goes through, which is why `promote` then finds no challenger. The backtest then attaches the summary and decides a pending refresh. `moot promote` looks at a challenger, and promotes it only when two conditions hold. Its Brier skill must beat the champion's by a margin (0.02 by default, `--margin`), and its backtest must rest on at least as many distinct experiments as the gate for that skill. Otherwise it says which condition failed, for example that the gain is short of the margin or that the backtest has too few tests. When the refresh went through there is no challenger, and `promote` says so. `moot doctor` warns that the champion was fit on an older snapshot whenever the champion is not a model fitted on the current ledger; once the refresh has gone through it reads OK for the model. Nothing is broken. The backtest after the fit also fills the new model's backtest summary, which the skill line of a card reads (its first line is cut off here by `tail`).
+Read the first line of the fit output: it says which role the new model took when it was fitted. Here it says challenger and the next line announces that a refresh of the champion is pending (same method, newer data), which `moot backtest` decides; after the backtest the refresh is decided and goes through, which is why `promote` then finds no challenger. The backtest then attaches the summary and decides a pending refresh. `moot promote` looks at a challenger, and promotes it only when two conditions hold. It pairs the rows both models scored and bootstraps the difference of their Brier skills by test (500 resamples by default, `--bootstrap`), and the lower end of the 90 percent interval must clear the margin, which is zero by default (`--margin`), so the interval decides. The common tests must also reach the gate for that skill. Otherwise it says which condition failed, for example that the interval does not clear zero or that the backtest has too few tests. When the refresh went through there is no challenger, and `promote` says so. `moot doctor` warns that the champion was fit on an older snapshot whenever the champion is not a model fitted on the current ledger; once the refresh has gone through it reads OK for the model. Nothing is broken. The backtest after the fit also fills the new model's backtest summary, which the skill line of a card reads (its first line is cut off here by `tail`).
 
 ## 6. What the weekly job looks like
 

@@ -42,7 +42,7 @@ Keep the clone and its environment on the internal disk. If the repository or it
   Cannot decode configuration file PosixPath('.../.venv/lib/python3.11/site-packages/matplotlib/mpl-data/stylelib/.__classic_test_patch.mplstyle') as utf-8. error: 'utf-8' codec can't decode byte 0xb0 in position 37
   ```
 
-  The plotting library globs the sidecar of one of its own style files, and the message names a style file and not the drive. `moot backtest` now stops on this with one line that says what it is ("the Python environment holds macOS `._` sidecar files ...") and `moot doctor` reports it on its second line: `FAIL environment: N sidecar files (`._name`) under ...` (and `WARN environment: ... lives on an external volume` before any sidecar appears). Cure: make the environment on the internal disk and install into that, then run again.
+  The plotting library globs the sidecar of one of its own style files, and the message names a style file and not the drive. `moot backtest` now stops on this with one line that says what it is ("the Python environment holds macOS `._` sidecar files ...") and `moot doctor` reports it on its `environment` line: `FAIL environment: N sidecar files (`._name`) under ...` (and `WARN environment: ... lives on an external volume` before any sidecar appears). Cure: make the environment on the internal disk and install into that, then run again.
 
   ```bash
   python3 -m venv ~/.venvs/mootcourt
@@ -59,7 +59,7 @@ Keep the clone and its environment on the internal disk. If the repository or it
            If the cache and target directories are on different filesystems, hardlinking may not be supported.
            If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
   error: Failed to install: ruff-0.17.3-py3-none-macosx_11_0_arm64.whl (ruff==0.17.3)
-    Caused by: RECORD file doesn't match wheel contents: Could not find entry for ruff-0.17.3.data/scripts/._ruff (/Volumes/Crucial X10/mootcourt-data/round01-r4-clone/.venv/lib/python3.13/site-packages/ruff-0.17.3.data/scripts/._ruff)
+    Caused by: RECORD file doesn't match wheel contents: Could not find entry for ruff-0.17.3.data/scripts/._ruff (/path/to/clone/.venv/lib/python3.13/site-packages/ruff-0.17.3.data/scripts/._ruff)
   ```
 
   An older uv fails with `failed to copy ... ._ttx.1` instead; the cause is the same, a `._` file in a wheel. Cure: point uv at an environment on the internal disk, and leave the clone and the data root where they are.

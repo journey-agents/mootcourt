@@ -40,6 +40,10 @@ Tests scan every committed text file, file name, card text and command help.
 Describe what changed and why, and say what you ran. Keep a pull request to one idea. A change to the method needs an
 entry in `docs/method.md` that says what was decided and what was measured.
 
+## Submitting a report card from a new archive
+
+The benchmark is maintained through this repository, by issues and pull requests. To submit the report card of an archive that is not in it yet, open a pull request that adds a run folder under `paper/data/` with its `README.md`. The README names the commit the run used, the stages that were run, the archive and its licence, and the command that regenerates every file in the folder. Keep the raw archive out of the repository, as above.
+
 ## Release
 
 The checklist is in `docs/release.md`; `make release-check` runs it locally.

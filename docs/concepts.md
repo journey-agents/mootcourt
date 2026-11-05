@@ -93,7 +93,7 @@ Abstention is the court declining to rule. A card abstains when any one of four 
 | reliability | the cell's reliability report is missing, more than 14 days old at the card's issue time, or marks the cell drifted (two joins in a row with at least ten outcomes in the window and a rolling log score more than 0.10 nats under the base rate) |
 | instability | resampling the precedents by experiment keeps the forecast on the same side of the action threshold in 80 percent or fewer of the resamples |
 
-An abstained card says which reasons fired and shows the base-rate forecast only. It still keeps the forecast it withheld, sealed in its frozen file, and the weekly join scores that forecast like any other card's (see [the card](#card)), so a cell that abstains for a stale record collects the evidence it needs to recover. The abstention rate is reported with every score, so a forecaster cannot look good by declining everything without that showing.
+An abstained card says which reasons fired and shows the base-rate forecast only. It still keeps the forecast it withheld in its frozen file, which no interface shows, and the weekly join scores that forecast like any other card's (see [the card](#card)), so a cell that abstains for a stale record collects the evidence it needs to recover. The abstention rate is reported with every score, so a forecaster cannot look good by declining everything without that showing.
 
 ## Card
 
@@ -109,9 +109,9 @@ A card can name the ledger row that will hold its result, `source:test_id:varian
 
 Every card carries the **skill line**: the trailing eight-week Brier skill of recent cards against the cell base rate, with its 90 percent interval by test, the rows and tests it rests on, the gate verdict at that many tests (read at the base rate nearest the cell's own) and the model's backtest figure with its interval: the card's own cell when that cell is decidable, otherwise the pooled figure, labelled pooled with the reason. A record with too few tests says "undecidable at this n"; a report written before the intervals were stored says that no interval is recorded.
 
-### Abstained cards keep a sealed forecast
+### Abstained cards keep the forecast they withheld
 
-When a card abstains, it keeps the forecast it withheld in a sealed block of its frozen file. No renderer, HTTP response or tool shows it, so an abstained card still shows only the base rate. The weekly join scores it with the same function as an issued card, flags it as abstained, and feeds it to the reliability report. Without that, abstention would be absorbing: a stale cell would abstain every card, the abstained cards would add no evidence, and the cell could never refresh.
+When a card abstains, it keeps the forecast it withheld in the frozen file. The join scores it and no renderer, HTTP response or tool shows it, so an abstained card still shows only the base rate. The weekly join scores it with the same function as an issued card, flags it as abstained, and feeds it to the reliability report. Without that, abstention would be absorbing: a stale cell would abstain every card, the abstained cards would add no evidence, and the cell could never refresh.
 
 ## Frozen ids
 

@@ -163,8 +163,19 @@ def _record(card: dict, row, now: dt.datetime) -> dict:
         "at": pd.Timestamp(row["usable_after"]).isoformat(), "joined_at": now.isoformat(),
         "card_issued_at": card["issued_at"], "card_origin": card["origin"], "row_started_at": pd.Timestamp(row["started_at"]).isoformat(),
         "timing": None, "post_hoc": False, "post_hoc_reason": None, "reissue": False, "superseded_by": None, "scored": False,
+        "cell_mismatch": False, "cell_mismatch_reason": None,
         "ledger_snapshot_id": None,     # the snapshot that holds the outcome row, filled by the join that writes the record (call 249)
     }
+
+
+def cell_mismatch_outcome(card: dict, row, now: dt.datetime) -> dict:
+    """The record of a card whose ledger row has another cell than the card: not scored, no score of any kind (round 02, R2).
+
+    The join matches a card to its row by row id, and the row's result is the result of the row's own metric, so a card issued for one
+    cell would otherwise be scored against another metric's result and credited to the wrong cell's reliability entry."""
+    why = (f"the card is for cell {card['cell']}, but its row {card['request'].get('row_id')} is in the ledger with cell {row['cell']}: "
+           "scoring it would credit another metric's result to this cell")
+    return {**_record(card, row, now), "cell_mismatch": True, "cell_mismatch_reason": why}
 
 
 def reissue_outcome(card: dict, row, superseded_by: str, now: dt.datetime) -> dict:
@@ -298,7 +309,9 @@ def attach_outcomes(cards_dir, ledger: pd.DataFrame, source: str, now: dt.dateti
         winner = scored_before.get(row_id)
         for _issued, card_id, card in sorted(pending[row_id], key=lambda c: (c[0], c[1])):
             timing, _why = card_timing(card, row)
-            if timing != "pre_launch":
+            if card.get("cell") is not None and str(card["cell"]) != str(row["cell"]):
+                outcome = cell_mismatch_outcome(card, row, now)        # before the order of the candidates: it never wins the row
+            elif timing != "pre_launch":
                 outcome = outcome_from_card(card, row, p0, now)
             elif winner is None:
                 outcome = outcome_from_card(card, row, p0, now)
@@ -352,6 +365,7 @@ class JoinResult:
     n_reissues: int = 0             # pre-launch cards for a row another card scores
     post_hoc: tuple = ()            # (card id, reason) of each post-hoc record written
     n_outside_window: int = 0       # scored outcomes dated before the trailing window of this join: they date no reliability entry (call 250)
+    n_cell_mismatch: int = 0        # cards recorded unscored because their ledger row has another cell than the card (call 256)
 
 
 def join_new_rows(loader: Callable[[], pd.DataFrame], *, ledger_dir, cards_dir, reports_dir, source: str,
@@ -386,7 +400,8 @@ def join_new_rows(loader: Callable[[], pd.DataFrame], *, ledger_dir, cards_dir, 
         counts[o["miss_type"]] = counts.get(o["miss_type"], 0) + 1
     edge = pd.Timestamp(now) - pd.Timedelta(weeks=TRAILING_WEEKS)
     outside = sum(1 for o in scored if pd.Timestamp(o["at"]) <= edge)
-    return JoinResult(n_new, len(scored), snapshot, path, counts, len(post_hoc), n_reissues, post_hoc, outside)
+    n_mismatch = sum(1 for o in written if o.get("cell_mismatch"))
+    return JoinResult(n_new, len(scored), snapshot, path, counts, len(post_hoc), n_reissues, post_hoc, outside, n_mismatch)
 
 
 def join_command(source: str, ledger_dir, cards_dir, reports_dir, new_rows_path=None, now: dt.datetime | None = None) -> JoinResult:

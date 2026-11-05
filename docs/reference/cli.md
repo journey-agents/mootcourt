@@ -69,7 +69,7 @@ Issue a card for a proposed experiment and freeze it under the cards directory.
 | `--headline` | str | `` | Proposed headline (text sources; leave out for ledgers without headline text). |
 | `--image-changed` | str | `false` | true or false. |
 | `--impressions` | int |  | Planned units per arm; the reference arm's when --impressions-variant is given. |
-| `--impressions-variant` | int |  | Planned exposures of the variant arm; default: the same as --impressions. |
+| `--impressions-variant` | int |  | Planned units of the variant arm; default: the same as --impressions. |
 | `--origin` | str |  | ISO-8601 time with offset; default now. |
 | `--models-dir` | path |  | Default: the storage root. |
 | `--cards-dir` | path |  | Default: the storage root. |
@@ -216,7 +216,7 @@ Promote the challenger only if the paired comparison on common rows clears the m
 
 ## `moot reliability`
 
-Print the weekly reliability report of a source: one line per cell, or the JSON (call 208).
+Print the weekly reliability report of a source: one line per cell, or the JSON.
 
 | Option | Type | Default | Meaning |
 |---|---|---|---|

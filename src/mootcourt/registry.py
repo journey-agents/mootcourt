@@ -381,14 +381,16 @@ def backtest_summary(report: dict, report_name: str) -> dict:
 
     Falls back to the last rung when there is no P2. Holds the Brier skill with its interval, the scored row count, the log score, the
     report file name, the name of its per-row score table (``scores`` beside the report) and, under ``cells``, the same figures for every
-    cell of the rung with the cell's gate verdict (``decidable_by_tests``), which the card's backtest line reads (call 225).
+    cell of the rung with the cell's gate verdicts, which the card's backtest line reads (call 225): ``decidable_by_tests`` at the pooled
+    archive's dependence, ``decidable_by_tests_cell`` at the cell's own dependence and its two gate sizes ``gate_cell_n_200`` and
+    ``gate_cell_n_400`` (call 257; the card reads the cell's own).
     """
     rows = report["tables"]["aggregate"]
     rungs = sorted({r["rung"] for r in rows})
     rung = "P2" if "P2" in rungs else rungs[-1]
     r = next(x for x in rows if x["cell"] == "ALL" and x["rung"] == rung)
     cells = {x["cell"]: {k: x.get(k) for k in ("brier_skill", "brier_skill_lo", "brier_skill_hi", "n", "n_tests", "decidable_by_tests",
-                                              "gate_base_rate")}
+                                              "decidable_by_tests_cell", "gate_cell_n_200", "gate_cell_n_400", "gate_base_rate")}
              for x in rows if x["rung"] == rung and x["cell"] != "ALL"}
     scores = (report_name.replace("backtest-", "scores-", 1).rsplit(".json", 1)[0] + ".parquet") if report_name.startswith("backtest-") else None
     return {"snapshot_id": report["header"]["snapshot_id"], "rung": rung, "brier_skill": r["brier_skill"],

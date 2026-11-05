@@ -317,14 +317,14 @@
    }
   ],
   "summary": {
-   "bootstrap_resamples": 1000,
+   "bootstrap_resamples": 500,
    "level": 0.9,
    "mean_in_selection_gain": 0.009683585032363932,
    "pairs_admitted": 8,
    "pairs_in_selection": 27,
    "pairs_with_negative_realized": 1,
-   "pooled_hi": 0.0025259771712053164,
-   "pooled_lo": -0.000710652657109361,
+   "pooled_hi": 0.0024529385163534444,
+   "pooled_lo": -0.0007302879172501846,
    "pooled_realized_p2_minus_p1": 0.0009693826486854876,
    "pooled_rows": 6114,
    "pooled_tests": 1837
@@ -980,7 +980,7 @@
  },
  "guard_period_control": null,
  "header": {
-  "created_at": "2026-11-05T03:44:46.559832+00:00",
+  "created_at": "2026-11-05T13:56:00.286636+00:00",
   "created_by": "scripts/paper_extras.py",
   "differences_from_docs": [
    "guard_admission_rates: the one-off runs behind the documentation left no report file, so the cells are refit here on ledgers regenerated with the same generator, text effect zero, 300 tests of two variants per seed; the seeds and the settings are in inputs",
@@ -1008,6 +1008,262 @@
    "rows": "status == admitted"
   },
   "n_rows": 13453
+ },
+ "issued_row_brier_skill": {
+  "bootstrap_resamples": 500,
+  "inputs": {
+   "definition": "issued: abstain false; abstained: abstain true, scored on the forecast the rule withheld; each row set against its own base Brier",
+   "reading": "pooled over origins and cells, so the composition of the two row sets (the burn-in origin and the event rate) is part of the difference",
+   "scores": "scores-upworthy-20261103-4bfb354b87e3.parquet"
+  },
+  "level": 0.9,
+  "rungs": {
+   "P1": {
+    "abstained": {
+     "brier": 0.09852742701798892,
+     "brier_base": 0.09997364526337389,
+     "brier_skill": 0.014465994928713588,
+     "brier_skill_hi": 0.02741014245953649,
+     "brier_skill_lo": 0.0030924234793612113,
+     "event_rate": 0.1104589114194237,
+     "n": 1874,
+     "n_tests": 752
+    },
+    "all": {
+     "brier": 0.08304130507345552,
+     "brier_base": 0.08316378782856344,
+     "brier_skill": 0.0014727895194049934,
+     "brier_skill_hi": 0.0047984950480917865,
+     "brier_skill_lo": -0.0018181929301026689,
+     "event_rate": 0.09103948063712539,
+     "n": 13247,
+     "n_tests": 3797
+    },
+    "issued": {
+     "brier": 0.08048956036897512,
+     "brier_base": 0.08039392298790268,
+     "brier_skill": -0.0011896095813961338,
+     "brier_skill_hi": 0.0022521495763488542,
+     "brier_skill_lo": -0.004569554686424349,
+     "event_rate": 0.08783962015299393,
+     "n": 11373,
+     "n_tests": 3307
+    }
+   },
+   "P2": {
+    "abstained": {
+     "brier": 0.09798888881018765,
+     "brier_base": 0.09997364526337389,
+     "brier_skill": 0.019852796684141416,
+     "brier_skill_hi": 0.033539671043837656,
+     "brier_skill_lo": 0.007823508697590064,
+     "event_rate": 0.1104589114194237,
+     "n": 1874,
+     "n_tests": 752
+    },
+    "all": {
+     "brier": 0.08300593643953263,
+     "brier_base": 0.08316378782856344,
+     "brier_skill": 0.001898078396287195,
+     "brier_skill_hi": 0.005366720079675511,
+     "brier_skill_lo": -0.001751910789510458,
+     "event_rate": 0.09103948063712539,
+     "n": 13247,
+     "n_tests": 3797
+    },
+    "issued": {
+     "brier": 0.08053710211766439,
+     "brier_base": 0.08039392298790268,
+     "brier_skill": -0.0017809695613839605,
+     "brier_skill_hi": 0.002111699225250611,
+     "brier_skill_lo": -0.005599408391722161,
+     "event_rate": 0.08783962015299393,
+     "n": 11373,
+     "n_tests": 3307
+    }
+   }
+  }
+ },
+ "p2_selection_comparison": {
+  "bootstrap_resamples": 500,
+  "guard_off": {
+   "by_origin": [
+    {
+     "difference": -0.018035201218149353,
+     "hi": -0.006830198807350186,
+     "lo": -0.030571667336519445,
+     "origin": "2013-04-01T00:00:00+00:00",
+     "rows": 781,
+     "tests": 281
+    },
+    {
+     "difference": -0.01083505071215097,
+     "hi": -0.007092996900547148,
+     "lo": -0.01466170358717488,
+     "origin": "2013-07-01T00:00:00+00:00",
+     "rows": 1273,
+     "tests": 437
+    },
+    {
+     "difference": -0.026929183569620412,
+     "hi": -0.01888870209543528,
+     "lo": -0.03452175660805433,
+     "origin": "2013-10-01T00:00:00+00:00",
+     "rows": 1096,
+     "tests": 351
+    },
+    {
+     "difference": -0.00048076304667057023,
+     "hi": 0.002782798648923051,
+     "lo": -0.0037881223752935455,
+     "origin": "2014-01-01T00:00:00+00:00",
+     "rows": 1315,
+     "tests": 387
+    },
+    {
+     "difference": 0.008860523336631825,
+     "hi": 0.011789552206953812,
+     "lo": 0.0059550711923768125,
+     "origin": "2014-04-01T00:00:00+00:00",
+     "rows": 1907,
+     "tests": 515
+    },
+    {
+     "difference": 0.01688542683421349,
+     "hi": 0.018573264530594488,
+     "lo": 0.015142355315832773,
+     "origin": "2014-07-01T00:00:00+00:00",
+     "rows": 2822,
+     "tests": 738
+    },
+    {
+     "difference": 0.008314210612175767,
+     "hi": 0.012644234384592508,
+     "lo": 0.0035141967600010237,
+     "origin": "2014-10-01T00:00:00+00:00",
+     "rows": 2640,
+     "tests": 689
+    },
+    {
+     "difference": 0.002217232087817311,
+     "hi": 0.008278283580180457,
+     "lo": -0.003822200514349404,
+     "origin": "2015-01-01T00:00:00+00:00",
+     "rows": 1143,
+     "tests": 318
+    },
+    {
+     "difference": 0.004130871596683551,
+     "hi": 0.019104372426334844,
+     "lo": -0.012342529077567676,
+     "origin": "2015-04-01T00:00:00+00:00",
+     "rows": 270,
+     "tests": 83
+    }
+   ],
+   "pooled": {
+    "difference": 0.002424831270937762,
+    "hi": 0.003927307688321781,
+    "lo": 0.0006440712638807929,
+    "rows": 13247,
+    "tests": 3797
+   }
+  },
+  "guard_on": {
+   "by_origin": [
+    {
+     "difference": 2.5538427971008406e-05,
+     "hi": 0.0044168266271185355,
+     "lo": -0.0046627573024421234,
+     "origin": "2013-04-01T00:00:00+00:00",
+     "rows": 781,
+     "tests": 281
+    },
+    {
+     "difference": 0.0,
+     "hi": 0.0,
+     "lo": 0.0,
+     "origin": "2013-07-01T00:00:00+00:00",
+     "rows": 1273,
+     "tests": 437
+    },
+    {
+     "difference": -0.02280895525635253,
+     "hi": -0.018133381266637553,
+     "lo": -0.027413361192796963,
+     "origin": "2013-10-01T00:00:00+00:00",
+     "rows": 1096,
+     "tests": 351
+    },
+    {
+     "difference": -0.000676732654202333,
+     "hi": -0.00022481437313111923,
+     "lo": -0.0011197358663596708,
+     "origin": "2014-01-01T00:00:00+00:00",
+     "rows": 1315,
+     "tests": 387
+    },
+    {
+     "difference": 0.008992225157121878,
+     "hi": 0.01188081601181691,
+     "lo": 0.006131673512429385,
+     "origin": "2014-04-01T00:00:00+00:00",
+     "rows": 1907,
+     "tests": 515
+    },
+    {
+     "difference": 0.014781256429742895,
+     "hi": 0.016770470691022686,
+     "lo": 0.01299205833412142,
+     "origin": "2014-07-01T00:00:00+00:00",
+     "rows": 2822,
+     "tests": 738
+    },
+    {
+     "difference": 0.008291389743390873,
+     "hi": 0.012711150659028435,
+     "lo": 0.0034087751934837665,
+     "origin": "2014-10-01T00:00:00+00:00",
+     "rows": 2640,
+     "tests": 689
+    },
+    {
+     "difference": 0.002478847647841283,
+     "hi": 0.007904899586833984,
+     "lo": -0.002988721789537968,
+     "origin": "2015-01-01T00:00:00+00:00",
+     "rows": 1143,
+     "tests": 318
+    },
+    {
+     "difference": 0.0022796546880634134,
+     "hi": 0.016819144893669338,
+     "lo": -0.014829020937762637,
+     "origin": "2015-04-01T00:00:00+00:00",
+     "rows": 270,
+     "tests": 83
+    }
+   ],
+   "pooled": {
+    "difference": 0.004403291664541737,
+    "hi": 0.005704395102978646,
+    "lo": 0.003085258385581381,
+    "rows": 13247,
+    "tests": 3797
+   }
+  },
+  "inputs": {
+   "forward": [
+    "scores-upworthy-20261103-4bfb354b87e3.parquet",
+    "scores-upworthy-20261103-4bfb354b87e3--p2-guard-off.parquet"
+   ],
+   "loto": [
+    "scores-upworthy-20261103-4bfb354b87e3--p2-selection-loto.parquet",
+    "scores-upworthy-20261103-4bfb354b87e3--p2-selection-loto+p2-guard-off.parquet"
+   ]
+  },
+  "level": 0.9,
+  "unit": "nats per row of log score, forward chaining minus leave-one-test-out"
  },
  "positive_control_rungs": null,
  "positive_control_sensitivity": null,

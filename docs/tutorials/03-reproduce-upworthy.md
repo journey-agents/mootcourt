@@ -4,7 +4,7 @@
 
 **Prerequisites:** a clone of this repository with the package installed (this tutorial uses the scripts in `scripts/`), Python 3.11 or newer and a network connection for the download. About 15 MB of disk for the archives and a few hundred MB for everything that grows from them.
 
-**Time:** about 10 minutes of compute: 5 seconds to build the ledger, 15 to 30 seconds to fit, a minute to simulate the gates the first time, and 3 to 4 minutes for the backtest. The download takes as long as your connection needs for 15 MB.
+**Time:** about 10 minutes of compute: 5 seconds to build the ledger, 15 to 30 seconds to fit, and 5 to 7 minutes for the backtest, of which about a minute is the quick gate simulation the first time. The download takes as long as your connection needs for 15 MB.
 
 **Why do this.** The reference results of the project are produced by exactly these commands on two public archives. Running them yourself shows that the numbers are not a one-off, and it is the best preparation for running the same commands on your own archive ([tutorial 2](02-your-own-archive.md)). The Upworthy archive is a set of headline and image tests run by one publisher (Matias et al., Scientific Data 8, 195, 2021, CC BY 4.0).
 
@@ -22,7 +22,7 @@ mkdir -p "$MOOTCOURT_DATA_ROOT"
 From the clone:
 
 ```bash
-python scripts/download_data.py
+python3 scripts/download_data.py
 ```
 
 The script lists the files through the Open Science Framework API at run time, streams each to a `.part` file, renames it only when complete and records the SHA-256 digest and size of every file in `data/CHECKSUMS.json` under the data root. Every later run verifies the files against that record and stops on any mismatch. It downloads about 15 MB. `--verify-only` checks the files on disk without any network access:
@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (6.6 s)
+upworthy: 17793 contrasts, 13453 admitted, 4873 tests (5.5 s)
 snapshot 20261105-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 7.1 s
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 5.9 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,7 +59,7 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 25cd2b6c38d9 at snapshot 20261105-4bfb354b87e3 on 13453 rows usable at 2026-11-05T05:59:43.868587+00:00 in 26.7 s; it is the champion for upworthy
+fitted model 25cd2b6c38d9 at snapshot 20261105-4bfb354b87e3 on 13453 rows usable at 2026-11-05T11:05:41.742874+00:00 in 19.9 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
@@ -72,48 +72,45 @@ moot backtest --source upworthy
 ```
 
 ```text output
-~/mootcourt-data/reports/gates.json is missing; running the gate power simulation first (synthetic data, same as `moot simulate power`)
-gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.3, "by_target": {"0.80": {"n_200": 125, "n_400": 300}, "0.90": {"n_200": 175, "n_400": 375}}, "decision_target": 0.9, "icc": 0.0, "interval": {"by": "row", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.0, "level": 0.95, "rows_per_test": 1.0}, "n_200": 175, "n_400": 375, "rows_per_test": 1.0}
-note: these gates were simulated at one base rate (0.3); run `moot simulate gate-power` to size them by test at the base rate of your archive
+~/mootcourt-data/reports/gates.json is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the simulated base rate nearest this ledger's 0.092); run `moot simulate gate-power` for the full gates, which the adjusted bounds of the report also read
+gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
+gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 backtest of upworthy: still running, 10 s elapsed
-backtest of upworthy: still running, 20 s elapsed
 progress: origin 2013-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 2158 rows, scoring 1096
+backtest of upworthy: still running, 20 s elapsed
 backtest of upworthy: still running, 30 s elapsed
 progress: origin 2014-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 3335 rows, scoring 1315
 backtest of upworthy: still running, 40 s elapsed
-backtest of upworthy: still running, 50 s elapsed
 progress: origin 2014-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 4534 rows, scoring 1907
+backtest of upworthy: still running, 50 s elapsed
 backtest of upworthy: still running, 60 s elapsed
 backtest of upworthy: still running, 70 s elapsed
+progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 80 s elapsed
 backtest of upworthy: still running, 90 s elapsed
-progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 100 s elapsed
 backtest of upworthy: still running, 110 s elapsed
 backtest of upworthy: still running, 120 s elapsed
 backtest of upworthy: still running, 130 s elapsed
+progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9139 rows, scoring 2640
 backtest of upworthy: still running, 140 s elapsed
 backtest of upworthy: still running, 150 s elapsed
-progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9139 rows, scoring 2640
 backtest of upworthy: still running, 160 s elapsed
 backtest of upworthy: still running, 170 s elapsed
 backtest of upworthy: still running, 180 s elapsed
+progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
 backtest of upworthy: still running, 190 s elapsed
 backtest of upworthy: still running, 200 s elapsed
-progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
 backtest of upworthy: still running, 210 s elapsed
-backtest of upworthy: still running, 220 s elapsed
-backtest of upworthy: still running, 230 s elapsed
-backtest of upworthy: still running, 240 s elapsed
 progress: origin 2015-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 13132 rows, scoring 270
 filled the backtest summary of model 25cd2b6c38d9
-scored 13247 rows over 9 origins in 307.2 s (report writing 53.0 s; the whole run 360.2 s)
+scored 13247 rows over 9 origins in 248.3 s (report writing 44.5 s; the whole run 292.8 s)
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.md
 wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.json
 wrote ~/mootcourt-data/reports/scores-upworthy-20261105-4bfb354b87e3.parquet
 ```
 
-The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about 3 and a half minutes). That quick file sizes the gate at one base rate (0.3), so the backtest ends with a note, and the decidability columns of your report will differ from the published ones. The published tables read gates sized by test at the base rate of each cell: run `moot simulate gate-power` (`make power`, about ten minutes) and then the backtest again to get the same columns. The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
+The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about five minutes, of which about one is writing the report). That quick file sizes the gate at one base rate (0.3), so the backtest ends with a note, and the decidability columns of your report will differ from the published ones. The published tables read gates sized by test at the base rate of each cell: run `moot simulate gate-power` (`make power`, about ten minutes) and then the backtest again to get the same columns. The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
 
 ## 5. Compare with the published tables
 
@@ -135,14 +132,14 @@ The report has more to read: calibration, coverage of the intervals (near 0.80 a
 
 The archive ends in 2015, so its reliability report is dated 2015. With today's clock a card abstains because that report is older than 14 days. To see a card issued as of the end of the archive, pass the time of the archive's last day:
 
-```bash run needs=archives slow head=26
+```bash run needs=archives slow
 moot card --source upworthy --headline "A simple fact about your mornings" --image-changed false --impressions 20000 --origin 2015-05-07T00:00:00+00:00 --now 2015-05-07T00:00:00+00:00
 ```
 
 ```text output
 # Moot Court card
 
-- Card id: 8dce15903f770d58
+- Card id: 9809c988fce99cd9
 - Source: upworthy
 - Cell: headline_only
 - Origin: 2015-05-07T00:00:00+00:00
@@ -166,9 +163,35 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 - 80 percent interval for the true effect: -0.47 to 0.28 percentage points
 - 80 percent interval for the result of the test at the planned standard error: -0.50 to 0.31 percentage points
 - P(true effect above 0): 0.357
+- Rung: P2, weight on precedents 0.6
+
+## Team forecast
+
+- None provided.
+
+## Robustness
+
+- Top precedents considered (k = round of the effective number): 1393
+- Precedents to dismiss, highest weight first, to move p_sig across 0.35: more than 1393
+- Share of 200 resamples by test with p_sig on the same side of 0.35: 1.00
+
+## Skill at this n
+
+- Latest gated backtest for this cell (headline_only), rung P2: Brier skill -0.004 (90 percent interval -0.008 to 0.001) over 2280 tests, decidable at skill 0.20 and 0.10; the interval includes zero
+- Brier skill against the cell base rate, trailing 8 weeks: 0.094 (90 percent interval 0.038 to 0.180, by test), measured on 265 rows from 93 tests, as of 2015-05-06T22:46:43.618000+00:00, descriptive, one window of many
+- Gate at this n: 93 tests: undecidable at this n (the gate needs 250 tests for a skill of 0.10 and 175 for 0.20 at the nearest simulated base rate, 0.09 (this cell's own rate is 0.101)), and its interval is above zero
+
+## Abstention
+
+- Status: issue
+- Reasons: none
+
+---
+
+The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
 ```
 
-This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).
+The card ends with the **Skill at this n** section, which reads the backtest you just ran: it gives the cell's own gated skill when the cell is decidable at its number of tests and otherwise the pooled figure, labelled, and the gate it was read against comes from the gates file, so it changes with the file (step 4). This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).
 
 ## 7. The rest of the study
 
@@ -185,7 +208,7 @@ These commands produce the remaining tables of [Results](../results.md). They ar
 
 The run-time table at the end of [Results](../results.md) has the measured times of the stages.
 
-`make ablations` and `make challengers` write gigabytes: keep the data root on a volume with room. Then `python scripts/render_readme_results.py --write` rewrites the results page from the reports, and `--check` fails if it is stale.
+`make ablations` and `make challengers` write gigabytes: keep the data root on a volume with room. Then `python3 scripts/render_readme_results.py --write` rewrites the results page from the reports, and `--check` fails if it is stale.
 
 ## What you have
 

@@ -1231,7 +1231,97 @@ def trigger_ablation_released_rows(reports_dir: Path, source: str, snapshot_id: 
     }
 
 
-def guard_pairs(reports_dir: Path, source: str, snapshot_id: str, level: float = 0.9, B: int = 1000, seed: int = 0) -> dict | None:
+def issued_row_brier_skill(reports_dir: Path, source: str, snapshot_id: str) -> dict | None:
+    """Brier skill of the rows the abstention rule issued, of the rows it abstained on (scored on the forecast withheld) and of all rows.
+
+    Round 02, R1-F3: hypothesis 4 names skill, so the issued-row comparison is printed on the Brier skill and not on the log score. For
+    each of P1 and P2 and each of the three row sets the entry holds ``n``, ``n_tests``, the Brier score, the base Brier score of that
+    row set (the base rate forecast the skill is taken against), the event rate and the skill with its by-test interval, from the same
+    aggregation, resample count and seed as the main report's aggregate table (so the ``all`` entry equals that table's ``ALL`` row).
+    None when the main report or its score table is not on the data root."""
+    from mootcourt import harness_stats as hs
+
+    reports_dir = Path(reports_dir)
+    rep = reports_dir / f"backtest-{source}-{snapshot_id}.json"
+    sco = reports_dir / f"scores-{source}-{snapshot_id}.parquet"
+    if not (rep.exists() and sco.exists()):
+        return None
+    main = json.loads(rep.read_text(encoding="utf-8"))
+    B, seed = int(main["header"]["bootstrap_resamples"]), int(main["header"]["seed"])
+    scores = pd.read_parquet(sco)
+    keep = ("n", "n_tests", "brier", "brier_base", "brier_skill", "brier_skill_lo", "brier_skill_hi")
+    rungs: dict = {}
+    for rung in ("P1", "P2"):
+        g = scores[scores["rung"] == rung]
+        if g.empty:
+            continue
+        ab = g["abstain"].to_numpy(bool)
+        rungs[rung] = {}
+        for name, part in (("all", g), ("issued", g[~ab]), ("abstained", g[ab])):
+            if part.empty:
+                rungs[rung][name] = {"n": 0}
+                continue
+            row = hs.aggregate_scores(part, _gates(main), B=B, seed=seed, adjust=False)
+            row = row[row["cell"] == "ALL"].iloc[0]
+            rungs[rung][name] = {**{k: row[k] for k in keep}, "event_rate": float(part["event"].mean())}
+    return {
+        "rungs": rungs,
+        "bootstrap_resamples": B,
+        "level": hs.LEVEL,
+        "inputs": {
+            "scores": sco.name,
+            "definition": "issued: abstain false; abstained: abstain true, scored on the forecast the rule withheld; "
+            "each row set against its own base Brier",
+            "reading": "pooled over origins and cells, so the composition of the two row sets (the burn-in origin and the event rate) "
+            "is part of the difference",
+        },
+    }
+
+
+def p2_selection_comparison(
+    reports_dir: Path, source: str, snapshot_id: str, level: float = 0.9, B: int = SENSITIVITY_BOOTSTRAP, seed: int = 0
+) -> dict | None:
+    """The paired comparison behind the default selection rule: P2 under forward chaining minus P2 under leave-one-test-out (round 02, R3.9).
+
+    Per row, the log score of P2 in the main backtest minus its log score in the ``--p2-selection loto`` ablation (nats, the same row under both
+    rules), pooled and at each origin, with a percentile interval by test at ``B`` resamples; once with the admission guard on (main run against
+    ``p2-selection-loto``) and once with it off (``p2-guard-off`` against ``p2-selection-loto+p2-guard-off``). None when a score table is missing."""
+    from mootcourt import harness_stats as hs
+
+    reports_dir = Path(reports_dir)
+    ab = reports_dir / "ablations"
+    pairs = {
+        "guard_on": (reports_dir / f"scores-{source}-{snapshot_id}.parquet", ab / f"scores-{source}-{snapshot_id}--p2-selection-loto.parquet"),
+        "guard_off": (ab / f"scores-{source}-{snapshot_id}--p2-guard-off.parquet",
+                      ab / f"scores-{source}-{snapshot_id}--p2-selection-loto+p2-guard-off.parquet"),
+    }
+    if not all(f.exists() for pair in pairs.values() for f in pair):
+        return None
+
+    def interval(frame: pd.DataFrame) -> dict:
+        iv = hs.bootstrap_by_test(frame, "d", B=B, seed=seed, level=level)
+        return {"difference": float(iv.estimate), "lo": float(iv.lo), "hi": float(iv.hi), "rows": int(len(frame)),
+                "tests": int(frame["test_id"].nunique())}
+
+    out: dict = {}
+    for name, (fwd_path, loto_path) in pairs.items():
+        cols = ["row_id", "test_id", "origin", "rung", "logscore"]
+        fwd = pd.read_parquet(fwd_path, columns=cols)
+        loto = pd.read_parquet(loto_path, columns=cols)
+        a = fwd[fwd["rung"] == "P2"].set_index("row_id")
+        b = loto[loto["rung"] == "P2"].set_index("row_id")
+        common = a.index.intersection(b.index)
+        d = pd.DataFrame({"test_id": a.loc[common, "test_id"], "origin": pd.to_datetime(a.loc[common, "origin"], utc=True),
+                          "d": a.loc[common, "logscore"] - b.loc[common, "logscore"]}).reset_index(drop=True)
+        out[name] = {
+            "pooled": interval(d),
+            "by_origin": [{"origin": pd.Timestamp(o).isoformat(), **interval(g)} for o, g in d.groupby("origin", sort=True)],
+        }
+    return {**out, "bootstrap_resamples": B, "level": level, "unit": "nats per row of log score, forward chaining minus leave-one-test-out",
+            "inputs": {"forward": [f.name for f, _ in pairs.values()], "loto": [f.name for _, f in pairs.values()]}}
+
+
+def guard_pairs(reports_dir: Path, source: str, snapshot_id: str, level: float = 0.9, B: int = SENSITIVITY_BOOTSTRAP, seed: int = 0) -> dict | None:
     """Per (origin, cell) pair where the guard admitted a positive weight: in-selection gain, lambda and the realized P2 minus P1 log score.
 
     None when the main report or its score table is not on the data root. The realized difference is the mean over the rows of the pair
@@ -1413,6 +1503,8 @@ def build_extras(
         )
     doc["trigger_ablation_released_rows"] = trigger_ablation_released_rows(reports_dir, source, snapshot_id)
     doc["guard_pairs"] = guard_pairs(reports_dir, source, snapshot_id)
+    doc["issued_row_brier_skill"] = issued_row_brier_skill(reports_dir, source, snapshot_id)
+    doc["p2_selection_comparison"] = p2_selection_comparison(reports_dir, source, snapshot_id)
     doc["guard_pairs_rows"] = guard_pairs_rows(reports_dir, source, snapshot_id, ledger, verbose=verbose)
     doc["cautionary_deciles"] = cautionary_deciles(reports_dir, source, snapshot_id)
     return clean(doc)

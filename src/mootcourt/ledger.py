@@ -107,6 +107,28 @@ def resolve_row_id(source: str, row_id: str | None = None, test_id: str | None =
     return str(row_id)
 
 
+class RowCellMismatchError(ValueError):
+    """A card names a ledger row whose cell is not the card's cell (round 02, R2: the join would score it against another metric)."""
+
+
+def check_row_cell(ledger_path, row_id: str | None, cell: str) -> None:
+    """Raise ``RowCellMismatchError`` when the ledger holds ``row_id`` with a cell other than ``cell``.
+
+    Nothing is checked, and nothing raised, when there is no row id, no ledger file or no such row (a card for a test that has not
+    concluded is the normal case). One filtered parquet read of two columns, so a service can call it on each request."""
+    if not row_id or ledger_path is None or not Path(ledger_path).is_file():
+        return
+    try:
+        found = pd.read_parquet(ledger_path, columns=["row_id", "cell"], filters=[("row_id", "==", row_id)])
+    except (OSError, ValueError, KeyError):         # an unreadable ledger is the doctor's finding, not a reason to refuse a card
+        return
+    cells = sorted(set(found["cell"].astype(str)))
+    if cells and cell not in cells:
+        raise RowCellMismatchError(
+            f"row id {row_id} is in the ledger with cell {cells[0]}, but this card is for cell {cell}: the join would score it against "
+            f"another metric's result; give the cell of the row ({cells[0]}) or the id of the row of cell {cell}")
+
+
 def to_utc(ts) -> pd.Timestamp:
     """Coerce a datetime-like to a timezone-aware UTC Timestamp; naive values are rejected."""
     t = pd.Timestamp(ts)

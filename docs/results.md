@@ -698,7 +698,7 @@ Calibration by precision, deciles of the planned exposures per arm. `mean p_sig`
 
 ### Weekly replay
 
-`scripts/replay_weekly.py` issues one card per admitted row at the start of the week its test starts and joins the outcome at the first weekly join after it exists. An abstained card keeps a sealed forecast that the join scores like any other, flagged, so abstention does not stop a cell from recovering. Coverage is the share of observed estimates inside the 90 percent interval for the observed estimate that the card stores.
+`scripts/replay_weekly.py` issues one card per admitted row at the start of the week its test starts and joins the outcome at the first weekly join after it exists. An abstained card keeps the forecast it withheld in its frozen file, and the join scores it like any other, flagged, so abstention does not stop a cell from recovering. Coverage is the share of observed estimates inside the 90 percent interval for the observed estimate that the card stores.
 
 | archive | weeks | cards | outcomes joined | abstained cards | flagged weeks | coverage 90% (n) | hit | magnitude miss | direction miss | confident but wrong | abstained but clear |
 |---|---|---|---|---|---|---|---|---|---|---|---|

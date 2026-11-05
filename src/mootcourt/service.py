@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field
 from mootcourt import card as card_mod
 from mootcourt.bundle import ModelBundle, load_bundle
 from mootcourt.config import BOUNDARY_SENTENCE
-from mootcourt.ledger import resolve_row_id
+from mootcourt.ledger import check_row_cell, resolve_row_id
 from mootcourt.predictors.p3 import TeamForecast
 from mootcourt.registry import Registry
 from mootcourt.settings import abstain_config
@@ -43,8 +43,10 @@ def _utc_now() -> dt.datetime:
 class ServingState:
     """Preloaded champion bundles plus the directories to read reliability from and freeze cards into."""
 
-    def __init__(self, models_dir, reports_dir, now: Callable[[], dt.datetime] | None = None, config=None):
+    def __init__(self, models_dir, reports_dir, now: Callable[[], dt.datetime] | None = None, config=None, ledger_path=None):
         self.models_dir, self.reports_dir = Path(models_dir), Path(reports_dir)
+        # the ledger a card's row id is checked against at issue (its cell must be the card's cell); the storage root's ledger by default
+        self.ledger_path = Path(ledger_path) if ledger_path is not None else storage_paths().ledger_path
         self.now = now or _utc_now
         # The configured action threshold, read once at startup from the project file in the working directory (restart to change it),
         # through the same function as `moot card`, so one request gives one card id and one abstention on every path.
@@ -86,8 +88,10 @@ class ServingState:
     def issue(self, payload: dict) -> card_mod.Card:
         """Issue a card (not frozen) from a payload with the bundle preloaded."""
         req = self.request(payload)
-        return card_mod.build_card(self.bundle(req.source), req, reliability=self.reliability(req.source), now=self.now(), config=self.config,
+        card = card_mod.build_card(self.bundle(req.source), req, reliability=self.reliability(req.source), now=self.now(), config=self.config,
                                    gates=self.gates())
+        check_row_cell(self.ledger_path, req.row_id, card.cell)       # RowCellMismatchError is a ValueError: a 422 on the route
+        return card
 
     def gates(self) -> dict | None:
         """The gates of the reports folder (read on each request, like the reliability report), or None when there is no gates.json."""
@@ -132,13 +136,13 @@ class CardPayload(BaseModel):
     guardrails: list[GuardrailPayload] = Field(default_factory=list, max_length=20)
 
 
-def create_app(models_dir, cards_dir, reports_dir=None, now: Callable[[], dt.datetime] | None = None, trusted_hosts=None):
+def create_app(models_dir, cards_dir, reports_dir=None, now: Callable[[], dt.datetime] | None = None, trusted_hosts=None, ledger_path=None):
     """Build the FastAPI app over a models directory; ``cards_dir`` is where issued cards are frozen.
 
     ``trusted_hosts`` (a list of Host header values, without ports) refuses any other Host header with a 400. ``moot serve`` passes the
     loopback names when it binds to loopback, so a web page cannot reach the service through a DNS name that resolves to 127.0.0.1.
     """
-    state = ServingState(models_dir, reports_dir if reports_dir is not None else storage_paths().reports, now)
+    state = ServingState(models_dir, reports_dir if reports_dir is not None else storage_paths().reports, now, ledger_path=ledger_path)
     cards_dir = Path(cards_dir)
     app = FastAPI(title="Moot Court", description=BOUNDARY_SENTENCE)
     if trusted_hosts:

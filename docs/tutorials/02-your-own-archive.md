@@ -74,11 +74,12 @@ head -3 my-export.csv
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (10 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (12 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (20 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (21 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (26 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (24 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (26 s elapsed)
+the quick gates simulation (synthetic data): still running, 30 s elapsed
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (31 s elapsed)
 experiment,variant,control,metric,delta,delta_low,delta_high,control_units,variant_units,start,end
 exp-001,treatment,control,checkout_conversion,-1.4001,-3.1395999999999993,0.33939999999999976,57135,57135,2023-01-09T00:00:00Z,2023-01-23T00:00:00Z
 exp-001,treatment,control,pages_per_session,-3.4189,-4.578436,-2.2593639999999997,57135,57135,2023-01-09T00:00:00Z,2023-01-23T00:00:00Z
@@ -153,7 +154,7 @@ moot ingest --format generic --input my-export.csv --mapping mapping.toml --sour
   admitted: 360
 admitted by cell: checkout_conversion 120, pages_per_session 120, revenue_per_user 120
 final reads from 2023-01-23 to 2025-12-29
-snapshot 20261104-36befd8be469 for mine
+snapshot 20261105-36befd8be469 for mine
 ledger ~/moot-mine/mootcourt-data/data/ledger/ledger.parquet: 360 rows
 ```
 
@@ -179,15 +180,15 @@ moot backtest --source mine
 ```
 
 ```text output
-fitted model a33cf6145aa2 at snapshot 20261104-36befd8be469 on 360 rows usable at 2026-11-04T23:09:34.784001+00:00 in 1.2 s; it is the champion for mine
+fitted model c2c6c9f4066d at snapshot 20261105-36befd8be469 on 360 rows usable at 2026-11-05T11:04:51.580811+00:00 in 1.7 s; it is the champion for mine
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 gates read from ~/moot-mine/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
-filled the backtest summary of model a33cf6145aa2
-scored 330 rows over 11 origins in 3.8 s (report writing 14.4 s; the whole run 18.2 s)
-wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-36befd8be469.md
-wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261104-36befd8be469.json
-wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261104-36befd8be469.parquet
+filled the backtest summary of model c2c6c9f4066d
+scored 330 rows over 11 origins in 5.0 s (report writing 16.7 s; the whole run 21.6 s)
+wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261105-36befd8be469.md
+wrote ~/moot-mine/mootcourt-data/reports/backtest-mine-20261105-36befd8be469.json
+wrote ~/moot-mine/mootcourt-data/reports/scores-mine-20261105-36befd8be469.parquet
 ```
 
 Time: about ten to fifteen seconds here on the internal disk (several times longer with the data root on an exFAT volume). It grows roughly with the number of rows times the number of origins; a ledger of a million contrasts is measured in [Scale](../scale.md).
@@ -204,14 +205,14 @@ moot benchmark --ledger mootcourt-data/data/ledger/ledger.parquet
 
 ```text output
 scoring 360 contrasts of source mine
-wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261104-36befd8be469.md
-wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261104-36befd8be469.json
+wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261105-36befd8be469.md
+wrote ~/moot-mine/mootcourt-data/reports/benchmark/ledger-20261105-36befd8be469.json
 ```
 
 It writes `reports/benchmark/ledger-<snapshot>.md`. Read its sections in this order:
 
 1. **Ledger.** Admitted contrasts, the number of distinct experiments scored (the unit that matters, because the rows of one experiment are not independent), the number of cells and the base rate of significant positive results. A low base rate makes every probability score harder to move.
-2. **Gates.** (Headed "Tests needed" when the gates file counts tests, as the one `moot init` wrote does, and "Rows needed" for a per-row gates file or for the quick fallback the report card simulates when no gates file exists.) How many scored experiments a skill difference of 0.20 and 0.10 needs, at two power targets (0.90 for decisions, 0.80 as a screen). They come from a simulation on synthetic data and say nothing about your ledger except how large it must be.
+2. **Gates.** (Headed "Tests needed" when the gates file counts tests, as the one `moot init` wrote does, and "Rows needed" for a per-row gates file or for the quick fallback the report card simulates when no gates file exists.) How many scored experiments a skill difference of 0.20 and 0.10 needs, at two power targets (0.90 for decisions, 0.80 as a screen). They come from a simulation on synthetic data and say nothing about your ledger except how large it must be. The Gates heading line names the simulated base rate the sizes were read at, the nearest simulated rate to your ledger's own, so a card reader can see that the gates were not simulated at your ledger's rate.
 3. **Ladder.** One row per **rung**, a predictor of the ladder, and each rung adds one thing to the one below. P0 is the empirical base-rate forecaster of each cell, so its Brier skill is zero by construction. P1 adds a fitted partially pooled prior that accounts for measurement error: it pools the cells and shrinks each toward the whole. P2 adds the precedents that resemble the proposal, under an **admission guard**: its weight on precedents is above zero only when it beats zero on validation rows inside the fit by more than two standard errors, and at zero P2 equals P1. The guard limits how much noise the selection fits. It does not promise that P2 beats P1 out of time, so compare the P2 row with the P1 row on the score, and do not assume the richer rung is the better one. The columns to read:
    - **Brier skill** with its 90 percent interval. Zero means no better than the base rate. An interval that contains zero means the data cannot tell the rung from the base rate. P0's skill is zero by construction.
    - The two **coverage** columns. Near 0.80 and 0.90 is calibrated, and well below means overconfident. [Tutorial 1](01-first-card.md#4-fit-the-models-and-back-test-them) shows how to judge "near" with the interval in the backtest report.
@@ -236,12 +237,12 @@ moot card --source mine --cell revenue_per_user --impressions 50000 --now 2025-1
 ```text output
 # Moot Court card
 
-- Card id: 125acf9ed629c73f
+- Card id: ecae904d2a8836fa
 - Source: mine
 - Cell: revenue_per_user
 - Origin: 2025-12-30T00:00:00+00:00
-- Ledger snapshot: 20261104-36befd8be469
-- Model: a33cf6145aa2
+- Ledger snapshot: 20261105-36befd8be469
+- Model: c2c6c9f4066d
 - Feature hash: e7ee5b832720
 - Issued at: 2025-12-30T00:00:00+00:00
 - Request: planned units per arm: 50000, standard error of the future estimate: 0.019 units of the ledger's effect
