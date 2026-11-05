@@ -18,7 +18,7 @@ pip install -e .
 moot init
 ```
 
-The command takes about 20 seconds, because it also simulates the quick gates file. It writes `mootcourt.toml` (data root, the cells to forecast, the action threshold, the gate target and a place for simulators), creates the data root `mootcourt-data/` with its folders, writes a synthetic sample ledger and a quick gate file, and prints the three commands that follow.
+The command takes about 30 seconds on a laptop with the data root on the internal disk, because it also simulates the quick gates file. It writes `mootcourt.toml` (data root, the cells to forecast, the action threshold, the gate target and a place for simulators), creates the data root `mootcourt-data/` with its folders, writes a synthetic sample ledger and a quick gate file, and prints the three commands that follow.
 
 ## 3. Import the sample ledger
 

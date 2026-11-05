@@ -221,5 +221,4 @@ MIT. Data: Matias et al., Scientific Data 8, 195 (2021), doi 10.1038/s41597-021-
 
 If you use Moot Court, please cite the software release and the paper. The repository carries a `CITATION.cff`; GitHub's "Cite this
 repository" button formats it. The software release 1.0.0 is archived at Zenodo, DOI 10.5281/zenodo.23988587 (https://doi.org/10.5281/zenodo.23988587); the concept
-DOI 10.5281/zenodo.23988586 resolves to the latest release. The paper is on arXiv as <arXiv identifier, filled in after upload>; until
-then, cite the repository and the release.
+DOI 10.5281/zenodo.23988586 resolves to the latest release. The paper is on arXiv as <arXiv identifier, filled in after upload>; until then, cite the repository and the release.

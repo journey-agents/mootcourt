@@ -1,0 +1,36 @@
+# Confirmation pass, Reviewer R2
+
+Reviewer: R2
+Role: experimentation platform engineer
+Commit: c7dbfd0 (release 1.0.0 plus the Zenodo DOI line; tag v1.0.0 is d9d06ed)
+Date: 5 November 2026
+
+No new blocking or major finding.
+
+## 1. Round 03 findings at c7dbfd0
+
+Checks run: `uv run pytest tests/test_round02_b.py` (25 passed, 20 s); `make quick-check` once (OK, the sample backtest matches tests/fixtures/quick-check/backtest-sample.json, 59 s); `uv run moot card`, `uv run moot serve` and the tool's `tool_get_card` on the ServingState the stdio server builds, all against the sample data root of my round 03 trace (360 rows, champion fit at the 2025-12-31 clock), cards written to a scratch folder. Since a839b2c the modules of the loop (loop.py, card.py, registry.py, onboarding.py, service.py, mcp_server.py, the sources, scripts/replay_weekly.py and scripts/leakage_audit.py) are byte-identical; the code diff touches ledger.py, cli.py, report.py and the version string.
+
+- R2-F1a [minor, R2.15 (a)], letter: Fixed. Closed. ledger.py:114-135: `check_row_cell` raises `RowHeldError` when the ledger holds the row with the card's cell ("row id X is in the ledger with its result; a card for it would not be pre-launch evidence (the join cannot tell that the result was known when the card was requested), so it is not issued") and `RowCellMismatchError` when it holds it with another cell; cli.py:232-234 calls it with no handler, so the root command group maps it to exit 2; service.py:93 is unchanged (`ServingState.issue`, which the tool shares). Run: the command refused sample:exp-050:treatment::checkout_conversion with that message, exit 2; `POST /card` answered 422 with the same message and froze nothing; the tool raised `RowHeldError`; a row the ledger does not hold (exp-150, exp-151, exp-152) was issued on all three (exit 0, 200, issued) and the tool wrote nothing. Tests test_r3_moot_card_refuses_a_row_whose_result_the_ledger_holds_even_at_a_backdated_now, test_r3_post_card_refuses_a_row_whose_result_the_ledger_holds and test_r3_the_tool_refuses_a_row_whose_result_the_ledger_holds pass (they carry the prefix r3 in the file; they are the R2 item). docs/operations.md:36 and docs/reference/card.md:51 carry the sentence, docs/commands.md:313 the message with exit 2 and 422, and tutorial 5's example moved to exp-121, a row the sample ledger does not hold.
+- R2-F1b [minor, R2.15 (b)], Fixed. Closed. paper/main.tex:105 reads "reading the contrast's own start (on the headline archive the later of its two arms' creation times), so that a card for a variant added to a running test is pre-launch evidence for that contrast and not for the test"; docs/reference/card.md:51 says the same. The code's rule is kept (`card_timing` unchanged), which was my question 3.
+- R2-F2 [minor, R6.10], Fixed. Closed. cli.py:232-234: the explicit handler is removed. Run: the cell-mismatch refusal (the exp-050 revenue row with cell checkout_conversion) exits 2 with its one line, the foreign source and the late origin exit 2 as before, and the frozen-card clash keeps exit 1 (docs/commands.md:314). docs/commands.md:312 reads "(exit 2; the service answers 422)" and docs/operations.md:36 "(exit 2 on the command, 422 on the service)". The convention the letter cites is the commands page's line 5 ("Exit codes: 0 success, 1 a handled problem (a warning from doctor, a refused import, a card that cannot be frozen), 2 a bad argument or a failed check"); the manual names the codes per refusal and carries no separate convention sentence, which is enough. Test test_r3_the_cell_mismatch_refusal_exits_2_like_its_siblings passes.
+- R2-F3 [minor, C86], Fixed. Closed. paper/sections/results.tex:93 reads "joined an outcome to every card (13,247), covered 89.5 percent of the 11,790 outcomes of issued cards with the card's 90 percent interval (an abstained card shows no interval)"; the replay caption (appendix.tex:383) reads "rolling 90 percent coverage of the issued cards' intervals"; C86 is requoted on totals.coverage_90_all and C132 added on totals.outcomes_joined 13,247, and the shipped replay file holds outcomes_joined 13247, coverage_90_all_n 11790 and coverage_90_all 0.8949.
+- R2-F4 [nit, R2.14], Argued (decision 19). Argued and accepted. sources/asos.py and docs/ledger-format.md:36 are unchanged; paper/reviews/rubric.md:50 is amended, dated 5 November 2026, with the clause I proposed; Section 9's argued list carries the two fields with the reason, the release and the allow-list.
+
+Suggestions R2-s1 to R2-s5 are recorded and not fixed; loop.py:23 and mcp_server.py:38 still read "sealed", as expected.
+
+## 2. Rubric R2.1 to R2.15 at c7dbfd0
+
+No item fails. R2.1 to R2.5, R2.8, R2.10, R2.12 and R2.13: the scoring, join, card, registry, doctor, replay and audit code is byte-identical to a839b2c, the three leakage audit files and the replay file are unchanged since 9f725b1, and `make quick-check` reproduces the sample fixture, so the round 03 trace stands (four outcomes reproduced from the frozen card within 1e-9, every audit count zero, the service's loopback bind and Host check, the exclusive create of the card file); R2.13 now with exit 2 on every refusal at issue. R2.6, R2.7, R2.9 and R2.11: the sentences checked in round 03 are still in place (Section 3's conditioning and the admission ablation; limitations.tex "correlates 0.152" beside 0.099 and 0.215; tutorial 4's paired rule and the commands page's earn-weight margin; Section 4.3's staleness limit, seed date and cold start). R2.14 passes under the dated amendment: the ledger-format page names the two fields as post-launch display fields kept outside the block for the run folders' identifiers, moving at the next release that changes snapshot ids. R2.15 passes: (a) refused on the command, the service and the tool, traced; (b) Section 4.3 and the card page name the contrast's start.
+
+## 3. Open items at the cap
+
+R2.14 read literally may stay listed in Section 9 for publication. The sentence there (the checkpoint count and the final offset in days, kept at the top level of the deployment-shaped features until the next snapshot-changing release, because moving them rewrites every snapshot id the run folders cite, with the reading side closed by the feature allow-list and its test) matches the code and the ledger-format page, and the amended item passes.
+
+## 4. Verdict
+
+Recommendation: accept
+Scores (1 to 5): novelty 3, correctness 4, rigor 4, clarity 4, reproducibility 5, code 4
+High-quality paper worth publishing at a top venue: yes. For a datasets-and-benchmarks track: a leakage-audited protocol for pre-launch forecasts with a frozen card, a replayable weekly loop and an honest headline negative, every number traced to a shipped report and regenerated from a clean clone.
+High-quality code package worth publishing: yes. The loop refuses a backdated, late-origin, foreign-source, cell-mismatched or already-concluded card on all three interfaces under one exit-code convention, scores one pre-launch card per row from the frozen file alone, and its tests and quick check hold at the release commit.
+Remaining concerns: [suggestion] R2-s1 to R2-s5 as recorded in the letter; [suggestion] the three held-row tests and the exit-code test carry the prefix test_r3 while they close R2 items, a naming matter for the next release.

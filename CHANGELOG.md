@@ -4,6 +4,22 @@ This project follows [semantic versioning](https://semver.org). Before 1.0.0 a m
 schema, the card schema or a command line option; the change is listed here and the schema versions are bumped.
 The format follows [Keep a Changelog](https://keepachangelog.com).
 
+## [Unreleased]
+
+### Fixed
+
+- The README had grown one line past the length its documentation test allows when the Zenodo DOI line was added after the 1.0.0 tag
+  (commit c7dbfd0; continuous integration on that commit failed on the three Python versions, the tag's run was green); the wrapped sentence of the Citing section is joined.
+- `moot init` is said to take about 30 seconds on the quickstart and the command guide, as tutorial 1 and the rendered output blocks
+  already said, instead of 20.
+- Section 9 of the paper names the significant-positive event by its one name in its last place, and register row C52 quotes the
+  sentence as the paper prints it.
+
+### Added
+
+- The confirmation pass of round 03 on release 1.0.0: `paper/reviews/round-03/confirmation-R1.md` to `confirmation-R7.md` and
+  `confirmation.md`, each reviewer's verification of its own findings at the released commit with a final verdict.
+
 ## [1.0.0] - 2026-11-05
 
 Release notes for 1.0.0, from the four review rounds of the paper (rounds 00 to 03).

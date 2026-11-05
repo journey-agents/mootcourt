@@ -16,7 +16,7 @@ mkdir moot-commands && cd moot-commands
 
 **Purpose.** Create a project folder: `mootcourt.toml`, the data root with its folders, a synthetic sample ledger and a quick gates file.
 
-**Reads.** Nothing. **Writes.** `mootcourt.toml`, `mootcourt-data/` (or the folder you name with `--data-root`), `data/sample-ledger.csv`, `reports/gates.json`. It refuses to overwrite an existing `mootcourt.toml` unless you pass `--force`. About 20 seconds on the internal disk, because it simulates the quick gates file; after `--progress-after` seconds (default 10) it prints progress lines to standard error. On an exFAT volume it can take several times longer.
+**Reads.** Nothing. **Writes.** `mootcourt.toml`, `mootcourt-data/` (or the folder you name with `--data-root`), `data/sample-ledger.csv`, `reports/gates.json`. It refuses to overwrite an existing `mootcourt.toml` unless you pass `--force`. About 30 seconds on the internal disk, because it simulates the quick gates file; after `--progress-after` seconds (default 10) it prints progress lines to standard error. On an exFAT volume it can take several times longer.
 
 **Options you will use.** `--cells a,b` the cells you forecast, `--name`, `--data-root PATH` to put everything on another volume, `--dir` for another project folder.
 
