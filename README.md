@@ -13,11 +13,11 @@ Skill on headline tests does not transfer to product deployments, and nothing he
 ## How it fits together
 
 ```mermaid
-flowchart LR
-    A["Your archive of concluded A/B tests<br>effect, standard error, units per arm, dates"] -->|moot ingest| LG["Ledger<br>one row per variant, metric and test<br>grouped into cells"]
-    LG -->|moot fit| LAD["Ladder of predictors<br>P0 base rate, P1 pooled prior, P2 precedents<br>optional challengers"]
-    LG -->|moot backtest| BT["Backtest<br>replay by quarter, score every forecast<br>size the gates"]
-    LAD -->|moot card| CARD["Card for a proposed test<br>P(significant and positive), interval, fragility<br>or an abstention with its reason"]
+flowchart TB
+    A["Your archive of concluded A/B tests<br>effect, standard error, units per arm, dates"] -->|moot ingest| LG["Ledger<br>one row per variant, metric and test, grouped into cells"]
+    LG -->|moot fit| LAD["Ladder of predictors<br>P0 base rate, P1 pooled prior, P2 precedents, optional challengers"]
+    LG -->|moot backtest| BT["Backtest<br>replay by quarter, score every forecast, size the gates"]
+    LAD -->|moot card| CARD["Card for a proposed test<br>P(significant and positive), interval, fragility, or an abstention with its reason"]
     BT --> REL["Reliability and gates<br>may the next card speak?"]
     REL --> CARD
     CARD -.->|the live test runs| OUT["Outcome lands in the ledger"]
