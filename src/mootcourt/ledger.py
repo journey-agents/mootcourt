@@ -383,3 +383,23 @@ def ensure_snapshot(df: pd.DataFrame, ledger_dir, today: dt.date | None = None) 
                 if stored == digest:
                     return p.name
     return write_snapshot(df, ledger_dir, today=today)
+
+
+def replace_source(df: pd.DataFrame, new: pd.DataFrame, source: str) -> pd.DataFrame:
+    """The ledger with every row of ``source`` replaced by ``new``, which takes the place of the first replaced row.
+
+    ``append_rows`` never changes an existing row, so a loader rule that changes statuses (paper v2 plan, D1) needs this explicit replacement.
+    The other sources' rows are untouched and keep their order. ``new`` must hold only rows of ``source``.
+    """
+    validate_ledger(new)
+    if (new["source"] != source).any():
+        raise LedgerSchemaError(f"the replacement rows must all be of source {source}")
+    mine = (df["source"] == source).to_numpy()
+    first = int(np.flatnonzero(mine)[0]) if mine.any() else len(df)
+    before = df.iloc[:first].loc[~mine[:first]]
+    after = df.iloc[first:].loc[~mine[first:]]
+    out = pd.concat([before, new, after], ignore_index=True)
+    for c in _TIME_COLUMNS:
+        out[c] = pd.to_datetime(out[c], utc=True)
+    validate_ledger(out)
+    return out

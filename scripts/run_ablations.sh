@@ -2,7 +2,9 @@
 # Run the ablation backtests of one source, several at a time. Every run writes its own report under reports/ablations.
 # Usage: scripts/run_ablations.sh SOURCE [JOBS]      (or: scripts/run_ablations.sh SOURCE JOBS --list, which prints the settings and runs nothing)
 #   upworthy  P2 selection rule (leave-one-test-out, the counterfactual of the forward-chaining default), recency, feature sets, bandwidth, lambda, kappa, prior, P2 admission guard (off, 1.0), the single-headline
-#             feature space (--pairwise off), admission on exposure only (--admission prelaunch), one contrast per test (--contrasts one); the feature, bandwidth, selection, recency and
+#             feature space (--pairwise off), admission on exposure only (--admission prelaunch), one contrast per test (--contrasts one); the two single changes of the
+#             cautionary run (--effect-scale relative, at planned precision; --s-star realized, on the absolute effect) and the exposure fixed at the cell median
+#             (--exposure cell-median), paper v2 plan X2 and X3; the feature, bandwidth, selection, recency and
 #             pairwise ablations are run twice, with the guard on and with --p2-guard off, because behind the guard the ablated setting rarely
 #             reaches a forecast (round 00, R3); the off runs are named like `features-text+p2-guard-off`
 #   asos      kappa, prior and the P2 admission guard (the other switches change only P2, which equals P1 on a cell-only space)
@@ -34,6 +36,7 @@ case "$SOURCE" in
       "--p2-guard off" "--p2-guard 1.0"
       "--admission prelaunch"
       "--contrasts one"
+      "--effect-scale relative" "--s-star realized" "--exposure cell-median"
       "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;
   asos)

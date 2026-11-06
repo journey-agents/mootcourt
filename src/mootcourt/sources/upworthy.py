@@ -31,8 +31,9 @@ the cell ``unclassified``; it is never admitted.
 Admission status, exactly one per row, in this precedence (builder call 43):
 ``single_arm`` (the test has fewer than two packages), ``missing_text`` (an empty headline in either arm),
 ``duplicate_arm`` (same headline and same image as the reference), ``imbalance_flag`` (the problem flag is set in
-either arm), ``low_exposure`` (fewer than 1000 impressions in either arm), ``low_clicks`` (fewer than 10 clicks in
-either arm, where the binomial standard error and the rate are unreliable), else ``admitted``.
+either arm, or the test started from 2013-06-25 to 2014-01-10 inclusive, the window the archive's June 2024 notice discourages; method
+call 275), ``low_exposure`` (fewer than 1000 impressions in either arm), ``low_clicks`` (fewer than 10 clicks in either arm, where the
+binomial standard error and the rate are unreliable), else ``admitted``.
 
 Time. ``started_at`` of a contrast is the later of the two arms' ``created_at`` values, the first instant at which both
 arms existed (code review finding REV-001: on the real file 34 tests have packages created up to 14.9 days after the
@@ -60,6 +61,8 @@ COLUMNS_USED = ("created_at", "test_week", "clickability_test_id", "impressions"
 OPTIONAL_COLUMNS = ("problem",)          # absent from the real exploratory file (builder call 44); the imbalance status then never fires
 PACKAGE_ID_COLUMNS = ("id", "package_id", "Unnamed: 0")   # the real file has no named id; its unnamed first column is the package index
 FORMER_STAFF_COLUMNS = ("square", "significance", "first_place", "winner", "updated_at")
+# first and last day, UTC and inclusive: the tests the archive's June 2024 notice discourages (paper v2 plan, D1)
+RANDOMIZATION_WINDOW = ("2013-06-25", "2014-01-10")
 MIN_IMPRESSIONS = 1000
 MIN_CLICKS = 10
 _TRUE = {"true", "t", "1", "yes", "y"}
@@ -131,9 +134,21 @@ def _kind(head_changed: bool, image_changed: bool) -> str:
     return "headline_only" if head_changed else ("image_only" if image_changed else "unclassified")
 
 
-def load_upworthy(path) -> pd.DataFrame:
-    """Build the contrast ledger from the exploratory packages file at ``path``; see the module docstring."""
+def _window_bounds() -> tuple[pd.Timestamp, pd.Timestamp]:
+    """The window as a half-open interval [first day 00:00, day after the last day 00:00) in UTC."""
+    first, last = RANDOMIZATION_WINDOW
+    return pd.Timestamp(first, tz="UTC"), pd.Timestamp(last, tz="UTC") + pd.Timedelta(days=1)
+
+
+def load_upworthy(path, exclude_randomization_window: bool = True) -> pd.DataFrame:
+    """Build the contrast ledger from the exploratory packages file at ``path``; see the module docstring.
+
+    ``exclude_randomization_window`` (default True) gives the status ``imbalance_flag`` to every contrast of a test that started inside
+    ``RANDOMIZATION_WINDOW`` (the start of a test is the earliest ``created_at`` of its packages). False is run 7's configuration,
+    the ablation ``include-randomization-window``; it changes statuses only, never a row, an effect or a time.
+    """
     df, id_col = _read(path)
+    win_lo, win_hi = _window_bounds()
     has_id = id_col is not None
     horizon = pd.Timedelta(days=HORIZON_DAYS_UPWORTHY)
     rows: list[dict] = []
@@ -154,6 +169,7 @@ def load_upworthy(path) -> pd.DataFrame:
                          "features_json": json.dumps({"headline": _text(ref["headline"]), "n_variants": n_pk}, sort_keys=True)})
             continue
         hr, er = _text(ref["headline"]), _text(ref["eyecatcher_id"])
+        in_window = bool(exclude_randomization_window and win_lo <= g["created_at"].min() < win_hi)
         # The reference arm is shared by every contrast of the test and keeps accruing until the test's last arm ends, so
         # the final read is test level: seven days after the creation of the latest arm (REV-026). started_at stays per contrast.
         final = g["created_at"].max() + horizon
@@ -169,7 +185,7 @@ def load_upworthy(path) -> pd.DataFrame:
                 status = "missing_text"
             elif not head_changed and not image_changed:
                 status = "duplicate_arm"
-            elif _flag(ref["problem"]) or _flag(v["problem"]):
+            elif in_window or _flag(ref["problem"]) or _flag(v["problem"]):
                 status = "imbalance_flag"
             elif min(nr, nv) < MIN_IMPRESSIONS:
                 status = "low_exposure"

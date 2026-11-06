@@ -30,7 +30,7 @@ def test_upworthy_y_is_the_absolute_ctr_difference_in_points_with_binomial_se(im
                     _row("t1", "2014-01-01T00:00:01Z", 12000, 300, "new head", "a")])
     path = tmp_path / "up.csv"
     df.to_csv(path)
-    out = up.load_upworthy(path)
+    out = up.load_upworthy(path, exclude_randomization_window=False)       
     r = out.iloc[0]
     cr, cv = 200 / 10000, 300 / 12000
     assert r["status"] == "admitted"
@@ -52,7 +52,7 @@ def test_low_clicks_status_when_either_arm_has_fewer_than_ten_clicks(imp, tmp_pa
                     _row("t3", "2014-01-01T00:00:01Z", 10000, 300, "new three", "a")])
     path = tmp_path / "up.csv"
     df.to_csv(path)
-    out = up.load_upworthy(path).set_index("test_id")
+    out = up.load_upworthy(path, exclude_randomization_window=False).set_index("test_id")       
     assert out.loc["t1", "status"] == "low_clicks" and out.loc["t2", "status"] == "low_clicks"
     assert out.loc["t3", "status"] == "low_exposure", "fewer than 1000 impressions takes precedence"
     assert imp("mootcourt.ledger").exclusion_reason("low_clicks")

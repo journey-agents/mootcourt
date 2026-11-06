@@ -37,6 +37,8 @@ POST_LAUNCH_FIELDS = (
 )
 POST_LAUNCH_BLOCK = "post_launch"
 DEFAULT_CTR = 0.02
+# set to "relative" by ``relative_lift_ledger(planned=True)``: s_star_rows then returns the relative lift's planned standard error
+PLANNED_SCALE_COLUMN = "planned_scale"
 _CTR_FLOOR = 1e-6
 
 
@@ -133,6 +135,10 @@ def s_star_rows(scored: pd.DataFrame, visible: pd.DataFrame) -> np.ndarray:
         by_cell = cell_median_ctr(visible[visible["source"] == "upworthy"] if "source" in visible else visible)
         c = np.array([lookup_ctr(by_cell, str(k)) for k in scored["cell"].to_numpy()[up]])
         out[up] = upworthy_s_star(scored["n_ref"].to_numpy()[up], scored["n_var"].to_numpy()[up], c)
+        if PLANNED_SCALE_COLUMN in scored.columns:
+            # relative lift at planned precision (X2): the standard error of a ratio at zero effect is s_star / c
+            rel = (scored[PLANNED_SCALE_COLUMN].to_numpy(dtype=object)[up] == "relative")
+            out[np.flatnonzero(up)[rel]] = out[np.flatnonzero(up)[rel]] / c[rel]
     asos = source == "asos"
     if asos.any():
         out[asos] = np.sqrt(1.0 / scored["n_ref"].to_numpy(float)[asos] + 1.0 / scored["n_var"].to_numpy(float)[asos])
@@ -172,7 +178,7 @@ def generic_s_star(scored: pd.DataFrame, visible: pd.DataFrame, mask: np.ndarray
     return out
 
 
-def relative_lift_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
+def relative_lift_ledger(ledger: pd.DataFrame, planned: bool = False) -> pd.DataFrame:
     """The Upworthy rows of ``ledger`` re-expressed as the first run had them: ``y`` the relative lift in percent and ``s`` its standard error.
 
     Both come from the ``post_launch`` block, where the ledger keeps them as display data. A relative lift against a noisy reference arm
@@ -192,6 +198,32 @@ def relative_lift_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
             y[i], s[i] = float(ly), float(ls)
     out["y"], out["s"] = y, s
     out.loc[bad, "status"] = "low_exposure"
+    if planned:
+        # X2, relative lift at PLANNED precision: the forecaster is given the standard error a launch can know, ``s_star / c`` (pre-launch
+        # exposure and the visible cell median rate), in the units of the relative lift, instead of the realized one of the cautionary run
+        out[PLANNED_SCALE_COLUMN] = "relative"
+    return out
+
+
+def cell_median_exposure_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
+    """The ledger with the planned exposure of every Upworthy row set to the median of its cell (X3, the exposure stand-in fixed).
+
+    The planned exposure of a row is the mean of its two arms' realized impressions (``planned_exposure``), a stand-in for the exposure a
+    launch would have planned. Here both arms of every row get their cell's median planned exposure over the admitted rows (at least one
+    impression), a constant per cell that carries no information about the row, so ``s_star``, the exposure feature and the ranking that read
+    exposure lose their row-level variation. ``y``, ``s`` and the statuses are unchanged. A view: the stored ledger is not changed.
+    """
+    out = ledger.copy()
+    up = (out["source"] == "upworthy").to_numpy()
+    adm = up & (out["status"] == "admitted").to_numpy()
+    expo = planned_exposure(out)
+    for cell in out.loc[adm, "cell"].unique():
+        m = adm & (out["cell"] == cell).to_numpy()
+        med = max(int(round(float(np.median(expo[m])))), 1)
+        sel = up & (out["cell"] == cell).to_numpy()
+        out.loc[sel, "n_ref"] = med
+        out.loc[sel, "n_var"] = med
+    out["n_ref"], out["n_var"] = out["n_ref"].astype("int64"), out["n_var"].astype("int64")
     return out
 
 

@@ -45,9 +45,9 @@ moot ingest --source upworthy
 ```
 
 ```text output
-upworthy: 17793 contrasts, 13453 admitted, 4873 tests (3.8 s)
-snapshot 20261105-4bfb354b87e3 for upworthy
-ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 4.2 s
+upworthy: 17793 contrasts, 10903 admitted, 4873 tests (3.6 s)
+snapshot 20261106-2dc461f52ea4 for upworthy
+ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 3.9 s
 ```
 
 The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
@@ -59,7 +59,7 @@ moot fit --source upworthy
 ```
 
 ```text output
-fitted model 25cd2b6c38d9 at snapshot 20261105-4bfb354b87e3 on 13453 rows usable at 2026-11-05T15:40:48.608054+00:00 in 15.9 s; it is the champion for upworthy
+fitted model 938be3f002b0 at snapshot 20261106-2dc461f52ea4 on 10903 rows usable at 2026-11-06T12:03:15.519027+00:00 in 11.8 s; it is the champion for upworthy
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 

@@ -360,7 +360,7 @@ def _parse_guard(value: str | None):
 
 
 def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale="absolute", s_star="prelaunch",
-                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all") -> dict:
+                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all", exposure="planned") -> dict:
     """The ablation settings that differ from the defaults, as a dict; empty for the main run."""
     from mootcourt.config import KAPPA, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 
@@ -393,6 +393,8 @@ def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection,
         v["pairwise"] = pairwise
     if contrasts != "all":
         v["contrasts"] = contrasts
+    if exposure != "planned":
+        v["exposure"] = exposure
     if "p2_guard" in v:                      # last, so a run with the guard off is always named `<ablation>+p2-guard-off` (call 176)
         v["p2_guard"] = v.pop("p2_guard")
     return v
@@ -444,6 +446,12 @@ def backtest(
         "--contrasts",
         help="all (default) or one: keep one admitted contrast per test (the lowest row id), so a test has one headline against its reference "
         "(ablation of the arm-count structure, round 01 R3 minor 6).",
+    ),
+    exposure: str = typer.Option(
+        "planned",
+        "--exposure",
+        help="planned (default): the planned exposure of a row is the mean of its arms' impressions; cell-median: every row gets its cell's median "
+        "(X3 of the paper v2 plan: what the realized-exposure stand-in does to each score). Upworthy only.",
     ),
     pairwise: str = typer.Option(
         "on",
@@ -500,11 +508,14 @@ def backtest(
         raise typer.BadParameter(str(exc)) from None
     for name, value, allowed in (("--effect-scale", effect_scale, ("absolute", "relative")), ("--s-star", s_star, ("prelaunch", "realized")),
                                  ("--admission", admission, ("realized", "prelaunch")), ("--recalibration", recalibration, ("platt", "isotonic")),
-                                 ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one"))):
+                                 ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one")),
+                                 ("--exposure", exposure, ("planned", "cell-median"))):
         if value not in allowed:
             raise typer.BadParameter(f"{name} must be one of {', '.join(allowed)}")
     if effect_scale == "relative" and source != "upworthy":
         raise typer.BadParameter("--effect-scale relative needs the Upworthy source (it reads the relative lift stored with each row)")
+    if exposure != "planned" and source != "upworthy":
+        raise typer.BadParameter("--exposure cell-median needs the Upworthy source (the other sources' exposure is not a count of impressions)")
     guard_arg = _parse_guard(p2_guard)
     from mootcourt.abstain import TRIGGERS
 
@@ -512,7 +523,7 @@ def backtest(
         if name not in TRIGGERS:
             raise typer.BadParameter(f"--drop-trigger must be one of {', '.join(TRIGGERS)}; got {name!r}")
     variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg,
-                                tuple(drop_trigger or ()), admission, pairwise, contrasts)
+                                tuple(drop_trigger or ()), admission, pairwise, contrasts, exposure)
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
     sid = ensure_snapshot(df, ledger_path.parent)
@@ -576,6 +587,11 @@ def backtest(
         n_before = int((df["status"] == "admitted").sum())
         df = one_contrast_per_test_ledger(df)         # a view: the snapshot id above is the stored ledger's
         typer.echo(f"one contrast per test: {int((df['status'] == 'admitted').sum())} of {n_before} admitted contrasts kept")
+    if exposure == "cell-median":
+        from mootcourt.scale import cell_median_exposure_ledger
+
+        df = cell_median_exposure_ledger(df)         # a view: the snapshot id above is the stored ledger's
+        typer.echo("exposure fixed at the cell median: every row of a cell gets the cell's median planned exposure")
     if learning_curve is not None:
         from mootcourt.learning_curve import parse_fractions, run_learning_curve, write_learning_curve
 
@@ -595,8 +611,9 @@ def backtest(
     if effect_scale == "relative":
         from mootcourt.scale import relative_lift_ledger
 
-        df = relative_lift_ledger(df)          # after the snapshot id: this is a view for the cautionary run, not a new ledger
-        typer.echo("cautionary run: y is the relative lift in percent and s its standard error")
+        df = relative_lift_ledger(df, planned=(s_star == "prelaunch"))          # after the snapshot id: a view, not a new ledger
+        typer.echo("cautionary run: y is the relative lift in percent and s its standard error" if s_star == "realized" else
+                   "relative lift at planned precision: y is the relative lift in percent, s_star its planned standard error (s_star / c)")
     if s_star == "realized":
         typer.echo("cautionary run: the forecaster is given each row's realized standard error")
     with Heartbeat(f"backtest of {source}", delay=progress_after) as beat:

@@ -21,9 +21,18 @@ this repository. `make data` downloads the files, and every later run checks the
 - Former-staff columns (`square`, `significance`, `first_place`, `winner`, `updated_at`) are never read, as
   inputs or as labels. The loader reads an explicit list of twelve columns and the inventory lists those five by
   name only.
+- **The archive's 2024 randomization notice.** In June 2024 the archive's maintainers reported evidence of randomization
+  problems in about 22 percent of tests and discourage causal or confirmatory use of tests from 25 June 2013 to 10 January
+  2014 (https://upworthy.natematias.com/about-the-archive). The 2021 file used here has no flag column, so the loader applies
+  the date rule itself: a test that started from 2013-06-25 to 2014-01-10 inclusive (UTC, the earliest `created_at` of its
+  packages) gets the status `imbalance_flag` on every contrast, by default (docs/method.md call 275). On the exploratory file
+  1,050 of the 4,873 tests (21.5 percent) started in the window. Their rows are kept and counted, not scored: 2,587 contrasts
+  of 857 tests change status, 2,550 of them (848 tests) from `admitted`, which leaves 3,022 admitted tests and 10,903 admitted
+  contrasts. The earlier runs (run 7 and before) did not apply the rule; `include-randomization-window` is that configuration
+  and is kept as an ablation.
 - Discrepancies with the design spec, recorded as found on the real file:
-  - The file has no `problem` (randomization imbalance) column. The `imbalance_flag` status therefore never fires
-    on this file. That is a property of the file, not a result.
+  - The file has no `problem` (randomization imbalance) column. The `imbalance_flag` status therefore fires only through the
+    date rule above, never through a flag in the file. That is a property of the file, not a result.
   - The file has no named package id. Its unnamed first column is a unique, increasing integer index of the full
     archive. It is used as the package id for tie-breaking and for variant ids.
   - `created_at` has mixed precision (some values with milliseconds, some without) and no time zone. It is read as UTC.
@@ -99,7 +108,8 @@ Admission is a status. Rows are never deleted.
 2. `missing_text`: a headline is empty in either arm.
 3. `duplicate_arm`: same headline and same `eyecatcher_id` as the reference. The packages may differ in excerpt or lede, which are not the
    kind of change this project models.
-4. `imbalance_flag`: the problem flag is set in either arm (never fires on this file, see above).
+4. `imbalance_flag`: the problem flag is set in either arm (the file has no such column), or the test started from 2013-06-25 to
+   2014-01-10 inclusive, the window of the archive's June 2024 notice (see above and docs/method.md call 275). The date rule is on by default.
 5. `low_exposure`: fewer than 1000 impressions in either arm.
 6. `low_clicks`: fewer than 10 clicks in either arm, where the rate and its binomial standard error are unreliable.
 7. Otherwise `admitted`.
@@ -114,15 +124,18 @@ recorded in the row's feature record.
 
 Upworthy: 4,873 tests and 17,793 contrasts (22,666 packages minus one reference per test).
 
-| status | rows |
-|---|---|
-| admitted | 13,453 |
-| duplicate_arm | 3,321 |
-| low_clicks | 991 |
-| low_exposure | 28 |
-| single_arm, missing_text, imbalance_flag | 0 |
+| status | rows, date rule on (run 8) | rows, rule off (run 7) |
+|---|---|---|
+| admitted | 10,903 | 13,453 |
+| duplicate_arm | 3,321 | 3,321 |
+| imbalance_flag | 2,587 | 0 |
+| low_clicks | 975 | 991 |
+| low_exposure | 7 | 28 |
+| single_arm, missing_text | 0 | 0 |
 
-Admitted by cell: headline_only 7,593; image_only 5,369; both 491.
+Admitted by cell, rule on: headline_only 6,142; image_only 4,371; both 390 (rule off: 7,593; 5,369; 491).
+The 2,587 flagged contrasts belong to 857 tests; 1,050 tests in all started in the window, and the others have only contrasts that
+`duplicate_arm` already excludes or a single package.
 
 The `low_clicks` status is new. Seven of the 35 rows that were `low_exposure` in the first run (a zero-click arm with at least 1000
 impressions) moved to it, and 984 rows that were admitted in the first run have an arm with fewer than 10 clicks.

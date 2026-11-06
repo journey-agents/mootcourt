@@ -105,6 +105,32 @@ def _metrics(scores: pd.DataFrame, rung: str, B: int, seed: int, base_ref: pd.Se
     }
 
 
+def _paired_vs_p1(scores: pd.DataFrame, rung: str, B: int, seed: int) -> dict | None:
+    """One run's paired difference of ``rung`` from P1 on the held-out rows both scored (X9 of the paper v2 plan): the mean of
+    ``logscore(rung) - logscore(P1)`` (nats per row) and of ``brier(P1) - brier(rung)`` (positive when the rung is better), with the by-test resample
+    draws of each (same seed as the skill draws)."""
+    g, ref = scores[scores["rung"] == rung], scores[scores["rung"] == "P1"]
+    if g.empty or ref.empty or rung == "P1":
+        return None
+    r = ref.drop_duplicates("row_id").set_index("row_id")
+    g = g.drop_duplicates("row_id")
+    d_log = g["logscore"].to_numpy(float) - r["logscore"].reindex(g["row_id"]).to_numpy(float)
+    d_brier = r["brier_event"].reindex(g["row_id"]).to_numpy(float) - g["brier_event"].to_numpy(float)
+    out: dict = {"n_paired": int(len(g))}
+    for name, d in (("logscore", d_log), ("brier", d_brier)):
+        ok = np.isfinite(d)
+        if not ok.any():
+            out[name], out[name + "_draws"] = None, np.full(B, np.nan)
+            continue
+        part = g.loc[ok, ["test_id"]].assign(d=d[ok])
+        ts = hs._TestSums(part, {"d": part["d"].to_numpy(float)})
+        counts = ts.resample_counts(B, np.random.default_rng(seed))
+        den = counts @ ts.counts
+        out[name] = float(part["d"].mean())
+        out[name + "_draws"] = (counts @ ts.sums["d"]) / np.where(den > 0, den, np.nan)
+    return out
+
+
 def run_learning_curve(
     ledger: pd.DataFrame,
     source: str,
@@ -125,6 +151,7 @@ def run_learning_curve(
         raise ValueError("the full history cannot be fitted, so the curve has no reference base rate")
     base_ref = ref_scores.drop_duplicates("row_id").set_index("row_id")["brier_base"].astype(float)
     runs: dict[tuple[float, str], list] = {}
+    paired: dict[tuple[float, str], list] = {}
     n_fit: dict[float, list[int]] = {}
     n_hist_tests: dict[float, list[int]] = {}
     held_rows = held_tests = 0
@@ -146,6 +173,9 @@ def run_learning_curve(
                 if rung_kind(rung) == "baseline":  # the direction baselines have no Brier score: their columns would be empty (round 00 nit)
                     continue
                 runs.setdefault((f, rung), []).append(_metrics(sc, rung, B, seed, base_ref))
+                pr = _paired_vs_p1(sc, rung, B, seed)
+                if pr is not None:
+                    paired.setdefault((f, rung), []).append(pr)
             if verbose:
                 print(f"learning curve: fraction {f}, seed {k}: {len(sub)} rows kept", flush=True)
     rows = []
@@ -189,6 +219,17 @@ def run_learning_curve(
                 "brier": avg("brier"),
             }
         )
+    paired_rows = []
+    for (f, rung), ps in sorted(paired.items()):
+        row = {"fraction": f, "rung": rung, "n_seeds": len(ps), "n_paired": ps[0]["n_paired"]}
+        for name in ("logscore", "brier"):
+            vals = [p[name] for p in ps if p[name] is not None]
+            draws = np.nanmean(np.stack([p[name + "_draws"] for p in ps]), axis=0) if vals else np.full(B, np.nan)
+            lo, hi = np.nanpercentile(draws, [LEVEL_LO, LEVEL_HI]) if np.isfinite(draws).any() else (np.nan, np.nan)
+            row[f"{name}_minus_p1" if name == "logscore" else "brier_gain_over_p1"] = float(np.mean(vals)) if vals else None
+            row[f"{name}_lo"], row[f"{name}_hi"] = lo, hi
+            row[f"{name}_seed_sd"] = float(np.std(vals, ddof=1)) if len(vals) > 1 else None
+        paired_rows.append(row)
     return clean(
         {
             "source": source,
@@ -212,6 +253,11 @@ def run_learning_curve(
                 "decision_target": gates.get("decision_target"),
             },
             "rows": rows,
+            "paired_vs_p1": paired_rows,
+            "paired_vs_p1_note": "per fraction, the mean over seeds of the paired difference from P1 on the same held-out rows: logscore_minus_p1 is "
+                                 "the rung's log score minus P1's (nats per row, above zero is better), brier_gain_over_p1 is P1's Brier score "
+                                 "minus the rung's (above zero is "
+                                 "better); the interval is the percentile interval of the seed-averaged by-test resamples, as for the skill",
         }
     )
 

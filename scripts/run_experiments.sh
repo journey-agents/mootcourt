@@ -123,6 +123,18 @@ pool lc-asos $MOOT backtest --source asos --learning-curve 0.05,0.1,0.25,0.5,1 -
 pool replay-upworthy $PY scripts/replay_weekly.py --source upworthy --verbose
 pool replay-asos $PY scripts/replay_weekly.py --source asos --verbose
 pool cautionary $MOOT backtest --source upworthy --origins quarterly --effect-scale relative --s-star realized --bootstrap 500
+# X1 of the paper v2 plan (D1): the ablation that includes the randomization window, run 7's configuration. Its own ledger (the Upworthy rows rebuilt from the
+# downloaded file with the date rule off; RUN7_UPWORTHY_DIGEST, when set, makes the stage fail unless that ledger is run 7's), fitted and back-tested with the
+# main run's challengers and seed; it sits in reports/include-randomization-window like the planted ledgers sit in positive-control.
+WIN="$ROOT/include-randomization-window"
+act mkdir -p "$WIN/data/ledger"
+pool window-ablation bash -c "$PY scripts/rebuild_upworthy_ledger.py --window off --ledger '$LEDGER' --out '$WIN/data/ledger/ledger.parquet' \
+  ${RUN7_UPWORTHY_DIGEST:+--expect-digest $RUN7_UPWORTHY_DIGEST} && cp '$ROOT/gates.json' '$WIN/gates.json' && \
+  $MOOT fit --source upworthy --ledger '$WIN/data/ledger/ledger.parquet' --models-dir '$WIN/models' --reports-dir '$WIN' && \
+  $MOOT backtest --source upworthy --origins quarterly --challenger gbm --challenger local_eb --challenger text_lr --ledger '$WIN/data/ledger/ledger.parquet' \
+  --reports-dir '$WIN' --models-dir '$WIN/models' --seed 0"
+# X7: the gates simulated at each stratum's own dependence, from the main run's score table
+for src in upworthy asos; do pool "gates-strata-$src" $PY scripts/gates_by_stratum.py --source "$src"; done
 for src in upworthy asos; do
   while IFS= read -r flags; do
     name=$(echo "$flags" | tr ' ' '_' | tr -d '-')
@@ -137,7 +149,15 @@ wait
 act mkdir -p "$PC/rungs/n2000/data/ledger"
 act cp "$PC/data/ledger.parquet" "$PC/rungs/n2000/data/ledger/ledger.parquet"          # the run folder is read as a data root: data/ledger/ledger.parquet
 act cp "$PC"/backtest-synthetic-*.json "$PC"/backtest-synthetic-*.md "$PC"/scores-synthetic-*.parquet "$PC/rungs/n2000/"
-for src in upworthy asos; do pool "extras-$src" $PY scripts/paper_extras.py --source "$src" --verbose; done
+EXTRAS_UP=()          # X1 reads run 7's main report and score table to check that the ablation regenerates them
+[ -n "${RUN7_REPORT:-}" ] && EXTRAS_UP+=(--run7-report "$RUN7_REPORT")
+[ -n "${RUN7_SCORES:-}" ] && EXTRAS_UP+=(--run7-scores "$RUN7_SCORES")
+pool extras-upworthy $PY scripts/paper_extras.py --source upworthy --verbose ${EXTRAS_UP[@]+"${EXTRAS_UP[@]}"}
+pool extras-asos $PY scripts/paper_extras.py --source asos --verbose
+wait
+# X10 (paper v2 plan, docs/superpowers/plans/2026-11-06-x10-sizing-design.md): the sizing evaluation merges into the Upworthy extras report, so it starts once that
+# report exists and runs beside the synthetic extras; SKIP_SIZING=1 leaves it out (the stage then logs "skipped"),
+pool sizing-upworthy bash -c "if [ '${SKIP_SIZING:-0}' = 1 ]; then echo skipped; else $PY scripts/paper_extras.py --source upworthy --sizing-only; fi"
 pool extras-synthetic $PY scripts/paper_extras.py --source synthetic --verbose --jobs 4 --positive-control-runs "$PC/rungs/n2000,$PC11"
 wait
 for src in upworthy asos synthetic; do

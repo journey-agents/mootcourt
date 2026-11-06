@@ -54,6 +54,13 @@ the inputs it came from:
   abstained on and the run issued. Input: the run's ``tables.released_rows`` (or, for a report written before that table existed, the
   two score tables).
 
+* The keys of the paper version 2 plan (run 8; ``mootcourt.extras_v2`` holds the functions, each with its definition): ``randomization_window`` (X1),
+  ``effect_scale_choices`` (X2), ``exposure_fixed`` (X3), ``prior_family_scale`` (X4), ``ranking_paired`` and
+  ``positive_control_decision_value`` (X5), ``abstention_composition`` (X6), ``gates_by_stratum`` (X7, from ``scripts/gates_by_stratum.py``),
+  ``drift_matched_null`` (X8), ``within_origin_auc_by_year`` and ``lowest_reliability_bin`` (X9). They read the stored score tables and reports
+  (the ablations of run 8 for X1 to X3), never refit a model, and are None
+  where an input is missing. They are additive: every key above is unchanged.
+
 Use: ``python scripts/paper_extras.py --source upworthy`` (and asos, synthetic). Nothing is written but the report.
 """
 
@@ -70,6 +77,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from mootcourt import extras_v2
 from mootcourt.abstain import TRIGGERS
 from mootcourt.benchmark import HEADLINE_WORDS
 from mootcourt.config import TOP_M_NEIGHBORS, Z
@@ -1531,6 +1539,9 @@ def build_extras(
     positive_control_runs=(),
     positive_control_lift: float = 1.0,
     jobs: int = 1,
+    ablation_dir=None,
+    run7_report=None,
+    run7_scores=None,
 ) -> dict:
     """The paper-extras document of one source. The synthetic-ledger values are computed for the synthetic source only."""
     reports_dir = Path(reports_dir)
@@ -1577,7 +1588,53 @@ def build_extras(
     doc["issued_ece_by_origin"] = issued_ece_by_origin(reports_dir, source, snapshot_id)
     doc["guard_pairs_rows"] = guard_pairs_rows(reports_dir, source, snapshot_id, ledger, verbose=verbose)
     doc["cautionary_deciles"] = cautionary_deciles(reports_dir, source, snapshot_id)
+    doc.update(version2_keys(source, ledger, reports_dir, snapshot_id, positive_control_runs=positive_control_runs, ablation_dir=ablation_dir,
+                             run7_report=run7_report, run7_scores=run7_scores, verbose=verbose))
     return clean(doc)
+
+
+def version2_keys(source: str, ledger: pd.DataFrame, reports_dir, snapshot_id: str, *, positive_control_runs=(), ablation_dir=None, run7_report=None,
+                  run7_scores=None, verbose: bool = False) -> dict:
+    """The keys of the paper version 2 plan (X1 and X4 to X9, ``mootcourt.extras_v2``), additive to every key above; None where an input is
+    missing."""
+    reports_dir = Path(reports_dir)
+    scores_path = reports_dir / f"scores-{source}-{snapshot_id}.parquet"
+    scores = pd.read_parquet(scores_path) if scores_path.is_file() else None
+    out: dict = {}
+
+    errors: dict = {}
+
+    def step(name, fn):
+        t0 = time.perf_counter()
+        try:
+            out[name] = fn()
+        except (KeyError, ValueError) as exc:
+            # a score table or report that lacks a column the analysis needs: the key is None and the error is recorded
+            out[name] = None
+            errors[name] = f"{type(exc).__name__}: {exc}"
+        if verbose:
+            print(f"{name}: {time.perf_counter() - t0:.1f} s" + (f" ERROR {errors[name]}" if name in errors else ""), flush=True)
+
+    abl = Path(ablation_dir) if ablation_dir else reports_dir / "include-randomization-window"
+    step("randomization_window", lambda: extras_v2.randomization_window_summary(reports_dir, source, snapshot_id, ledger, ablation_dir=abl,
+                                                                               run7_report=run7_report, run7_scores=run7_scores))
+    step("effect_scale_choices", lambda: extras_v2.effect_scale_choices(reports_dir, source, snapshot_id))
+    step("exposure_fixed", lambda: extras_v2.exposure_fixed(reports_dir, source, snapshot_id))
+    step("prior_family_scale", lambda: extras_v2.prior_family_scale(ledger, source))
+    step("ranking_paired", lambda: None if scores is None else extras_v2.ranking_paired(scores))
+    step("abstention_composition", lambda: None if scores is None else extras_v2.abstention_composition(scores))
+    step("drift_matched_null", lambda: None if scores is None else extras_v2.drift_matched_null(scores))
+    step("within_origin_auc_by_year", lambda: None if scores is None else extras_v2.within_origin_auc_by_year(scores))
+    step("lowest_reliability_bin", lambda: None if scores is None else extras_v2.lowest_reliability_bin(scores))
+    gates_f = reports_dir / f"gates-by-stratum-{source}-{snapshot_id}.json"
+    step("gates_by_stratum", lambda: None if scores is None or not gates_f.is_file()
+         else extras_v2.gates_by_stratum(scores, json.loads(gates_f.read_text(encoding="utf-8"))))
+    step(
+        "positive_control_decision_value",
+        lambda: extras_v2.positive_control_decision_value(list(positive_control_runs)) if source == "synthetic" and positive_control_runs else None,
+    )
+    out["version2_errors"] = errors
+    return out
 
 
 def main() -> int:
@@ -1631,6 +1688,24 @@ def main() -> int:
         action="store_true",
         help="add only guard_gain_diagnostic to the existing synthetic report (seeds = --sensitivity-seeds)",
     )
+    ap.add_argument(
+        "--ablation-dir",
+        default=None,
+        help="X1: the folder of the ablation run that includes the randomization window (default: reports/include-randomization-window)",
+    )
+    ap.add_argument("--run7-report", default=None, help="X1: run 7's main backtest report of this source, to check that the ablation regenerates it")
+    ap.add_argument("--run7-scores", default=None, help="X1: run 7's score table of this source")
+    ap.add_argument(
+        "--sizing-only",
+        action="store_true",
+        help="X10: add only sizing_evaluation (docs/superpowers/plans/2026-11-06-x10-sizing-design.md) to the existing report of --source (Upworthy)",
+    )
+    ap.add_argument("--sizing-bootstrap", type=int, default=200, help="X10: by-test resamples of the nonparametric world in part B")
+    ap.add_argument(
+        "--version2-only",
+        action="store_true",
+        help="add only the keys of the paper version 2 plan to the existing report of --source; every other key is left as it is",
+    )
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args()
     ledger_path = Path(args.ledger)
@@ -1661,6 +1736,29 @@ def main() -> int:
             doc["positive_control_rungs"] = clean(
                 positive_control_rungs(pc_runs, strength=args.positive_control_lift, B=args.positive_control_bootstrap, verbose=args.verbose)
             )
+        out.write_text(json.dumps(doc, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+        print(f"computed in {time.perf_counter() - t0:.1f} s")
+        print(f"wrote {out}")
+        return 0
+    if args.sizing_only:
+        from mootcourt import sizing
+
+        out = Path(args.reports_dir) / f"paper-extras-{args.source}-{sid}.json"
+        doc = json.loads(out.read_text(encoding="utf-8"))
+        sc_path = Path(args.reports_dir) / f"scores-{args.source}-{sid}.parquet"
+        t0 = time.perf_counter()
+        evaluation = sizing.sizing_evaluation(df, pd.read_parquet(sc_path), B=args.sizing_bootstrap) if args.source == "upworthy" else None
+        doc["sizing_evaluation"] = clean(evaluation)
+        out.write_text(json.dumps(doc, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+        print(f"computed in {time.perf_counter() - t0:.1f} s")
+        print(f"wrote {out}")
+        return 0
+    if args.version2_only:
+        out = Path(args.reports_dir) / f"paper-extras-{args.source}-{sid}.json"
+        doc = json.loads(out.read_text(encoding="utf-8")) if out.is_file() else {"header": {"source": args.source, "snapshot_id": sid}}
+        t0 = time.perf_counter()
+        doc.update(clean(version2_keys(args.source, df, args.reports_dir, sid, positive_control_runs=pc_runs, ablation_dir=args.ablation_dir,
+                                       run7_report=args.run7_report, run7_scores=args.run7_scores, verbose=args.verbose)))
         out.write_text(json.dumps(doc, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
         print(f"computed in {time.perf_counter() - t0:.1f} s")
         print(f"wrote {out}")
@@ -1713,6 +1811,9 @@ def main() -> int:
         positive_control_runs=pc_runs,
         positive_control_lift=args.positive_control_lift,
         jobs=args.jobs,
+        ablation_dir=args.ablation_dir,
+        run7_report=args.run7_report,
+        run7_scores=args.run7_scores,
     )
     out = Path(args.reports_dir) / f"paper-extras-{args.source}-{sid}.json"
     out.parent.mkdir(parents=True, exist_ok=True)

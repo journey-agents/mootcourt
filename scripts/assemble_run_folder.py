@@ -29,7 +29,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-TOP = ("backtest-*.json", "learning-curve-*.json", "replay-*.json", "paper-extras-*.json")
+TOP = ("backtest-*.json", "learning-curve-*.json", "replay-*.json", "paper-extras-*.json", "gates-by-stratum-*.json")
+# the ablation run that includes the randomization window (paper v2 plan, X1); its report sits in this folder
+WINDOW_DIR = "include-randomization-window"
 TOP_FILES = (
     "card-latency.json",
     "gates.json",
@@ -52,6 +54,8 @@ def collect(reports: Path) -> dict[str, Path]:
     for pat in ("backtest-*.json", "p2-guard-*.json"):
         for f in sorted((reports / "ablations").glob(pat)):
             out[f"ablations/{f.name}"] = f
+    for f in sorted((reports / WINDOW_DIR).glob("backtest-*.json")):
+        out[f"{WINDOW_DIR}/{f.name}"] = f
     pc = reports / "positive-control"
     for name in ("gates.json", "reliability-synthetic.json"):
         if (pc / name).is_file():
@@ -102,6 +106,8 @@ def _relative_name(path: Path) -> str:
     parent = path.parent
     if parent.name == "ablations":
         return f"ablations/{path.name}"
+    if parent.name == WINDOW_DIR:
+        return f"{WINDOW_DIR}/{path.name}"
     if parent.name == "positive-control":
         return f"positive-control/{path.name}"
     if parent.parent.name == "rungs":
