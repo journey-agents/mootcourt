@@ -86,6 +86,8 @@ from mootcourt.report import clean
 from mootcourt.storage import storage_paths
 
 SCHEMA_VERSION = 1
+SEEDS_12 = range(12)  # default seed sets (a range is immutable, so it is safe as an argument default)
+SEEDS_24 = range(24)
 GUARD_MULTIPLIERS = (1.0, 1.5, 2.0)
 TAIL_SIZES = (10_000, 100_000, 300_000)
 TAIL_CELL = "headline_only"
@@ -321,7 +323,7 @@ def _gain_record(frame: pd.DataFrame, strength: float, B: int, seed: int, level:
 def positive_control_sensitivity(
     strengths=SENSITIVITY_STRENGTHS,
     sizes=SENSITIVITY_SIZES,
-    seeds=range(12),
+    seeds=SEEDS_12,
     multiplier: float = 2.0,
     verbose: bool = False,
     held_share: float = SENSITIVITY_HELD_OUT_SHARE,
@@ -566,7 +568,7 @@ def positive_control_rungs(run_dirs, strength: float = 1.0, B: int = SENSITIVITY
 GAIN_DIAGNOSTIC_SIZES = (300, 1000, 3700, 11100)
 
 
-def guard_gain_diagnostic(sizes=GAIN_DIAGNOSTIC_SIZES, seeds=range(12), multiplier: float = 2.0, verbose: bool = False) -> dict:
+def guard_gain_diagnostic(sizes=GAIN_DIAGNOSTIC_SIZES, seeds=SEEDS_12, multiplier: float = 2.0, verbose: bool = False) -> dict:
     """In-selection gain, its standard error, their ratio and the share admitted, per ledger size, at planted lift zero (no signal)."""
     from mootcourt.features import FeatureSpace
     from mootcourt.predictors.p1 import P1Predictor
@@ -654,7 +656,7 @@ def split_tests(ledger: pd.DataFrame, seed: int, share: float = 0.15) -> tuple[p
 
 
 def guard_held_out_gain(
-    sizes=GAIN_DIAGNOSTIC_SIZES, seeds=range(12), multiplier: float = 2.0, held_share: float = 0.15, verbose: bool = False
+    sizes=GAIN_DIAGNOSTIC_SIZES, seeds=SEEDS_12, multiplier: float = 2.0, held_share: float = 0.15, verbose: bool = False
 ) -> dict:
     """In-selection gain against the gain on held-out tests, per ledger size, with no planted signal.
 
@@ -761,7 +763,7 @@ def guard_held_out_gain(
 PERIOD_CONTROL_SIZES = (3700, 11100)
 
 
-def guard_period_control(sizes=PERIOD_CONTROL_SIZES, seeds=range(12), multiplier: float = 2.0, verbose: bool = False) -> dict:
+def guard_period_control(sizes=PERIOD_CONTROL_SIZES, seeds=SEEDS_12, multiplier: float = 2.0, verbose: bool = False) -> dict:
     """The guard's admissions at planted lift zero under three treatments of P1's period level (review N2, REV-N2-001).
 
     * ``old_rule``: every period counts, including a partial tail period (the rule before method call 199), P1 as fitted;
@@ -839,7 +841,7 @@ def guard_period_control(sizes=PERIOD_CONTROL_SIZES, seeds=range(12), multiplier
 FRACTIONS = (0.85, 0.90, 0.95, 1.00)
 
 
-def guard_fit_fraction_stability(n_tests: int = 3700, seeds=range(12), multiplier: float = 2.0, verbose: bool = False) -> dict:
+def guard_fit_fraction_stability(n_tests: int = 3700, seeds=SEEDS_12, multiplier: float = 2.0, verbose: bool = False) -> dict:
     """Share of cells admitted when the same ledgers are fit on the first f of the rows in time order, and on a random 85 percent."""
     from mootcourt.features import FeatureSpace
     from mootcourt.predictors.p1 import P1Predictor
@@ -1526,14 +1528,14 @@ def build_extras(
     *,
     experiments_dir=None,
     snapshot_id: str,
-    guard_seeds=range(24),
+    guard_seeds=SEEDS_24,
     guard_tests: int = 300,
     tail_sizes=TAIL_SIZES,
     tail_top_m: int = TOP_M_NEIGHBORS,
     tail_queries: int = 60,
     tail_seed: int = 0,
     verbose: bool = False,
-    sensitivity_seeds=range(12),
+    sensitivity_seeds=SEEDS_12,
     sensitivity_sizes=SENSITIVITY_SIZES,
     sensitivity_strengths=SENSITIVITY_STRENGTHS,
     positive_control_runs=(),

@@ -47,3 +47,7 @@ Confirmed unchanged: audience multiple 20 primary with 5 and 100 beside it; powe
 ## Implementation (ready for the go)
 
 `src/mootcourt/sizing.py` (pure functions with tests: the gain, the optimizer checked against the closed form, the grid mixing distribution, the three rules, exact regret checked by simulation), the report key `sizing_evaluation` in `scripts/paper_extras.py` (parts A and B, upworthy only), and a stage `sizing-upworthy` of the driver after the main backtest. Part A needs only the score table. Part B refits P1 at each of nine origins (about 20 s each) and the mixing distribution 27 times at 200 resamples each; the estimate is 15 to 25 minutes on one core.
+
+## Note on the exposure-only policy of X5
+
+The plan names an exposure-only (s*) policy but not its direction. The builder fixed "smallest planned standard error first" (the most precise tests first) before the run and reports the opposite order (`s_star_desc`) beside it; the report key names both.
