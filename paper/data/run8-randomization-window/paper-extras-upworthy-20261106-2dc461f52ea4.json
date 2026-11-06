@@ -97,6 +97,215 @@
   "definition": "skill = 1 - sum(Brier) / sum(base Brier) of the group's rows; the base rate is the trailing-window rate of the row's cell at its origin, the same number for every row of a stratum",
   "level": 0.9
  },
+ "calibration_within_period": {
+  "definition": "per origin-and-cell stratum, forecasts shifted on the logit scale so their mean equals the realized event rate (oracle level correction, a diagnostic); ECE before and after in the same 10 equal-width bins; null for the after value draws outcomes from the shifted forecasts, clustered at their measured design effect; added after X8's result was seen",
+  "draws": 500,
+  "min_rows": 50,
+  "rungs": {
+   "P0": {
+    "by_stratum_group": {
+     "ALL": {
+      "after_percentile_in_null": 0.0,
+      "design_effect_after": 1.5904892252335305,
+      "ece_after": 3.761120938000022e-05,
+      "ece_before": 0.019362814238838275,
+      "null_mean": 0.0036968791459434827,
+      "rows": 10697,
+      "share_of_ece_removed": 0.9980575546035783,
+      "tests": 2949
+     },
+     "both": {
+      "after_percentile_in_null": 0.4,
+      "design_effect_after": 1.9219546634840183,
+      "ece_after": 0.0010873705313950532,
+      "ece_before": 0.03298953149090364,
+      "null_mean": 0.024029691640912718,
+      "rows": 370,
+      "share_of_ece_removed": 0.9670389216744445,
+      "tests": 173
+     },
+     "headline_only": {
+      "after_percentile_in_null": 0.0,
+      "design_effect_after": 1.6692593153079482,
+      "ece_after": 8.392028644614491e-13,
+      "ece_before": 0.02544609034564869,
+      "null_mean": 0.005429098223258021,
+      "rows": 5966,
+      "share_of_ece_removed": 0.9999999999670204,
+      "tests": 1770
+     },
+     "image_only": {
+      "after_percentile_in_null": 0.0,
+      "design_effect_after": 1.3981323952627693,
+      "ece_after": 1.4927060199379496e-12,
+      "ece_before": 0.009884549933286406,
+      "null_mean": 0.004245356569636572,
+      "rows": 4361,
+      "share_of_ece_removed": 0.9999999998489859,
+      "tests": 1198
+     }
+    },
+    "shift_logit_median": -0.23727164487354457,
+    "shift_logit_range": [
+     -0.8531458413563087,
+     18.65957265126781
+    ],
+    "strata_shifted": 18,
+    "unshifted_strata": [
+     {
+      "cell": "both",
+      "origin": "2014-01-01T00:00:00+00:00",
+      "rows": 21
+     },
+     {
+      "cell": "both",
+      "origin": "2014-04-01T00:00:00+00:00",
+      "rows": 43
+     },
+     {
+      "cell": "both",
+      "origin": "2015-04-01T00:00:00+00:00",
+      "rows": 6
+     }
+    ]
+   },
+   "P1": {
+    "by_stratum_group": {
+     "ALL": {
+      "after_percentile_in_null": 63.7,
+      "design_effect_after": 1.589552606728412,
+      "ece_after": 0.004207953465618641,
+      "ece_before": 0.01400440143760596,
+      "null_mean": 0.0037396954735493346,
+      "rows": 10697,
+      "share_of_ece_removed": 0.6995263607397713,
+      "tests": 2949
+     },
+     "both": {
+      "after_percentile_in_null": 18.1,
+      "design_effect_after": 1.8307929082936747,
+      "ece_after": 0.012688637123868217,
+      "ece_before": 0.060403791870262506,
+      "null_mean": 0.024823857863798787,
+      "rows": 370,
+      "share_of_ece_removed": 0.7899364140727897,
+      "tests": 173
+     },
+     "headline_only": {
+      "after_percentile_in_null": 46.7,
+      "design_effect_after": 1.6746800046031833,
+      "ece_after": 0.004986173959555371,
+      "ece_before": 0.018476971534997583,
+      "null_mean": 0.005434478619873105,
+      "rows": 5966,
+      "share_of_ece_removed": 0.7301411678796514,
+      "tests": 1770
+     },
+     "image_only": {
+      "after_percentile_in_null": 20.9,
+      "design_effect_after": 1.394795595626856,
+      "ece_after": 0.0024237946900221145,
+      "ece_before": 0.006589085662804264,
+      "null_mean": 0.00466039494635056,
+      "rows": 4361,
+      "share_of_ece_removed": 0.6321500714879815,
+      "tests": 1198
+     }
+    },
+    "shift_logit_median": -0.11432731018430786,
+    "shift_logit_range": [
+     -0.8922009184243507,
+     0.565147418055858
+    ],
+    "strata_shifted": 18,
+    "unshifted_strata": [
+     {
+      "cell": "both",
+      "origin": "2014-01-01T00:00:00+00:00",
+      "rows": 21
+     },
+     {
+      "cell": "both",
+      "origin": "2014-04-01T00:00:00+00:00",
+      "rows": 43
+     },
+     {
+      "cell": "both",
+      "origin": "2015-04-01T00:00:00+00:00",
+      "rows": 6
+     }
+    ]
+   },
+   "P2": {
+    "by_stratum_group": {
+     "ALL": {
+      "after_percentile_in_null": 51.0,
+      "design_effect_after": 1.5881390244595543,
+      "ece_after": 0.003633935809671324,
+      "ece_before": 0.013517740333324008,
+      "null_mean": 0.0037602405927850977,
+      "rows": 10697,
+      "share_of_ece_removed": 0.731172835099301,
+      "tests": 2949
+     },
+     "both": {
+      "after_percentile_in_null": 18.1,
+      "design_effect_after": 1.830792908293675,
+      "ece_after": 0.012688637123868217,
+      "ece_before": 0.06040379187026248,
+      "null_mean": 0.024823857863798787,
+      "rows": 370,
+      "share_of_ece_removed": 0.7899364140727896,
+      "tests": 173
+     },
+     "headline_only": {
+      "after_percentile_in_null": 34.1,
+      "design_effect_after": 1.6723488133362798,
+      "ece_after": 0.004024244211031379,
+      "ece_before": 0.015674633385531444,
+      "null_mean": 0.005533705503761295,
+      "rows": 5966,
+      "share_of_ece_removed": 0.7432639021244363,
+      "tests": 1770
+     },
+     "image_only": {
+      "after_percentile_in_null": 20.9,
+      "design_effect_after": 1.394795595626856,
+      "ece_after": 0.0024237946900221158,
+      "ece_before": 0.0065890856628042765,
+      "null_mean": 0.00466039494635056,
+      "rows": 4361,
+      "share_of_ece_removed": 0.632150071487982,
+      "tests": 1198
+     }
+    },
+    "shift_logit_median": -0.07063652861688752,
+    "shift_logit_range": [
+     -0.8922009184243507,
+     0.565147418055858
+    ],
+    "strata_shifted": 18,
+    "unshifted_strata": [
+     {
+      "cell": "both",
+      "origin": "2014-01-01T00:00:00+00:00",
+      "rows": 21
+     },
+     {
+      "cell": "both",
+      "origin": "2014-04-01T00:00:00+00:00",
+      "rows": 43
+     },
+     {
+      "cell": "both",
+      "origin": "2015-04-01T00:00:00+00:00",
+      "rows": 6
+     }
+    ]
+   }
+  },
+  "seed": 0
+ },
  "cautionary_deciles": {
   "inputs": {
    "decile_of": "realized standard error s, pandas qcut into 10 bins",

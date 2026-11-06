@@ -13,7 +13,7 @@ reports: a rounded comment cannot vouch for a double-rounded number (round 03). 
 ``source_resolution(paper_dir, run_dir)``: every path in a ``% src`` line (a run-folder path, ``paper/data/``, ``tables/``, ``src/mootcourt/``,
 ``DATA.md``, ``data/CHECKSUMS`` or an absolute path) must exist. A line that names no JSON report is counted apart (``nojson``) and is not a failure.
 
-    python scripts/paper_audit.py [--paper paper] [--run paper/data/run6-forward-chaining]    # exit 1 on any unmatched number or missing path
+    python scripts/paper_audit.py [--paper paper] [--run paper/data/run8-randomization-window]    # exit 1 on any unmatched number or missing path
 """
 from __future__ import annotations
 

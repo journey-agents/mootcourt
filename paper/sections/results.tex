@@ -6,11 +6,11 @@ Every number in this section is rendered from a report JSON file of the final ru
 
 \subsection{A cautionary run: ratio metrics and realized precision}
 \label{sec:cautionary}
-% src: $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--effect-scale-relative+s-star-realized.json header.scored_rows 13247 (same rows and origins as the main run; tables/cautionary-upworthy.tex)
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json header.scored_rows 13247 (same rows and origins as the main run; tables/cautionary-upworthy.tex)
 The first run of the protocol defined the effect as relative lift against the earliest-created arm and handed the forecaster each row's realized standard error; both common choices that let post-launch information into a pre-launch question (Table~\ref{tab:cautionary} and Figure~\ref{fig:cautionary}, Appendix~\ref{app:tables}). Table~\ref{tab:fmt-cautionary} holds the two extreme deciles.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json cautionary_deciles.rows rung=P1; tables/cautionary-upworthy.tex; $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--effect-scale-relative+s-star-realized.json tables.aggregate[cell=ALL,rung=P1] brier_skill, header.bootstrap_resamples 500; tables/fmt-cautionary.tex
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json cautionary_deciles.rows rung=P1; tables/cautionary-upworthy.tex; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json tables.aggregate[cell=ALL,rung=P1] brier_skill, header.bootstrap_resamples 500; tables/fmt-cautionary.tex
 \caption{The cautionary run on the headline archive: relative lift at realized precision, read at the two extreme deciles of the realized standard error $s$, condensed from Table~\ref{tab:cautionary} (the extras key \texttt{cautionary\_deciles}, rung P1). Columns: mean effect in percent, the significant-positive rate in percent, P1's mean $\psig$ in percent, and P1's coverage of the 90 percent interval. The last row is the Brier skill of P1 against the base rate over all deciles, with its 90 percent bootstrap interval by test.}
 \label{tab:fmt-cautionary}
 \input{tables/fmt-cautionary}
@@ -21,30 +21,30 @@ Without the table by precision the negative Brier skill reads as a ledger with n
 
 \subsection{Skill ladder on the headline archive}
 \label{sec:ladder-results}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json header.origins_scored 9, header.tests_scored 3797
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 9, header.tests_scored 3797
 Table~\ref{tab:main-upworthy} gives the pooled scores over nine quarterly origins and 3,797 scored tests; Table~\ref{tab:fmt-p1-cells} reads the empirical-Bayes prior (P1) against P0 and by cell.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate rung=P1 family_size 52, tables.score_by_origin; tables/main-upworthy.tex; tables/fmt-p1-cells.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate rung=P1 family_size 52, tables.score_by_origin; tables/main-upworthy.tex; tables/fmt-p1-cells.tex
 \caption{P1 against P0 on the headline archive, pooled and by cell, condensed from Table~\ref{tab:main-upworthy} (the report keys \texttt{tables.aggregate} and, for the origin row, \texttt{tables.score\_by\_origin}). Columns: scored tests, the log score per row of P1 and of P0, P1's Brier skill against the base rate with the 90 percent bootstrap interval by test, and the pooled interval after adjustment for the 52 intervals of the table. A blank is a value the text does not read.}
 \label{tab:fmt-p1-cells}
 \resizebox{\columnwidth}{!}{%
 \input{tables/fmt-p1-cells}}
 \end{table}
 
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P0 logscore -1.0059; rung=P1 logscore -0.8566 (difference 0.149); $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.9566 (0.049 above P0, so 0.100 of the 0.149 is the Student-t family)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P0 logscore -1.0059; rung=P1 logscore -0.8566 (difference 0.149); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.9566 (0.049 above P0, so 0.100 of the 0.149 is the Student-t family)
 P1 improves the log score over P0 by 0.149 nats, of which 0.100 are the Student-t family (Section~\ref{sec:ablations}).
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.8122, coverage_90 0.8945
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.8122, coverage_90 0.8945
 Its 80 percent intervals cover 81 percent of outcomes.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P1 coverage_90 0.8945
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P1 coverage_90 0.8945
 Its 90 percent intervals cover 89 percent, and its pooled Brier skill against the base rate is indistinguishable from zero.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.score_by_origin cell=ALL: P1 above P0 at all nine origins; narrowest margin at origin 2015-01-01
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_origin cell=ALL: P1 above P0 at all nine origins; narrowest margin at origin 2015-01-01
 P1 is above P0 on the log score at every origin, by the narrowest margin at January 2015, so the first half of the first hypothesis holds.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate rung=P1 family_size 52; cell=headline_only ece 0.0172, ece_percentile 100.0
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate rung=P1 family_size 52; cell=headline_only ece 0.0172, ece_percentile 100.0
 The per-cell intervals are descriptive (two excursions among the table's 52 are what the null predicts), and the headline-only cell's ECE at the 100th percentile reads its negative interval as slight miscalibration as well.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P1 direction_ceiling 0.8229, n_decisive 3526; tables/fmt-direction.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P1 direction_ceiling 0.8229, n_decisive 3526; tables/fmt-direction.tex
 \caption{Direction of the winner on the headline archive, pooled (the report key \texttt{tables.aggregate}, cell ALL). Rows: the ladder's P1, the \emph{always\_reference} baseline, the text classifier and P2. Columns: direction accuracy over all rows, against a ceiling of 0.823; direction accuracy on the 3,526 decisive rows; and the direction AUC. A blank is a value the text does not read.}
 \label{tab:fmt-direction}
 \input{tables/fmt-direction}
@@ -53,7 +53,7 @@ The per-cell intervals are descriptive (two excursions among the table's 52 are 
 The ladder is no better on direction than \emph{always\_reference}, the creation-order effect P1 learns through the cell mean. The text models carry a little direction signal apart from it, and the text classifier is the lowest rung on direction accuracy itself (Table~\ref{tab:fmt-direction}).
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] family_size 52; tables/main-upworthy.tex; tables/fmt-challengers.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] family_size 52; tables/main-upworthy.tex; tables/fmt-challengers.tex
 \caption{The three challengers on the same origins and rows as the ladder, raw against recalibrated on visible rows, condensed from Table~\ref{tab:main-upworthy} (the report key \texttt{tables.aggregate}, cell ALL). Columns: Brier skill against the base rate, raw and recalibrated, each with its 90 percent bootstrap interval by test, and the recalibrated interval adjusted for the 52 intervals of that table where the text reads it. The prior's Brier skill is in Table~\ref{tab:fmt-p1-cells}.}
 \label{tab:fmt-challengers}
 \resizebox{\columnwidth}{!}{%
@@ -64,26 +64,26 @@ Two of the challengers score below the prior raw and the text classifier a littl
 
 Discrimination apart from skill (Tables~\ref{tab:discrimination} and~\ref{tab:discrimination-within}, Appendix~\ref{app:tables}) is as thin as the Brier skills say:
 \begin{itemize}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] auc_event: rung=P0 0.5475 (0.5294, 0.5655), rung=text_lr+cal 0.5822 (0.5673, 0.5979) (tables/discrimination-upworthy.tex; docs/method.md call 189)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] auc_event: rung=P0 0.5475 (0.5294, 0.5655), rung=text_lr+cal 0.5822 (0.5673, 0.5979) (tables/discrimination-upworthy.tex; docs/method.md call 189)
 \item Pooled, the AUC for the significant-positive event runs from 0.547 for P0 to 0.582 for the recalibrated text classifier.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] resolution_event rung=text_lr+cal 0.000638, rung=P0 0.000501, rung=P1 0.000269, rung=P2 0.000308 (tables/discrimination-upworthy.tex; docs/method.md call 189)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] resolution_event rung=text_lr+cal 0.000638, rung=P0 0.000501, rung=P1 0.000269, rung=P2 0.000308 (tables/discrimination-upworthy.tex; docs/method.md call 189)
 \item The Murphy resolution term, read as a ranking (Section~\ref{sec:protocol}), puts the recalibrated text classifier first but P0 above P1 and P2, because the pooled figure credits every rung with the movement of the base rate between cells and origins, which P0 has by construction.
 \item Within each origin and cell stratum the event AUC rises from P0 through P1 to the text classifier (Table~\ref{tab:fmt-auc-within}).
 \item Within the origins of the headline-only cell the same table sets P1 against the recalibrated text classifier: inside the largest cell the prior ranks tests at chance for the significant-positive event and the text models a little above it.
 \end{itemize}
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate key auc_event_within, header.bootstrap_resamples 500 (tables/discrimination-within-upworthy.tex; docs/method.md call 203); tables/fmt-auc-within.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate key auc_event_within, header.bootstrap_resamples 500 (tables/discrimination-within-upworthy.tex; docs/method.md call 203); tables/fmt-auc-within.tex
 \caption{Event AUC within strata on the headline archive (\texttt{tables.aggregate}, key \texttt{auc\_event\_within}; Table~\ref{tab:discrimination-within}, Appendix~\ref{app:tables}). Rows: the rung. Columns: all cells, within each origin and cell stratum, and the headline-only cell, within its origins. Each estimate carries its 90 percent bootstrap interval by test; P0 is constant within a stratum, so it has none, and a blank is a figure the text does not read.}
 \label{tab:fmt-auc-within}
 \input{tables/fmt-auc-within}
 \end{table}
 
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs.summary pairs_admitted 8, pairs_in_selection 27; tables.p2_selection[].selection forward in every row of $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json (docs/method.md call 206; src/mootcourt/config.py P2_SELECTION_DEFAULT; the headers of this run carry no p2_selection key, reports written since round 02 do)
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_admitted 8, pairs_in_selection 27; tables.p2_selection[].selection forward in every row of $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json (docs/method.md call 206; src/mootcourt/config.py P2_SELECTION_DEFAULT; the headers of this run carry no p2_selection key, reports written since round 02 do)
 The precedent rung (P2) runs behind the admission guard of Section~\ref{sec:method}, its weight and bandwidth chosen by forward chaining. The guard admits a weight above zero in 8 of the 27 cell-origin pairs (Table~\ref{tab:selection-upworthy}, Appendix~\ref{app:tables}). Tables~\ref{tab:fmt-guard} and~\ref{tab:fmt-p2-vs-p1} set P2 against P1 and against itself without the guard.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs.summary pairs_in_selection 27; $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json header.origins_scored 9, tables.p2_selection_by_cell; $RUN6/ablations/p2-guard-upworthy.json unguarded, guarded; tables/fmt-guard.tex
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_in_selection 27; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 9, tables.p2_selection_by_cell; $RUN6/ablations/p2-guard-upworthy.json unguarded, guarded; tables/fmt-guard.tex
 \caption{P1 against P2 with the guard on and with it off, pooled on the headline archive (the report key \texttt{tables.aggregate}, cell ALL, and the guard ablation \texttt{ablations/p2-guard-upworthy.json}). Rows: the cell-origin pairs admitted out of 27, the same count by cell out of each cell's 9 origins, the log score per row, and the Brier skill against the base rate with its 90 percent bootstrap interval by test.}
 \label{tab:fmt-guard}
 \resizebox{\columnwidth}{!}{%
@@ -91,20 +91,20 @@ The precedent rung (P2) runs behind the admission guard of Section~\ref{sec:meth
 \end{table}
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json header.scored_rows 13247; $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs.summary pooled_rows 6114, pairs_admitted 8; tables/guard-pairs-upworthy.tex, tables/guard-pairs-rows.tex; tables/fmt-p2-vs-p1.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.scored_rows 13247; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pooled_rows 6114, pairs_admitted 8; tables/guard-pairs-upworthy.tex, tables/guard-pairs-rows.tex; tables/fmt-p2-vs-p1.tex
 \caption{Paired log-score differences in nats on the headline archive, with the 90 percent bootstrap interval by test where the report gives one. Columns: over all the rows a line covers, 13,247 when pooled (the report key \texttt{tables.score\_by\_origin} for the origin lines), and over the rows of the eight admitted pairs, 6,114 when pooled, or of that origin's admitted pair on an origin line (Tables~\ref{tab:guard-pairs} and~\ref{tab:guard-pairs-rows}, the extras keys \texttt{guard\_pairs} and \texttt{guard\_pairs\_rows}). Rows: P2 minus P1, pooled and by origin; the location and scale parts of the pooled difference; and P2 guarded minus P2 unguarded, which is descriptive. A positive difference favours the first named.}
 \label{tab:fmt-p2-vs-p1}
 \resizebox{\columnwidth}{!}{%
 \input{tables/fmt-p2-vs-p1}}
 \end{table}
 
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P2 brier_skill 0.0019 against rung=P1 0.0015 (within 0.001)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P2 brier_skill 0.0019 against rung=P1 0.0015 (within 0.001)
 Pooled, P2's Brier skill is within 0.001 of the prior's.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P2 logscore_vs_p1 0.0004; $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs_rows.rows origin 2013-10-01 mean_diff -0.0276, origin 2014-04-01 mean_diff 0.0184
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P2 logscore_vs_p1 0.0004; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs_rows.rows origin 2013-10-01 mean_diff -0.0276, origin 2014-04-01 mean_diff 0.0184
 The largest differences by origin are October 2013, where the forward validation blocks are smallest, and April 2014; on the admitted pairs' own rows those two differences are clear of zero with opposite signs, so the pooled plus 0.0004 is a cancellation of two measurable movements, not an absence of movement.
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs.summary pairs_admitted 8, mean_in_selection_gain 0.0097, pairs_with_negative_realized 1 (tables/guard-pairs-upworthy.tex)
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_admitted 8, mean_in_selection_gain 0.0097, pairs_with_negative_realized 1 (tables/guard-pairs-upworthy.tex)
 Table~\ref{tab:guard-pairs} (Appendix~\ref{app:tables}) lists the eight admitted pairs, whose mean in-selection gain is 0.0097 nats.
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs_rows.pooled.decisive rows 1646 mean_diff -0.0049 against non_decisive rows 4468 mean_diff 0.0031 (tables/guard-pairs-rows.tex; docs/method.md call 233)
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs_rows.pooled.decisive rows 1646 mean_diff -0.0049 against non_decisive rows 4468 mean_diff 0.0031 (tables/guard-pairs-rows.tex; docs/method.md call 233)
 Table~\ref{tab:guard-pairs-rows} splits the pooled difference row by row into its two parts and shows the loss concentrated on the decisive rows.
 
 The guard limits how much noise the selection fits; it does not promise that P2 beats P1 on later tests. With the family fixed there is no loss for the guard to recover and no gain to find: pooled, the admitted precedents move the out-of-time log score by less than the noise of selecting them, two of the eight pairs moving it measurably in opposite directions, the precedent mean carrying a little and the scale term giving most of it back, which is how the pooled difference decomposes.
@@ -115,18 +115,18 @@ The guard limits how much noise the selection fits; it does not promise that P2 
 The power simulation puts the release gate in tests for each Brier skill at the archive's base rate (other rates in Table~\ref{tab:gates}, Appendix~\ref{app:tables}), and Table~\ref{tab:fmt-gates} sets each stratum against it.
 
 \begin{table*}[t]\centering\scriptsize
-% src: $RUN6/gates.json by_base_rate 0.09 by_target 0.90 n_200 175, n_400 250, rows_per_test 3.5, icc 0.13 (tables/gates.tex); $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate rung=P1 decidable_by_tests, gate_cell_n_200, gate_cell_n_400 (docs/method.md call 205); tables/fmt-gates.tex
+% src: $RUN6/gates.json by_base_rate 0.09 by_target 0.90 n_200 175, n_400 250, rows_per_test 3.5, icc 0.13 (tables/gates.tex); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate rung=P1 decidable_by_tests, gate_cell_n_200, gate_cell_n_400 (docs/method.md call 205); tables/fmt-gates.tex
 \caption{Release gates on the headline archive at its base rate of 0.09 and a decision target of 0.90 (\texttt{gates.json}, Table~\ref{tab:gates}, and the report keys \texttt{decidable\_by\_tests} and \texttt{gate\_cell\_*} of \texttt{tables.aggregate}, rung P1). Rows: the simulation, then each stratum at the dependence the row names. Columns: scored tests, rows per test and within-test correlation (blank where the row is read at the simulation's dependence, the first row's values), the number of tests the gate asks for at a Brier skill of 0.20 and of 0.10, and the skills at which the stratum's claims are decidable.}
 \label{tab:fmt-gates}
 \input{tables/fmt-gates}
 \end{table*}
 
 The pooled table and the two larger cells clear the larger gate, so their claims are decidable at both skills. The smallest cell clears only the smaller gate at the simulated dependence and neither gate at its own, so it is undecidable at both skills.
-% src: $RUN6/gates.json by_base_rate 0.09 by_target 0.90 n_400 250; $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate rung=P1 cell=ALL brier_skill_lo -0.0018, brier_skill_hi 0.0048
+% src: $RUN6/gates.json by_base_rate 0.09 by_target 0.90 n_400 250; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate rung=P1 cell=ALL brier_skill_lo -0.0018, brier_skill_hi 0.0048
 Decidable does not mean skilled: a skill of 0.10 would have been resolved with probability 0.90 had it existed, and the interval that came back bounds the prior's skill well below the smaller target.
 
 \begin{table*}[t]\centering\scriptsize
-% src: $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.9566 against the main run's -0.8566 (0.100 nats, the normal-family penalty of Section 4.2)
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.9566 against the main run's -0.8566 (0.100 nats, the normal-family penalty of Section 4.2)
 \caption{Headline archive, pooled over origins and cells. Intervals are bootstrap by test; \emph{+cal} rows are the challengers recalibrated on visible rows and carry a probability only; \emph{decid.} is decidability at the release gate in tests at the archive's base rate. The boosted model and the local comparison set issue a normal predictive, so their log scores carry the 0.100-nat family penalty of Section~\ref{sec:method}.}
 \label{tab:main-upworthy}
 \resizebox{0.85\textwidth}{!}{\input{tables/main-upworthy}}
@@ -137,31 +137,31 @@ Decidable does not mean skilled: a skill of 0.10 would have been resolved with p
 Table~\ref{tab:fmt-calibration} gives the ladder's calibration error and pooled coverage.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P1 design_effect 1.4326 (tables/ece-upworthy.tex, tables/main-upworthy.tex); tables/fmt-calibration.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P1 design_effect 1.4326 (tables/ece-upworthy.tex, tables/main-upworthy.tex); tables/fmt-calibration.tex
 \caption{Calibration and pooled coverage of the ladder on the headline archive (the report key \texttt{tables.aggregate}, cell ALL; Table~\ref{tab:main-upworthy}). Columns: expected calibration error (ECE), its percentile under the null that draws the contrasts of a test together, with a latent correlation solved to the measured design effect of 1.43, over 500 draws against a rejection line of 95; the equal-mass ECE with its percentile where the text reads it; and the coverage of the 80 and 90 percent intervals.}
 \label{tab:fmt-calibration}
 \input{tables/fmt-calibration}
 \end{table}
 
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P1 ece_percentile 100.0, rung=P2 ece_percentile 100.0, rung=P1 ece_equal_mass_percentile 100.0
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P1 ece_percentile 100.0, rung=P2 ece_percentile 100.0, rung=P1 ece_equal_mass_percentile 100.0
 P1 and P2 sit at the 100th percentile, as does the equal-mass ECE, against the rejection line of 95 (Section~\ref{sec:protocol}).
 
 \begin{itemize}
 \item Above 0.1 the forecasts run ahead of the outcomes in P1's two upper bins (Table~\ref{tab:fmt-upper-bins}), so the departure is one-sided.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P0 ece 0.0188, ece_percentile 100.0
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P0 ece 0.0188, ece_percentile 100.0
 \item P0's own error sits at the 100th percentile too, so part of the departure is a trailing base rate behind the event rate of the period it forecasts.
 \item The percentile is the verdict on the issued probabilities; the claim kept is that they are scored, gated and audited.
 \end{itemize}
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.reliability_bins rung=P1 bin 1 lo 0.1 hi 0.2, bin 2 lo 0.2 hi 0.3 (tables/calibration-upworthy.tex); tables/fmt-upper-bins.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.reliability_bins rung=P1 bin 1 lo 0.1 hi 0.2, bin 2 lo 0.2 hi 0.3 (tables/calibration-upworthy.tex); tables/fmt-upper-bins.tex
 \caption{P1's two upper reliability bins on the headline archive (\texttt{tables.reliability\_bins}, rung P1). Rows: the bins of P1's significance probability above 0.1, abstained rows included; no row falls higher than the second. Columns: the rows in the bin, the mean forecast, and the share with a significant positive result. These counts and shares carry no interval.}
 \label{tab:fmt-upper-bins}
 \input{tables/fmt-upper-bins}
 \end{table}
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.calibration_by_precision, tables.coverage_by_se_ratio (tables/calibration-upworthy.tex, tables/coverage-ratio-upworthy.tex); tables/fmt-deciles.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.calibration_by_precision, tables.coverage_by_se_ratio (tables/calibration-upworthy.tex, tables/coverage-ratio-upworthy.tex); tables/fmt-deciles.tex
 \caption{P1 across two sets of deciles on the headline archive. Each cell is the lowest-to-highest range over the ten deciles, except the ratio row's coverage, which falls from the first decile to the last (Tables~\ref{tab:calibration-upworthy} and~\ref{tab:coverage-ratio}; the report keys \texttt{tables.calibration\_by\_precision} and \texttt{tables.coverage\_by\_se\_ratio}). Rows: deciles of planned exposure and deciles of the ratio of realized to planned standard error, with the span of that ratio. Columns: P1's mean $\psig$ against the realized event rate, and the coverage of the 90 percent interval.}
 \label{tab:fmt-deciles}
 \resizebox{\columnwidth}{!}{%
@@ -171,7 +171,7 @@ P1 and P2 sit at the 100th percentile, as does the equal-mass ECE, against the r
 Table~\ref{tab:fmt-deciles} gives P1's mean $\psig$, the realized rate and the 90 percent coverage within deciles of planned exposure (Table~\ref{tab:calibration-upworthy} and Figure~\ref{fig:coverage-exposure}, Appendix~\ref{app:tables}).
 Within deciles of the ratio of realized to planned standard error the picture changes (Figure~\ref{fig:coverage}). The ratio spans so wide a range because the forecaster fixes the click-through level at the cell median and the realized level moves. P1's coverage falls from the most precise decile to the least, while its mean $\psig$ stays flat and the event rate rises. The intervals are wrong in both directions row by row and average to nominal, and the absolute-difference scale still couples the effect with the level, in a milder form than the cautionary run. A scale mixture over the uncertain level might adapt to this and is not built (Section~\ref{sec:limitations}).
 
-% Figure 1: paper/figures/coverage-se-upworthy.pdf, drawn by scripts/paper_figures.py from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.coverage_by_se_ratio (coverage_80, coverage_90 by rung and decile) and tables.aggregate[cell=ALL] coverage_80, coverage_90 (open markers); every plotted value is listed in paper/figures/figures.json.
+% Figure 1: paper/figures/coverage-se-upworthy.pdf, drawn by scripts/paper_figures.py from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.coverage_by_se_ratio (coverage_80, coverage_90 by rung and decile) and tables.aggregate[cell=ALL] coverage_80, coverage_90 (open markers); every plotted value is listed in paper/figures/figures.json.
 \begin{figure}[t]\centering
 \includegraphics[width=0.62\columnwidth]{figures/coverage-se-upworthy.pdf}
 \caption{Coverage of the 80 percent (left) and 90 percent (right) intervals for the observed estimate by decile of the ratio of realized to planned standard error, headline archive, for P0, P1 and P2 (Table~\ref{tab:coverage-ratio}). Dashed grey is the nominal level; open markers are the pooled coverage.}
@@ -183,7 +183,7 @@ Within deciles of the ratio of realized to planned standard error the picture ch
 Tables~\ref{tab:decision-upworthy} and~\ref{tab:decision-intervals-upworthy} (Appendix~\ref{app:tables}) and Figure~\ref{fig:decision} answer the launching team's question; Table~\ref{tab:fmt-decision} sets the policies side by side at a quarter of the tests.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL budget=0.25, family_size 6 (tables/decision-intervals-upworthy.tex; docs/method.md calls 200 and 201); tables/fmt-decision.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value origin=ALL budget=0.25, family_size 6 (tables/decision-intervals-upworthy.tex; docs/method.md calls 200 and 201); tables/fmt-decision.tex
 \caption{Policies at a budget of a quarter of the tests on the headline archive, pooled over origins, condensed from Table~\ref{tab:decision-intervals-upworthy} (the report key \texttt{tables.decision\_value}, origin ALL). Columns: the fraction of the realized positive lift captured; the difference from random order, read for the arm-count policy only; the difference from the arm-count-matched random order with its 90 percent bootstrap interval by test; and that interval after adjustment for the six rungs of the table. The matched baseline differs by rung, so its row gives the range.}
 \label{tab:fmt-decision}
 \resizebox{\columnwidth}{!}{%
@@ -194,16 +194,16 @@ Random order's captured fraction is exact. At this budget a policy that ranks te
 
 At budgets of a tenth and a half:
 \begin{itemize}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL budget=0.10 policy=p_win rung=text_lr diff_matched 0.0322 (0.0211, 0.0451); budget=0.50 rung=text_lr diff_matched 0.0362 (0.0167, 0.0509); rung=P1 captured_fraction 0.099848 at 0.10 and 0.500704 at 0.50
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value origin=ALL budget=0.10 policy=p_win rung=text_lr diff_matched 0.0322 (0.0211, 0.0451); budget=0.50 rung=text_lr diff_matched 0.0362 (0.0167, 0.0509); rung=P1 captured_fraction 0.099848 at 0.10 and 0.500704 at 0.50
 \item The text classifier stays the best rung and the prior stays at the baseline (plus 0.032 and plus 0.036 over the matched baseline for the text classifier; Table~\ref{tab:decision-intervals-upworthy}).
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL captured_fraction budget=0.10: rung=P2 0.118706, rung=GBM 0.117685, rung=local_eb 0.114871; budget=0.50: rung=local_eb 0.534494, rung=GBM 0.518520, rung=P2 0.513992
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value origin=ALL captured_fraction budget=0.10: rung=P2 0.118706, rung=GBM 0.117685, rung=local_eb 0.114871; budget=0.50: rung=local_eb 0.534494, rung=GBM 0.518520, rung=P2 0.513992
 \item The order of the middle rungs changes with the budget.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL rung=GBM diff_matched_adjusted_lo 0.000987 at 0.10 and -0.007167 at 0.50
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value origin=ALL rung=GBM diff_matched_adjusted_lo 0.000987 at 0.10 and -0.007167 at 0.50
 \item The boosted model's adjusted bound clears zero at a tenth and not at a half.
 \end{itemize}
 The fifth hypothesis therefore holds for the text classifier and the boosted model, is unresolved for the precedent rung and the local comparison set, and fails for the prior, which ranks by cell only; against the random order the plan names, the precedent rung would be confirmed as well (Section~\ref{sec:verdicts}).
 
-% Figure 2: paper/figures/decision-value-upworthy.pdf, drawn by scripts/paper_figures.py from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value rows origin=ALL (policy p_win captured_fraction with its interval per rung and budget; policy random, exact; policy oracle); every plotted value is listed in paper/figures/figures.json.
+% Figure 2: paper/figures/decision-value-upworthy.pdf, drawn by scripts/paper_figures.py from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value rows origin=ALL (policy p_win captured_fraction with its interval per rung and budget; policy random, exact; policy oracle); every plotted value is listed in paper/figures/figures.json.
 \begin{figure}[t]\centering
 \includegraphics[width=0.62\columnwidth]{figures/decision-value-upworthy.pdf}
 \caption{Fraction of the total positive lift captured by choosing the top 10, 25 and 50 percent of each period's tests by each rung's win probability, headline archive, pooled over origins, with 90 percent intervals by test (Table~\ref{tab:decision-intervals-upworthy}). Dashed grey is random order ($K/n$, exact); the star is the oracle. P0 and P1 rank by cell only.}

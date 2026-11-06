@@ -447,3 +447,36 @@ def test_exposure_fixed_reads_forecasts_equal_to_rounding_noise_as_ties(tmp_path
     out = ex.exposure_fixed(tmp_path, "upworthy", "S")
     assert out["auc_event_within_ties_exact"]["fixed"]["P1"] == pytest.approx(0.5)  # noise in the last place is a tie
     assert out["auc_event_within_ties_exact"]["main"]["P1"] != pytest.approx(0.5, abs=1e-6)
+
+
+def test_calibration_within_period_removes_a_level_error_but_not_a_shape_error():
+    rng = np.random.default_rng(31)
+    rows = []
+    for o in range(4):
+        level = 0.05 + 0.04 * o  # the event rate moves between origins
+        for t in range(300):
+            p = float(np.clip(0.1 + rng.normal(0, 0.03), 0.02, 0.4))  # the forecast does not follow it
+            rows.append(
+                {
+                    "origin": pd.Timestamp("2014-01-01", tz="UTC") + pd.Timedelta(days=90 * o),
+                    "cell": "a",
+                    "test_id": f"{o}-{t}",
+                    "rung": "R",
+                    "p_sig": p,
+                    "event": float(rng.random() < level),
+                }
+            )
+    sc = pd.DataFrame(rows)
+    out = ex.calibration_within_period(sc, rungs=("R",), draws=100)["rungs"]["R"]
+    a = out["by_stratum_group"]["ALL"]
+    assert a["ece_after"] < a["ece_before"] and a["share_of_ece_removed"] > 0.2 and out["strata_shifted"] == 4
+    # shifted forecasts have the realized mean in every stratum
+    p_s, shift = ex.logit_shift_to_mean(np.array([0.1, 0.2, 0.3]), 0.4)
+    assert p_s.mean() == pytest.approx(0.4, abs=1e-6) and shift > 0
+    # a stratum with too few rows is listed and left as it is
+    small = sc[sc["origin"] == sc["origin"].min()].head(10)
+    out2 = ex.calibration_within_period(pd.concat([sc, small.assign(origin=pd.Timestamp("2016-01-01", tz="UTC"))]), rungs=("R",), draws=50)["rungs"][
+        "R"
+    ]
+    assert len(out2["unshifted_strata"]) == 1
+    assert ex.calibration_within_period(sc.drop(columns="event")) is None

@@ -51,3 +51,7 @@ Confirmed unchanged: audience multiple 20 primary with 5 and 100 beside it; powe
 ## Note on the exposure-only policy of X5
 
 The plan names an exposure-only (s*) policy but not its direction. The builder fixed "smallest planned standard error first" (the most precise tests first) before the run and reports the opposite order (`s_star_desc`) beside it; the report key names both.
+
+## Note on X8b
+
+X8b (`calibration_within_period`, method call 279) was added on 6 November 2026 after X8's result was seen and before X8b's own result existed, because the X8 null does not separate a level error from a shape error.

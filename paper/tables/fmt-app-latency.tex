@@ -4,14 +4,14 @@
 how the card is produced & median & at most \\
 \midrule
 % src: $RUN6/card-latency.json in_process_ms.p50; $RUN6/card-latency.json in_process_ms.max
-in process, bundle preloaded & 29.6 & 47.6 \\
+in process, bundle preloaded & 17.9 & 39.4 \\
 % src: $RUN6/card-latency.json in_process_lambda_0.5_ms.p50; $RUN6/card-latency.json in_process_lambda_0.5_ms.max
-same, weight forced to 0.5 & 29.7 & 31.9 \\
+same, weight forced to 0.5 & 33.6 & 45.7 \\
 % src: $RUN6/card-latency.json service_ms.p50; $RUN6/card-latency.json service_ms.max
-through the loopback service & 31.9 & 40.5 \\
+through the loopback service & 20.9 & 33.7 \\
 % src: $RUN6/card-latency.json cli_fresh_process_ms.p50
-fresh process & 1.26 s &  \\
+fresh process & 1.43 s &  \\
 % src: $RUN6/card-latency.json bundle_load_ms
-of which loading the bundle & 60 &  \\
+of which loading the bundle & 57 &  \\
 \bottomrule
 \end{tabular}

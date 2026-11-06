@@ -236,6 +236,9 @@ def app_driver(r):
         group("the {word} deployment-shaped ablations", "ablation-asos-*"),
         group("the cautionary run", "cautionary"),
         group("the {word} guard comparisons", "guard-compare-*"),
+        group("the ablation that includes the randomization window", "window-ablation"),
+        group("the gates at each stratum's own dependence, {word} archives", "gates-strata-*"),
+        group("the sizing evaluation", "sizing-*"),
     ]
     outside_names = sorted(used)
     timed_patterns = ("gates", "fit-*", "main-*", "audit-*", "latency")

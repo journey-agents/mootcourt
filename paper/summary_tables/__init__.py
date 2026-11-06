@@ -14,6 +14,7 @@ import os
 import pkgutil
 import sys
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
@@ -31,6 +32,14 @@ HAND_TYPED = {
     "tab:schema": "field names of the exchange format",
     "tab:commands": "command lines",
     "tab:checksums": "file sizes and digests from data/CHECKSUMS.json",
+}
+
+
+# Tables the text pass of paper version 2 will input; tests/test_summary_tables.py requires every other table to be input, and these not yet to be,
+# so a name leaves this set when its \\input arrives.
+NOT_INPUT_YET = {
+    "fmt-window", "fmt-leak-choices", "fmt-exposure-fixed", "fmt-prior-family", "fmt-ranking-paired", "fmt-abstention-composition",
+    "fmt-gates-strata", "fmt-drift-null", "fmt-learning-paired", "fmt-auc-by-year", "fmt-sizing", "fmt-assurance",
 }
 
 
@@ -171,6 +180,23 @@ def build_all(root, out, write):
             write(out, f"{t.name}.tex", t.source or f"the report keys named above each row ({mod.__name__.split('.')[-1]})", t.render())
             built.append(t.name)
     return built
+
+
+def month_year(origin):
+    """An origin's date as running text, for a label chosen by code: ``2015-01-01...`` is January 2015."""
+    return datetime.fromisoformat(origin).strftime("%B %Y")
+
+
+def narrowest_origin(rep):
+    """The origin after burn-in where P1 leads P0 by least on log score; an origin where P1 does not lead fails the build, since the tables say above at every one."""
+    def score(origin, rung):
+        return rep.get(f"tables.score_by_origin[origin={origin},rung={rung}].logscore")
+
+    origins = [o["origin"] for o in rep.get("tables.origins") if not o["burn_in"]]
+    margins = {o: score(o, "P1") - score(o, "P0") for o in origins}
+    if min(margins.values()) <= 0:
+        raise ValueError("P1 is not above P0 at every origin after burn-in")
+    return min(margins, key=margins.get)
 
 
 derived = _cell   # a cell computed in Python from report leaves: ``derived(fmt(a + b), rep.ref(key_a), rep.ref(key_b))``

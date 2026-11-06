@@ -1,6 +1,6 @@
 """Draw the paper's figures from Moot Court report JSON files.
 
-Usage: python scripts/paper_figures.py [--run paper/data/run7-tie-rank] [--out paper/figures]
+Usage: python scripts/paper_figures.py [--run paper/data/run8-randomization-window] [--out paper/figures]
                                        [--cautionary paper/data/run1-relative-lift]
 
 One vector PDF per figure (and per archive where the data is per archive), written next to ``figures.json``, which lists every file
@@ -25,7 +25,7 @@ import numpy as np  # noqa: E402
 from scipy.stats import binom  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_RUN = os.path.join("paper", "data", "run7-tie-rank")
+DEFAULT_RUN = os.path.join("paper", "data", "run8-randomization-window")
 DEFAULT_OUT = os.path.join("paper", "figures")
 SOURCES = ("upworthy", "asos", "synthetic")
 LADDER = ("P0", "P1", "P2")

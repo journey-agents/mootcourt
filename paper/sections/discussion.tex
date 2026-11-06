@@ -4,7 +4,7 @@ The headline archive is the main archive because it is the largest public ledger
 
 \paragraph{RQ1: can a team predict a new experiment's result from its concluded experiments?} Partly.
 \begin{itemize}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL] rung=P1 logscore -0.8566, rung=P0 logscore -1.0059 (0.149 nats)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P1 logscore -0.8566, rung=P0 logscore -1.0059 (0.149 nats)
 \item The prior predicts the next result's distribution (0.149 nats better than the base rate). A power calculation would use it on that scale; this paper does not test that use.
 \item It has no pooled skill on which test will be significant (0.001, interval spanning zero).
 \item On the deployment-shaped archive the answer is unknown: the archive is undecidable at every gate.
@@ -12,21 +12,21 @@ The headline archive is the main archive because it is the largest public ledger
 
 \paragraph{RQ2: how, and how well?} Fit the prior per cell with measurement error, replay in time order, and read each claim at its gate.
 \begin{itemize}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL budget=0.25 policy=p_win rung=text_lr diff_matched 0.039459 (0.021737, 0.054063)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value origin=ALL budget=0.25 policy=p_win rung=text_lr diff_matched 0.039459 (0.021737, 0.054063)
 \item To choose tests, TF-IDF features of the two headlines give a little (3.9 points of captured lift over the arm-count-matched random order for a classifier) and a skill on significance whose interval spans zero after adjustment. It fails the planted control on skill, so that control neither validates nor explains this value.
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 0.000447 (-0.000297, 0.001191)
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 0.000447 (-0.000297, 0.001191)
 \item Precedents add nothing measurable on the pooled log score, at plus 0.0004 nats paired on the full backtest (Section~\ref{sec:ladder-results}), and rank tests slightly better; the backtest is weak here, because a planted signal of this size returns a gain inside that interval (Section~\ref{sec:synthetic-results}).
 \item Abstention did not filter quality on this archive (Section~\ref{sec:verdicts}); we keep it as a statement about evidence, so the card prints beside every forecast the latest gated skill of its cell, or the pooled figure, labelled, when the cell is undecidable.
 \end{itemize}
 
 \paragraph{RQ3: what improves the prediction?} Among the settings tested:
 \begin{itemize}
-% src: $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.956628; $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[cell=ALL,rung=P1] logscore -0.856623 (0.100 nats)
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.956628; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] logscore -0.856623 (0.100 nats)
 \item A heavy-tailed predictive gained most: a normal prior costs 0.100 nats (Table~\ref{tab:fmt-prior-settings}). This run does not separate heavy-tailed effects from a mixture over the click-through level.
-% src: $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--p2-selection-loto.json tables.aggregate[cell=ALL,rung=P2] logscore -0.8606 against the main run's rung=P1 -0.8566 in $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json (0.004 nats below); $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json p2_selection_comparison guard_on.pooled difference 0.004403 (0.003085, 0.005704), guard_off.pooled difference 0.002425 (0.000644, 0.003927), bootstrap_resamples 500 (docs/method.md call 202; the extras rerun of round 02)
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-selection-loto.json tables.aggregate[cell=ALL,rung=P2] logscore -0.8606 against the main run's rung=P1 -0.8566 in $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json (0.004 nats below); $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p2_selection_comparison guard_on.pooled difference 0.004403 (0.003085, 0.005704), guard_off.pooled difference 0.002425 (0.000644, 0.003927), bootstrap_resamples 500 (docs/method.md call 202; the extras rerun of round 02)
 \item Choosing the precedent weight by forward chaining beats leave-one-test-out by plus 0.0044 nats (Section~\ref{sec:ablations}).
 \item Bandwidth, feature set, recency and pooling strength barely move the score (Tables~\ref{tab:fmt-p2-settings} and~\ref{tab:fmt-prior-settings}).
-% src: $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json rows rung=P2 skill 0.0299, rung=P1 0.0286 at n_fit_rows 2991.2 (unpaired; intervals overlap)
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=P2 skill 0.0299, rung=P1 0.0286 at n_fit_rows 2991.2 (unpaired; intervals overlap)
 \item A prior's level and spread arrive within a few hundred rows, so more history alone is unlikely to help much; on the learning curve P2 sits above P1 from 2,991 history rows, 0.030 against 0.029, with overlapping unpaired intervals (Section~\ref{sec:ablations}).
 \item Not tested, so these are candidates and not findings: recording planned exposure, stronger text models, a held-out scale term for the precedent rung, and team forecasts frozen before launch.
 \end{itemize}
@@ -38,7 +38,7 @@ The headline archive is the main archive because it is the largest public ledger
 \item Join outcomes weekly. The card abstains when evidence is thin, novel, stale or drifted, and anything above the prior must earn its place on a paired, gated comparison.
 \end{enumerate}
 \begin{itemize}
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals flagged weeks 4 of 111 (tables/replay-upworthy.tex)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals flagged weeks 4 of 111 (tables/replay-upworthy.tex)
 \item In replay the weekly loop flagged 4 of 111 weeks, all in the smallest cell in the archive's last month; expect early abstention on a young ledger.
 \item It flags weak evidence, and its audit checks a backtest for leakage. It does not find defects in a change: bugs, instrumentation errors and harm remain the job of tests, guardrails and the live experiment.
 \item The card prioritizes and sizes; the live test decides. A team that prioritizes by the forecast selects its own future ledger, so rows should record whether a card influenced the test (Section~\ref{sec:limitations}).

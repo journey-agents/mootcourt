@@ -1626,6 +1626,7 @@ def version2_keys(source: str, ledger: pd.DataFrame, reports_dir, snapshot_id: s
     step("ranking_paired", lambda: None if scores is None else extras_v2.ranking_paired(scores))
     step("abstention_composition", lambda: None if scores is None else extras_v2.abstention_composition(scores))
     step("drift_matched_null", lambda: None if scores is None else extras_v2.drift_matched_null(scores))
+    step("calibration_within_period", lambda: None if scores is None else extras_v2.calibration_within_period(scores))
     step("within_origin_auc_by_year", lambda: None if scores is None else extras_v2.within_origin_auc_by_year(scores))
     step("lowest_reliability_bin", lambda: None if scores is None else extras_v2.lowest_reliability_bin(scores))
     gates_f = reports_dir / f"gates-by-stratum-{source}-{snapshot_id}.json"

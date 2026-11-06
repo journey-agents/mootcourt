@@ -1,5 +1,5 @@
 """Summary tables, group results_b: abstention, drift, the deployment-shaped archive and the positive control (Sections 6.5 to 6.8)."""
-from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, n, pctw, v
+from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, month_year, n, pctw, v
 
 MAIN = "backtest-upworthy-*.json"
 EXTRAS = "paper-extras-upworthy-*.json"
@@ -10,9 +10,35 @@ CONTROL = "positive-control/backtest-synthetic-*.json"
 WORDS = {0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
 
 
+def _all_abstaining(main):
+    """The origins on which every card abstains, in words, with their dates; the burn-in origin always among them."""
+    origins = [o for o in main.get("tables.origins") if o["abstention_rate"] == 1.0]
+    burn = [o for o in origins if o["burn_in"]]
+    if len(burn) != 1:
+        raise ValueError("the wording names one burn-in origin among the origins that abstain on every row")
+    later = [month_year(o["origin"]) for o in origins if not o["burn_in"]]
+    words = " and ".join(["the burn-in origin", *later])
+    return origins, words
+
+
 def abstention_triggers(r):
     main, extras = r(MAIN), r(EXTRAS)
     row = "tables.abstention[cell=ALL]"
+    full, full_words = _all_abstaining(main)
+    full_keys = [main.ref(f"tables.origins[origin={o['origin']}].{f}") for o in full for f in ("n_scored", "abstention_rate")]
+    # The wording of the "when it fires" column, each clause checked against the reports, so a run that falsifies one stops the build.
+    if main.get(f"{row}.reliability") != sum(o["n_scored"] for o in full):
+        raise ValueError("the reliability trigger does not fire on exactly the rows of the origins that abstain on every row")
+    without_novelty = r("ablations/backtest-upworthy-*--drop-trigger-novelty.json")
+    full_origins = {o["origin"] for o in full}
+    if any(o["abstention_rate"] != 0 for o in without_novelty.get("tables.origins") if o["origin"] not in full_origins):
+        raise ValueError("a trigger other than novelty fires after the origins that abstain on every row")
+    burn_origins = {o["origin"] for o in main.get("tables.origins") if o["burn_in"]}
+    thin = [c for c in main.get("tables.p2_selection") if c["n_rows"] < 30]
+    if {c["origin"] for c in thin} != burn_origins or {c["cell"] for c in thin} != {c["cell"] for c in main.get("tables.abstention") if c["cell"] != "ALL" and c["support"] > 0}:
+        raise ValueError("the support trigger does not fire only at the burn-in origin, in the cells below 30 visible rows")
+    if main.get(f"{row}.instability") != 0:
+        raise ValueError("the row says the decision instability trigger never fires")
     # The cells where the support trigger fires, and the pairs (cell, origin) where the guard holds the precedent weight at zero.
     abst = [c for c in main.get("tables.abstention") if c["cell"] != "ALL"]
     two = derived(WORDS[sum(c["support"] > 0 for c in abst)], *[main.ref(f"tables.abstention[cell={c['cell']}].support") for c in abst])
@@ -21,9 +47,9 @@ def abstention_triggers(r):
     zero = derived(fmt(sum(c["share_lambda_zero"] * c["origins"] for c in sel), 0), *zero_keys)
     novelty_share = derived(fmt(main.get(f"{row}.novelty") / main.get(f"{row}.n") * 100, 1) + r"\%", main.ref(f"{row}.novelty"), main.ref(f"{row}.n"))
     return Table("fmt-abstention-triggers", r"lrrp{0.5\columnwidth}", ["trigger & rows & share & when it fires"], [
-        ["reliability", n(main, f"{row}.reliability"), "", "on the rows of the burn-in origin and never after"],
+        ["reliability", n(main, f"{row}.reliability"), "", derived(f"on every row of {full_words}, and never after", main.ref(f"{row}.reliability"), *full_keys)],
         ["support", n(main, f"{row}.support"), "", join("on rows of the burn-in origin, in the {} cells with fewer than 30 visible rows", two)],
-        ["novelty", n(main, f"{row}.novelty"), novelty_share, "the only trigger that fires after burn-in"],
+        ["novelty", n(main, f"{row}.novelty"), novelty_share, derived("the only trigger at the origins after those", without_novelty.ref("tables.origins"))],
         ["decision instability", n(main, f"{row}.instability"), "", join("never, being off by construction in the {} pairs where the precedent weight is zero", zero)],
         Raw(r"\midrule"),
         ["any trigger", n(extras, "issued_row_brier_skill.rungs.P2.abstained.n"), join(r"{}\%", v(main, f"{row}.rate", 1, scale=100)), "the pooled abstention rate"],
@@ -36,7 +62,7 @@ def abstention_rows(r):
 
     def row(label, side, log):
         key = f"issued_row_brier_skill.rungs.P2.{side}"
-        return [label, n(extras, f"{key}.n"), ci(extras, key, "brier_skill"), log, v(extras, f"{key}.event_rate", 2)]
+        return [label, n(extras, f"{key}.n"), ci(extras, key, "brier_skill", 4), log, v(extras, f"{key}.event_rate", 2)]
 
     return Table("fmt-abstention-rows", "lrrrr", [r"row set & rows & Brier skill (90\%) & log score & event rate"], [
         row("issued", "issued", v(main, f"{agg}.logscore_nonabstained")),
@@ -48,6 +74,12 @@ def abstention_rows(r):
 def abstention_released(r):
     main = r(MAIN)
     agg = "tables.aggregate[cell=ALL,rung=P2]"
+    full, full_words = _all_abstaining(main)
+    # The rows reliability alone withholds sit at the origins that abstain on every row: dropping it changes nothing elsewhere.
+    without = {o["origin"]: o["abstention_rate"] for o in r("ablations/backtest-upworthy-*--drop-trigger-reliability.json").get("tables.origins")}
+    moved = {o["origin"] for o in main.get("tables.origins") if abs(o["abstention_rate"] - without[o["origin"]]) > 1e-12}
+    if moved != {o["origin"] for o in full}:
+        raise ValueError("dropping the reliability trigger changes other origins than those the row names")
 
     def released(label, trigger):
         rep = r(f"ablations/backtest-upworthy-*--drop-trigger-{trigger}.json")
@@ -56,7 +88,7 @@ def abstention_released(r):
 
     return Table("fmt-abstention-released", "lrrr", [r"rows & count & log score (90\%) & direction accuracy (90\%)"], [
         released("released by novelty", "novelty"),
-        released("burn-in rows released by reliability alone", "reliability"),
+        released(f"released by reliability alone, at {full_words}", "reliability"),
         Raw(r"\midrule"),
         ["issued rows, main run", n(main, f"{agg}.n_nonabstained"), ci(main, agg, "logscore_nonabstained"), ci(main, agg, "direction_accuracy_nonabstained")],
     ])
@@ -67,8 +99,8 @@ def drift_year(r):
 
     def row(year, adjusted=False):
         key = f"tables.score_by_year[cell=ALL,rung=P1,year={year}]"
-        return [v(main, f"{key}.year", 0), n(main, f"{key}.n_tests"), ci(main, key, "brier_skill"),
-                lohi(main, f"{key}.adjusted_lo", f"{key}.adjusted_hi") if adjusted else "", v(main, f"{key}.event_rate")]
+        return [v(main, f"{key}.year", 0), n(main, f"{key}.n_tests"), ci(main, key, "brier_skill", 4),
+                lohi(main, f"{key}.adjusted_lo", f"{key}.adjusted_hi", 4) if adjusted else "", v(main, f"{key}.event_rate")]
 
     return Table("fmt-drift-year", "rrrrr", [r"year & tests & P1 Brier skill (90\%) & adjusted interval & significant-positive rate"], [
         row(2013), row(2014), row(2015, adjusted=True),

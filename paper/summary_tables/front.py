@@ -53,6 +53,8 @@ def glance(r):
     if max(abs(row["diff_matched"]) for row in _decision_rows(asos)) > 1e-9:
         raise ValueError("the ASOS row says all rungs hold a decision value of zero")
     held = "{}; guard holds $\\lambda$ at zero"
+    if any(row["lambda"] != 0 for a in (asos, syn) for row in a.get("tables.p2_selection")):
+        raise ValueError("the row says the guard holds the weight at zero")
 
     return Table("glance", "lrrr", [" & Upworthy (headline archive) & ASOS (deployment-shaped) & Synthetic (no planted text signal)"], [
         ["scored tests / rows", *[join("{} / {}", n(a, "header.tests_scored"), n(a, "header.scored_rows")) for a in archives]],

@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPER = ROOT / "paper"
-RUN = PAPER / "data" / "run7-tie-rank"
+RUN = PAPER / "data" / "run8-randomization-window"
 sys.path.insert(0, str(PAPER))
 import summary_tables as st  # noqa: E402
 
@@ -37,7 +37,7 @@ def test_each_summary_table_is_input_by_the_sources_and_its_number_rows_name_the
     names = [fn(reports).name for mod in st.group_modules() for fn in mod.TABLES]
     assert len(names) == len(set(names)) and len(names) >= 40
     for name in names:
-        assert f"tables/{name}" in tex, name
+        assert (f"tables/{name}" in tex) != (name in st.NOT_INPUT_YET), name
         text = (tmp_path / f"{name}.tex").read_text(encoding="utf-8")
         assert text == (PAPER / "tables" / f"{name}.tex").read_text(encoding="utf-8"), f"{name}: the committed table is stale"
         assert "% src: $RUN6/" in text or name in {"fmt-app-driver", "fmt-app-syn-truth"}, name

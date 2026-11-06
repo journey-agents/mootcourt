@@ -15,14 +15,17 @@ def p2_settings(r):
         on = r(on)
         off = r(off) if off else None
         if paired is True:
-            paired = ci(on, P2, "logscore_vs_p1", 4)
+            paired = ci(on, P2, "logscore_vs_p1", 5)
         return [label, v(on, f"{P2}.logscore"), v(off, f"{P2}.logscore") if off else "",
-                ci(on, P2, "brier_skill"), ci(off, P2, "brier_skill") if off else "", paired or ""]
+                ci(on, P2, "brier_skill", 4), ci(off, P2, "brier_skill", 4) if off else "", paired or ""]
 
     def both(label, name):
         return row(label, _abl(name), _abl(f"{name}+p2-guard-off"))
 
     prelaunch, one = _abl("admission-prelaunch"), _abl("contrasts-one")
+    zero, main = r(_abl("lambda-0.0")), r(MAIN)
+    if abs(zero.get(f"{P2}.logscore") - main.get(f"{P1}.logscore")) > 1e-9:
+        raise ValueError("the row says the fixed weight zero is P1 exactly")
     return Table("fmt-p2-settings", "lrrrrr", [
         "setting & log score, guard on & log score, guard off & Brier skill, guard on (90\\%) & Brier skill, guard off (90\\%)"
         " & P2 minus P1, paired (90\\%)"], [
@@ -96,7 +99,7 @@ def admission(r):
 
     def row(label, rep):
         return [label, n(rep, "header.scored_rows"), v(rep, f"{ALL}.brier_base", 4),
-                ci(rep, P1, "brier_skill"), ci(rep, P2, "brier_skill")]
+                ci(rep, P1, "brier_skill", 4), ci(rep, P2, "brier_skill", 4)]
 
     return Table("fmt-admission", "lrrrr", ["admission & contrasts & base Brier score & P1 Brier skill (90\\%) & P2 Brier skill (90\\%)"],
                  [row("realized clicks (the main run)", main), row("exposure alone", pre)])

@@ -159,6 +159,14 @@ def calibration_table(rep, source, out, rungs=("P1", "P2")):
     write(out, f"calibration-{source}.tex", rep["_path"], "\n".join(lines) + "\n")
 
 
+def _ranking_paired(rep, source):
+    """The paired captured-lift differences of the run's extras file, for the headline archive's decision table; None when the run has no such key."""
+    if source != "upworthy":
+        return None
+    extras = latest(os.path.join(os.path.dirname(rep["_path"]), f"paper-extras-{source}-*.json"))
+    return load(extras).get("ranking_paired") if extras else None
+
+
 def decision_table(rep, source, out):
     """Captured fraction and regret per policy and model, as the mean over the per-origin rows of tables.decision_value (25 percent budget).
 
@@ -184,10 +192,10 @@ def decision_table(rep, source, out):
         "and excludes the pooled origin=ALL row)"
     )
     write(out, f"decision-{source}.tex", note, "\n".join(lines) + "\n")
-    decision_intervals_table(rep, source, out)
+    decision_intervals_table(rep, source, out, paired=_ranking_paired(rep, source))
 
 
-def decision_intervals_table(rep, source, out):
+def decision_intervals_table(rep, source, out, paired=None):
     """The pooled decision value with its intervals, at every budget (tables.decision_value, origin ALL).
 
     Columns: captured_fraction with captured_fraction_lo and captured_fraction_hi, diff_matched (the captured fraction minus the arm-count-matched
@@ -196,7 +204,9 @@ def decision_intervals_table(rep, source, out):
     policy's row of the same table (round 02, R5: the matched columns are the ones read, and the table had ten columns).
     Every interval is a 90 percent bootstrap
     that resamples whole tests within each origin; random order is exact (K over n); a rung whose p_win is constant within a cell chooses by
-    cell and then at random.
+    cell and then at random. ``paired`` is the extras key ``ranking_paired`` when a run has it: a row of P2 minus P1, paired by test,
+    follows each budget's rungs, its difference in the captured column and its Bonferroni-adjusted bounds (over the two listed comparisons)
+    in the adjusted column.
     """
     pooled = [r for r in rep["tables"]["decision_value"] if r["origin"] == "ALL"]
     if not pooled or "captured_fraction_lo" not in pooled[0]:
@@ -224,9 +234,15 @@ def decision_intervals_table(rep, source, out):
                 rgt += f" ({fr(r.get('regret_lo'))}, {fr(r.get('regret_hi'))})"
             const = "" if r.get("constant_within_cell") is None else ("yes" if r["constant_within_cell"] else "no")
             lines.append(f"{bud:g} & {esc(pol)} & {esc(rg)} & {cf} & {mt} & {madj} & {rgt} & {const} \\\\")
+        if paired:
+            d = paired["budgets"][f"{bud:.2f}"]["differences"]["P2_minus_P1"]
+            lines.append(f"{bud:g} & paired by test & P2 minus P1 & {f3(d['estimate'])} ({f3(d['lo'])}, {f3(d['hi'])}) &  & "
+                         f"({f3(d['adjusted_lo'])}, {f3(d['adjusted_hi'])}) $m={d['family_size']}$ &  &  \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
+    source_note = "; the paired row from the paper extras' ranking_paired" if paired else ""
     note = (
-        f"{rep['_path']} (tables.decision_value, origin ALL; intervals are 90 percent bootstrap by test within each origin; random order is "
+        f"{rep['_path']} (tables.decision_value, origin ALL{source_note}; intervals are 90 percent bootstrap by test within each origin; "
+        "random order is "
         "exact, K over n; constant_within_cell: p_win is one number per cell, so the policy chooses by cell and then at random; the adjusted "
         "bounds are Bonferroni bounds for the m rungs compared with random order at the budget, docs/method.md calls 200 and 201; "
         "arm_count ranks by the "

@@ -1,10 +1,8 @@
 """Summary tables of the limitations section: the verdict on each hypothesis and the period rule of the guard."""
-from datetime import datetime
-
-from summary_tables import Raw, Table, derived, fmt, join, n, pct, pctw, v
+from summary_tables import Raw, Table, derived, fmt, join, month_year, n, narrowest_origin, pct, pctw, v
 
 UPWORTHY, ASOS, EXTRAS = "backtest-upworthy-*.json", "backtest-asos-*.json", "paper-extras-upworthy-*.json"
-NUMBER_WORDS = {9: "nine"}
+NUMBER_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
 
 
 def _words(x, nd, plus):
@@ -47,27 +45,15 @@ def _adjusted(rep, rung):
     return derived(text, rep.ref(lo_key), rep.ref(hi_key))
 
 
-def _narrowest_origin(up):
-    """The origin after burn-in where P1 leads P0 by least; an origin where P1 does not lead fails the build, since the row says above at every one."""
-    def score(origin, rung):
-        return up.get(f"tables.score_by_origin[origin={origin},rung={rung}].logscore")
-
-    origins = [o["origin"] for o in up.get("tables.origins") if not o["burn_in"]]
-    margins = {o: score(o, "P1") - score(o, "P0") for o in origins}
-    if min(margins.values()) <= 0:
-        raise ValueError("P1 is not above P0 at every origin after burn-in")
-    return min(margins, key=margins.get)
-
-
 def _h1_part1(up, extras):
-    origin = _narrowest_origin(up)
+    origin = narrowest_origin(up)
     paired = f"p1_minus_p0_by_origin.by_origin[origin={origin}]"
     clear = extras.get("p1_minus_p0_by_origin.by_origin_clear_of_zero")
     if clear != len(extras.get("p1_minus_p0_by_origin.by_origin")):
         raise ValueError("the row says clear of zero at all origins")
     return join("above at every origin after burn-in; the narrowest margin {}, {} against {}; paired by test the difference there is {}, {},"
                 " and clear of zero at all {} origins",
-                datetime.fromisoformat(origin).strftime("%B %Y"),
+                month_year(origin),
                 w(up, f"tables.score_by_origin[origin={origin},rung=P1].logscore"),
                 w(up, f"tables.score_by_origin[origin={origin},rung=P0].logscore"),
                 w(extras, f"{paired}.difference", plus=True), span(extras, f"{paired}.lo", f"{paired}.hi"),
@@ -85,6 +71,29 @@ def _h4_after_burn_in(up):
     return derived(fmt(rate * 100, 1), up.ref(all_rate), up.ref(all_n), *[up.ref(k) for k in keys])
 
 
+def _guard_verdict_wording(up, asos, extras, p2_all, p1_all, issued, skill):
+    """The measured words typed in the rows of ``verdicts``: each is checked here, so a change of run that falsifies one stops the build. The verdict words themselves are the lead's."""
+    def fail(words):
+        raise ValueError(f"the verdicts table says {words!r} and the report does not")
+
+    if not up.get(f"{p2_all}.brier_skill_lo") < 0 < up.get(f"{p2_all}.brier_skill_hi"):
+        fail("not clear of zero")
+    if 2 * extras.get(f"{issued}.origins_inside_central_90") > extras.get(f"{issued}.origins"):
+        fail("not at most of them")
+    for name, nominal in (("coverage_80", 0.80), ("coverage_90", 0.90)):
+        if abs(up.get(f"{p1_all}.{name}") - nominal) > 0.05:
+            fail("within 5 points of nominal pooled")
+    if extras.get(f"{skill}.abstained.brier_skill") <= extras.get(f"{skill}.all.brier_skill"):
+        fail("abstained rows above the full set")
+    if not up.get(f"{_dv('P1')}.diff_matched_lo") < 0 < up.get(f"{_dv('P1')}.diff_matched_hi"):
+        fail("at the matched order within noise")
+    aggregate = [row for row in asos.get("tables.aggregate") if row["cell"] == "ALL" and row.get("decidable_by_tests")]
+    if not aggregate or any(not row["decidable_by_tests"].startswith("undecidable") for row in aggregate):
+        fail("undecidable at every gate")
+    if asos.get(f"{_cell('P2', 'ALL')}.logscore_vs_p1") != 0:
+        fail("P2 equals P1 there")
+
+
 def verdicts(r):
     up, _asos, extras = r(UPWORTHY), r(ASOS), r(EXTRAS)
     p1_all, p2_all, headline, image = _cell("P1", "ALL"), _cell("P2", "ALL"), _cell("P2", "headline_only"), _cell("P2", "image_only")
@@ -99,6 +108,7 @@ def verdicts(r):
     def random_bound(rung):
         return span(up, f"{_dv(rung)}.diff_random_adjusted_lo", f"{_dv(rung)}.diff_random_adjusted_hi")
 
+    _guard_verdict_wording(up, _asos, extras, p2_all, p1_all, issued, skill)
     rows = [
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, held in part} (Section~\ref{sec:ladder-results})} \\"),
         _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in", _h1_part1(up, extras), "held"),
@@ -111,7 +121,7 @@ def verdicts(r):
         Raw(r"\midrule"),
         _group("H2, refuted"),
         _row("H2", "P2's Brier skill positive, its interval clear of zero",
-             join("{}, {}, not clear of zero", w(up, f"{p2_all}.brier_skill"), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi")),
+             join("{}, {}, not clear of zero", w(up, f"{p2_all}.brier_skill", 4), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
              "refuted"),
         Raw(r"\midrule"),
         _group("H3, held in part"),
@@ -129,8 +139,8 @@ def verdicts(r):
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H4, held in part} (Section~\ref{sec:abstention-results})} \\"),
         _row("H4 part 1", "issued cards above the full set on skill",
-             join("issued rows {}, {}, against {} for the full set", w(extras, f"{skill}.issued.brier_skill"),
-                  span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi"), w(extras, f"{skill}.all.brier_skill")),
+             join("issued rows {}, {}, against {} for the full set", w(extras, f"{skill}.issued.brier_skill", 4),
+                  span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi", 4), w(extras, f"{skill}.all.brier_skill", 4)),
              "refuted"),
         _row("H4 part 2", "abstained rows lower on skill when forced",
              join("abstained rows, scored on the withheld forecast, above the full set at {}, {}", w(extras, f"{skill}.abstained.brier_skill"),

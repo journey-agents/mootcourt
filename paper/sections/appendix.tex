@@ -6,25 +6,25 @@
 % (without it the class drops pending single-column floats).
 \setcounter{topnumber}{8}\setcounter{bottomnumber}{8}\setcounter{dbltopnumber}{6}\setcounter{totalnumber}{16}
 \renewcommand{\topfraction}{1}\renewcommand{\bottomfraction}{1}\renewcommand{\dbltopfraction}{1}\renewcommand{\textfraction}{0}\renewcommand{\floatpagefraction}{0.1}\renewcommand{\dblfloatpagefraction}{0.1}
-% src: paper/figures/reliability-upworthy.pdf from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.reliability_bins (rung, bin, n, mean_p, freq); tables.aggregate design_effect 1.13 (GBM) to 1.50 (text_lr) on the headline archive and 3.82 (P1) on the deployment-shaped one (tables/ece-upworthy.tex, tables/ece-asos.tex)
+% src: paper/figures/reliability-upworthy.pdf from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.reliability_bins (rung, bin, n, mean_p, freq); tables.aggregate design_effect 1.13 (GBM) to 1.50 (text_lr) on the headline archive and 3.82 (P1) on the deployment-shaped one (tables/ece-upworthy.tex, tables/ece-asos.tex)
 \begin{figure*}[t]\centering
 \includegraphics[width=\textwidth]{figures/reliability-upworthy.pdf}
 \caption{Reliability by rung on the headline archive, ten equal-width probability bins, empty bins dropped. Points are the observed frequency; light bars are the central 90 percent range of the frequency expected under perfect calibration given the bin count, treating rows as independent, so they understate the spread where tests contribute several rows. Design effects run from 1.1 to 1.5 on this archive. The design effect is 3.8 on the deployment-shaped one (Tables~\ref{tab:ece-upworthy} and~\ref{tab:ece-asos}). Dashed grey is the diagonal.}
 \label{fig:reliability}
 \end{figure*}
-% src: paper/figures/coverage-exposure-upworthy.pdf from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.calibration_by_precision (rung, decile, coverage_90) and tables.aggregate coverage_90
+% src: paper/figures/coverage-exposure-upworthy.pdf from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.calibration_by_precision (rung, decile, coverage_90) and tables.aggregate coverage_90
 \begin{figure}[t]\centering
 \includegraphics[width=0.7\columnwidth]{figures/coverage-exposure-upworthy.pdf}
 \caption{Coverage of the 90 percent interval by decile of planned exposure, low to high, headline archive, P0, P1 and P2 (Table~\ref{tab:calibration-upworthy}); the 80 percent level is not drawn because the table by exposure carries the 90 percent level only. Dashed grey is the nominal level; open markers are the pooled coverage.}
 \label{fig:coverage-exposure}
 \end{figure}
-% src: paper/figures/cautionary-upworthy.pdf from paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate[rung=P1] brier_skill, brier_skill_lo, brier_skill_hi by cell
+% src: paper/figures/cautionary-upworthy.pdf from paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[rung=P1] brier_skill, brier_skill_lo, brier_skill_hi by cell
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{figures/cautionary-upworthy.pdf}
 \caption{P1 Brier skill by cell with 90 percent intervals: left the relative-lift run at realized precision (Section~\ref{sec:cautionary}), right the pre-launch-clean run. The figure shows the Brier skill because the relative-lift run has no table by the ratio of realized to planned standard error and its log score is on another scale. Dashed grey is zero skill.}
 \label{fig:cautionary}
 \end{figure}
-% src: paper/figures/learning-curve-upworthy.pdf from $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json rows (rung, fraction, skill, skill_lo, skill_hi; skill against base_brier_full, call 204), seeds 20
+% src: paper/figures/learning-curve-upworthy.pdf from $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows (rung, fraction, skill, skill_lo, skill_hi; skill against base_brier_full, call 204), seeds 20
 \begin{figure}[t]\centering
 \includegraphics[width=\columnwidth]{figures/learning-curve-upworthy.pdf}
 \caption{Brier skill against the base rate of the full history at the final origin, by share of the visible ledger, headline archive, mean over 20 seeds with the bootstrap band (Tables~\ref{tab:learning-upworthy} and~\ref{tab:learning-detail}); the boosted model's band is clipped at the axis. Dashed grey is zero skill. No learning curve exists for the synthetic archive.}
@@ -38,7 +38,7 @@ Every table of the headline archive is produced for the deployment-shaped archiv
 Table~\ref{tab:fmt-app-asos} sets its figures beside the headline archive's.
 
 \begin{table}[tp]\centering\scriptsize
-% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate, tables.decision_value, tables.abstention, tables.score_by_year; $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json the same keys; $RUN6/ablations/p2-guard-asos.json and $RUN6/ablations/p2-guard-upworthy.json; intervals by test, level 0.9; decision value at budget 0.25 (tables/fmt-app-asos.tex)
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate, tables.decision_value, tables.abstention, tables.score_by_year; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json the same keys; $RUN6/ablations/p2-guard-asos.json and $RUN6/ablations/p2-guard-upworthy.json; intervals by test, level 0.9; decision value at budget 0.25 (tables/fmt-app-asos.tex)
 \caption{The deployment-shaped archive beside the headline archive. Rows: one figure each, grouped by topic. Columns: the archives, the same report key on each side (the main backtests' \texttt{tables.aggregate}, \texttt{tables.decision\_value} and \texttt{tables.score\_by\_year}; the guard, drop-trigger and prior ablation reports; \texttt{paper-extras}; the replays; the learning curves). Intervals are 90 percent by test. Decision value is the captured share of positive lift by $\pwin$, minus random order, at a budget of 25 percent of tests. A blank cell has no counterpart reported on the headline archive.}
 \label{tab:fmt-app-asos}
 \resizebox{\columnwidth}{!}{\input{tables/fmt-app-asos}}
@@ -160,17 +160,17 @@ Table~\ref{tab:landscape} compresses the survey's gap table.
 \label{app:replay}
 The weekly replay of the headline archive (Table~\ref{tab:replay}) adds these figures.
 \begin{itemize}
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json drift_onsets (both 2015-04-20), weeks[].flagged (2015-04-20, 2015-04-27, 2015-05-04, 2015-05-11, cell both)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json drift_onsets (both 2015-04-20), weeks[].flagged (2015-04-20, 2015-04-27, 2015-05-04, 2015-05-11, cell both)
 \item Drift: the rule marks one cell, the smallest, which changed both headline and image, for the four weeks from 20 April 2015 to the end of the archive, and no cell before that.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json weeks[].coverage_90 (minimum 0.7075 at 2013-09-30)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json weeks[].coverage_90 (minimum 0.7075 at 2013-09-30)
 \item Lowest rolling 90 percent coverage against the card's interval for the observed estimate: 0.71 on 30 September 2013.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json weeks[].coverage_90 (maximum 0.9670 at 2014-10-13)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json weeks[].coverage_90 (maximum 0.9670 at 2014-10-13)
 \item Highest: 0.97 on 13 October 2014.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.abstained_by_trigger novelty 1100
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.abstained_by_trigger novelty 1100
 \item Abstentions by the novelty trigger: 1,100.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.abstained_by_trigger reliability 106
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.abstained_by_trigger reliability 106
 \item Abstentions by the reliability trigger: 106.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.abstained_by_trigger support 304, instability 0
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.abstained_by_trigger support 304, instability 0
 \item Abstentions by the support trigger: 304.
 \end{itemize}
 A card counts under every trigger it fired; the reliability trigger fires only until the first report of a cell exists.
@@ -222,7 +222,7 @@ The driver ran four stages at a time over 3 hours 15 minutes of wall time from t
 
 \paragraph{Versions.}
 \begin{itemize}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json header.bootstrap_resamples 500; $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--effect-scale-relative+s-star-realized.json header.bootstrap_resamples 500; $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json bootstrap_resamples 500
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json header.bootstrap_resamples 500; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json bootstrap_resamples 500
 \item Resamples: every backtest, ablation, learning curve and replay of the run folder used 500 bootstrap resamples.
 % src: $RUN6/README.md (one code state: scripts/run7.sh on commit 82ba862, 71 stages; docs/method.md call 255)
 \item Code state: all were produced by one code state, commit 82ba862, in one run.
@@ -333,14 +333,14 @@ features & pre-launch fields; post-launch block kept apart \\
 \resizebox{\columnwidth}{!}{\input{tables/cautionary-upworthy}}
 \end{table}
 
-% src: tables/discrimination-upworthy.tex from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate auc_event, resolution_event, auc_direction, resolution_direction
+% src: tables/discrimination-upworthy.tex from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate auc_event, resolution_event, auc_direction, resolution_direction
 \begin{table}[tp]\centering\scriptsize
 \caption{Discrimination apart from skill, headline archive: AUC of $\psig$ against the significant-positive event and of the direction probability against the sign, with 90 percent intervals by test, and the Murphy resolution term of each over ten equal-mass bins (the bin-weighted squared gap between a bin's observed frequency and the event rate), whose estimate is biased upward by about $9/N$ times the rate times one minus the rate and is read as a ranking of rungs on the same rows.}
 \label{tab:discrimination}
 \resizebox{\columnwidth}{!}{\input{tables/discrimination-upworthy}}
 \end{table}
 
-% src: the resolution bias (Section 5): 9 over N times p(1 - p) per stratum; 27 strata (9 origins by 3 cells), header.scored_rows 13247, tables.aggregate[cell=ALL,rung=P1] event_rate 0.0910, so 9 x 27 x 0.0910 x 0.9090 / 13247 = 0.0015 row-weighted; resolution_event_within P1 0.00229, P2 0.00242, local_eb 0.00248, text_lr 0.00217, GBM 0.00230, P0 0.00000; tables/discrimination-within-upworthy.tex from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate auc_event_within, resolution_event_within, auc_direction_within (cell ALL and headline_only; docs/method.md call 203)
+% src: the resolution bias (Section 5): 9 over N times p(1 - p) per stratum; 27 strata (9 origins by 3 cells), header.scored_rows 13247, tables.aggregate[cell=ALL,rung=P1] event_rate 0.0910, so 9 x 27 x 0.0910 x 0.9090 / 13247 = 0.0015 row-weighted; resolution_event_within P1 0.00229, P2 0.00242, local_eb 0.00248, text_lr 0.00217, GBM 0.00230, P0 0.00000; tables/discrimination-within-upworthy.tex from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate auc_event_within, resolution_event_within, auc_direction_within (cell ALL and headline_only; docs/method.md call 203)
 \begin{table}[tp]\centering\scriptsize
 \caption{Discrimination within strata, headline archive: the AUC for the event and for the direction and the Murphy resolution term computed inside each origin and cell stratum and averaged with weights by stratum size, with 90 percent intervals by test; the last column is the event AUC within the origins of the headline-only cell. P0 is one half by construction. The within-stratum resolution carries the upward bias of Section~\ref{sec:protocol} in every stratum, about nine over the stratum's rows times the event rate times one minus it, which weighted by rows over the 27 strata is about 0.0015 at the pooled rate, of the size of the printed values, so the column ranks rungs on the same rows and nothing more; P0's zero is by construction, not a bias reference.}
 \label{tab:discrimination-within}
@@ -353,7 +353,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \resizebox{\columnwidth}{!}{\input{tables/selection-upworthy}}
 \end{table}
 
-% src: tables/guard-pairs-upworthy.tex from $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs
+% src: tables/guard-pairs-upworthy.tex from $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs
 \begin{table}[tp]\centering\scriptsize
 \caption{The eight cell-origin pairs in which the guard admitted a weight on the headline archive: the chosen weight, the in-selection gain over weight zero on the validation rows (nats per row, with its clustered standard error), the rows and tests scored out of time, and the realized out-of-time P2 minus P1 log score; the pooled line carries a 90 percent interval by test (500 resamples).}
 \label{tab:guard-pairs}
@@ -407,7 +407,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.score_by_year family_size 156
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year family_size 156
 \caption{Skill by calendar year of the test's start (headline archive), all cells pooled, from the backtest report's \texttt{score\_by\_year}: rows, tests, the event rate, the log score and Brier skill with 90 percent intervals by test, direction accuracy and abstention; the Bonferroni family of this table has 156 intervals.}
 \label{tab:drift}
 \resizebox{\columnwidth}{!}{\input{tables/drift-upworthy}}
@@ -426,7 +426,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \resizebox{\columnwidth}{!}{\input{tables/admission-upworthy}}
 \end{table}
 
-% src: tables/event-definition-upworthy.tex from $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.aggregate brier_skill, brier_skill_planned, p_sig_mean, event_rate_planned
+% src: tables/event-definition-upworthy.tex from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate brier_skill, brier_skill_planned, p_sig_mean, event_rate_planned
 \begin{table}[tp]\centering\scriptsize
 \caption{The significant-positive event defined on the realized standard error (the headline) and on the planned one (planned event rate 0.081 against 0.091 realized), headline archive: Brier skill against the base rate under each definition, with 90 percent intervals by test.}
 \label{tab:event-definition}
@@ -564,7 +564,7 @@ features & pre-launch fields; post-launch block kept apart \\
 % two-column floats keeps the pending queue short: the class could not flush twelve at one \clearpage (dead cycles).
 \clearpage
 
-% src: tables/guard-pairs-rows.tex from $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json guard_pairs_rows (rows and pooled; bootstrap_resamples 500; docs/method.md call 233)
+% src: tables/guard-pairs-rows.tex from $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs_rows (rows and pooled; bootstrap_resamples 500; docs/method.md call 233)
 \begin{table*}[t]\centering\scriptsize
 \caption{The admitted pairs row by row (headline archive): per pair and pooled, the share of rows on which P2's log score exceeds P1's, the median and mean difference (nats per row, 90 percent intervals by test), the decisive rows (the realized estimate beyond 1.96 standard errors) and the rest, and the location and scale parts of the mean difference, the two one-parameter-at-a-time paths averaged, which sum to it row by row. The pooled line's mean difference and its interval are those of Table~\ref{tab:guard-pairs}, one draw for both tables; the location and scale parts are this table's own.}
 \label{tab:guard-pairs-rows}
@@ -572,7 +572,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.decision_value origin=ALL n_tests 3799 against header.tests_scored 3797 (two tests have contrasts starting in two quarters and are counted in both origins); family_size 6
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value origin=ALL n_tests 3799 against header.tests_scored 3797 (two tests have contrasts starting in two quarters and are counted in both origins); family_size 6
 \caption{Decision value on the headline archive at three budgets, the first column's shares of each period's tests: captured share of the realized positive lift (the exact random-order share is the \emph{random} row), its difference from a random order matched on the arm-count composition of the chosen set with Bonferroni-adjusted bounds over the six rungs of the budget, and the regret against the oracle, each with a 90 percent interval by test within each origin; \emph{const.\ in cell} marks rungs whose win probability is one number per cell. The pooled rows count 3,799 test-origin pairs from 3,797 tests, two tests having contrasts that started in two quarters. Figure~\ref{fig:decision} draws the 25 percent rows.}
 \label{tab:decision-intervals-upworthy}
 \input{tables/decision-intervals-upworthy}
@@ -606,7 +606,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \end{table*}
 
 \begin{table*}[t]\centering\small
-% src: tables.aggregate[cell=ALL,rung=P1] logscore of $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--lambda-0.0.json -0.8566 (and every other unchanged file of the folder), $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--prior-normal.json -0.9566, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--admission-prelaunch.json -0.8322 (header.scored_rows 14235), $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--contrasts-one.json -0.8710 (header.scored_rows 3797), $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--kappa-0.0.json -0.8599, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--kappa-5.0.json -0.8588, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--kappa-80.0.json -0.8553, $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--effect-scale-relative+s-star-realized.json -4.9650 (every file header.bootstrap_resamples 500) (tables/ablations-upworthy.tex) (tables/ablations-upworthy-p1.tex)
+% src: tables.aggregate[cell=ALL,rung=P1] logscore of $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-0.0.json -0.8566 (and every other unchanged file of the folder), $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json -0.9566, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json -0.8322 (header.scored_rows 14235), $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--contrasts-one.json -0.8710 (header.scored_rows 3797), $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json -0.8599, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-5.0.json -0.8588, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json -0.8553, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json -4.9650 (every file header.bootstrap_resamples 500) (tables/ablations-upworthy.tex) (tables/ablations-upworthy-p1.tex)
 \caption{Ablations on the headline archive, one setting changed per row, same origins and rows; pooled scores of the precedent rung with the admission guard on and, where the guard can hold the setting back, off, each with the paired P2 minus P1 log-score difference (nats per row, 90 percent interval by test, printed to five decimals so that a bound just below zero, as the two $\kappa$ rows' lower bounds of minus 0.00002, is seen as such); \emph{p2-selection-loto} is leave-one-test-out selection, the rule of the first round, and \emph{contrasts-one} keeps one contrast per test. The lower block gives P1's log score, which differs only in the rows it names. The \emph{effect-scale-relative} row is the cautionary run of Section~\ref{sec:cautionary}, on a different effect scale.}
 \label{tab:ablations-upworthy}
 \resizebox{\textwidth}{!}{\input{tables/ablations-upworthy}}
@@ -616,7 +616,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \end{table*}
 
 \begin{table*}[t]\centering\scriptsize
-% src: $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json seeds 20, bootstrap_resamples 500; each rung's skill is against base_brier_full, the P0 Brier score of the full history at the final origin (call 204)
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json seeds 20, bootstrap_resamples 500; each rung's skill is against base_brier_full, the P0 Brier score of the full history at the final origin (call 204)
 \caption{Brier skill against the base rate of the full history at the final origin, by fraction of the visible ledger (headline archive); 90 percent bootstrap intervals (500 resamples) by held-out test of the skill averaged over twenty seeds. P0's row is the subsampled base rate scored against the full one.}
 \label{tab:learning-upworthy}
 \resizebox{\textwidth}{!}{\input{tables/learning-upworthy}}
@@ -624,7 +624,7 @@ features & pre-launch fields; post-launch block kept apart \\
 
 \clearpage
 
-% src: tables/learning-detail-upworthy.tex from $RUN6/learning-curve-upworthy-20261103-4bfb354b87e3.json rows (n_fit_rows, n_history_tests, n_scored_tests 318 at every fraction, skill against base_brier_full, skill_own_base; bootstrap_resamples 500; docs/method.md call 204)
+% src: tables/learning-detail-upworthy.tex from $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows (n_fit_rows, n_history_tests, n_scored_tests 318 at every fraction, skill against base_brier_full, skill_own_base; bootstrap_resamples 500; docs/method.md call 204)
 \begin{table*}[t]\centering\scriptsize
 \caption{The learning curve in detail (headline archive): history rows and tests at each fraction, the scored tests (the same 318 at every point), P1's raw Brier score, the base Brier score of the full history and of the subsample itself, P1's skill against the full-history base rate with the spread of that skill over the 20 seeds (blank at the full history, which is one fit), P1's skill against the subsample's own base rate, and the local comparison set against the full-history base rate; the own-base column is the reading of the first round, which rose as the history shrank because the subsampled base rate is itself a poor forecaster.}
 \label{tab:learning-detail}

@@ -1,7 +1,7 @@
 % Results, second half (Sections 6.5 to 6.8). Source comments follow the convention of results.tex: a "% src:" line names the report and key behind the one line that follows it.
 \subsection{Abstention}
 \label{sec:abstention-results}
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.abstention cell=ALL rate 0.141466
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.abstention cell=ALL rate 0.141466
 The pooled abstention rate is 14.1 percent.
 Table~\ref{tab:fmt-abstention-triggers} condenses the trigger counts of Table~\ref{tab:abstention-upworthy} (Appendix~\ref{app:tables}).
 
@@ -12,12 +12,12 @@ Table~\ref{tab:fmt-abstention-triggers} condenses the trigger counts of Table~\r
 \input{tables/fmt-abstention-triggers}
 \end{table}
 
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json issued_row_brier_skill rungs.P2.issued brier_skill -0.001781, rungs.P2.abstained brier_skill 0.019853
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json issued_row_brier_skill rungs.P2.issued brier_skill -0.001781, rungs.P2.abstained brier_skill 0.019853
 On the Brier skill the fourth hypothesis names, Table~\ref{tab:fmt-abstention-rows} shows the sign the hypothesis expects reversing, partly by composition: the abstained rows carry the burn-in origin and the higher event rate.
 On the log score the issued rows are the better side.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/paper-extras-upworthy-20261103-4bfb354b87e3.json issued_row_brier_skill bootstrap_resamples 500, level 0.9; tables/fmt-abstention-rows.tex
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json issued_row_brier_skill bootstrap_resamples 500, level 0.9; tables/fmt-abstention-rows.tex
 \caption{Issued against abstained against all rows, P2 on the headline archive (\texttt{paper-extras}, key \texttt{issued\_row\_brier\_skill}; log scores from the main backtest's \texttt{tables.aggregate}, cell ALL). Rows: the row set, the abstained rows scored on the forecast the rule withheld. Columns: rows, Brier skill against the row set's own base rate with the 90 percent bootstrap interval by test (500 resamples), pooled log score per row, and event rate. The text does not read a log score for the abstained rows.}
 \label{tab:fmt-abstention-rows}
 \input{tables/fmt-abstention-rows}
@@ -28,7 +28,7 @@ The novelty rows are no worse than the issued rows on the log score and a little
 The novelty trigger, the only one that fires after burn-in, changes what is issued, not measurably how well; the burn-in rows the reliability trigger withheld were worse on both scores.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/ablations/backtest-upworthy-20261103-4bfb354b87e3--drop-trigger-novelty.json tables.released_rows cell=ALL rung=P2 n 1093; tables/trigger-released-upworthy.tex; tables/fmt-abstention-released.tex
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--drop-trigger-novelty.json tables.released_rows cell=ALL rung=P2 n 1093; tables/trigger-released-upworthy.tex; tables/fmt-abstention-released.tex
 \caption{The rows a trigger had withheld, scored with that trigger switched off, P2 on the headline archive, from Table~\ref{tab:trigger-released} (Appendix~\ref{app:tables}; the \texttt{drop-trigger} ablation reports, \texttt{tables.released\_rows}), with the main run's issued rows for comparison (Table~\ref{tab:trigger-ablation}). Rows: the trigger switched off; support and instability release no rows. Columns: released rows, pooled log score per row and direction accuracy, each with the 90 percent bootstrap interval by test.}
 \label{tab:fmt-abstention-released}
 \resizebox{\columnwidth}{!}{\input{tables/fmt-abstention-released}}
@@ -41,7 +41,7 @@ The skill does not decline with time, and the 2015 interval clears zero unadjust
 The significant-positive rate falls, a shift that P0's trailing base rate lags and that the drift rule, which watches the log score against P0 alone, cannot see.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.score_by_year cell=ALL rung=P1 family_size 156 (tables/drift-upworthy.tex); tables/fmt-drift-year.tex
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year cell=ALL rung=P1 family_size 156 (tables/drift-upworthy.tex); tables/fmt-drift-year.tex
 \caption{The prior by calendar year of the test's start on the headline archive, from Table~\ref{tab:drift} (Appendix~\ref{app:tables}; the main backtest's \texttt{tables.score\_by\_year}, cell ALL). Rows: the year. Columns: tests, P1's Brier skill with the 90 percent bootstrap interval by test, the interval adjusted for the table's 156 intervals where the text reads it, and the significant-positive rate.}
 \label{tab:fmt-drift-year}
 \input{tables/fmt-drift-year}
@@ -50,15 +50,15 @@ The significant-positive rate falls, a shift that P0's trailing base rate lags a
 The weekly replay (Table~\ref{tab:replay}, Appendix~\ref{app:tables}) runs the released loop under its own rules (one scored card per admitted row, issued at the week start, at or before the test's start) and one convention it fixes (a bundle refit at every quarterly origin).
 It joins outcomes at the first weekly join on or after the horizon, scores each with the card's own predictive (abstained cards on the withheld forecast) and evaluates the drift rule weekly.
 \begin{itemize}
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json header.n_weeks 111, header.n_cards 13247 (tables/replay-upworthy.tex)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json header.n_weeks 111, header.n_cards 13247 (tables/replay-upworthy.tex)
 \item Span: 111 weeks and 13,247 cards.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.abstained 1457 (0.110), totals.abstained_by_trigger novelty 1100 reliability 106 support 304 (tables/replay-upworthy.tex)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.abstained 1457 (0.110), totals.abstained_by_trigger novelty 1100 reliability 106 support 304 (tables/replay-upworthy.tex)
 \item Abstained: 1,457 cards (0.110).
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.outcomes_joined 13247, header.n_outcomes 13247 (tables/replay-upworthy.tex)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.outcomes_joined 13247, header.n_outcomes 13247 (tables/replay-upworthy.tex)
 \item Outcomes joined: every card (13,247).
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.coverage_90_all 0.8949 (coverage_90_all_n 11790, the outcomes of issued cards: 13247 minus 1457 abstained)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.coverage_90_all 0.8949 (coverage_90_all_n 11790, the outcomes of issued cards: 13247 minus 1457 abstained)
 \item Coverage: 89.5 percent of the 11,790 outcomes of issued cards fell in the card's 90 percent interval; an abstained card shows no interval.
-% src: $RUN6/replay-upworthy-20261103-4bfb354b87e3.json totals.n_flagged_weeks 4; drift_onsets both 2015-04-20; weeks[].flagged 2015-04-20 to 2015-05-11 (tables/replay-upworthy.tex)
+% src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.n_flagged_weeks 4; drift_onsets both 2015-04-20; weeks[].flagged 2015-04-20 to 2015-05-11 (tables/replay-upworthy.tex)
 \item Weeks flagged: 4, all in the smallest cell from 20 April 2015 to the end of the archive (Appendix~\ref{app:replay}).
 \end{itemize}
 
@@ -113,7 +113,7 @@ Admission and recovery are different curves (Table~\ref{tab:fmt-control}, from T
 \item At about 1,200 scored rows per cell the guard admits no weight in the planted cell at any of the eight origins, so P2 equals P1 in that cell.
 % src: $RUN6/positive-control/backtest-synthetic-20261105-8cc34d3af720.json tables.p2_selection cell=headline_only: lambda 0.0 at all 8 origins, gain -0.0002 to 0.0093 (tables/positive-control.tex)
 \item The in-selection gains in that cell run from 0.000 to 0.009 nats, none past two standard errors.
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows n_tests 11100 rows_per_cell 7400 text_effect_strength 0.0 share_admitted 0.000; $RUN6/backtest-upworthy-20261103-4bfb354b87e3.json tables.abstention cell=headline_only n 7417 rows
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows n_tests 11100 rows_per_cell 7400 text_effect_strength 0.0 share_admitted 0.000; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.abstention cell=headline_only n 7417 rows
 \item At 7,400 rows per cell, the size of the headline-only cell, the guard admits nothing with nothing planted.
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows n_tests 11100 text_effect_strength 1.0 realized_gain 0.00369 (0.00334, 0.00401)
 \item At 11,100 tests the rung's held-out gain over P1 is 0.0037 nats per row (0.0033 to 0.0040).

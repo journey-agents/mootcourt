@@ -957,3 +957,91 @@ def lowest_reliability_bin(scores: pd.DataFrame, *, rungs=("P0", "P1", "P2"), n_
             },
         }
     return out if out["rungs"] else None
+
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------- X8b
+def logit_shift_to_mean(p, target: float, tol: float = 1e-10) -> tuple[np.ndarray, float]:
+    """``p`` shifted on the logit scale by the one constant that makes its mean equal ``target`` (bisection); returns the shifted forecasts and the shift."""
+    p = np.clip(np.asarray(p, float), 1e-9, 1 - 1e-9)
+    z = special.logit(p)
+    lo, hi = -20.0, 20.0
+    for _ in range(200):
+        mid = 0.5 * (lo + hi)
+        if special.expit(z + mid).mean() < target:
+            lo = mid
+        else:
+            hi = mid
+        if hi - lo < tol:
+            break
+    c = 0.5 * (lo + hi)
+    return special.expit(z + c), float(c)
+
+
+def calibration_within_period(
+    scores: pd.DataFrame, *, rungs=("P0", "P1", "P2"), draws: int = hs.NULL_DRAWS, seed: int = 0, min_rows: int = 50
+) -> dict | None:
+    """X8b. Calibration after removing the level error of each origin-and-cell stratum.
+
+    X8 (``drift_matched_null``) draws outcomes at the trailing base rate; it does not say whether a rung's departure from calibration comes from the event
+    rate moving. This diagnostic does: each row's forecast is shifted on the logit scale by the single constant per origin-and-cell stratum that makes the mean
+    forecast equal the realized event rate there (an oracle level correction, so a diagnostic and not a forecast). ECE with the same bins is computed before
+    and after, the after value is placed in a null that draws outcomes from the shifted forecasts, clustered at the design effect measured for the shifted
+    forecasts (500 draws, the seed rule of the current null), and the share of ECE removed is reported, pooled and by cell. A stratum with fewer than
+    ``min_rows`` rows, or with no events or only events, is not shifted and is listed. Level error is what the shift removes; what remains is shape."""
+    need = {"p_sig", "event", "test_id", "rung", "origin", "cell"}
+    if not need <= set(scores.columns):
+        return None
+    out: dict = {
+        "draws": draws,
+        "seed": seed,
+        "min_rows": min_rows,
+        "rungs": {},
+        "definition": "per origin-and-cell stratum, forecasts shifted on the logit scale so their mean equals the realized event rate (oracle level "
+        "correction, a diagnostic); ECE before and after in the same 10 equal-width bins; null for the after value draws outcomes "
+        "from the shifted forecasts, clustered at their measured design effect; added after X8's result was seen",
+    }
+    for rung in rungs:
+        g = scores[(scores["rung"] == rung) & scores["p_sig"].notna()].reset_index(drop=True)
+        if g.empty:
+            continue
+        g["p_shift"] = g["p_sig"].to_numpy(float)
+        unshifted = []
+        shifts = []
+        for (o, c), h in g.groupby(["origin", "cell"], sort=True):
+            e = h["event"].to_numpy(float)
+            if len(h) < min_rows or e.min() == e.max():
+                unshifted.append({"origin": pd.Timestamp(o).isoformat(), "cell": str(c), "rows": int(len(h))})
+                continue
+            ps, sh = logit_shift_to_mean(h["p_sig"].to_numpy(float), float(e.mean()))
+            g.loc[h.index, "p_shift"] = ps
+            shifts.append(sh)
+
+        def one(h: pd.DataFrame) -> dict:
+            p, ps, e, t = h["p_sig"].to_numpy(float), h["p_shift"].to_numpy(float), h["event"].to_numpy(float), h["test_id"].to_numpy()
+            before, after = hs.ece(p, e), hs.ece(ps, e)
+            de = hs.design_effect(ps, e, t)
+            rho = hs.latent_rho_for_design_effect(ps, t, de["design_effect"], seed=seed)
+            null = hs.ece_null(ps, draws, seed, test_ids=t, icc=rho)
+            return {
+                "rows": int(len(h)),
+                "tests": int(len(set(t))),
+                "ece_before": float(before),
+                "ece_after": float(after),
+                "share_of_ece_removed": float(1.0 - after / before) if before > 0 else None,
+                "after_percentile_in_null": hs.null_percentile(null, after),
+                "null_mean": float(null.mean()),
+                "design_effect_after": de["design_effect"],
+            }
+
+        res = {"ALL": one(g)}
+        for c, h in g.groupby("cell"):
+            if len(h) >= min_rows and h["event"].nunique() == 2:
+                res[str(c)] = one(h)
+        out["rungs"][rung] = {
+            "by_stratum_group": res,
+            "unshifted_strata": unshifted,
+            "strata_shifted": len(shifts),
+            "shift_logit_median": float(np.median(shifts)) if shifts else None,
+            "shift_logit_range": [float(min(shifts)), float(max(shifts))] if shifts else None,
+        }
+    return out if out["rungs"] else None
