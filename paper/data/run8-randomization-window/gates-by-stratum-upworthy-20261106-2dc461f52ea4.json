@@ -1,0 +1,115 @@
+{
+ "bootstrap": 500,
+ "decision_target": 0.9,
+ "interval": {
+  "by": "test",
+  "level": 0.9
+ },
+ "label": "synthetic",
+ "note": "each stratum's sizes are simulated at the base rate, rows per test and within-test correlation measured on its own P1 rows in the main score table; sizes are numbers of tests; 1000000000 means no size on the grid reached the power",
+ "reps": 1000,
+ "research_target": 0.8,
+ "rung": "P1",
+ "seconds": 539.7,
+ "seed": 20261102,
+ "skills": {
+  "n_200": 0.2,
+  "n_400": 0.1
+ },
+ "snapshot_id": "20261106-2dc461f52ea4",
+ "source": "upworthy",
+ "strata": {
+  "ALL": {
+   "by_target": {
+    "0.80": {
+     "n_200": 125,
+     "n_400": 225
+    },
+    "0.90": {
+     "n_200": 200,
+     "n_400": 300
+    }
+   },
+   "dependence": {
+    "base_rate": 0.08535103299990651,
+    "icc": 0.19739337785568228,
+    "n_rows": 10697,
+    "n_tests": 2949,
+    "rows_per_test": 3.627331298745337
+   },
+   "latent_rho": 0.4362884787021252,
+   "n_200": 200,
+   "n_400": 300,
+   "reached": true
+  },
+  "both": {
+   "by_target": {
+    "0.80": {
+     "n_200": 225,
+     "n_400": 350
+    },
+    "0.90": {
+     "n_200": 275,
+     "n_400": 450
+    }
+   },
+   "dependence": {
+    "base_rate": 0.0972972972972973,
+    "icc": 0.511831409644479,
+    "n_rows": 370,
+    "n_tests": 173,
+    "rows_per_test": 2.138728323699422
+   },
+   "latent_rho": 0.799828524260361,
+   "n_200": 275,
+   "n_400": 450,
+   "reached": true
+  },
+  "headline_only": {
+   "by_target": {
+    "0.80": {
+     "n_200": 150,
+     "n_400": 225
+    },
+    "0.90": {
+     "n_200": 200,
+     "n_400": 325
+    }
+   },
+   "dependence": {
+    "base_rate": 0.09637948374120013,
+    "icc": 0.2343795596270927,
+    "n_rows": 5966,
+    "n_tests": 1770,
+    "rows_per_test": 3.3706214689265535
+   },
+   "latent_rho": 0.4820653920768994,
+   "n_200": 200,
+   "n_400": 325,
+   "reached": true
+  },
+  "image_only": {
+   "by_target": {
+    "0.80": {
+     "n_200": 150,
+     "n_400": 225
+    },
+    "0.90": {
+     "n_200": 225,
+     "n_400": 325
+    }
+   },
+   "dependence": {
+    "base_rate": 0.06925017197890392,
+    "icc": 0.1291439743064479,
+    "n_rows": 4361,
+    "n_tests": 1198,
+    "rows_per_test": 3.6402337228714523
+   },
+   "latent_rho": 0.3352886811586463,
+   "n_200": 225,
+   "n_400": 325,
+   "reached": true
+  }
+ }
+}

@@ -1,0 +1,138 @@
+{
+ "bootstrap": 500,
+ "decision_target": 0.9,
+ "interval": {
+  "by": "test",
+  "level": 0.9
+ },
+ "label": "synthetic",
+ "note": "each stratum's sizes are simulated at the base rate, rows per test and within-test correlation measured on its own P1 rows in the main score table; sizes are numbers of tests; 1000000000 means no size on the grid reached the power",
+ "reps": 1000,
+ "research_target": 0.8,
+ "rung": "P1",
+ "seconds": 652.9,
+ "seed": 20261102,
+ "skills": {
+  "n_200": 0.2,
+  "n_400": 0.1
+ },
+ "snapshot_id": "20261103-6bb5a15c5ff0",
+ "source": "asos",
+ "strata": {
+  "ALL": {
+   "by_target": {
+    "0.80": {
+     "n_200": 125,
+     "n_400": 200
+    },
+    "0.90": {
+     "n_200": 175,
+     "n_400": 275
+    }
+   },
+   "dependence": {
+    "base_rate": 0.1394658753709199,
+    "icc": 0.42194502672675793,
+    "n_rows": 337,
+    "n_tests": 68,
+    "rows_per_test": 4.955882352941177
+   },
+   "latent_rho": 0.6892946032291826,
+   "n_200": 175,
+   "n_400": 275,
+   "reached": true
+  },
+  "metric_1": {
+   "by_target": {
+    "0.80": {
+     "n_200": 150,
+     "n_400": 250
+    },
+    "0.90": {
+     "n_200": 175,
+     "n_400": 325
+    }
+   },
+   "dependence": {
+    "base_rate": 0.15294117647058825,
+    "icc": 0.011904761904760515,
+    "n_rows": 85,
+    "n_tests": 68,
+    "rows_per_test": 1.25
+   },
+   "latent_rho": 0.027256993895619284,
+   "n_200": 175,
+   "n_400": 325,
+   "reached": true
+  },
+  "metric_2": {
+   "by_target": {
+    "0.80": {
+     "n_200": 175,
+     "n_400": 275
+    },
+    "0.90": {
+     "n_200": 250,
+     "n_400": 425
+    }
+   },
+   "dependence": {
+    "base_rate": 0.11904761904761904,
+    "icc": 0.08108108108108159,
+    "n_rows": 84,
+    "n_tests": 67,
+    "rows_per_test": 1.2537313432835822
+   },
+   "latent_rho": 0.18951413393688224,
+   "n_200": 250,
+   "n_400": 425,
+   "reached": true
+  },
+  "metric_3": {
+   "by_target": {
+    "0.80": {
+     "n_200": 150,
+     "n_400": 275
+    },
+    "0.90": {
+     "n_200": 225,
+     "n_400": 375
+    }
+   },
+   "dependence": {
+    "base_rate": 0.13095238095238096,
+    "icc": 0.0,
+    "n_rows": 84,
+    "n_tests": 67,
+    "rows_per_test": 1.2537313432835822
+   },
+   "latent_rho": 0.0,
+   "n_200": 225,
+   "n_400": 375,
+   "reached": true
+  },
+  "metric_4": {
+   "by_target": {
+    "0.80": {
+     "n_200": 150,
+     "n_400": 250
+    },
+    "0.90": {
+     "n_200": 175,
+     "n_400": 325
+    }
+   },
+   "dependence": {
+    "base_rate": 0.15476190476190477,
+    "icc": 0.014084507042253058,
+    "n_rows": 84,
+    "n_tests": 67,
+    "rows_per_test": 1.2537313432835822
+   },
+   "latent_rho": 0.031985044908615486,
+   "n_200": 175,
+   "n_400": 325,
+   "reached": true
+  }
+ }
+}

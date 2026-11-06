@@ -1,0 +1,39 @@
+{
+ "bundle_load_ms": 57.1,
+ "cli_fresh_process_ms": {
+  "max": 1461.0,
+  "n": 3,
+  "p50": 1427.6,
+  "p95": 1457.6
+ },
+ "impressions": 20000,
+ "in_process_lambda_0.5_ms": {
+  "max": 45.7,
+  "n": 30,
+  "p50": 33.6,
+  "p95": 41.3
+ },
+ "in_process_ms": {
+  "max": 39.4,
+  "n": 30,
+  "p50": 17.9,
+  "p95": 20.2
+ },
+ "model_id": "938be3f002b0",
+ "service_ms": {
+  "max": 33.7,
+  "n": 30,
+  "p50": 20.9,
+  "p95": 24.4
+ },
+ "source": "upworthy",
+ "statuses": {
+  "abstain": 2,
+  "issue": 28
+ },
+ "statuses_lambda_0.5": {
+  "abstain": 5,
+  "issue": 25
+ },
+ "under_one_second_p95": true
+}

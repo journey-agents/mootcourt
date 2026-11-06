@@ -1,0 +1,100 @@
+{
+ "source": "asos",
+ "scores": "scores-asos-20261103-6bb5a15c5ff0.parquet",
+ "ledger": "ledger.parquet",
+ "rungs": [
+  {
+   "rung": "GBM",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "GBM+cal",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P0",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P1",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "P2",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "always_reference",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "always_variant",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "local_eb",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  },
+  {
+   "rung": "local_eb+cal",
+   "origins": 7,
+   "scored_rows": 337,
+   "fit_and_scored": 0,
+   "fit_after_origin": 0,
+   "outside_window": 0,
+   "usable_after_mismatch": 0,
+   "s_star_mismatch": 0
+  }
+ ],
+ "post_launch_fields_in_features": "0",
+ "total_violations": 0,
+ "pass": true
+}

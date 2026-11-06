@@ -1,0 +1,62 @@
+{
+ "bootstrap_resamples": 500,
+ "difference": {
+  "brier_skill": {
+   "estimate": 0.003407611153871516,
+   "hi": 0.005070166966205377,
+   "lo": 0.0016993965945147032,
+   "n": 10697
+  },
+  "crps": {
+   "estimate": -0.0009645381949652524,
+   "hi": -0.0005619422737506202,
+   "lo": -0.0013757792873105407,
+   "n": 10697
+  },
+  "logscore": {
+   "estimate": 0.003965766607062525,
+   "hi": 0.0053134781031848755,
+   "lo": 0.002727506231325056,
+   "n": 10697
+  }
+ },
+ "guarded": {
+  "brier_skill": 0.0032219384674977425,
+  "brier_skill_hi": 0.007212176259267033,
+  "brier_skill_lo": -0.00044180484996493325,
+  "cells_origins": 21,
+  "crps": 0.2925205861656738,
+  "crps_hi": 0.3002583022301049,
+  "crps_lo": 0.28544265831125204,
+  "guard": 2.0,
+  "logscore": -0.7564630064581149,
+  "logscore_hi": -0.7345630209013858,
+  "logscore_lo": -0.7811024134483514,
+  "n": 10697,
+  "n_tests": 2949,
+  "share_guard_held": 0.3333333333333333,
+  "share_lambda_zero": 0.8095238095238095
+ },
+ "note": "difference is guarded minus unguarded; positive log score and Brier skill differences favour the guard, a negative CRPS difference favours the guard",
+ "rung": "P2",
+ "seed": 0,
+ "snapshot_id": "20261106-2dc461f52ea4",
+ "source": "upworthy",
+ "unguarded": {
+  "brier_skill": -0.00018567268637359469,
+  "brier_skill_hi": 0.004236499088653172,
+  "brier_skill_lo": -0.004272112504819658,
+  "cells_origins": 21,
+  "crps": 0.293485124360639,
+  "crps_hi": 0.3012385658711351,
+  "crps_lo": 0.28636911540170207,
+  "guard": null,
+  "logscore": -0.7604287730651775,
+  "logscore_hi": -0.7383834834360042,
+  "logscore_lo": -0.7854703653944233,
+  "n": 10697,
+  "n_tests": 2949,
+  "share_guard_held": 0.0,
+  "share_lambda_zero": 0.47619047619047616
+ }
+}

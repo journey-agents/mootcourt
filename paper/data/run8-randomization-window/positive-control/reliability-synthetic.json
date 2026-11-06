@@ -1,0 +1,48 @@
+{
+ "as_of": "2015-04-14T12:48:02.205568+00:00",
+ "cells": {
+  "both": {
+   "as_of": "2015-04-14T12:48:02.205568+00:00",
+   "brier_skill": 0.01847999350492302,
+   "brier_skill_hi": 0.07684333144552695,
+   "brier_skill_lo": -0.02896243287990032,
+   "consecutive_below": 0,
+   "drifted": false,
+   "n": 80,
+   "n_tests": 40,
+   "p0_rolling_logscore": -2.578115425950468,
+   "rolling_logscore": -2.5289402039064526,
+   "window_weeks": 8
+  },
+  "headline_only": {
+   "as_of": "2015-04-14T12:48:02.205568+00:00",
+   "brier_skill": 0.008603579828606711,
+   "brier_skill_hi": 0.07080112884295028,
+   "brier_skill_lo": -0.041361637604442204,
+   "consecutive_below": 0,
+   "drifted": false,
+   "n": 94,
+   "n_tests": 47,
+   "p0_rolling_logscore": -2.722695480602019,
+   "rolling_logscore": -2.704193277157832,
+   "window_weeks": 8
+  },
+  "image_only": {
+   "as_of": "2015-04-14T12:48:02.205568+00:00",
+   "brier_skill": -0.013960984589412195,
+   "brier_skill_hi": 0.0007945554709960445,
+   "brier_skill_lo": -0.020270296537959743,
+   "consecutive_below": 0,
+   "drifted": false,
+   "n": 94,
+   "n_tests": 47,
+   "p0_rolling_logscore": -2.3368025372257595,
+   "rolling_logscore": -2.2819471964165357,
+   "window_weeks": 8
+  }
+ },
+ "seed": {
+  "last_result": "2015-04-14T12:48:02.205568+00:00"
+ },
+ "source": "synthetic"
+}

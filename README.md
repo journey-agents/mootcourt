@@ -241,7 +241,7 @@ The join finds a card by the ledger row it names: give `moot card` a row id with
 ### Headline results
 
 <!-- moot-headline:start -->
-- Upworthy, 13247 scored rows: Brier skill against the base rate on all rows is 0.0015 (-0.0018 to 0.0048) for P1 (not distinguishable from the constant base rate) and 0.0019 (-0.0018 to 0.0054) for P2 (not distinguishable from the constant base rate); 0 of 3 cells are undecidable at this n at the release gate.
+- Upworthy, 10697 scored rows: Brier skill against the base rate on all rows is 0.0023 (-0.0012 to 0.0061) for P1 (not distinguishable from the constant base rate) and 0.0032 (-0.0004 to 0.0072) for P2 (not distinguishable from the constant base rate); 1 of 3 cells are undecidable at this n at the release gate.
 - ASOS, 337 scored rows: Brier skill against the base rate on all rows is -0.1073 (-0.2366 to -0.0020) for P1 (worse than the constant base rate) and -0.1073 (-0.2366 to -0.0020) for P2 (worse than the constant base rate); 4 of 4 cells are undecidable at this n at the release gate.
 <!-- moot-headline:end -->
 
