@@ -23,6 +23,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Added
 
+- `paper/summary_tables/`: the summary tables of the paper's reformatted body and appendix are generated from report keys by `make tables`, with a `% src:` comment above each row; the eight tables without report results stay hand-typed and are listed in `HAND_TYPED`.
 - The confirmation pass of round 03 on release 1.0.0: `paper/reviews/round-03/confirmation-R1.md` to `confirmation-R7.md` and
   `confirmation.md`, each reviewer's verification of its own findings at the released commit with a final verdict.
 

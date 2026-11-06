@@ -1711,3 +1711,7 @@ Fixed in `paper/build_tables.py`. The pooled realized P2 minus P1 difference of 
 ### Call 273: the number audit matches the report leaf first (round 03, R4 and decision 30)
 
 Fixed. `scripts/paper_audit.py` matched a printed number to the digits of its `% src:` comment before the report's leaf, so a comment that carried rounded digits (0.05385 for a leaf of 0.053846) let a double-rounded number (0.0539) pass. The order is now the report leaves, the tables, then the comment, and a number that matches only a comment number which is itself a rounding of a leaf of the named reports is listed as unmatched. A derived number that no leaf carries still passes on its comment. On the paper as it stands the audit finds 773 numbers (753 by leaf, 20 by comment) and none unmatched. Tests in `tests/test_round03_audit.py`.
+
+### Call 274: why the matched decision value is zero on the deployment-shaped archive (format pass, 5 November 2026)
+
+A reading, not a code change. The features of the deployment-shaped archive are the metric and the number of variants, so a test's score is a function of its number of arms. Ties within an arm stratum are chosen with equal probability, and `_matched_value` in `src/mootcourt/decision_value.py` then returns the chosen set's own expected value. The difference from the arm-count-matched order is therefore zero at every origin by construction, while the difference from random order is not.

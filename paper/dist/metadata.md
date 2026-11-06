@@ -12,11 +12,16 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Teams rarely consult their ledger of concluded experiments before the next launch. We release a benchmark and protocol that ask it about a proposed test: a rolling-origin backtest over versioned snapshots in which no in-test outcome reaches a pre-launch forecast (one stand-in, realized exposure, its leak measured), proper scores, a clustered calibration null, gates and decision value, on the Upworthy Research Archive (3,797 headline tests) and the ASOS Digital Experiments Dataset (78 experiments).
+Problem. A team must choose which A/B tests to run before any result exists. Its record of past experiments could inform that choice but is usually read only afterwards. Industrial systems forecast tests on private data; no public benchmark shows whether such forecasts can be trusted, or when the record has too little to say.
+Method. We replay two public archives in time order: 3,797 headline tests from an online publisher (Upworthy) and 78 experiments from a fashion retailer (ASOS). Each test is forecast only from results final before it started (realized exposure stands in for planned exposure; we measure that leak).
+Findings.
+- Can past experiments predict new ones? Partly. On the publisher's tests, a fitted model forecasts the range of a new effect better than a historical baseline (0.149 nats), but not which test wins: pooled skill 0.001, interval spanning zero on 3,797 tests, and its probabilities are miscalibrated. The retailer's 68 scored tests are too few to decide (400 needed).
+- How? Fit a prior per group of tests, allowing for measurement error. Weighting similar past tests leaves log score and skill unchanged and ranks tests slightly better, but this backtest is weak here: on synthetic tests it recovers about 0.09 of the gain an oracle gets from a planted effect. To choose tests, a text classifier's top quarter captures 3.9 points more lift than a matched random choice, though it fails that same control. Abstention did not improve what was issued.
+- What improves prediction? A heavy-tailed forecast gained most (0.100 nats over a normal one); bandwidth, features and pooling barely mattered. Planned exposure, stronger text models and frozen team forecasts are untested.
+Tools. A base rate, a fitted prior, similarity weighting, three learned challengers.
+Release. A benchmark (protocol, schema, baselines, run reports) and Moot Court, an MIT-licensed Python package that regenerates every results table and runs privately on a company's own aggregate records.
 
-The first finding is a powered negative. On the headline archive an empirical-Bayes prior gains 0.149 nats of log score over the base rate, yet its Brier skill is 0.001 (minus 0.002 to 0.005) on 3,797 tests against a gate of 250, its probabilities sit at the null's 100th percentile, and its coverage runs from 1.00 to 0.66 across deciles of realized over planned standard error. Guarded precedents in the prior's family are no better than it (plus 0.0004 nats, minus 0.0003 to 0.0012); in a positive control the guard admits a planted lift at the largest cell's size and the rung recovers about a fifth pooled, a tenth in the real-shaped cell. Ranking by win probability beats an arm-count-matched random order for a TF-IDF classifier (3.9 points, 2.2 to 5.4); the prior, one number per cell, sits at it (minus 0.004, within noise). A first run scoring relative lift at realized precision reversed the calibration gradient: leakage. The deployment-shaped archive is undecidable at every gate. Moot Court, the open-source system, regenerates every table from the reports.
-
-(Check the abstract against `paper/main.tex` at upload: the text above is the 250-word abstract of pass 12, 5 November 2026, on the run 7 sources.)
+(Check the abstract against `paper/main.tex` at upload: the text above is the structured abstract of the format pass of 5 November 2026, on the run 7 sources.)
 
 ## Categories
 

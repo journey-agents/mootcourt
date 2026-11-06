@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / "paper" / "data" / "run6-forward-chaining"
+RUN = ROOT / "paper" / "data" / "run7-tie-rank"
 
 
 def _build(out: Path, seed: str) -> dict[str, bytes]:

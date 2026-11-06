@@ -2,7 +2,8 @@
 
 Usage: python build_tables.py --reports "/Volumes/Crucial X10/mootcourt-data/reports" --out tables
 Every table file starts with a comment naming the report file and snapshot id it came from, so each
-number in the paper traces to one JSON path. No number is typed by hand.
+number in the paper traces to one JSON path. No number is typed by hand. The summary tables of the body and the appendix are specified in
+paper/summary_tables/ and written from here as well.
 """
 
 from __future__ import annotations
@@ -1147,3 +1148,7 @@ if __name__ == "__main__":
     positive_control_gain_table(a.reports, a.out)
     positive_control_rungs_table(a.reports, a.out)
     guard_pairs_rows_table(a.reports, a.out)
+
+    import summary_tables
+
+    summary_tables.build_all(a.reports, a.out, write)
