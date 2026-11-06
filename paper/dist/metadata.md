@@ -1,10 +1,10 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: Problem and every finding are kept, the question labels and Tools are left to the PDF, and Method and Release are shorter.
+Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: Every finding is kept, the question labels and Tools are left to the PDF, and Problem, Method and Release are shorter.
 
 ## Title
 
-Arguing from Precedent: A Benchmark and Protocol for Scored, Gated Pre-Launch Forecasts of A/B Test Outcomes with Abstention
+Can Past Experiments Predict the Next One? A Public Benchmark for Pre-Launch Forecasts of A/B Tests
 
 ## Authors
 
@@ -12,11 +12,11 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before launching a change, a team wants to know what its experiment is likely to show: what result to expect, whether the experiment is worth running and how large to make it. Its past experiments hold evidence on all of this. Industrial systems now forecast experiment outcomes on private data; no public benchmark shows whether such forecasts can be trusted, or when past experiments say too little.
-Method. We simulate how a team would have forecast each test at the time, on two public archives: 2,949 headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 experiments from a retailer (ASOS). In time order, we fit on finished tests only and predict each new test. Forecasts use actual traffic, which a real forecast would not have. All results are exploratory: we reused the same data and changed the method after seeing results.
+Problem. Before launching a change, a team wants to know what its experiment is likely to show: what result to expect, whether the experiment is worth running and how large to make it. Past experiments may hold evidence. Industrial systems screen candidates before live tests, on private evidence. We found no public benchmark showing whether forecasts from past experiments can be trusted, or when they say too little.
+Method. We simulate how a team would have forecast each test at the time, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 experiments from a retailer (ASOS; no dates, arbitrary order). We fit on earlier tests only and predict each new test. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
 Findings.
-- For the publisher, a fitted prior forecasts the next result's distribution better than the base rate (0.120 nats). Its skill on which test will be significant is at most small: the interval spans zero on our main definition and just clears it when significance is set at planned precision. Its probabilities are miscalibrated, mostly in level. The retailer's tests are too few to decide.
-- Fit a prior per group. Weighting similar past tests matches it on log score and skill and ranks tests better, but the backtest is weak: a planted signal returns 0.09 of an oracle's gain. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, but fails that control. Issued rows beat abstained rows on log score, not on skill.
+- For the publisher, a fitted prior forecasts the next result's distribution better than the base rate (0.120 nats), but not which test in a group will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it at planned precision. Its probabilities are miscalibrated, mostly in level. The retailer's tests are too few to decide.
+- Weighting similar past tests matches the prior on score and skill and ranks tests better, but no better than arm count or traffic alone; a planted signal returns only 0.09 of an oracle's gain. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, but fails that control. Issued rows beat abstained rows on log score, not on skill.
 - A heavy-tailed predictive gained most, much of it a mixture over the click-through level. Sizing tests from the forecast shows no measurable advantage over the base rate.
 Release. Benchmark and Moot Court, an MIT-licensed package.
 
