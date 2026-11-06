@@ -62,12 +62,12 @@ def glance(r):
     if any(row["lambda"] != 0 for a in (asos, syn) for row in a.get("tables.p2_selection")):
         raise ValueError("the row says the guard holds the weight at zero")
 
-    return Table("glance", "lrrr", [" & Upworthy (headline archive) & ASOS (deployment-shaped) & Synthetic (no planted text signal)"], [
+    return Table("glance", "lrrr", [" & Upworthy (headline archive) & ASOS (product experiments) & Synthetic (no planted text signal)"], [
         ["scored tests / rows", *[join("{} / {}", n(a, "header.tests_scored"), n(a, "header.scored_rows")) for a in archives]],
         ["P1 log score gain over P0, nats (90\\%)", *[_gain_over_p0(a) for a in archives]],
         ["P1 Brier skill, event at realized precision (90\\%)", *[ci(a, p1, "brier_skill", 4) for a in archives]],
         ["P1 Brier skill, event at planned precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
-        ["gate for skill 0.10, tests at base rate; pooled claim", _gate(up_extras), _gate(asos_extras), _gate_scaled(syn)],
+        ["tests to read a skill of 0.10, at base rate; verdict at that skill", _gate(up_extras), _gate(asos_extras), _gate_scaled(syn)],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],
         ["P1 coverage of the 80 / 90 percent intervals",
          *[join("{} / {}", v(a, f"{p1}.coverage_80", 2), v(a, f"{p1}.coverage_90", 2)) for a in archives]],
@@ -77,9 +77,9 @@ def glance(r):
         ["abstention rate", *[v(a, f"{p1}.abstention_rate") for a in archives]],
         ["P2 minus P1, paired log score (90\\%)", ci(up, p2, "logscore_vs_p1", 4),
          join(held, v(asos, f"{p2}.logscore_vs_p1", 4)), join(held, v(syn, f"{p2}.logscore_vs_p1", 4))],
-        ["best decision value at a quarter budget (90\\%)", _best_decision(up, "text_lr", "text classifier"),
+        ["best decision value at a quarter budget, minus matched random (90\\%)", _best_decision(up, "text_lr", "text classifier"),
          _best_decision(asos, "P1", "all rungs"), _best_decision(syn, "P1", "prior")],
-        ["P1 decision value at a quarter budget (90\\%)", *[ci(a, _dv("P1"), "diff_matched") for a in archives]],
+        ["P1 decision value at a quarter budget, minus matched random (90\\%)", *[ci(a, _dv("P1"), "diff_matched") for a in archives]],
     ])
 
 

@@ -48,32 +48,9 @@
 
 \maketitle
 
-\begin{table*}[t]\centering\footnotesize
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.tests_in_ledger 78, header.tests_scored 68; tables/coverage-ratio-asos.tex tables/coverage-ratio-synthetic.tex ratio range 1.00 to 1.00; tables/glance.tex
-\caption{Results at a glance: the headline numbers of the three archives side by side, for the prior (P1) unless the row names another model. Intervals are 90 percent bootstrap by test. Section~\ref{sec:protocol} defines each measure; the results sections read each row. Sources: Tables~\ref{tab:main-upworthy}, \ref{tab:main-asos}, \ref{tab:main-synthetic}, \ref{tab:coverage-ratio}, \ref{tab:decision-intervals-upworthy}, \ref{tab:decision-intervals-asos}, \ref{tab:decision-intervals-synthetic}, \ref{tab:event-definition} and~\ref{tab:fmt-gates-strata}.}
-\label{tab:glance}
-\input{tables/glance}
-\par\smallskip\parbox{0.92\textwidth}{\scriptsize\raggedright
-\textbf{Reading the table.}
-\begin{itemize}\setlength{\itemsep}{0pt}
-\item Log scores sit on each archive's own effect scale, so read that row within a column.
-\item The two Brier skill rows differ in how the significant-positive event is defined: at the test's realized standard error, the main reading, or at its planned one. On ASOS and synthetic the two events coincide.
-\item On ASOS the gate is not met, so no interval there decides a claim.
-% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.tests_in_ledger 78, header.tests_scored 68
-\item The ASOS ledger holds 78 experiments, of which 68 are scored.
-\item The gates of the headline and ASOS columns are simulated at that archive's own dependence (Table~\ref{tab:fmt-gates-strata}). No such simulation ran for the synthetic archive, so its gate is the report's scaling of the nearest simulated gate to its dependence.
-\item The abstention rate is of all scored rows, the burn-in origin included.
-% src: src/mootcourt/decision_value.py _matched_value (the chosen set's own value when the score fixes the arm stratum); $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value diff_matched 0 for every rung
-\item ``Best'' decision value is over the models the archive runs. On ASOS the features are metric and number of variants, so each test's score is a function of its number of arms and the difference from the order matched on arms is zero by construction. No text classifier runs there because the archive has no text.
-\item On the synthetic archive the prior's value comes from cells that differ in their means, not from text; P0, P1 and P2 tie.
-\item The decile row is n/a on ASOS and synthetic because the ratio of realized to planned standard error is 1.00 throughout.
-\item The positive control runs on its own generator: its recovered fractions are in Table~\ref{tab:positive-control-gain}.
-\end{itemize}}
-\end{table*}
-
 \section{Introduction}
 \label{sec:intro}
-Before launching a change, a team wants to know what its experiment is likely to show. This paper is about that forecast: the result to expect and whether it will be significant (Section~\ref{sec:ladder-results}), with choosing tests (Section~\ref{sec:decision-results}) and sizing them (Section~\ref{sec:sizing-results}) as uses of the forecast, each evaluated here. We do not measure what happens after a change is deployed. A team that runs online controlled experiments accumulates a \emph{ledger}, one record for each concluded test. The ledger is consulted after a test, to shrink a noisy estimate, and rarely before one, when it could still inform all of this. Three 2026 industrial systems now screen candidates before a live test; the evidence they report rests on private data (Section~\ref{sec:related}). What is missing is a public benchmark with a protocol strict enough that a forecast made before launch cannot have read the result, scored so that a calibrated-looking forecast with no discrimination is seen for what it is, and gated so that a reader knows how many tests a claim needs. This paper releases that benchmark and reads it on two public archives.
+Before launching a change, a team wants to know what its experiment is likely to show. This paper is about that forecast: the result to expect and whether it will be significant (Section~\ref{sec:ladder-results}), with choosing tests (Section~\ref{sec:decision-results}) and sizing them (Section~\ref{sec:sizing-results}) as uses of the forecast, each evaluated here. We do not measure what happens after a change is deployed. A team that runs online controlled experiments accumulates a \emph{ledger}, one record for each concluded test. Published methods mostly use such a ledger after a test, to shrink a noisy estimate, though it could also inform the forecast before one. Three 2026 industrial systems now screen candidates before a live test; the evidence they report rests on private data (Section~\ref{sec:related}). We found no public benchmark that does three things: fixes a protocol under which a forecast sees only rows from before its test, with one stated exception for traffic (Section~\ref{sec:setting}); scores forecasts so that one that looks calibrated but cannot tell tests apart is seen for what it is; and uses gates, so that a reader knows how many tests a claim needs. This paper releases such a benchmark and applies it to two public archives and a synthetic one.
 
 The system issues a \emph{card} before a test launches: a frozen forecast of the test's result, with the probability of a significant positive result and the probability that the variant wins. The forecasts come from a \emph{ladder} of models, each step or \emph{rung} adding one thing to the one below. P0 is the base rate; P1, the prior, is an empirical-Bayes prior fit to concluded tests; P2, the precedent rung, moves that prior toward similar past tests when a guard admits the move. Models are fit within a \emph{cell}, a group of tests with the same kind of change. A \emph{gate} is the number of tests a claim needs before its interval can decide it; below the gate the claim is undecidable. A card can also abstain, naming why.
 
@@ -86,6 +63,30 @@ We ask three questions, and the discussion answers them in order (Section~\ref{s
 Every number in this paper is exploratory. We read one split of the headline archive repeatedly and changed the method between runs after seeing results; the archive's confirmatory split is unopened and is the next test. The main analysis also leaves out the tests in the window where the archive's maintainers report randomization problems (Section~\ref{sec:setting}).
 
 In short, the ledger says how the next result will be distributed better than a base rate does, and its skill on which test will be significant is at most small and depends on how that event is defined: the interval spans zero at realized precision and lies just above zero, unadjusted, at planned precision or with exposure fixed. A text classifier ranks tests best, and no positive control stands behind it. Precedents match the prior on score and rank tests better, and a planted-signal control shows the backtest is too weak to rule out a precedent signal of that size. Table~\ref{tab:glance} sets the numbers side by side.
+
+\begin{table*}[t]\centering\footnotesize
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.tests_in_ledger 78, header.tests_scored 68; tables/coverage-ratio-asos.tex tables/coverage-ratio-synthetic.tex ratio range 1.00 to 1.00; tables/glance.tex
+\caption{Results at a glance: the main numbers of the two public archives and the synthetic archive side by side, for the prior (P1) unless the row names another model. Intervals are 90 percent bootstrap by test. Section~\ref{sec:protocol} defines each measure; the results sections read each row. Sources: Tables~\ref{tab:main-upworthy}, \ref{tab:main-asos}, \ref{tab:main-synthetic}, \ref{tab:coverage-ratio}, \ref{tab:decision-intervals-upworthy}, \ref{tab:decision-intervals-asos}, \ref{tab:decision-intervals-synthetic}, \ref{tab:event-definition} and~\ref{tab:fmt-gates-strata}.}
+\label{tab:glance}
+\input{tables/glance}
+\par\smallskip\parbox{0.92\textwidth}{\scriptsize\raggedright
+\textbf{Reading the table.}
+\begin{itemize}\setlength{\itemsep}{0pt}
+\item Log scores sit on each archive's own effect scale, so read that row within a column.
+\item The two Brier skill rows differ in how the significant-positive event is defined: at the test's realized standard error, the main reading, or at its planned one. On ASOS and synthetic the two events coincide.
+\item On ASOS the gate is not met, so no interval there decides a claim.
+\item The gate row is for a skill of 0.10. The skills measured on the publisher's archive are far smaller, so a verdict of decidable says the interval is worth reading, not that a skill of this size can be told from zero.
+% src: tables/glance.tex, row P1 ECE; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1].ece_percentile 100; $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate[cell=ALL,rung=P1].ece_percentile 95.2
+\item A percentile above 95 rejects calibration. The synthetic archive's 95.2 is just past that line; the publisher's 100 is above every draw of the null.
+\item The gates of the headline and ASOS columns are simulated at that archive's own dependence (Table~\ref{tab:fmt-gates-strata}). No such simulation ran for the synthetic archive, so its gate is the report's scaling of the nearest simulated gate to its dependence.
+\item The abstention rate is of all scored rows, the burn-in origin included.
+% src: src/mootcourt/decision_value.py _matched_value (the chosen set's own value when the score fixes the arm stratum); $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value diff_matched 0 for every rung
+\item ``Best'' decision value is over the models the archive runs. On ASOS the features are metric and number of variants, so each test's score is a function of its number of arms and the difference from the order matched on arms is zero by construction. No text classifier runs there because the archive has no text.
+\item On the synthetic archive the prior's value comes from cells that differ in their means, not from text; P0, P1 and P2 tie.
+\item The decile row is n/a on ASOS and synthetic because the ratio of realized to planned standard error is 1.00 throughout.
+\item The positive control runs on its own generator: its recovered fractions are in Table~\ref{tab:positive-control-gain}.
+\end{itemize}}
+\end{table*}
 
 The paper makes four contributions.
 \begin{enumerate}
