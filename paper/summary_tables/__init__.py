@@ -27,19 +27,10 @@ HAND_TYPED = {
     "tab:fmt-archives": "the source archives' own counts, from DATA.md",
     "tab:fmt-protocol": "configuration constants",
     "tab:fmt-prior-work": "figures quoted from cited papers",
-    "tab:fmt-app-calls": "ranges of the design calls in docs/method.md",
     "tab:landscape": "a survey of tools",
     "tab:schema": "field names of the exchange format",
     "tab:commands": "command lines",
     "tab:checksums": "file sizes and digests from data/CHECKSUMS.json",
-}
-
-
-# Tables the text pass of paper version 2 will input; tests/test_summary_tables.py requires every other table to be input, and these not yet to be,
-# so a name leaves this set when its \\input arrives.
-NOT_INPUT_YET = {
-    "fmt-window", "fmt-leak-choices", "fmt-exposure-fixed", "fmt-prior-family", "fmt-ranking-paired", "fmt-abstention-composition",
-    "fmt-gates-strata", "fmt-drift-null", "fmt-learning-paired", "fmt-auc-by-year", "fmt-sizing", "fmt-assurance",
 }
 
 

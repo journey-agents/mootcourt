@@ -17,6 +17,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com).
 
 ### Changed
 
+- Paper version 2 reads run 8, which excludes the tests in the archive's discouraged randomization window; including them is a reported ablation. Every number is stated as exploratory. The hypotheses are no longer described as pre-registered.
+- The paper's verdict words are held, failed and not shown. Skill on the significant-positive event is stated as at most small and dependent on the event's definition. The default selection rule stays by plan and no longer rests on a comparison it wins.
 - The README is rewritten as a reader's entry point: a flowchart of how the pieces fit together, a sequence diagram of the weekly
   loop, a table of the four ideas and a table of the ladder, a numbered quickstart whose commands and outputs are unchanged, and a
   short guide to reading a card. Its length test now allows about 300 lines (320 newline-split pieces) instead of 225.

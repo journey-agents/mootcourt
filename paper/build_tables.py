@@ -118,7 +118,7 @@ def main_table(rep, source, out):
                     (interval(r, "logscore_vs_p1", 4) if r.get("logscore_vs_p1") is not None else ""),
                     f3(r["crps"], 2),
                     f"{f3(r.get('brier'), 4)} / {f3(r.get('brier_base'), 4)} / {f3(r.get('brier_floor'), 4)}" if r.get("brier") is not None else "",
-                    interval(r, "brier_skill"),
+                    interval(r, "brier_skill", 4),
                     f"{f3(r['direction_accuracy'])} / {f3(r.get('direction_ceiling'))}",
                     (f"{f3(r['coverage_80'], 2)} / {f3(r['coverage_90'], 2)}" if r.get("coverage_80") is not None else ""),
                     f3(r["abstention_rate"], 3),

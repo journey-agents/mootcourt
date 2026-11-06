@@ -6,19 +6,19 @@ figure & value \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.scored_rows
 scored contrasts & 337 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.tests_scored
-experiments & 68 \\
+experiments scored & 68 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.origins_scored
 nominal quarterly origins & seven \\
-% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].gate_base_rate; $RUN6/gates.json by_base_rate["0.14"].n_200; $RUN6/gates.json by_base_rate["0.14"].n_400
-gate at base rate 0.14 (tests) & 200 and 400 \\
+% src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json gates_by_stratum.strata.ALL.dependence.base_rate; $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json gates_by_stratum.strata.ALL.own_gate.n_200; $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json gates_by_stratum.strata.ALL.own_gate.n_400
+own gate at skill 0.20 and 0.10, tests (base rate 0.14) & 175 and 275 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].abstention_rate
 abstention rate & 0.457 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.abstention[cell=ALL].support
 support trigger, rows at the early origins & 126 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].brier_skill_hi
-P1 Brier skill (90\%) & -0.107 (-0.237, -0.002) \\
+P1 Brier skill (90\%) & -0.1073 (-0.2366, -0.0020) \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].adjusted_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].adjusted_hi
-P1 Brier skill, adjusted interval & (-0.326, 0.111) \\
+P1 Brier skill, adjusted interval & (-0.3258, 0.1113) \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].ece
 expected calibration error & 0.127 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].ece_percentile
@@ -27,8 +27,18 @@ calibration percentile & 98.8 \\
 design effect & 3.8 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].coverage_80; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1].coverage_90
 coverage of the 80 and 90 percent intervals & 0.78 and 0.86 \\
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill_hi
+boosted model, recalibrated Brier skill (90\%) & -0.0090 (-0.0756, 0.0446) \\
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill_hi
+local comparison set, recalibrated Brier skill (90\%) & 0.0150 (-0.0351, 0.0691) \\
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random_hi
+boosted model, lift minus random order, quarter of tests (90\%) & 0.0420 (-0.0243, 0.1352) \\
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random_hi
+local comparison set, the same (90\%) & 0.0044 (-0.0660, 0.0934) \\
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_matched; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_matched
+both, lift minus the matched order, quarter of tests & 0.000 and 0.000 \\
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation.corr_log_impressions_abs_z
-exposure stand-in against the absolute standardized effect, correlation & 0.215 \\
+exposure stand-in, correlation with $|$standardized effect$|$ & 0.215 \\
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json impressions_effect_correlation.corr_log_impressions_abs_z
 the same correlation on the headline archive & 0.087 \\
 \bottomrule

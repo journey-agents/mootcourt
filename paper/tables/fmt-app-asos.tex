@@ -32,7 +32,7 @@ local comparison set, decision value & 0.004 (-0.066, 0.093) & 0.029 (0.009, 0.0
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation.corr_log_impressions_abs_z; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json impressions_effect_correlation.corr_log_impressions_abs_z
 log of the user count & 0.215 & 0.087 \\
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation.corr_log_run_length_abs_z
-log of the run length & 0.152 &  \\
+log of the run length & 0.152 & n/a \\
 \midrule
 \multicolumn{3}{l}{\emph{Abstention and the support trigger}} \\
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json trigger_ablation_released_rows.runs[dropped_trigger=support].issued_in_main.abstention_rate; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json trigger_ablation_released_rows.runs[dropped_trigger=support].issued_in_main.abstention_rate
@@ -42,13 +42,13 @@ abstention rate, support off & 0.217 & 0.318 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].n; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].n_tests; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--drop-trigger-support.json tables.released_rows[cell=ALL].n
 rows released, in tests & 81 in 19 & 0 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].brier_skill; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].brier_skill_lo; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].brier_skill_hi
-Brier skill of the released rows & -0.137 (-0.423, 0.064) &  \\
+Brier skill of the released rows & -0.137 (-0.423, 0.064) & n/a \\
 \midrule
 \multicolumn{3}{l}{\emph{Drift and the weekly replay}} \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2019,cell=ALL,rung=P1].n_tests; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2019,cell=ALL,rung=P1].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2019,cell=ALL,rung=P1].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2019,cell=ALL,rung=P1].brier_skill_hi
-P1 skill, first nominal year, 29 tests & -0.108 (-0.404, 0.154) &  \\
+P1 skill, first nominal year, 29 tests & -0.108 (-0.404, 0.154) & n/a \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2020,cell=ALL,rung=P1].n_tests; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2020,cell=ALL,rung=P1].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2020,cell=ALL,rung=P1].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.score_by_year[year=2020,cell=ALL,rung=P1].brier_skill_hi
-P1 skill, second nominal year, 39 tests & -0.107 (-0.177, -0.034) &  \\
+P1 skill, second nominal year, 39 tests & -0.107 (-0.177, -0.034) & n/a \\
 % src: $RUN6/replay-asos-20261103-6bb5a15c5ff0.json header.n_weeks; $RUN6/replay-upworthy-20261106-2dc461f52ea4.json header.n_weeks
 weeks replayed & 101 & 111 \\
 % src: $RUN6/replay-asos-20261103-6bb5a15c5ff0.json header.n_cards; $RUN6/replay-upworthy-20261106-2dc461f52ea4.json header.n_cards
@@ -74,7 +74,7 @@ Brier skill, normal prior & -0.368 & -0.019 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-0.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-80.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json tables.aggregate[cell=ALL,rung=P1].logscore
 log score at $\kappa = 0$ and $\kappa = 80$ & 4.693, 4.716 & -0.761, -0.755 \\
 \midrule
-\multicolumn{3}{l}{\emph{The learning curve at the final origin, P1}} \\
+\multicolumn{3}{l}{\emph{The learning curve at one origin, P1}} \\
 % src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json heldout_rows; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json heldout_rows
 held-out rows & 56 & 1,143 \\
 % src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json heldout_tests; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json heldout_tests

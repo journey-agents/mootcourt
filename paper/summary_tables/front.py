@@ -1,4 +1,4 @@
-"""Summary tables of the paper's front matter: the results at a glance and the inputs of the gate."""
+"""Summary tables of the paper's front matter: the results at a glance."""
 from summary_tables import Table, ci, derived, fmt, join, n, v
 
 UPWORTHY, ASOS, SYNTHETIC = "backtest-upworthy-*.json", "backtest-asos-*.json", "backtest-synthetic-*.json"
@@ -19,13 +19,18 @@ def _gain_over_p0(rep):
     return derived(f"{fmt(-x)} ({fmt(-hi)}, {fmt(-lo)})", *[rep.ref(f"{row}.logscore_vs_p1{s}") for s in ("", "_lo", "_hi")])
 
 
-def _gate(rep, gates):
-    """The tests the release gate asks for at the archive's base rate, and the claim that gate leaves decidable."""
+def _gate(extras):
+    """The tests the release gate asks for at the archive's own dependence, the one rule of Section 5, and the pooled claim's verdict."""
+    at = "gates_by_stratum.strata.ALL"
+    word = derived(extras.get(f"{at}.verdict").split()[0], extras.ref(f"{at}.verdict"))
+    return join("{} at {}; {}", n(extras, f"{at}.own_gate.n_400"), v(extras, f"{at}.dependence.base_rate", 2), word)
+
+
+def _gate_scaled(rep):
+    """An archive with no stratum simulation: the report's gate scaled to the archive's dependence, which the caption says."""
     row = _agg("P1")
-    rate = rep.get(f"{row}.gate_base_rate")
-    tests = n(gates, f'by_base_rate["{rate:.2f}"].by_target["0.90"].n_400')
-    word = derived(rep.get(f"{row}.decidable_by_tests").split()[0], rep.ref(f"{row}.decidable_by_tests"))
-    return join("{} at {}; {}", tests, v(rep, f"{row}.gate_base_rate", 2), word)
+    word = derived(rep.get(f"{row}.decidable_by_tests_cell").split()[0], rep.ref(f"{row}.decidable_by_tests_cell"))
+    return join("{} at {}; {}", n(rep, f"{row}.gate_cell_n_400"), v(rep, f"{row}.gate_base_rate", 2), word)
 
 
 def _ece_percentile(rep):
@@ -47,7 +52,8 @@ def _best_decision(rep, rung, label):
 
 
 def glance(r):
-    up, asos, syn, gates = r(UPWORTHY), r(ASOS), r(SYNTHETIC), r("gates.json")
+    up, asos, syn = r(UPWORTHY), r(ASOS), r(SYNTHETIC)
+    up_extras, asos_extras = r("paper-extras-upworthy-*.json"), r("paper-extras-asos-*.json")
     archives = (up, asos, syn)
     p1, p2 = _agg("P1"), _agg("P2")
     if max(abs(row["diff_matched"]) for row in _decision_rows(asos)) > 1e-9:
@@ -59,12 +65,13 @@ def glance(r):
     return Table("glance", "lrrr", [" & Upworthy (headline archive) & ASOS (deployment-shaped) & Synthetic (no planted text signal)"], [
         ["scored tests / rows", *[join("{} / {}", n(a, "header.tests_scored"), n(a, "header.scored_rows")) for a in archives]],
         ["P1 log score gain over P0, nats (90\\%)", *[_gain_over_p0(a) for a in archives]],
-        ["P1 Brier skill against the base rate (90\\%)", *[ci(a, p1, "brier_skill") for a in archives]],
-        ["release gate, tests at base rate; pooled claim", *[_gate(a, gates) for a in archives]],
+        ["P1 Brier skill, event at realized precision (90\\%)", *[ci(a, p1, "brier_skill", 4) for a in archives]],
+        ["P1 Brier skill, event at planned precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
+        ["gate for skill 0.10, tests at base rate; pooled claim", _gate(up_extras), _gate(asos_extras), _gate_scaled(syn)],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],
         ["P1 coverage of the 80 / 90 percent intervals",
          *[join("{} / {}", v(a, f"{p1}.coverage_80", 2), v(a, f"{p1}.coverage_90", 2)) for a in archives]],
-        ["P1 90 percent coverage, most to least precise decile",
+        ["P1 90 percent coverage, deciles of realized over planned $s$",
          join("{} to {}", v(up, "tables.coverage_by_se_ratio[rung=P1,decile=1].coverage_90", 2),
               v(up, "tables.coverage_by_se_ratio[rung=P1,decile=10].coverage_90", 2)), "n/a", "n/a"],
         ["abstention rate", *[v(a, f"{p1}.abstention_rate") for a in archives]],
@@ -76,17 +83,4 @@ def glance(r):
     ])
 
 
-def gate_inputs(r):
-    gates = r("gates.json")
-
-    def row(rate):
-        at = f'by_base_rate["{rate}"]'
-        return [rate, v(gates, f"{at}.rows_per_test", 1), v(gates, f"{at}.icc", 2),
-                n(gates, f'{at}.by_target["0.90"].n_200'), n(gates, f'{at}.by_target["0.90"].n_400')]
-
-    return Table("fmt-gate-inputs", "rrrrr",
-                 ["base rate & rows per test & within-test correlation & tests for skill 0.20 & tests for skill 0.10"],
-                 [row("0.09"), row("0.14"), row("0.30")])
-
-
-TABLES = [glance, gate_inputs]
+TABLES = [glance]

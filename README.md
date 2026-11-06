@@ -231,10 +231,10 @@ The join finds a card by the ledger row it names: give `moot card` a row id with
 ## What the results show, and what the project does not show
 
 - **Headline-test skill is not deployment skill.** The main archive is headline and image tests from one publisher. Nothing here measures whether a forecaster that predicts them predicts product experiments.
-- **The headline result is modest.** On the Upworthy archive no rung of the ladder is distinguishable from always forecasting the base rate, and weighing similar headlines does not measurably improve on the pooled prior out of time: P2 and P1 differ by less than a thousandth of a nat of log score. Nulls are reported as nulls.
+- **The headline result is modest.** On the Upworthy archive skill on the significant-positive event is at most small and depends on how the event is defined: at realized precision no rung of the ladder is distinguishable from always forecasting the base rate, and at planned precision the unadjusted intervals of P1 and P2 lie just above zero. Weighing similar headlines does not measurably improve on the pooled prior on the log score out of time: P2 and P1 differ by less than a thousandth of a nat. Every number is exploratory: one split read repeatedly, with the method changed between runs.
 - **ASOS is undecidable at its n.** The deployment-shaped archive has a few hundred contrasts in under a hundred tests, and the results mark each cell as decidable or undecidable at the release gate, sized at the archive's own base rate; every ASOS cell is undecidable. That file has no dates, so its calendar is nominal and says nothing about drift.
 - **Scores are against the observed estimate, not the unknown true effect.** A predictor is judged on the estimate a test produced, noise included.
-- **Two stand-ins on Upworthy.** The archive does not record when a test was read, so a test is treated as final seven days after its latest arm was created. It does not record planned exposure either, so realized impressions stand in, and that stand-in can leak: log impressions correlate +0.099 with the absolute standardized effect on the admitted rows (`DATA.md`, `docs/method.md`).
+- **Two stand-ins on Upworthy.** The archive does not record when a test was read, so a test is treated as final seven days after its latest arm was created. It does not record planned exposure either, so realized impressions stand in, and that stand-in can leak: log impressions correlate +0.087 with the absolute standardized effect on the admitted rows (`DATA.md`, `docs/method.md`).
 - **Not every rung is exercised on real data.** The team-forecast rung needs a forecast frozen before the test, and no archive holds one. It runs on synthetic data only.
 - **It is not a decision tool.** No ship, rollout, allocation, ramp or stopping recommendation comes out of it.
 
@@ -245,7 +245,7 @@ The join finds a card by the ledger row it names: give `moot card` a row id with
 - ASOS, 337 scored rows: Brier skill against the base rate on all rows is -0.1073 (-0.2366 to -0.0020) for P1 (worse than the constant base rate) and -0.1073 (-0.2366 to -0.0020) for P2 (worse than the constant base rate); 4 of 4 cells are undecidable at this n at the release gate.
 <!-- moot-headline:end -->
 
-The full tables (calibration, abstention, decision value, challengers, ablations, the cautionary first run and run times) are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run7-tie-rank` for the published ones.
+The full tables (calibration, abstention, decision value, challengers, ablations, the cautionary first run and run times) are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run8-randomization-window` for the published ones.
 
 ## Learn more
 

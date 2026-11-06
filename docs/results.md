@@ -1,6 +1,6 @@
 # Results
 
-These tables are produced by the commands of [tutorial 3](tutorials/03-reproduce-upworthy.md) and the `make` targets it lists, and rendered from the report files by `scripts/render_readme_results.py`. Nulls are reported as nulls. Every number here comes from the rerun after the round 00 review, which fixed P0, the P2 predictive, the gates and the live join; [Method](method.md) (calls 160 to 179) lists what changed.
+These tables are produced by the commands of [tutorial 3](tutorials/03-reproduce-upworthy.md) and the `make` targets it lists, and rendered from the report files by `scripts/render_readme_results.py`. Nulls are reported as nulls. Every number here comes from the rerun after the round 00 review, which fixed P0, the P2 predictive, the gates and the live join; [Method](method.md) (calls 160 to 179) lists what changed. The current numbers are run 8 (`paper/data/run8-randomization-window`), which leaves out the tests in the archive's discouraged randomization window ([`DATA.md`](https://github.com/journey-agents/mootcourt/blob/main/DATA.md)), and every number is exploratory.
 
 The first full run scored Upworthy on a relative lift against a noisy reference arm, with the realized standard error as the forecaster's scale, and every rung had negative skill. That was a design defect, not a finding about the archive. The effect is now the absolute click-through difference in percentage points, and the forecaster's scale and features use only what is known before launch. [Method](method.md) (calls 52 to 55) tells the story with the numbers.
 
@@ -51,7 +51,7 @@ Reliability bins: P2 rows predicted between 0.10 and 0.20 (4675 rows, mean predi
 
 Log score on all rows: P0 -0.8762, P1 -0.7566, P2 -0.7565. P2 minus P1 is +0.0001, so the precedent rung adds nothing measurable over the prior.
 
-Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the pre-registered claim and the per-cell intervals are descriptive.
+Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.
 
 | rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |
 |---|---|---|---|---|---|---|
@@ -214,7 +214,7 @@ Reliability bins: P2 rows predicted between 0.10 and 0.20 (86 rows, mean predict
 
 Log score on all rows: P0 4.3405, P1 4.7088, P2 4.7088. P2 minus P1 is +0.0000, so the precedent rung adds nothing measurable over the prior.
 
-Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the pre-registered claim and the per-cell intervals are descriptive.
+Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.
 
 | rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |
 |---|---|---|---|---|---|---|
@@ -339,7 +339,7 @@ Reliability bins: P2 rows predicted between 0.10 and 0.20 (442 rows, mean predic
 
 Log score on all rows: P0 -2.4045, P1 -2.3946, P2 -2.3946. P2 minus P1 is +0.0000, so the precedent rung adds nothing measurable over the prior.
 
-Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the pre-registered claim and the per-cell intervals are descriptive.
+Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.
 
 | rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |
 |---|---|---|---|---|---|---|

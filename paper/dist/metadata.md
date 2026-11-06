@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract is the one in `paper/main.tex` as plain text.
+Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: Problem and every finding are kept, the question labels and Tools are left to the PDF, and Method and Release are shorter.
 
 ## Title
 
@@ -12,16 +12,13 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. A team must choose which A/B tests to run before any result exists. Its record of past experiments could inform that choice but is usually read only afterwards. Industrial systems forecast tests on private data; no public benchmark shows whether such forecasts can be trusted, or when the record has too little to say.
-Method. We replay two public archives in time order: 3,797 headline tests from an online publisher (Upworthy) and 78 experiments from a fashion retailer (ASOS). Each test is forecast only from results final before it started (realized exposure stands in for planned exposure; we measure that leak).
+Problem. Before launching a change, a team wants to know what its experiment is likely to show: what result to expect, whether the experiment is worth running and how large to make it. Its past experiments hold evidence on all of this. Industrial systems now forecast experiment outcomes on private data; no public benchmark shows whether such forecasts can be trusted, or when past experiments say too little.
+Method. We simulate how a team would have forecast each test at the time, on two public archives: 2,949 headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 experiments from a retailer (ASOS). In time order, we fit on finished tests only and predict each new test. Forecasts use actual traffic, which a real forecast would not have. All results are exploratory: we reused the same data and changed the method after seeing results.
 Findings.
-- Can past experiments predict new ones? Partly. On the publisher's tests, a fitted model forecasts the range of a new effect better than a historical baseline (0.149 nats), but not which test wins: pooled skill 0.001, interval spanning zero on 3,797 tests, and its probabilities are miscalibrated. The retailer's 68 scored tests are too few to decide (400 needed).
-- How? Fit a prior per group of tests, allowing for measurement error. Weighting similar past tests leaves log score and skill unchanged and ranks tests slightly better, but this backtest is weak here: on synthetic tests it recovers about 0.09 of the gain an oracle gets from a planted effect. To choose tests, a text classifier's top quarter captures 3.9 points more lift than a matched random choice, though it fails that same control. Abstention did not improve what was issued.
-- What improves prediction? A heavy-tailed forecast gained most (0.100 nats over a normal one); bandwidth, features and pooling barely mattered. Planned exposure, stronger text models and frozen team forecasts are untested.
-Tools. A base rate, a fitted prior, similarity weighting, three learned challengers.
-Release. A benchmark (protocol, schema, baselines, run reports) and Moot Court, an MIT-licensed Python package that regenerates every results table and runs privately on a company's own aggregate records.
-
-(Check the abstract against `paper/main.tex` at upload: the text above is the structured abstract of the format pass of 5 November 2026, on the run 7 sources.)
+- For the publisher, a fitted prior forecasts the next result's distribution better than the base rate (0.120 nats). Its skill on which test will be significant is at most small: the interval spans zero on our main definition and just clears it when significance is set at planned precision. Its probabilities are miscalibrated, mostly in level. The retailer's tests are too few to decide.
+- Fit a prior per group. Weighting similar past tests matches it on log score and skill and ranks tests better, but the backtest is weak: a planted signal returns 0.09 of an oracle's gain. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, but fails that control. Issued rows beat abstained rows on log score, not on skill.
+- A heavy-tailed predictive gained most, much of it a mixture over the click-through level. Sizing tests from the forecast shows no measurable advantage over the base rate.
+Release. Benchmark and Moot Court, an MIT-licensed package.
 
 ## Categories
 
@@ -38,8 +35,8 @@ Release. A benchmark (protocol, schema, baselines, run reports) and Moot Court, 
 
 ## Comments line
 
-30 pages including the appendix, 6 figures, 56 tables. Code, the data pipeline and the run folders behind every table:
-https://github.com/journey-agents/mootcourt (MIT). The analysis plan was fixed in writing before the final runs:
+41 pages including the appendix, 6 figures, 86 tables. Code, the data pipeline and the run folders behind every table:
+https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 
 ## License

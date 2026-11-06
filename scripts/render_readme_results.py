@@ -93,7 +93,7 @@ def adjusted_table(doc: dict) -> list[str]:
     """The pooled rows with the percentile interval beside the Bonferroni-adjusted bounds for the family the table shows."""
     rows = [r for r in _ladder(doc) if r["cell"] == "ALL"]
     out = ["Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once "
-           "(its family size is in the last column); the pooled interval is the pre-registered claim and the per-cell intervals are descriptive.", "",
+           "(its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.", "",
            "| rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |",
            "|---|---|---|---|---|---|---|"]
     out += [f"| {r['rung']} | {r.get('n_tests')} | {_ci(r, 'brier_skill')} | {_pair(r, 'adjusted_lo', 'adjusted_hi')} | {_ci(r, 'logscore')} | "

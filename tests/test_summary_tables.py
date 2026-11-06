@@ -37,10 +37,10 @@ def test_each_summary_table_is_input_by_the_sources_and_its_number_rows_name_the
     names = [fn(reports).name for mod in st.group_modules() for fn in mod.TABLES]
     assert len(names) == len(set(names)) and len(names) >= 40
     for name in names:
-        assert (f"tables/{name}" in tex) != (name in st.NOT_INPUT_YET), name
+        assert f"tables/{name}" in tex, name
         text = (tmp_path / f"{name}.tex").read_text(encoding="utf-8")
         assert text == (PAPER / "tables" / f"{name}.tex").read_text(encoding="utf-8"), f"{name}: the committed table is stale"
-        assert "% src: $RUN6/" in text or name in {"fmt-app-driver", "fmt-app-syn-truth"}, name
+        assert "% src: $RUN6/" in text or name == "fmt-app-syn-truth", name
 
 
 def test_a_missing_report_key_stops_the_build_rather_than_printing_a_blank():

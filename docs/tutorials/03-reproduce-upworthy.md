@@ -50,7 +50,7 @@ snapshot 20261106-2dc461f52ea4 for upworthy
 ledger ~/mootcourt-data/data/ledger/ledger.parquet: 17793 rows in 4.9 s
 ```
 
-The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **13,453 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
+The importer reads twelve named columns of the archive and builds one row per contrast: one variant of a test against the earliest-created arm of the same test, with the effect measured as the click-through difference in percentage points. 17,793 contrasts come from 4,873 tests. **10,903 are admitted** and can teach a model; the rest are kept, with the reason, and never used. The rest include 2,587 contrasts of tests that started in the window where the archive's maintainers report randomization problems (`DATA.md`). The archive records neither when a test was read nor the planned exposure of an arm, so two **modeling choices** stand in: a test is treated as final 7 days after its latest arm was created, and the arm's realized impressions stand in for planned exposure. Both are stated as limits in [Limitations](../limitations.md) and in the [method page](../method.md).
 
 ## 3. Fit
 
@@ -72,42 +72,33 @@ moot backtest --source upworthy
 ```
 
 ```text output
-~/mootcourt-data/reports/gates.json is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the simulated base rate nearest this ledger's 0.092); run `moot simulate gate-power` for the full gates. The adjusted bounds of the report do not read the gates: they depend on the family of intervals, 20 intervals for the ladder alone and 52 with the challengers
+~/mootcourt-data/reports/gates.json is missing; running the quick gate simulation first, the one `moot init` runs (synthetic data, by test, at the simulated base rate nearest this ledger's 0.086); run `moot simulate gate-power` for the full gates. The adjusted bounds of the report do not read the gates: they depend on the family of intervals, 20 intervals for the ladder alone and 52 with the challengers
 gates read from ~/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
 gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
 backtest of upworthy: still running, 10 s elapsed
-progress: origin 2013-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 2158 rows, scoring 1096
+progress: origin 2014-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 1984 rows, scoring 1907
 backtest of upworthy: still running, 20 s elapsed
-progress: origin 2014-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 3335 rows, scoring 1315
+progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 3863 rows, scoring 2822
 backtest of upworthy: still running, 30 s elapsed
-progress: origin 2014-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 4534 rows, scoring 1907
 backtest of upworthy: still running, 40 s elapsed
+progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6589 rows, scoring 2640
 backtest of upworthy: still running, 50 s elapsed
-progress: origin 2014-07-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 6413 rows, scoring 2822
 backtest of upworthy: still running, 60 s elapsed
 backtest of upworthy: still running, 70 s elapsed
+progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9447 rows, scoring 1143
 backtest of upworthy: still running, 80 s elapsed
 backtest of upworthy: still running, 90 s elapsed
 backtest of upworthy: still running, 100 s elapsed
-progress: origin 2014-10-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 9139 rows, scoring 2640
 backtest of upworthy: still running, 110 s elapsed
-backtest of upworthy: still running, 120 s elapsed
-backtest of upworthy: still running, 130 s elapsed
-backtest of upworthy: still running, 140 s elapsed
-progress: origin 2015-01-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 11997 rows, scoring 1143
-backtest of upworthy: still running, 150 s elapsed
-backtest of upworthy: still running, 160 s elapsed
-backtest of upworthy: still running, 170 s elapsed
-progress: origin 2015-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 13132 rows, scoring 270
-backtest of upworthy: still running, 180 s elapsed
-filled the backtest summary of model 25cd2b6c38d9
-scored 13247 rows over 9 origins in 207.3 s (report writing 39.1 s; the whole run 246.5 s)
-wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.md
-wrote ~/mootcourt-data/reports/backtest-upworthy-20261105-4bfb354b87e3.json
-wrote ~/mootcourt-data/reports/scores-upworthy-20261105-4bfb354b87e3.parquet
+progress: origin 2015-04-01: fitted ['P0', 'P1', 'P2', 'always_reference', 'always_variant'] on 10582 rows, scoring 270
+filled the backtest summary of model 938be3f002b0
+scored 10697 rows over 7 origins in 141.0 s (report writing 30.7 s; the whole run 171.7 s)
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261106-2dc461f52ea4.md
+wrote ~/mootcourt-data/reports/backtest-upworthy-20261106-2dc461f52ea4.json
+wrote ~/mootcourt-data/reports/scores-upworthy-20261106-2dc461f52ea4.parquet
 ```
 
-The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about five minutes, of which about one is writing the report). That quick file is sized by test at the simulated base rate nearest the archive's own (0.09, the rate the published gates read too), so the decidability columns already match the published ones. The Bonferroni-adjusted bounds of the pooled table differ in the fourth decimal until the challengers are in the table (`make challengers`, about 6 minutes), because the family of intervals then grows from 20 to 52, the number the results page prints as "intervals in the family". The scores do not depend on the gates file. It scores 13,247 rows over 9 quarterly origins. Each row is forecast by models fitted on rows that were final before the row's origin.
+The first time, there is no gates file, so the command first runs a quick gate simulation (about a minute, synthetic data) and writes `reports/gates.json`, then the backtest itself (about five minutes, of which about one is writing the report). That quick file is sized by test at the simulated base rate nearest the archive's own (0.09, the rate the published gates read too), so the decidability columns already match the published ones. The Bonferroni-adjusted bounds of the pooled table differ in the fourth decimal until the challengers are in the table (`make challengers`, about 6 minutes), because the family of intervals then grows from 20 to 52, the number the results page prints as "intervals in the family". The scores do not depend on the gates file. It scores 10,697 rows over 7 of the 9 quarterly origins, since the origins of July and October 2013 fall inside the window. Each row is forecast by models fitted on rows that were final before the row's origin.
 
 ## 5. Compare with the published tables
 
@@ -116,12 +107,12 @@ Open `reports/backtest-upworthy-<snapshot>.md` under your data root and compare 
 | Rung | What it is | Brier skill on all rows (90% interval) |
 |---|---|---|
 | P0 | the empirical base-rate forecaster | 0.0000, by construction |
-| P1 | pooled empirical-Bayes shrinkage | 0.0015 (-0.0018 to 0.0048) |
-| P2 | weighted precedents under an admission guard | 0.0019 (-0.0018 to 0.0054) |
+| P1 | pooled empirical-Bayes shrinkage | 0.0023 (-0.0012 to 0.0061) |
+| P2 | weighted precedents under an admission guard | 0.0032 (-0.0004 to 0.0072) |
 
-**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P0 is that base rate, as a forecaster, so its skill is zero by construction and its interval has no width. The intervals of P1 and P2 contain zero: pooled shrinkage and weighted precedents are no better than the base rate on this archive, and no worse. Look at the log score for the difference between the two: P2 minus P1 is about plus 0.0004 nats, which is level with the prior within the interval, so the precedents added nothing measurable out of time, even though the admission guard let them in for some cells (the report says for how many). The guard limits how much noise the selection fits. It does not promise that P2 beats P1 on later tests, and here it shows no measurable gain.
+**What these numbers say, and what they do not.** Brier skill is one minus the rung's Brier score over the Brier score of a constant base rate. Zero means no better than the base rate. P0 is that base rate, as a forecaster, so its skill is zero by construction and its interval has no width. The intervals of P1 and P2 contain zero: pooled shrinkage and weighted precedents are no better than the base rate on this archive, and no worse. Look at the log score for the difference between the two: P2 minus P1 is about plus 0.0001 nats, which is level with the prior within the interval, so the precedents added nothing measurable out of time, even though the admission guard let them in for some cells (the report says for how many). The guard limits how much noise the selection fits. It does not promise that P2 beats P1 on later tests, and here it shows no measurable gain.
 
-That is the finding, and it is a modest one: on this archive no rung of the ladder is distinguishable from the base rate in Brier skill, and the extra machinery of P2 does not pay. Nothing here says it would be the same for product experiments: the archive is headline and image tests from one publisher. The README's list of what the project does not show applies in full.
+That is the finding, and it is a modest one: on this archive, with the significant-positive event at realized precision, no rung of the ladder is distinguishable from the base rate in Brier skill. At planned precision the unadjusted intervals of P1 and P2 lie just above zero (the report's event-definition table), so that skill is at most small and depends on how the event is defined. The extra machinery of P2 does not pay on the log score. Every number is exploratory, as the paper says. Nothing here says it would be the same for product experiments: the archive is headline and image tests from one publisher. The README's list of what the project does not show applies in full.
 
 The report has more to read: calibration, coverage of the intervals (near 0.80 and 0.90 is calibrated), abstention by trigger, decision value and calibration by precision. [Tutorial 2](02-your-own-archive.md#7-read-the-report-card) explains each section. The tables of [Results](../results.md) include the cautionary first run, which scored a relative lift against a noisy reference arm and found negative skill everywhere, because of a design defect and not a finding about the archive, and the coverage by decile of the realized over the planned standard error, which shows where the intervals cover less than they say.
 
@@ -209,4 +200,4 @@ The run-time table at the end of [Results](../results.md) has the measured times
 
 ## What you have
 
-The ledger of the archive, a model, the backtest report and a card, and a direct comparison with the published numbers. If your numbers differ, check the snapshot id first (its digest part must match the published one), then the number of admitted rows (13,453), and then open an issue with the report attached.
+The ledger of the archive, a model, the backtest report and a card, and a direct comparison with the published numbers. If your numbers differ, check the snapshot id first (its digest part must match the published one), then the number of admitted rows (10,903), and then open an issue with the report attached.

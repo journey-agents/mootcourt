@@ -14,10 +14,9 @@ def p2_settings(r):
     def row(label, on, off=None, paired=None):
         on = r(on)
         off = r(off) if off else None
-        if paired is True:
-            paired = ci(on, P2, "logscore_vs_p1", 5)
         return [label, v(on, f"{P2}.logscore"), v(off, f"{P2}.logscore") if off else "",
-                ci(on, P2, "brier_skill", 4), ci(off, P2, "brier_skill", 4) if off else "", paired or ""]
+                ci(on, P2, "brier_skill", 4), ci(off, P2, "brier_skill", 4) if off else "",
+                paired or ci(on, P2, "logscore_vs_p1", 5), ci(off, P2, "logscore_vs_p1", 5) if off else ""]
 
     def both(label, name):
         return row(label, _abl(name), _abl(f"{name}+p2-guard-off"))
@@ -26,10 +25,10 @@ def p2_settings(r):
     zero, main = r(_abl("lambda-0.0")), r(MAIN)
     if abs(zero.get(f"{P2}.logscore") - main.get(f"{P1}.logscore")) > 1e-9:
         raise ValueError("the row says the fixed weight zero is P1 exactly")
-    return Table("fmt-p2-settings", "lrrrrr", [
-        "setting & log score, guard on & log score, guard off & Brier skill, guard on (90\\%) & Brier skill, guard off (90\\%)"
-        " & P2 minus P1, paired (90\\%)"], [
-        row("main run (forward chaining, guard at two standard errors)", MAIN, _abl("p2-guard-off"), paired=True),
+    return Table("fmt-p2-settings", "lrrrrrr", [
+        "& \\multicolumn{2}{c}{P2 log score} & \\multicolumn{2}{c}{P2 Brier skill (90\\%)} & \\multicolumn{2}{c}{P2 minus P1, paired (90\\%)}",
+        "setting & guard on & guard off & guard on & guard off & guard on & guard off"], [
+        row("main run (forward chaining, guard at two standard errors)", MAIN, _abl("p2-guard-off")),
         row("guard at one standard error", _abl("p2-guard-1.0")),
         row("fixed weight $\\lambda = 0$ (P1 exactly)", _abl("lambda-0.0"), paired="equals P1"),
         row("fixed weight $\\lambda = 0.2$", _abl("lambda-0.2")),
@@ -45,8 +44,8 @@ def p2_settings(r):
         both("leave-one-test-out selection", "p2-selection-loto"),
         both("leave-one-test-out with a recency kernel", "p2-selection-loto+recency-select"),
         both("recency kernel under forward chaining", "recency-select"),
-        row(join("admission on exposure alone ({} rows)", n(r(prelaunch), "header.scored_rows")), prelaunch, paired=True),
-        row(join("one contrast per test, the earliest ({} rows)", n(r(one), "header.scored_rows")), one, paired=True),
+        row(join("admission on exposure alone ({} rows)", n(r(prelaunch), "header.scored_rows")), prelaunch),
+        row(join("one contrast per test, the earliest ({} rows)", n(r(one), "header.scored_rows")), one),
     ])
 
 
@@ -81,16 +80,16 @@ def guard_threshold(r):
 
 
 def prior_settings(r):
-    def row(label, pattern, skill=False):
+    def row(label, pattern):
         rep = r(pattern)
-        return [label, v(rep, f"{P1}.logscore"), ci(rep, P1, "brier_skill") if skill else ""]
+        return [label, v(rep, f"{P1}.logscore"), ci(rep, P1, "brier_skill", 4)]
 
     return Table("fmt-prior-settings", "lrr", ["prior & P1 log score & P1 Brier skill (90\\%)"], [
         row("Student-t, $\\kappa = 0$", _abl("kappa-0.0")),
         row("Student-t, $\\kappa = 5$", _abl("kappa-5.0")),
         row("Student-t, $\\kappa = 20$ (the main run)", MAIN),
         row("Student-t, $\\kappa = 80$", _abl("kappa-80.0")),
-        row("normal, $\\kappa = 20$", _abl("prior-normal"), skill=True),
+        row("normal, $\\kappa = 20$", _abl("prior-normal")),
     ])
 
 

@@ -315,7 +315,7 @@ def fig_cautionary(figs, run1_path, run3_path, source="upworthy"):
     cells = ["ALL", "headline_only", "image_only", "both"]
     cells = [c for c in cells if any(r["cell"] == c for r in p1) and any(r["cell"] == c and r["rung"] == "P1" for r in d3["tables"]["aggregate"])]
     fig, axes = plt.subplots(1, 2, figsize=(COL_W, 1.9), sharey=True)
-    for ax, doc, label, path in ((axes[0], d1, "Run 1: relative lift", run1_path), (axes[1], d3, "Run 3: pre-launch clean", run3_path)):
+    for ax, doc, label, path in ((axes[0], d1, "First run: relative lift", run1_path), (axes[1], d3, "Main run: pre-launch clean", run3_path)):
         used.cur = rel(path)
         ax.axhline(0, color=GREY, lw=0.8, ls="--", zorder=1)
         for i, c in enumerate(cells):
@@ -330,7 +330,7 @@ def fig_cautionary(figs, run1_path, run3_path, source="upworthy"):
         ax.set_xlim(-0.5, len(cells) - 0.5)
         ax.set_xlabel(label)
         style_axes(ax)
-    axes[0].set_ylabel("P1 Brier skill, 90 percent interval")
+    axes[0].set_ylabel("P1 Brier skill")
     fig.tight_layout(pad=0.4, w_pad=0.6)
     figs.save(fig, name, used, "same quantity (P1 Brier skill by cell) in the relative-lift run and the pre-launch-clean run")
 

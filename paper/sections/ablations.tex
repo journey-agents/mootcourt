@@ -1,94 +1,149 @@
-% $RUN6 = paper/data/run7-tie-rank. Ablation reports: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--<setting>.json, each with tables.aggregate[cell=ALL] rows for P1 and P2; guard-off variants are named <setting>+p2-guard-off.
+% $RUN6 = paper/data/run8-randomization-window. Ablation reports: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--<setting>.json, each with tables.aggregate[cell=ALL] rows for P1 and P2; guard-off variants are named <setting>+p2-guard-off.
 \section{Ablations and Learning Curve}
 \label{sec:ablations}
+This section changes one setting at a time and asks whether any change moves a conclusion of Section~\ref{sec:results}. The shape of the prior matters, a forced precedent weight costs, and no setting lets precedents beat the prior by more than a thousandth of a nat.
 
 \paragraph{Does any setting of the precedent rung beat the prior?}
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 9, header.scored_rows 13247; tables/ablations-upworthy.tex (33 files)
-Table~\ref{tab:ablations-upworthy} (Appendix~\ref{app:tables}) changes one setting of P2 at a time on the same nine origins and, except where noted, the same 13,247 rows, each run with the guard on and, where the guard can hold the setting back, again with it off; Table~\ref{tab:fmt-p2-settings} condenses it and the readings follow.
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 7, header.scored_rows 10697; tables/ablations-upworthy.tex
+Table~\ref{tab:fmt-p2-settings} condenses Table~\ref{tab:ablations-upworthy} (Appendix~\ref{app:tables}). Each setting runs on the main run's 7 origins and 10,697 rows unless its row says otherwise, with the guard on and, where the guard can hold the setting back, again with it off.
 
 \begin{table*}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 9, header.scored_rows 13247, header.bootstrap_resamples 500; tables/ablations-upworthy.tex (33 Brier skill intervals); tables/fmt-p2-settings.tex
-\caption{Settings of the precedent rung on the headline archive, one changed at a time, condensed from Table~\ref{tab:ablations-upworthy} (Appendix~\ref{app:tables}; the ablation reports under \texttt{ablations/}). Rows: the setting, run on the main run's nine origins and 13,247 rows unless the row says otherwise. Columns: P2's pooled log score per row with the guard on and with it off, its Brier skill against the base rate with the 90 percent bootstrap interval by test (500 resamples), and the paired P2 minus P1 log score per row with its interval where the text reads it. A blank log score means the setting bypasses the guard or has no guard-off run; a blank paired difference is one the text does not read (the appendix table prints all of them).}
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 7, header.scored_rows 10697, header.bootstrap_resamples 500; tables/ablations-upworthy.tex; tables/fmt-p2-settings.tex
+\caption{Settings of the precedent rung on the headline archive, one changed at a time, from the ablation reports under \texttt{ablations/}. Rows: the setting, run on the main run's 7 origins and 10,697 rows unless the row says otherwise. Columns: P2's pooled log score per row, its Brier skill against the base rate, and the paired P2 minus P1 log score per row, each with the guard on and with it off. Intervals are 90 percent bootstrap intervals by test (500 resamples), unadjusted. An empty guard-off cell means the setting bypasses the guard or has no guard-off run. The one-contrast row's lower bound is a small negative number that rounds to zero.}
 \label{tab:fmt-p2-settings}
-\input{tables/fmt-p2-settings}
+\resizebox{\textwidth}{!}{\input{tables/fmt-p2-settings}}
 \end{table*}
 
 \begin{itemize}
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-0.0.json tables.aggregate[cell=ALL,rung=P2] logscore -0.8566 brier_skill 0.0015 (-0.0018, 0.0048); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-0.2.json -0.8582, 0.0016 (-0.0019, 0.0050); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-0.5.json -0.8609, 0.0005 (-0.0035, 0.0040); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-1.0.json -0.8689, -0.0023 (-0.0067, 0.0023)
-\item Fixing the precedent weight, which bypasses the guard, costs little: across the fixed weights the log score runs from minus 0.857 to minus 0.869 with every Brier skill interval spanning zero (Table~\ref{tab:fmt-p2-settings}), and $\lambda = 0$ returns P1's predictive object exactly.
-% src: tables/ablations-upworthy.tex (33 Brier skill intervals): the bandwidth, feature, single-headline, selection and recency rows print P2 log scores from -0.856 to -0.861 with the guard on and off against P1's -0.857 (the main run's rung=P1 logscore -0.8566 in $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json), a spread of 0.005 nats
-\item Every bandwidth multiplier, text or structured features alone, the single-headline space without the reference, leave-one-test-out selection with or without a recency kernel, and recency under forward chaining all land within a spread of 0.005 nats around the prior's minus 0.857, with the guard on or off (Table~\ref{tab:fmt-p2-settings}).
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-selection-loto+recency-select+p2-guard-off.json tables.aggregate[cell=ALL,rung=P2] brier_skill 0.0038 (0.0007, 0.0069); tables/ablations-upworthy.tex carries 33 Brier skill intervals (the two below zero are the prior-normal row here and the cautionary run of Section 6)
-\item The one Brier skill interval above zero, leave-one-test-out with a recency kernel and the guard off (Table~\ref{tab:fmt-p2-settings}), is one of 33 in Table~\ref{tab:ablations-upworthy} and is not read as a finding (the two below zero, the prior-shape and the cautionary rows, are read in their own places).
-% src: paired P2 minus P1 (logscore_vs_p1 with lo, hi): $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json tables.aggregate[cell=ALL,rung=P2] 0.000917 (0.000256, 0.001606) on header.scored_rows 14235, brier_skill 0.002456 (-0.000854, 0.006169); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--contrasts-one.json 0.000537 (0.000371, 0.000722), brier_skill -0.001890 (-0.007113, 0.003983); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 0.000447
-\item The same rule reads the two paired log-score differences from P1 whose intervals clear zero in the rung's favour, admission on exposure alone and one contrast per test (Table~\ref{tab:fmt-p2-settings}): each is under a thousandth of a nat, the size of the main run's plus 0.0004, neither clears zero on the Brier skill, and no setting moves the paired difference further in the rung's favour.
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-selection-loto.json tables.aggregate[cell=ALL,rung=P2] logscore -0.8606 against the main run's rung=P1 -0.8566 in $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json (0.004 nats below); $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p2_selection_comparison guard_on.pooled difference 0.004403 (0.003085, 0.005704), guard_off.pooled difference 0.002425 (0.000644, 0.003927), bootstrap_resamples 500 (docs/method.md call 202; the extras rerun of round 02)
-\item Leave-one-test-out, the selection rule of the first round, scores 0.004 nats below the prior.
-\item Paired by test, forward chaining beats it with the guard on and with it off (Table~\ref{tab:fmt-selection-rule}), the comparison by which the rule fixed before the data made forward chaining the default (Section~\ref{sec:method}; the shipped comparison is the extras key \texttt{p2\_selection\_comparison}, pooled and by origin).
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--contrasts-one.json header.scored_rows 3797, tables.aggregate[cell=ALL] rung=P1 logscore -0.8710 brier_skill -0.0026, rung=P2 logscore -0.8704 brier_skill -0.0019 (-0.0071, 0.0040) (docs/method.md call 206)
-\item Scoring one contrast per test, the earliest of each (3,797 rows), removes the arm-count structure of Section~\ref{sec:decision-results} and leaves P2 at the prior (Table~\ref{tab:fmt-p2-settings}).
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-0.2.json tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 -0.00265 (-0.00378, -0.00143); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--lambda-1.0.json logscore_vs_p1 -0.01303 (-0.01741, -0.00887)
+\item A forced precedent weight costs. Every fixed weight above zero lies below P1 with its paired interval clear of zero, and the cost grows from 0.003 nats at a weight of 0.2 to 0.013 nats at a weight of 1.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 -0.00386 (-0.00524, -0.00233); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-1.0.json logscore_vs_p1 -0.00294 (-0.00430, -0.00153)
+\item The guard earns its place. Removing it puts P2 below P1 by 0.004 nats, and loosening it to one standard error by 0.003 nats, both with paired intervals clear of zero.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--features-structured.json tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 0.00081 (0.00003, 0.00152); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--features-text.json logscore_vs_p1 -0.00119 (-0.00191, -0.00052)
+\item With the guard on, no setting beats P1 by more than 0.0009 nats. The largest gain is structured features alone, whose paired interval just clears zero; text features alone lie below P1 with theirs clear of zero. Bandwidth, the single-headline space and recency stay within noise of P1.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p2_selection_comparison guard_on.pooled difference -0.0001 (-0.0012, 0.0009), guard_off.pooled difference -0.0040 (-0.0057, -0.0022), bootstrap_resamples 500; tables/fmt-selection-rule.tex
+\item Forward chaining, the default selection rule, does not beat leave-one-test-out (Table~\ref{tab:fmt-selection-rule}). The two do not differ with the guard on, and with the guard off leave-one-test-out scores 0.004 nats higher. The default was fixed before this run and is reported as it stands, because the plan for this run changes no setting after seeing a result.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json header.scored_rows 11669, tables.aggregate[cell=ALL] rung=P1 brier_skill 0.0029 (-0.0005, 0.0064), rung=P2 0.0038 (0.0001, 0.0076); tables/fmt-admission.tex
+\item One setting in Table~\ref{tab:fmt-p2-settings} puts P2's Brier skill interval above zero: admission on exposure alone, with a lower bound of 0.0001. It is unadjusted and P1's interval on the same rows spans zero, so it is not read as a finding.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--contrasts-one.json header.scored_rows 2949, tables.aggregate[cell=ALL,rung=P2] logscore_vs_p1 0.00016, logscore_vs_p1_lo -0.0000034, brier_skill 0.0056 (-0.0003, 0.0113)
+\item Scoring one contrast per test, the earliest of each, removes the arm-count structure of Section~\ref{sec:decision-results} and leaves P2 at the prior on the log score and on skill.
 \end{itemize}
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p2_selection_comparison guard_on.pooled, guard_off.pooled, bootstrap_resamples 500 (docs/method.md call 202); tables/fmt-selection-rule.tex
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p2_selection_comparison guard_on.pooled, guard_off.pooled, bootstrap_resamples 500; tables/fmt-selection-rule.tex
 \caption{Forward chaining against leave-one-test-out on the headline archive (\texttt{paper-extras-upworthy}, key \texttt{p2\_selection\_comparison}, pooled). Columns: P2 with the guard on and with it off. The row is the paired log score per row, forward chaining minus leave-one-test-out, with its 90 percent bootstrap interval by test (500 resamples); a positive difference favours forward chaining.}
 \label{tab:fmt-selection-rule}
 \resizebox{\columnwidth}{!}{\input{tables/fmt-selection-rule}}
 \end{table}
 
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-1.0.json tables.aggregate[cell=ALL,rung=P2] logscore -0.8567 brier_skill 0.0012 (-0.0027, 0.0049); $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-off.json -0.8571, 0.0013 (-0.0027, 0.0050); main run (guard 2.0) -0.8562; $RUN6/ablations/p2-guard-upworthy.json difference.logscore estimate 0.0009
-Loosening the guard to one standard error or removing it changes the score by 0.001 nats or less (Table~\ref{tab:fmt-p2-settings}; Section~\ref{sec:ladder-results}).
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_admission_rates.by_multiplier (72 cells over 24 seeds, n_tests 300 per ledger): multiplier 1.0 share_admitted 0.347, 1.5 0.167, 2.0 0.056, off 0.653; guard_period_control.rows new_rule share_admitted n_tests 3700 0.056, n_tests 11100 0.000 (under the period rule of call 199)
-On synthetic ledgers with no planted text effect the share of cells in which the guard admits a weight falls as the threshold rises (Table~\ref{tab:fmt-guard-threshold}), hence the default of two, and under the period rule of Section~\ref{sec:limitations} the share stays between 0 and 6 percent at the two larger sizes.
+\paragraph{The guard's threshold, on data with no planted signal.}
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_admission_rates.by_multiplier (72 cells over 24 seeds, n_tests 300 per ledger): multiplier 1.0 share_admitted 0.347, 1.5 0.167, 2.0 0.056, off 0.653; guard_period_control.rows new_rule share_admitted n_tests 3700 0.056, n_tests 11100 0.000
+On synthetic ledgers with no planted text effect the share of cells in which the guard admits a weight falls as the threshold rises (Table~\ref{tab:fmt-guard-threshold}), which is why the default is two standard errors. At that default the share stays between 0 and 6 percent at the two larger sizes.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_admitted 4, pairs_in_selection 21, pooled_realized_p2_minus_p1 0.0004 (-0.0016, 0.0022); tables.p2_selection in $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json
+On the real archive it admits a weight in 4 of 21 pairs of cell and origin, a higher share than that null. Those admissions are worth little out of time: the admitted pairs' paired gain over P1 is 0.0004 nats, and its interval spans zero (Table~\ref{tab:guard-pairs}, Appendix~\ref{app:tables}).
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_admission_rates.by_multiplier (cells 72 over 24 seeds, n_tests 300 per ledger); guard_period_control.rows (12 seeds, 36 cells per size, multiplier 2.0) n_tests 3700 and 11100 (tables/guard-period-control.tex); tables/fmt-guard-threshold.tex
-\caption{Share of cells in which the guard admitted a precedent weight on synthetic ledgers with no planted text effect (\texttt{paper-extras-synthetic}, keys \texttt{guard\_admission\_rates} and \texttt{guard\_period\_control}). Rows: the guard threshold in standard errors of the in-selection gain. Columns: the share at 300 tests per ledger (24 seeds, 72 cell fits) and, for the default threshold, at 3,700 and 11,100 tests under the period rule of Section~\ref{sec:limitations} (12 seeds, 36 cells per size; Table~\ref{tab:guard-period-control}, Appendix~\ref{app:tables}).}
+\caption{Share of cells in which the guard admitted a precedent weight on synthetic ledgers with no planted text effect (\texttt{paper-extras-synthetic}, keys \texttt{guard\_admission\_rates} and \texttt{guard\_period\_control}). Rows: the guard threshold in standard errors of the in-selection gain. Columns: the share at 300 tests per ledger (24 seeds, 72 cell fits) and, for the default threshold, at 3,700 and 11,100 tests under the period rule of this section (12 seeds, 36 cells per size; Table~\ref{tab:guard-period-control}, Appendix~\ref{app:tables}).}
 \label{tab:fmt-guard-threshold}
 \input{tables/fmt-guard-threshold}
 \end{table}
 
-\paragraph{Settings of the prior, and admission.}
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json P1 logscore -0.8599; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-5.0.json -0.8588; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json -0.8553; main run (kappa 20) -0.8566; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json P1 logscore -0.9566 (0.100 nats below the main run), brier_skill -0.015757 (-0.021039, -0.010478)
-The pooling strength barely matters and the prior's shape does (Table~\ref{tab:fmt-prior-settings}): a normal prior in place of the Student-t costs 0.100 nats and turns the prior's Brier skill negative, so the heavy tails of headline effects are real.
-% src: 14235 minus 13247 = 988 rows; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json header.scored_rows 14235, tables.aggregate[cell=ALL] brier_base 0.0847 (main run 0.0832), rung=P1 brier_skill 0.001643 (-0.001379, 0.005153), rung=P2 0.002456 (-0.000854, 0.006169) (tables/admission-upworthy.tex)
-Admitting on exposure alone, without the minimum-clicks rule, scores 988 more contrasts at a higher base Brier score and leaves the conclusion where it was: the skills of P1 and P2 both span zero (Table~\ref{tab:fmt-admission}; Table~\ref{tab:admission}, Appendix~\ref{app:tables}).
+\paragraph{The guard at the size of its cell.}
+\label{sec:guard-period}
+The first synthetic runs admitted a weight in a majority of cells with no planted text effect at the two largest sizes, and the control arm of Table~\ref{tab:guard-period-control} found the cause in P1. P1 added half of the latest period's shrunken deviation to every cell's prior mean, and a synthetic ledger ends a week into a quarter, so that period held rows of noise. The precedent rung undid that noise, and the guard admitted a real gain over a wrong P1 (Table~\ref{tab:fmt-period-rule}). Using no period at all, or the rule now in force, the level of the last complete quarter (Section~\ref{sec:method}), both take the share down. At the quarterly origins of the backtest the two rules coincide, so the change moves no backtest number. Under the rule now in force:
+\begin{itemize}
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_gain_diagnostic.rows ratio_of_means 0.68, 0.63, 0.71, 0.67 at n_tests 300, 1000, 3700, 11100 (tables/guard-gain-diagnostic.tex)
+\item The mean in-selection gain stays below its standard error at every size (ratios of 0.63 to 0.71, Table~\ref{tab:guard-gain-diagnostic}).
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_held_out_gain.rows mean_bias 0.00928 at n_tests 300, 0.00000 at n_tests 11100, held_out_share_of_tests 0.15 (tables/guard-gain-held-out.tex)
+\item With a random 15 percent of tests held out, the in-selection gain of the best candidate exceeds its held-out gain by 0.0093 nats at the smallest ledger and 0.0000 at the largest (Table~\ref{tab:guard-gain-held-out}), a selection bias that shrinks with the cell.
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_fit_fraction_stability.rows (n_tests 3700): share_admitted 0.056, 0.056, 0.028, 0.056 on the first 85, 90, 95 and 100 percent of rows and 0.056 on a random 85 percent (tables/guard-fit-fraction.tex)
+\item At 3,700 tests the decision does not move with the fit set: 3 to 6 percent of cells are admitted on every fit set of Table~\ref{tab:guard-fit-fraction}.
+\end{itemize}
+
+\begin{table}[t]\centering\scriptsize
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows (planted lift zero, 12 seeds, 36 cells per size, multiplier 2.0), n_tests 3700 and 11100 (tables/guard-period-control.tex); tables/fmt-period-rule.tex
+\caption{Share of cells in which the guard admitted a precedent weight on synthetic ledgers with no planted text effect, under three treatments of P1's period level, condensed from Table~\ref{tab:guard-period-control} (Appendix~\ref{app:tables}; \texttt{paper-extras-synthetic}, key \texttt{guard\_period\_control}; 12 seeds, 36 cells per size, the guard at two standard errors). Rows: the old rule, the same rule with no period deviation, and the rule now in force. Columns: at each ledger size, the share admitted and the mean rows in the period level. The shares carry no interval.}
+\label{tab:fmt-period-rule}
+\input{tables/fmt-period-rule}
+\end{table}
+
+\paragraph{Settings of the prior, and its shape.}
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json tables.aggregate[cell=ALL,rung=P1] logscore -0.7607; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json logscore -0.7549; tables/fmt-prior-settings.tex
+The pooling strength $\kappa$ moves P1's log score by less than 0.006 nats (Table~\ref{tab:fmt-prior-settings}), and the prior's shape moves it by far more.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.8316, brier_skill -0.0185 (-0.0248, -0.0130); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] logscore -0.7566; difference 0.0750
+A normal prior in place of the Student-t costs 0.075 nats and turns the prior's Brier skill negative, so the predictive on the absolute scale needs heavy tails.
+
+Table~\ref{tab:fmt-prior-family} asks what those tails are. It fits each family once to all admitted rows and uses the test's own reference rate, a quantity known only after launch, so it is an in-sample diagnostic that no forecast could use. It reads as follows.
+\begin{itemize}
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json prior_family_scale.by_cell.ALL pp.gain_total 652.7, relative.gain_total 337.9 (tables/fmt-prior-family.tex)
+\item Dividing the effect by the reference rate roughly halves the Student-t's gain over a normal, from 652.7 to 337.9 nats, so part of the gain is the click-through level.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json prior_family_scale.by_cell.ALL.level_bins gain_normal_by_level_over_single_normal 1426.0, share_of_t_gain_reached_by_normal_by_level 2.18 (tables/fmt-prior-family.tex)
+\item Normal priors fitted separately within three bins of the reference rate beat one normal by 1,426.0 nats, about twice what the single Student-t gains.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json prior_family_scale.by_cell.ALL.level_bins gain_t_within_level_bins_over_normal_within_level_bins 355.8 (tables/fmt-prior-family.tex)
+\item Some Student-t gain remains inside the bins, 355.8 nats, so a mixture over the level does not explain all of it.
+\end{itemize}
+The reading is that much of what the Student-t captures on the absolute scale is a mixture over the click-through level, and this diagnostic does not establish that effects themselves are heavy-tailed.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-5.0.json, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json, $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json and $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json, tables.aggregate[cell=ALL,rung=P1]; tables/fmt-prior-settings.tex
-\caption{Settings of the prior on the headline archive: the pooling strength $\kappa$ of the empirical-Bayes fit and the prior's shape, every other setting as in the main run (the \texttt{kappa-*} and \texttt{prior-normal} ablation reports and the main backtest). Columns: P1's pooled log score per row on the main run's rows, and its Brier skill against the base rate with the 90 percent bootstrap interval by test where the text reads it.}
+\caption{Settings of the prior on the headline archive: the pooling strength $\kappa$ of the empirical-Bayes fit and the prior's shape, every other setting as in the main run (the \texttt{kappa-*} and \texttt{prior-normal} ablation reports and the main backtest). Columns: P1's pooled log score per row on the main run's rows, and its Brier skill against the base rate with the 90 percent bootstrap interval by test.}
 \label{tab:fmt-prior-settings}
 \input{tables/fmt-prior-settings}
 \end{table}
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.scored_rows 13247; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json header.scored_rows 14235 (988 more rows); tables/admission-upworthy.tex; tables/fmt-admission.tex
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json prior_family_scale.by_cell; tables/fmt-prior-family.tex
+\caption{The prior's family, by cell of the headline archive (\texttt{paper-extras-upworthy}, key \texttt{prior\_family\_scale}), as a gain in total in-sample marginal log likelihood in nats. Columns: admitted rows; the Student-t over a normal with the effect in percentage points, then with the effect divided by the reference rate, each with its best degrees of freedom $\nu$; three normals by bin of the reference rate over one normal; the Student-t over a normal inside those bins; and the level gain as a multiple of the first gain. Totals are not comparable across cells of different sizes.}
+\label{tab:fmt-prior-family}
+\resizebox{\columnwidth}{!}{\input{tables/fmt-prior-family}}
+\end{table}
+
+\paragraph{Admission.}
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.scored_rows 10697; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json header.scored_rows 11669 (972 more rows); tables/fmt-admission.tex
+Admitting on exposure alone, without the minimum-clicks rule, scores 972 more contrasts at a higher base Brier score and leaves the prior's skill interval spanning zero (Table~\ref{tab:fmt-admission}; Table~\ref{tab:admission}, Appendix~\ref{app:tables}).
+
+\begin{table}[t]\centering\scriptsize
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.scored_rows 10697; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json header.scored_rows 11669 (972 more rows); tables/admission-upworthy.tex; tables/fmt-admission.tex
 \caption{Admission on the headline archive: the main rule (1,000 impressions and 10 clicks in both arms) against exposure alone, without the minimum-clicks rule (Table~\ref{tab:admission}, Appendix~\ref{app:tables}). Columns: scored contrasts, the base Brier score of the significant-positive event, and the Brier skill of P1 and of P2 against it with the 90 percent bootstrap interval by test.}
 \label{tab:fmt-admission}
 \resizebox{\columnwidth}{!}{\input{tables/fmt-admission}}
 \end{table}
 
 \paragraph{Learning curve.}
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json final_origin 2015-01-01, heldout_rows 1143, heldout_tests 318, seeds 20, fractions 0.01 to 1.0 (seven), bootstrap_resamples 500, skill against base_brier_full (docs/method.md call 204) (tables/learning-upworthy.tex, tables/learning-detail-upworthy.tex)
-Table~\ref{tab:fmt-learning} condenses Tables~\ref{tab:learning-upworthy} and~\ref{tab:learning-detail} (Appendix~\ref{app:tables}): the history visible at the final origin, subsampled by whole tests at seven fractions with twenty seeds each and scored every time on the same held-out rows, each rung against the base rate of the full history at that origin; the detail table gives each subsample's own base rate beside it.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json final_origin 2015-01-01, heldout_rows 1143, heldout_tests 318, seeds 20, skill_reference; src/mootcourt/learning_curve.py HELDOUT_MIN 500; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.origins[origin=2015-04-01T00:00:00+00:00].n_scored 270
+The learning curve asks how much history the prior needs. It uses the January 2015 origin, the latest quarter start with at least 500 admitted rows to hold out, since the April 2015 origin holds 270. It subsamples the history visible at that origin by whole tests, at seven fractions with twenty seeds each, and scores every subsample on the same 1,143 rows in 318 tests.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[fraction=1.0,rung=P1] skill 0.024 (0.011, 0.042); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] brier_skill 0.0023 (-0.0012, 0.0061); $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json drift_matched_null.rungs.P0.by_origin["2015-01-01T00:00:00+00:00"] mean_forecast 0.091, event_rate 0.058
+Its estimand differs from the pooled skill of Section~\ref{sec:ladder-results}. Every point is one origin scored against the base rate of the full history at that origin, and at that origin the base rate of 0.091 stands above an event rate of 0.058. So P1's 0.024 at the full history is not at odds with its pooled 0.0023, and it should not be read as the prior's skill in general.
 
 \begin{table*}[t]\centering\scriptsize
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json final_origin 2015-01-01, heldout_rows 1143, heldout_tests 318, seeds 20, fractions 0.01 to 1.0 (seven), bootstrap_resamples 500, rows base_brier_full 0.055483 (tables/learning-upworthy.tex, tables/learning-detail-upworthy.tex); tables/fmt-learning.tex
-\caption{Learning curve on the headline archive, condensed from Tables~\ref{tab:learning-upworthy} and~\ref{tab:learning-detail} (Appendix~\ref{app:tables}; \texttt{learning-curve-upworthy}). Rows: the history visible at the final origin (January 2015), subsampled by whole tests at seven fractions, twenty seeds each; the mean history rows of the subsample are printed. Every point scores the same 1,143 held-out rows in 318 tests against the base rate of the full history (base Brier score 0.0555). Columns: the Brier skill of P1 and of P2 with the 90 percent bootstrap interval by test (500 resamples), the seed spread (standard deviation over seeds) of P1's skill, and the raw Brier scores of P1 and P2.}
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json final_origin 2015-01-01, heldout_rows 1143, heldout_tests 318, seeds 20, fractions 0.01 to 1.0 (seven), bootstrap_resamples 500, rows base_brier_full 0.0551 (tables/learning-upworthy.tex, tables/learning-detail-upworthy.tex); tables/fmt-learning.tex
+\caption{Learning curve on the headline archive, condensed from Tables~\ref{tab:learning-upworthy} and~\ref{tab:learning-detail} (Appendix~\ref{app:tables}; \texttt{learning-curve-upworthy}). Rows: the history visible at the January 2015 origin, subsampled by whole tests at seven fractions, twenty seeds each; the mean history rows of the subsample are printed. Every point scores the same 1,143 held-out rows in 318 tests against the base rate of the full history at that origin (base Brier score 0.0551). Columns: the Brier skill of P1 and of P2 with the 90 percent bootstrap interval by test (500 resamples), the seed spread (standard deviation over seeds) of P1's skill, with none at the single fit of the full history, and the raw Brier scores of P1 and P2.}
 \label{tab:fmt-learning}
 \input{tables/fmt-learning}
 \end{table*}
 
+\begin{table}[t]\centering\scriptsize
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json paired_vs_p1, paired_vs_p1_note, bootstrap_resamples 500, seeds 20; tables/fmt-learning-paired.tex
+\caption{The learning curve paired with P1 on the same held-out rows (\texttt{learning-curve-upworthy}, key \texttt{paired\_vs\_p1}). Rows: the fractions of Table~\ref{tab:fmt-learning}. Columns: P2's log score minus P1's in nats per row, P1's Brier score minus P2's, and P1's Brier score minus the text classifier's, which has no log score; above zero favours the challenger. Each is the mean over seeds with the 90 percent interval of the seed-averaged by-test resamples.}
+\label{tab:fmt-learning-paired}
+\resizebox{\columnwidth}{!}{\input{tables/fmt-learning-paired}}
+\end{table}
+
 \begin{itemize}
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=P1 skill 0.0007 (-0.0169, 0.0235) at n_fit_rows 122.65, 0.0229 at 604.6, 0.0286 at 2991.2, 0.0295 (0.0140, 0.0510) at 11997; skill_seed_sd 0.0359 at fraction 0.01 and 0.0031 at 0.25 (the numbers are the rows of Table tab:fmt-learning)
-\item P1's skill rises with the history and its seed spread narrows (Table~\ref{tab:fmt-learning}); a few hundred rows give the prior's level and spread.
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=P2 skill 0.0275 against rung=P1 0.0273 at n_fit_rows 1203.5; rung=P2 0.0299, 0.0317, 0.0353 against rung=P1 0.0286, 0.0288, 0.0295 at n_fit_rows 2991.2, 6004.7, 11997 (unpaired; intervals overlapping at every fraction); fraction 1.0 is the whole history visible at final_origin 2015-01-01, the fit of the main backtest's final origin
-\item P2 tracks P1 to 1,204 rows and sits above it from 2,991 rows on, the points unpaired and their intervals overlapping at every fraction; the full-history point is the main backtest's January 2015 fit.
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=local_eb skill 0.0366 at fraction 1.0 and 0.0251 at 0.5; rung=text_lr skill -0.0243 to 0.0104
-\item The local comparison set reaches 0.037 only at the full history, and the text classifier stays within 0.025 of zero.
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=P1 skill_own_base 0.0679 at fraction 0.01 (n_fit_rows 122.65), base_brier_own 0.0602 against base_brier_full 0.0555 there
-\item Against each subsample's own base rate the curve reads backwards (P1 0.068 at 123 rows), because a base rate from a few dozen rows is itself a poor forecaster.
-% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json gates n_200 175, n_400 250 against heldout_tests 318
-\item The 318 held-out tests clear both gates at every point; how much history the prior needs is a different question, and the answer here is a few hundred rows for the level and spread, with no size at which the precedents add anything this curve can measure.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=P1 skill 0.009 at n_fit_rows 93, 0.024 at n_fit_rows 2369.2, 0.024 at 9447; skill_seed_sd 0.015 at fraction 0.01 and 0.003 at 0.25 (tables/fmt-learning.tex)
+\item P1's skill rises with the history and then stops: 0.009 at 93 rows and 0.024 from 2,369 rows on, with its seed spread narrowing from 0.015 to 0.003 (Table~\ref{tab:fmt-learning}). More history than that does not change the prior's skill at this origin.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json paired_vs_p1[fraction=0.1,rung=P2] logscore_minus_p1 -0.0038 (-0.0075, -0.0010); paired_vs_p1[fraction=0.01,rung=P2] -0.0040 (-0.0056, -0.0027); paired_vs_p1[fraction=0.02,rung=P2] -0.0030 (-0.0050, -0.0011) (tables/fmt-learning-paired.tex)
+\item On a short history a precedent weight loses. Paired with P1, P2's log score lies below it with the interval clear of zero at three of the four smallest fractions (Table~\ref{tab:fmt-learning-paired}); at the remaining one the guard holds the weight at zero on every seed and the two coincide.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json paired_vs_p1[fraction=1.0,rung=P2] logscore_minus_p1 0.0013 (-0.0014, 0.0040), brier_gain_over_p1 0.000268 (0.000104, 0.000434) (tables/fmt-learning-paired.tex)
+\item At the full history P2's Brier score is better than P1's with the interval clear of zero, and its log score is not (0.0013, spanning zero). This is one origin, one unadjusted column and a small gain, so it does not show that precedents improve with more data.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json paired_vs_p1 rung=text_lr brier_gain_over_p1 -0.0019 (-0.0024, -0.0014) at fraction 0.01, -0.0004 (-0.0020, 0.0011) at fraction 1.0 (tables/fmt-learning-paired.tex)
+\item The text classifier's Brier score stays worse than P1's at the five smallest fractions, and its interval spans zero at the two largest.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=local_eb skill 0.0126 (-0.0106, 0.0371) at fraction 1.0, -0.0109 at 0.01
+\item The local comparison set starts below the base rate, with a skill of minus 0.011 at the smallest fraction, and its interval spans zero at the full history.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows rung=P1 skill_own_base 0.0462 at fraction 0.01, skill 0.0093 at fraction 0.01; base_brier_own 0.0574 against base_brier_full 0.0551 there
+\item Against each subsample's own base rate the curve reads backwards, with P1 at 0.046 on the smallest fraction (Table~\ref{tab:learning-detail}, Appendix~\ref{app:tables}), because a base rate from a few dozen tests is itself a poor forecaster.
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json heldout_tests 318; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json gates_by_stratum.strata.ALL.own_gate n_200 200, n_400 300
+\item The 318 held-out tests clear both pooled gates of 200 and 300 at every point.
 \end{itemize}
 The deployment-shaped archive's curve decides nothing (Appendix~\ref{app:asos}).

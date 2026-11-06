@@ -1,13 +1,10 @@
-"""Summary tables, group results_a: the cautionary run, the ladder, the challengers, the guard, the gates, calibration and decisions (Sections 6.1 to 6.4)."""
+"""Summary tables, group results_a: the cautionary run, the ladder, the challengers, the guard, calibration and decisions (the gates of each stratum are in experiments)."""
 from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, month_year, n, narrowest_origin, pct, pctw, v
 
 MAIN = "backtest-upworthy-*.json"
 EXTRAS = "paper-extras-upworthy-*.json"
 CAUTIONARY = "ablations/backtest-upworthy-*--effect-scale-relative+s-star-realized.json"
 GUARD = "ablations/p2-guard-upworthy.json"
-GATES = "gates.json"
-GATE = 'by_base_rate["0.09"].by_target["0.90"]'
-SIM = 'by_base_rate["0.09"]'
 WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
 DECIDABLE = {"decidable at skill 0.20 and 0.10": "both skills", "decidable at skill 0.20 only": "skill 0.20 only", "undecidable at this n": "neither"}
 
@@ -27,8 +24,11 @@ def signed_ci(rep, row, field_name, nd=3):
     return derived(f"{a} ({rep.get(lo_key):.{nd}f}, {rep.get(hi_key):.{nd}f})", *a.keys, rep.ref(lo_key), rep.ref(hi_key))
 
 
-def decidable(rep, key):
-    return derived(DECIDABLE[rep.get(key)], rep.ref(key))
+def ci_neg(rep, row, field_name, nd=4):
+    """``ci`` of a difference read the other way round: the value negated and the bounds swapped."""
+    keys = [f"{row}.{field_name}", f"{row}.{field_name}_lo", f"{row}.{field_name}_hi"]
+    x, lo, hi = (-rep.get(k) for k in keys)
+    return derived(f"{fmt(x, nd)} ({fmt(hi, nd)}, {fmt(lo, nd)})", *[rep.ref(k) for k in keys])
 
 
 def admitted(rep, share_key, count_key):
@@ -47,71 +47,82 @@ def cautionary(r):
         row("1 (most precise)", 1, 1),
         row("10 (least precise)", 10, 0),
         Raw(r"\midrule"),
-        [r"Brier skill (90\%)", join(r"\multicolumn{{4}}{{r}}{{{}}}", ci(run, agg("P1"), "brier_skill"))],
+        [r"Brier skill (90\%)", join(r"\multicolumn{{4}}{{r}}{{{}}}", ci(run, agg("P1"), "brier_skill", 4))],
     ])
 
 
 def p1_cells(r):
-    main = r(MAIN)
+    main, extras = r(MAIN), r(EXTRAS)
 
-    def cell(label, name, skill=ci):
+    def gain(cell):
+        return ci_neg(main, agg("P0", cell), "logscore_vs_p1")
+
+    def cell(label, name):
         row = agg("P1", name)
-        return [label, n(main, f"{row}.n_tests"), "", "", skill(main, row, "brier_skill"), ""]
+        return [label, n(main, f"{row}.n_tests"), v(main, f"{row}.logscore"), v(main, f"{agg('P0', name)}.logscore"), gain(name), ci(main, row, "brier_skill", 4),
+                lohi(main, f"{row}.adjusted_lo", f"{row}.adjusted_hi", 4)]
 
-    p1 = agg("P1")
-    narrowest = narrowest_origin(main)[:10]
-    return Table("fmt-p1-cells", "lrrrrr", [r"row & tests & P1 log score & P0 log score & Brier skill (90\%) & adjusted"], [
-        ["pooled", n(main, "header.tests_scored"), v(main, f"{p1}.logscore"), v(main, f"{agg('P0')}.logscore"), ci(main, p1, "brier_skill"),
-         lohi(main, f"{p1}.adjusted_lo", f"{p1}.adjusted_hi")],
-        [f"{month_year(narrowest)} (narrowest)", "", v(main, origin_score(narrowest, "P1")), v(main, origin_score(narrowest, "P0")), "", ""],
-        cell("image-only", "image_only"),
+    narrowest = narrowest_origin(main)
+    day = narrowest[:10]
+    by_origin = f"p1_minus_p0_by_origin.by_origin[origin={narrowest}]"
+    return Table("fmt-p1-cells", "lrrrrrr", [r"row & tests & P1 log score & P0 log score & P1 minus P0 (90\%) & P1 Brier skill (90\%) & adjusted"], [
+        cell("pooled", "ALL"),
         cell("headline-only", "headline_only"),
-        cell("both changed", "both", signed_ci),
+        cell("image-only", "image_only"),
+        cell("smallest", "both"),
+        [f"{month_year(day)} (narrowest)", n(main, f"tables.origins[origin={narrowest}].n_tests"), v(main, origin_score(day, "P1")), v(main, origin_score(day, "P0")),
+         ci(extras, by_origin, "difference", 4, lo="lo", hi="hi"), "", ""],
     ])
 
 
 def direction(r):
     main = r(MAIN)
 
-    def row(label, rung, auc=True, accuracy=True):
+    def row(label, rung, auc=True):
         a = agg(rung)
-        return [label, v(main, f"{a}.direction_accuracy") if accuracy else "", v(main, f"{a}.direction_accuracy_decisive") if accuracy else "",
-                v(main, f"{a}.auc_direction") if auc else ""]
+        return [label, v(main, f"{a}.direction_accuracy"), v(main, f"{a}.direction_accuracy_decisive"), ci(main, a, "auc_direction") if auc else "none, one forecast"]
 
-    return Table("fmt-direction", "lrrr", ["rung & accuracy & accuracy, decisive & direction AUC"], [
-        row("P1 (the ladder)", "P1"),
-        row(r"\emph{always\_reference}", "always_reference", auc=False),
+    return Table("fmt-direction", "lrrr", [r"rung & accuracy & accuracy, decisive & direction AUC (90\%)"], [
+        row("P1", "P1"),
+        row("precedent rung (P2)", "P2"),
         row("text classifier", "text_lr"),
-        row("P2", "P2", accuracy=False),
+        row(r"\emph{always\_reference}", "always_reference", auc=False),
     ])
 
 
 def challengers(r):
     main = r(MAIN)
-    cal = agg("text_lr+cal")
-    # The recalibrated text classifier's bound near zero is read at four places, so its lower bound stays visible.
-    text_cal = join("{} {}", v(main, f"{cal}.brier_skill"), lohi(main, f"{cal}.brier_skill_lo", f"{cal}.brier_skill_hi", 4))
+
+    def interval(rung):
+        return [ci(main, agg(rung), "brier_skill", 4), lohi(main, f"{agg(rung)}.adjusted_lo", f"{agg(rung)}.adjusted_hi", 4)]
 
     def row(label, rung):
-        return [label, ci(main, agg(rung), "brier_skill"), ci(main, agg(f"{rung}+cal"), "brier_skill"), ""]
+        return [label, *interval(rung), *interval(f"{rung}+cal")]
 
-    return Table("fmt-challengers", "lrrr", [r"challenger & raw (90\%) & recalibrated (90\%) & adjusted"], [
+    return Table("fmt-challengers", "lrrrr", [r"rung & raw (90\%) & raw, adjusted & recalibrated (90\%) & recalibrated, adjusted"], [
+        [r"P1", *interval("P1"), "", ""],
+        ["precedent rung (P2)", *interval("P2"), "", ""],
         row("boosted model", "GBM"),
         row("local comparison set", "local_eb"),
-        ["text classifier", ci(main, agg("text_lr"), "brier_skill"), text_cal, lohi(main, f"{cal}.adjusted_lo", f"{cal}.adjusted_hi")],
-        ["precedent rung (P2)", ci(main, agg("P2"), "brier_skill", 4), "", lohi(main, f"{agg('P2')}.adjusted_lo", f"{agg('P2')}.adjusted_hi", 4)],
+        row("text classifier", "text_lr"),
     ])
 
 
 def auc_within(r):
     main = r(MAIN)
     field = "auc_event_within"
-    return Table("fmt-auc-within", "lrr", ["rung & all cells & headline-only cell"], [
-        ["P0", v(main, f"{agg('P0')}.{field}"), ""],
-        ["P1", ci(main, agg("P1"), field), ci(main, agg("P1", "headline_only"), field)],
-        ["P2", ci(main, agg("P2"), field), ci(main, agg("P2", "headline_only"), field)],
-        ["text classifier, raw", ci(main, agg("text_lr"), field), ""],
-        ["text classifier, recalibrated", "", ci(main, agg("text_lr+cal", "headline_only"), field)],
+
+    def row(label, rung):
+        return [label, ci(main, agg(rung), field), ci(main, agg(rung, "headline_only"), field)]
+
+    return Table("fmt-auc-within", "lrr", [r"rung & all cells (90\%) & headline-only cell (90\%)"], [
+        ["P0 (one forecast per stratum)", v(main, f"{agg('P0')}.{field}"), v(main, f"{agg('P0', 'headline_only')}.{field}")],
+        row("P1", "P1"),
+        row("precedent rung (P2)", "P2"),
+        row("boosted model", "GBM"),
+        row("local comparison set", "local_eb"),
+        row("text classifier, raw", "text_lr"),
+        row("text classifier, recalibrated", "text_lr+cal"),
     ])
 
 
@@ -146,18 +157,20 @@ def p2_vs_p1(r):
     ranked = sorted(origins, key=lambda o: (-move(o), o))
     named, others = sorted(ranked[:2]), ranked[2:]
 
-    def diff(origin, nd=3):
+    def diff(origin, nd=4):
         p1_key, p2_key = origin_score(origin, "P1"), origin_score(origin, "P2")
         return derived(fmt(main.get(p2_key) - main.get(p1_key), nd), main.ref(p2_key), main.ref(p1_key))
 
     def origin_row(label, origin):
-        return [label, diff(origin), ci(extras, f"guard_pairs_rows.rows[origin={origin}T00:00:00+00:00]", "mean_diff")]
+        return [label, diff(origin), ci(extras, f"guard_pairs_rows.rows[origin={origin}T00:00:00+00:00]", "mean_diff", 4)]
 
     within = derived(f"within {fmt(max(move(o) for o in others), 3)} of zero", *[main.ref(origin_score(o, rung)) for o in others for rung in ("P1", "P2")])
     pooled = "guard_pairs_rows.pooled"
     return Table("fmt-p2-vs-p1", "lrr", ["difference & all rows & admitted pairs' rows"], [
         ["P2 minus P1, pooled", ci(main, agg("P2"), "logscore_vs_p1", 4),
          ci(extras, "guard_pairs.summary", "pooled_realized_p2_minus_p1", 4, lo="pooled_lo", hi="pooled_hi")],
+        ["P2 minus P1, headline-only", ci(main, agg("P2", "headline_only"), "logscore_vs_p1", 4), ""],
+        ["P2 minus P1, image-only", ci(main, agg("P2", "image_only"), "logscore_vs_p1", 4), ""],
         origin_row(f"{month_year(named[0])} origin", named[0]),
         origin_row(f"{month_year(named[1])} origin", named[1]),
         [f"the other {WORDS[len(others)]} origins", within, ""],
@@ -167,42 +180,16 @@ def p2_vs_p1(r):
     ])
 
 
-def gates(r):
-    main, sim = r(MAIN), r(GATES)
-    gate = [n(sim, f"{GATE}.n_200"), n(sim, f"{GATE}.n_400")]
-
-    def own(label, tests, cell, verdict):
-        a = agg("P1", cell)
-        return [label, tests, v(main, f"{a}.gate_cell_rows_per_test", 1), v(main, f"{a}.gate_cell_icc", 2), n(main, f"{a}.gate_cell_n_200"),
-                n(main, f"{a}.gate_cell_n_400"), decidable(main, f"{a}.{verdict}")]
-
-    def simulated(label, cell):
-        a = agg("P1", cell)
-        return [label, n(main, f"{a}.n_tests"), "", "", *gate, decidable(main, f"{a}.decidable_by_tests")]
-
-    both = agg("P1", "both")
-    if fmt(main.get(f"{agg('P1')}.gate_base_rate"), 2) != "0.09":
-        raise ValueError("the simulation row reads the base rate 0.09 and the archive's rate rounds to another")
-    return Table("fmt-gates", "lrrrrrl", ["stratum & tests & rows per test & within-test corr. & gate, skill 0.20 & gate, skill 0.10 & decidable"], [
-        ["simulation", "", v(sim, f"{SIM}.rows_per_test", 1), v(sim, f"{SIM}.icc", 2), *gate, ""],
-        own("pooled, at its own dependence", n(main, "header.tests_scored"), "ALL", "decidable_by_tests"),
-        simulated("headline-only", "headline_only"),
-        simulated("image-only", "image_only"),
-        simulated("smallest, at the simulated dependence", "both"),
-        own("smallest, at its own dependence", n(main, f"{both}.n_tests"), "both", "decidable_by_tests_cell"),
-    ])
-
-
 def calibration(r):
     main = r(MAIN)
 
-    def row(rung, equal_mass=False):
+    def row(rung):
         a = agg(rung)
-        mass = join("{} ({})", v(main, f"{a}.ece_equal_mass"), v(main, f"{a}.ece_equal_mass_percentile", 0)) if equal_mass else ""
+        mass = join("{} ({})", v(main, f"{a}.ece_equal_mass"), v(main, f"{a}.ece_equal_mass_percentile", 0))
         return [rung, v(main, f"{a}.ece"), v(main, f"{a}.ece_percentile", 0), mass, v(main, f"{a}.coverage_80", 2), v(main, f"{a}.coverage_90", 2)]
 
-    return Table("fmt-calibration", "lrrrrr", [r"rung & ECE & percentile & equal-mass ECE & cov.\ 80 & cov.\ 90"],
-                 [row("P0"), row("P1", equal_mass=True), row("P2")])
+    return Table("fmt-calibration", "lrrrrr", [r"rung & ECE & percentile & equal-mass ECE (percentile) & cov.\ 80 & cov.\ 90"],
+                 [row("P0"), row("P1"), row("P2")])
 
 
 def upper_bins(r):
@@ -213,12 +200,14 @@ def upper_bins(r):
     if any(row["n"] for row in main.get("tables.reliability_bins") if row["rung"] == "P1" and row["bin"] > 2):
         raise ValueError("a bin above the third holds rows, so 'above 0.2' no longer names one bin")
 
-    def row(label, b, gap=""):
+    def row(label, b, gap=None):
         key = f"tables.reliability_bins[rung=P1,bin={b}]"
+        if gap is None:
+            gap = derived(fmt(main.get(f"{key}.freq") - main.get(f"{key}.mean_p"), 4), main.ref(f"{key}.freq"), main.ref(f"{key}.mean_p"))
         return [label, n(main, f"{key}.n"), v(main, f"{key}.mean_p"), pctw(main, f"{key}.freq", 1), gap]
 
     gap = ci(extras, lowest, "gap_observed_minus_forecast", 4, lo="gap_lo", hi="gap_hi")
-    return Table("fmt-upper-bins", "lrrrr", [r"bin of $\psig$ & rows & mean & significant & observed minus", r" & & forecast & positive & forecast (90\%)"],
+    return Table("fmt-upper-bins", "lrrrr", [r"bin of $\psig$ & rows & mean & significant & observed minus", r" & & forecast & positive & forecast"],
                  [row("0 to 0.1", 0, gap), row("0.1 to 0.2", 1), row("above 0.2", 2)])
 
 
@@ -244,8 +233,7 @@ def deciles(r):
 
 
 def decision(r):
-    main, extras = r(MAIN), r(EXTRAS)
-    paired = 'ranking_paired.budgets["0.25"].differences.P2_minus_P1'
+    main = r(MAIN)
 
     def key(policy, rung=None):
         at_rung = f",rung={rung}" if rung else ""
@@ -256,27 +244,25 @@ def decision(r):
 
     def rung_row(label, rung):
         row = key("p_win", rung)
-        return [label, captured("p_win", rung), "", ci(main, row, "diff_matched"),
-                lohi(main, f"{row}.diff_matched_adjusted_lo", f"{row}.diff_matched_adjusted_hi")]
+        return [label, captured("p_win", rung), ci(main, row, "diff_random", 4), lohi(main, f"{row}.diff_random_adjusted_lo", f"{row}.diff_random_adjusted_hi", 4),
+                ci(main, row, "diff_matched", 4), lohi(main, f"{row}.diff_matched_adjusted_lo", f"{row}.diff_matched_adjusted_hi", 4)]
 
     matched = [row for row in main.get("tables.decision_value") if row["origin"] == "ALL" and row["budget"] == 0.25 and row["policy"] == "random_matched"]
     low = min(matched, key=lambda x: x["captured_fraction"])
     high = max(matched, key=lambda x: x["captured_fraction"])
     baseline = join("{} to {}", captured("random_matched", low["rung"]), captured("random_matched", high["rung"]))
-    return Table("fmt-decision", "lrrrr", [r"policy & captured & minus random (90\%) & minus matched (90\%) & adjusted"], [
-        ["random order (exact)", captured("random"), "", "", ""],
-        ["arm-count order", captured("arm_count"), ci(main, key("arm_count"), "diff_random"), "", ""],
-        ["matched random (the baseline)", baseline, "", "", ""],
+    return Table("fmt-decision", "lrrrrr", [r"policy & captured & minus random (90\%) & adjusted & minus matched (90\%) & adjusted"], [
+        ["random order (exact)", captured("random"), "", "", "", ""],
+        ["arm-count order", captured("arm_count"), ci(main, key("arm_count"), "diff_random", 4), "", "", ""],
+        ["matched random (the baseline)", baseline, "", "", "", ""],
         rung_row("text classifier", "text_lr"),
         rung_row("boosted model", "GBM"),
         rung_row("local comparison set", "local_eb"),
         rung_row("precedent rung (P2)", "P2"),
         rung_row("P1", "P1"),
         rung_row("P0", "P0"),
-        ["oracle", captured("oracle"), "", "", ""],
-        Raw(r"\midrule"),
-        ["P2 minus P1, paired by test", ci(extras, paired, "estimate", lo="lo", hi="hi"), "", "", lohi(extras, f"{paired}.adjusted_lo", f"{paired}.adjusted_hi")],
+        ["oracle", captured("oracle"), "", "", "", ""],
     ])
 
 
-TABLES = [cautionary, p1_cells, direction, challengers, auc_within, guard, p2_vs_p1, gates, calibration, upper_bins, deciles, decision]
+TABLES = [cautionary, p1_cells, direction, challengers, auc_within, guard, p2_vs_p1, calibration, upper_bins, deciles, decision]

@@ -669,7 +669,7 @@ differs from random order only through between-cell differences; `constant_withi
 
 Every aggregate and year row carries Bonferroni-adjusted bounds beside the percentile intervals, for the Brier skill (`adjusted_lo`, `adjusted_hi`) and for the log score (`logscore_adjusted_lo`, `logscore_adjusted_hi`), with the
 family size. The bound is the estimate plus or minus the bootstrap standard error times the normal quantile of `1 - 0.05 / m`, where `m` is the number of intervals the table shows (every cell and rung for the aggregate table, every
-year, cell and rung for the year table); the normal approximation is used so that the correction works for any family size with 500 draws. The per-cell and per-year intervals are descriptive; the pooled interval is the pre-registered claim.
+year, cell and rung for the year table); the normal approximation is used so that the correction works for any family size with 500 draws. The per-cell and per-year intervals are descriptive; the pooled interval is the primary claim, a rule fixed after the data were seen (corrected 6 November 2026: it was called pre-registered here).
 
 Review L amended the family: the intervals actually reported (call 186).
 
@@ -1735,3 +1735,9 @@ Call 205 scaled the nearest simulated gate to a cell's dependence to first order
 ### Call 279: calibration after removing the level error of each origin and cell (paper version 2 plan, X8b; 6 November 2026)
 
 X8 (`drift_matched_null`) draws the outcomes of the calibration null at the trailing base rate. That tests a rung against a world where the base rate is true and does not say whether its departure from calibration comes from the event rate moving; it is kept as stored and labelled for what it is. `calibration_within_period` in `src/mootcourt/extras_v2.py` answers the other question: each row's forecast is shifted on the logit scale by the single constant per origin-and-cell stratum that makes the mean forecast equal the realized event rate there (an oracle level correction, a diagnostic and not a forecast). ECE with the same ten bins is computed before and after, the after value is placed in a null that draws outcomes from the shifted forecasts (clustered at their measured design effect, 500 draws, the seed rule of the current null), and the share of ECE removed is reported pooled and by cell. Strata with fewer than 50 rows or with no or only events are not shifted and are listed. A level error is what the shift removes; what remains is a shape error. This experiment was added after X8's result was seen and before this one existed.
+
+### Call 280: the verdict words, and what run 8 did to the selection rule (paper version 2; 6 November 2026)
+
+The paper reads a hypothesis part with three words only. Held: the reading meets the claim. Failed: the estimate lies on the wrong side, or a test rejects the claim. Not shown: the estimate lies on the claim's side and its interval also contains no effect. Unresolved and not supported named the third state under other names and are gone from `paper/summary_tables/limits.py` and the text.
+
+Forward chaining no longer beats leave-one-test-out on run 8: with the guard on the paired difference is minus 0.0001 with an interval spanning zero, and with it off leave-one-test-out is better. Calls 66, 202 and 206 record why the default changed on earlier runs, and they stand as history. The default stays because plan decision D4 changes no setting in this plan; a change of default belongs to a later version. Earlier calls that quote 13,247 rows, nine origins or a report under `paper/data/run5-period-rule` or `run7-tie-rank` describe those runs. The current run is `paper/data/run8-randomization-window`.

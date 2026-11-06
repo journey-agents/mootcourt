@@ -1,90 +1,56 @@
-\section{Hypotheses, Limitations and Ethics}
+% $RUN6 = paper/data/run8-randomization-window
+\section{Limitations and Ethics}
 \label{sec:limitations}
 
-\paragraph{The hypotheses.}
-\label{sec:verdicts}
-Six hypotheses were fixed in writing before the final runs and are unchanged since (Section~\ref{sec:hypotheses} states them with their reading rule). How they were fixed:
+\paragraph{Every number is exploratory.} Every run read the same exploratory split of the headline archive, and the method changed between runs after results were seen. P2's family, the text classifier's pairwise design, the guard and the selection rule all came that way, and the selection rule's comparison ran on the rows that score it. So every number here is exploratory, the text classifier's ranking result included, and agreement between runs on one split is not replication. The archive's confirmatory split is unopened and is the next test.
+
+\paragraph{The archive's notice.}
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.notice (about 22 percent of tests; 25 June 2013 to 10 January 2014), counts.main tests_scored 2949; $RUN6/README.md
+The main analysis excludes every test that started inside the window the archive's maintainers discourage, by date, because the file we read has no flag column. A date rule cannot see a randomization problem outside that window and drops any sound test inside it. Including the window is the ablation of Table~\ref{tab:fmt-window}, and January 2014 abstains on every row because the gap leaves its reliability reports stale, a consequence of the rule and not a finding. Version 1.0.0 of this paper's package predates this handling.
+
+\paragraph{Scope.}
+% src: Section 3, the two archives; Table tab:schema and docs/tutorials/02-your-own-archive.md (the package takes any ledger of concluded contrasts with an effect and a standard error); no report measures any design below
+The evidence is on randomized A/B and A/B/n tests, mainly one publisher's headline and image tests. The package accepts other online randomized experiments, such as model launches or pricing, and those are untested. Switchback, geo and quasi-experiments are untested, and their dependence may invalidate the gates. Non-randomized studies are out of scope.
+
+\paragraph{The archives and the design.} Headline tests on one publisher are one kind of change in one product. The deployment-shaped archive is too small for any gate and carries no dates, so the protocol is measured on real experiments without transfer or real drift, from one archive of each kind, one main seed and one design.
+
+\paragraph{The scores and the stand-ins.} No true effect is ever observed, so every score is against the test's own estimate, with floors and ceilings beside it. Two post-launch quantities stand in for pre-launch ones.
 \begin{itemize}
-% src: git log of paper/plan.md: one commit, 145eaf7 (3 November 2026), which also holds paper/data/run2-prelaunch-clean/gates.json and run-log.json; the registered copy (references.bib mootcourt2026plan): tag plan-registered-2026-11-04, commit f0b088c794dcea1a1eac9872cd15aeb1c2412976, pushed 2026-11-04T17:19:12Z, plan.md sha256 e6dab9062fd1dc59734e5e4374ba429d3edc06efe681f68bb81424d88f45b613, byte-identical to paper/plan.md of 145eaf7
-\item Commit 145eaf7 (3 November 2026) holds the plan beside the reports of the second run on the same archive, while the plan's own section 1a reads the first.
-\item So the hypotheses postdate those two runs (the cautionary run of Section~\ref{sec:cautionary} and the pre-launch-clean run) and precede every run the paper reads.
-\item The reading rule of Section~\ref{sec:hypotheses}, the pooled interval as the primary claim, was fixed in the paper after the data were seen, since the plan fixes no reading rule.
-% src: references.bib mootcourt2026plan: tag plan-registered-2026-11-04, pushed 2026-11-04T17:19:12Z, after round 01
-\item A byte-identical copy of the plan was registered publicly on 4 November 2026, after round 01 \cite{mootcourt2026plan}.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json impressions_effect_correlation corr_log_impressions_abs_z 0.087, n_rows 10903
+\item Realized impressions stand in for the planned exposure the archives do not record. On the headline archive their log correlates 0.087 with the absolute standardized effect, which is an association and not an effect on any score.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median.json tables.aggregate[cell=ALL,rung=P1] logscore -0.7676, brier_skill 0.0059; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] logscore -0.7566, brier_skill 0.0023; tables/fmt-exposure-fixed.tex
+\item The effect on the scores is measured by fixing exposure at each cell's median (Table~\ref{tab:fmt-exposure-fixed}): P1's log score falls by 0.011 nats and its within-stratum AUC falls to chance, while its Brier skill rises, its interval then above zero, for a reason we have not explained. These archives cannot say whether a true planned exposure would carry the same signal, so this is a dependence on the stand-in and we do not call it a leak.
+% src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation corr_log_impressions_abs_z 0.2152, corr_log_run_length_abs_z 0.1522
+\item On the deployment-shaped archive the stand-in is the user count at the end of a run of varying length, and its log correlates 0.215 with the absolute standardized effect. The log of the run length, which no feature reads, correlates 0.152.
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] event_rate 0.0854, event_rate_planned 0.0778 (tables/event-definition-upworthy.tex)
+\item The headline significant-positive event and the floor ingredients use the realized standard error. Table~\ref{tab:event-definition} also scores the event defined on the planned one, where the event rate falls from 0.0854 to 0.0778.
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] brier_skill_planned rung=P1 0.0046 (0.0008, 0.0083), rung=P2 0.0058 (0.0018, 0.0095); $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json and $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json brier_skill_planned equal to brier_skill for every rung (tables/event-definition-upworthy.tex)
+\item On that planned event the skill of P1 and of P2 rises, and both intervals lie above zero, unadjusted (P1 at 0.0046, P2 at 0.0058).
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=text_lr] brier_skill_planned 0.0159 (0.0082, 0.0238)
+\item On that planned event the raw text classifier's interval also lies above zero, unadjusted, at 0.0159. So skill on this event is at most small, and whether an interval clears zero depends on the event's definition. On the other two archives the two events coincide.
+\item The deployment-shaped archive keeps two post-launch display fields, the checkpoint count and the final offset in days, at the top level of its features. No model reads them, which the feature allow-list and its test enforce, and moving them would rewrite every snapshot identifier the run folders cite.
 \end{itemize}
-The claims register and that tag are the record.
-
-\begin{table*}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json and $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json (the main backtests); $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json keys p1_minus_p0_by_origin, issued_ece_by_origin and issued_row_brier_skill, bootstrap_resamples 500; tables.decision_value budget=0.25, family_size 6; tables/verdicts.tex
-\caption{The six hypotheses read back part by part under the rule of Section~\ref{sec:hypotheses}. Rows: the parts of each hypothesis, under a line that gives its overall verdict and the section that reads it; H5 is one part, read rung by rung. Columns: what the plan fixed, in short (Section~\ref{sec:hypotheses} gives the wording), what was measured, and the verdict on the part. Sources: the main backtests \texttt{backtest-upworthy} and \texttt{backtest-asos} and the keys \texttt{p1\_minus\_p0\_by\_origin}, \texttt{issued\_ece\_by\_origin} and \texttt{issued\_row\_brier\_skill} of \texttt{paper-extras-upworthy}. A pair of numbers after a value is its 90 percent bootstrap interval by test; an adjusted interval or bound is the Bonferroni-adjusted one of the decision table. H1 reads the log score in nats, H2 and H4 the Brier skill against the base rate, and H5 the captured lift over the baseline at a quarter of the tests.}
-\label{tab:verdicts}
-\input{tables/verdicts}
-\end{table*}
-
-Table~\ref{tab:verdicts} gives the verdicts, and these notes carry what its cells cannot.
-\begin{itemize}
-\item H2: the decidable gate is the condition, not a part.
-\item H4: the abstained rows score above the full set partly by composition, since they carry the burn-in origin and a higher event rate. The novelty trigger, the only one that fires after burn-in, changes what is issued, not measurably how well.
-\item H5: the prior ranks by cell only, its win probability one number per cell and origin. The verdict rests on the arm-count-matched order, the baseline adopted after round 01, the later and stricter of the two, and the regret is reported as is.
-\end{itemize}
-One confirmed, four in part, one refuted; the one reading rule changed after the data were seen is the fifth hypothesis's baseline, and the count is read under the later, stricter baseline.
-
-\paragraph{The archives and the design.} Headline tests on one publisher are one kind of change in one product, and the deployment-shaped archive is too small for any gate and carries no dates, so the protocol is measured on real experiments without transfer or real drift, from one archive of each kind, one seed and one design.
-
-\paragraph{The scores and the stand-ins.}
-No true effect is ever observed, so every score is against the test's own estimate, with floors and ceilings beside it; two post-launch quantities stand in for pre-launch ones.
-\begin{itemize}
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json impressions_effect_correlation corr_log_impressions_abs_z 0.0994, n_rows 13453
-\item Realized impressions stand in for the planned exposure the archives do not record: their log correlates 0.099 with the absolute standardized effect on the headline archive, a measured leak a live card does not have.
-% src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json corr_log_impressions_abs_z 0.2152, corr_log_run_length_abs_z 0.1522
-\item On the deployment-shaped archive the stand-in is the user count at the end of a run of varying length: its log correlates 0.215, a larger measured leak, and the log of the run length itself, which no feature reads, correlates 0.152.
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] event_rate_planned 0.0814, brier_base 0.0832 = p(1 - p) gives the realized event rate 0.0910 (tables/event-definition-upworthy.tex)
-\item The headline significant-positive event and the floor ingredients use the realized standard error, and Table~\ref{tab:event-definition} scores the event defined on the planned one as well: the event rate falls from 0.091 to 0.081.
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] brier_skill_planned rung=P1 -0.0002 (-0.0037, 0.0038), rung=P2 -0.0033 (-0.0068, 0.0001), rung=text_lr+cal 0.0028 (-0.0011, 0.0063); $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json and $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json brier_skill_planned equal to brier_skill for every rung (tables/event-definition-upworthy.tex, tables/event-definition-asos.tex, tables/event-definition-synthetic.tex)
-\item Every skill stays within its interval (P1 minus 0.000, minus 0.004 to 0.004), and on the other two archives the two events coincide.
-\end{itemize}
-The scale mixture over the uncertain click-through level that might close the coverage gradient of Section~\ref{sec:calibration-results} is not built.
 
 \paragraph{The gates and the families.}
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate family_size 52, tables.score_by_year family_size 156, tables.decision_value family_size 6
-The gate sizes assume the calibration the backtest is meant to judge; we read the gates as a sizing convention and rest every powered claim on its interval. The aggregate and year tables read 52 and 156 intervals and the decision table six per budget, with adjusted bounds beside them; the remaining tables carry none yet and are read as descriptive; the pooled interval is the primary claim.
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500 (a rank among 500 draws moves 0.2 points per draw); docs/method.md call 255
-The calibration percentile is a rank among 500 draws, so it moves in steps of 0.2 points.
-% src: docs/method.md call 255: under the strict comparison the rule replaced, the percentile moved by up to 1.1 points between macOS and ubuntu on the same seed and 5.2 points in the worst case on the sample report
-Before the mid-rank rule of Section~\ref{sec:repro} it moved by up to 1.1 points between platforms on the same seed (5.2 in the worst case on the sample ledger).
-% src: $RUN6/README.md (run 7 against run 6: percentile fields moved in 8 places on the headline archive, 36 on the deployment-shaped one and 17 on the synthetic one, by at most about 3 points, none a pooled headline cell; paper/tables regenerated from run 7 is byte-identical to the run 6 tables apart from the positive-control header, so no printed percentile moved)
-The rerun under the rule moved no percentile the paper prints.
+The gate sizes assume the calibration the backtest is meant to judge, so we read the gates as a sizing convention and rest every claim on its interval. The aggregate and year tables read 52 and 156 intervals and the decision table six per budget, with adjusted bounds beside them. The remaining tables carry no adjusted bounds and are read as descriptive.
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500 (a rank among 500 draws moves 0.2 points per draw)
+The calibration percentile is a rank among 500 draws, so it moves in steps of 0.2 points (Section~\ref{sec:repro}).
 
-\paragraph{The guard at the size of its cell.}
-The first synthetic sensitivity runs admitted a weight in a majority of cells with no planted text effect at the two largest sizes, and the control arm of Table~\ref{tab:guard-period-control} found the cause in P1: it added half of the latest period's shrunken deviation to every cell's prior mean, and a synthetic ledger ends a week into a quarter, so that period held rows of noise, which the precedent rung undid, and the guard admitted a real gain over a wrong P1 (Table~\ref{tab:fmt-period-rule}). No period at all and the rule now in force, the level of the last complete quarter (Section~\ref{sec:method}), both take the share down; at the quarterly origins of the backtest the two rules coincide, so no backtest number moved.
+\paragraph{The sizing evaluation.}
+% src: docs/superpowers/plans/2026-11-06-x10-sizing-design.md; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json sizing_evaluation.test_and_roll (primary_multiple 20, world_scales; tables/fmt-sizing.tex)
+Each concluded test ran once at one size, so sizing cannot be replayed. The evaluation simulates regret on a synthetic horizon in impressions, a multiple of the cell's test scale, with no money in it, in a world of true effects fitted to the rows scored at that origin and cell. Its result is reported with the two alternative worlds of Table~\ref{tab:fmt-sizing}, and a different world could change the sign of a difference this small.
 
-\begin{table}[t]\centering\scriptsize
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows (planted lift zero, 12 seeds, 36 cells per size, multiplier 2.0), n_tests 3700 and 11100 (tables/guard-period-control.tex); tables/fmt-period-rule.tex
-\caption{Share of cells in which the guard admitted a precedent weight on synthetic ledgers with no planted text effect, under three treatments of P1's period level, condensed from Table~\ref{tab:guard-period-control} (Appendix~\ref{app:tables}; \texttt{paper-extras-synthetic}, key \texttt{guard\_period\_control}; 12 seeds, 36 cells per size, the guard at two standard errors). Rows: the old rule, the same rule with no period deviation, and the rule now in force. Columns: at each ledger size, the share admitted and the mean rows in the period level. The shares carry no interval.}
-\label{tab:fmt-period-rule}
-\input{tables/fmt-period-rule}
-\end{table}
-
-Under that rule the guard's numbers read as follows.
+\paragraph{What remains undone.}
 \begin{itemize}
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_gain_diagnostic.rows ratio_of_means 0.68, 0.63, 0.71, 0.67 at n_tests 300, 1000, 3700, 11100 (tables/guard-gain-diagnostic.tex)
-\item The mean in-selection gain stays below its standard error at every size (ratios of 0.63 to 0.71, Table~\ref{tab:guard-gain-diagnostic}).
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_held_out_gain.rows (held_out_share_of_tests 0.15, 12 seeds, 36 cells per size): mean_bias 0.00928, 0.00203, 0.00056, 0.00000; mean_candidate_held_out_se 0.0031, 0.0009, 0.0003, 0.0001 (tables/guard-gain-held-out.tex)
-\item What remains is a selection bias that shrinks with the cell, measured with a random 15 percent of tests held out.
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_held_out_gain.rows mean_bias 0.00928 at n_tests 300, 0.00000 at n_tests 11100 (tables/guard-gain-held-out.tex)
-\item The in-selection gain of the best candidate exceeds its held-out gain by 0.0093 nats at the smallest ledger and 0.0000 at the largest (Table~\ref{tab:guard-gain-held-out}).
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_fit_fraction_stability.rows (n_tests 3700): share_admitted 0.056, 0.056, 0.028, 0.056 on the first 85, 90, 95 and 100 percent of rows and 0.056 on a random 85 percent (tables/guard-fit-fraction.tex)
-\item The decision at 3,700 tests does not move with the fit set: 3 to 6 percent of cells admitted on every fit set of Table~\ref{tab:guard-fit-fraction}.
+\item In the method: a Student-t predictive for the challengers, whose log scores carry the normal-family penalty of Section~\ref{sec:method}; a scale mixture over the uncertain click-through level, which might close the coverage gradient of Section~\ref{sec:calibration-results}; a held-out choice of P2's scale term; a held-out split for the guard's gain in small cells; an empirical-Bayes variance for P1's period level; and a guard between P0 and P1, for which the loop's drift rule stands in. The degrees-of-freedom grid stops at 3, and fits on that boundary are reported as they are.
+\item In the protocol: planned-exposure and planned-duration columns in the exchange format, and adjusted bounds for the tables that lack them.
+\item Not run: a single-headline run of the challengers, so what the reference headline bought the text classifier is unmeasured.
 \end{itemize}
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pooled_realized_p2_minus_p1 0.0010 (-0.0007, 0.0025); $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows n_tests 11100 text_effect_strength 1.0 recovered_fraction 0.180 (a fifth), by_cell headline_only recovered_fraction 0.0995 (a tenth)
-The guard reads as designed on these ledgers; what an admission on the real archive is worth is the out-of-time comparison of Table~\ref{tab:guard-pairs} (pooled plus 0.0010 nats, within its noise), and the positive control bounds the other side, a rung that recovers about a fifth of a planted one-percent lift pooled over the generator's cells and a tenth in the cell shaped like the real one (Section~\ref{sec:synthetic-results}), so the control does not separate an archive with no precedent signal from one whose signal the rung mostly discards.
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs_rows.pooled location_part 0.0036 (0.0025, 0.0046), scale_part -0.0026 (-0.0040, -0.0010); guard_pairs_rows.rows location_part positive in 7 of 8 pairs (docs/method.md call 233)
-Future work, named and not done: a held-out choice of P2's scale term, the candidate the decomposition of the admitted pairs points at (Section~\ref{sec:ladder-results}); a held-out split for the gain in small cells; an empirical-Bayes variance for P1's period level; and the within-origin-and-cell comparison of issued against withheld rows, on which the reading of the fourth hypothesis's reversal as composition in part rests. Argued in the response letters and not built: a Student-t predictive for the challengers, whose log scores carry the normal-family penalty of Section~\ref{sec:method}; planned-exposure and planned-duration columns in the exchange format; an admission rule that conditions on realized counts written into the ledger's provenance, left to the operations manual; a date-free model id and a wall-clock stamp inside the content id, both declined by design; a guard between P0 and P1, which the loop's drift rule stands in for; the degrees-of-freedom grid, which stops at 3 with boundary fits reported; the adjusted bounds the remaining tables lack; the cost of an external data drive, allowed and unmeasured; the en dashes the document class and the bibliography style set in the rendered PDF, which the paper's own text never uses; the title, kept as the benchmark's name although the precedents never earn weight; and the two post-launch display fields of the deployment-shaped archive (the checkpoint count and the final offset in days), kept at the top level of its features outside the post-launch block until the next snapshot-changing release, because moving them rewrites every snapshot id the run folders cite, with the reading side closed by the feature allow-list and its test; and the numbering of the appendix tables in two ordered groups (single-column, then two-column) rather than one exact reading order, with the appendix figures cited from the body before its own two, kept because one exact order cost five pages. Not run: a single-headline run of the challengers (the pairwise-off ablation of Section~\ref{sec:ablations} carries the ladder and the direction baselines only), so what the reference headline bought the text classifier is unmeasured.
 
-\paragraph{The precedent rung at scale.}
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json top_m_tail_share.by_size share_p2_weight mean: contrasts 10000 0.5649, 100000 0.5185, 300000 0.6535
-On a large ledger the instability check, which lists 1,000 precedents, is a lower bound.
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json top_m_tail_share.by_size share_p2_weight mean: contrasts 10000 0.5649, 100000 0.5185, 300000 0.6535
-The kernel weight beyond them is 0.52 to 0.65 of the total at ten thousand to three hundred thousand synthetic contrasts (Appendix~\ref{app:walltime}).
-
-\paragraph{Ethics, data norms and misuse.} Both archives are aggregate, published under CC BY 4.0 and credited by name; nothing in the system ingests user-level data, and only the exploratory split of the headline archive is used (Section~\ref{sec:setting}). The system never decides: it prioritizes and sizes, and the live test decides. Three misuses are foreseeable: a team that prioritizes by $\pwin$ writes a ledger selected on the forecaster's own output, so a ledger row should record whether a card influenced the test, with skill reported apart for those rows; P3 must be entered before the card is seen; and an abstained card's base rate is labelled as the quantity it declined to improve on.
+\paragraph{Ethics, data norms and misuse.} Both archives are aggregate, published under CC BY 4.0 and credited by name. Nothing in the system ingests user-level data, and only the exploratory split of the headline archive is used (Section~\ref{sec:setting}). The system never decides: it forecasts a result, ranks candidates and can suggest a size, and the live test decides. Three misuses are foreseeable.
+\begin{itemize}
+\item A team that ranks by the win probability writes a ledger selected on the forecaster's own output, so a ledger row should record whether a card influenced the test, with skill reported apart for those rows.
+\item A team's own forecast must be entered before its card is seen.
+\item An abstained card's base rate must be labelled as the quantity it declined to improve on.
+\end{itemize}

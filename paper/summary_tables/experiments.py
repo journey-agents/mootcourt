@@ -3,7 +3,7 @@
 Every cell comes from a report key: the extras keys named in each function, the main report and the ablation that includes the randomization window.
 Literal words that state a measured fact are derived or guarded by a raised error, as in the other groups.
 """
-from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, n, v
+from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, month_year, n, v
 from summary_tables.results_a import DECIDABLE
 
 MAIN = "backtest-upworthy-*.json"
@@ -183,7 +183,7 @@ def ranking_paired(r):
 
     def planted_adjusted(size, name, nd=4):
         key = f"{planted(size)}.differences.{name}"
-        return ["\\quad adjusted", "", sci(syn, key, "estimate", nd, "adjusted_lo", "adjusted_hi"), ""]
+        return ["\\quad adjusted", "", lohi(syn, f"{key}.adjusted_lo", f"{key}.adjusted_hi", nd), ""]
 
     return Table("fmt-ranking-paired", "lrrr", ["policy or difference & budget 0.10 & budget 0.25 & budget 0.50"], [
         _heading("Captured fraction, headline archive", 4),
@@ -224,9 +224,15 @@ def ranking_paired(r):
 
 def abstention_composition(r):
     """X6: abstained against issued excluding burn-in, pooled and within origin-and-cell strata, against one common baseline."""
-    rep = r(EXTRAS)
+    rep, main = r(EXTRAS), r(MAIN)
     top = "abstention_composition"
     rungs = ("P1", "P2")
+    origins = main.get("tables.origins")
+    later_full = [o for o in origins if o["abstention_rate"] == 1.0 and not o["burn_in"]]
+    if len(later_full) != 1:
+        raise ValueError("the row names one origin after burn-in that abstains on every row")
+    full = later_full[0]
+    full_keys = [main.ref(f"tables.origins[origin={full['origin']}].{f}") for f in ("n_scored", "abstention_rate")]
 
     def both(fn):
         return [fn(rung) for rung in rungs]
@@ -240,6 +246,14 @@ def abstention_composition(r):
     def rate(cell):
         return both(lambda g: join("{} of {}", v(rep, f"{top}.{g}.abstention_rate_by_cell.{cell}.rate", 3), n(rep, f"{top}.{g}.abstention_rate_by_cell.{cell}.rows")))
 
+    def pooled_rate(g):
+        a, t = rep.get(f"{top}.{g}.abstained_rows"), rep.get(f"{top}.{g}.rows")
+        return derived(f"{fmt(a / t, 3)} of {fmt(t, 0, comma=True)}", rep.ref(f"{top}.{g}.abstained_rows"), rep.ref(f"{top}.{g}.rows"))
+
+    def rate_without_full(g):
+        a, t = rep.get(f"{top}.{g}.abstained_rows") - full["n_scored"], rep.get(f"{top}.{g}.rows") - full["n_scored"]
+        return derived(f"{fmt(a / t, 3)} of {fmt(t, 0, comma=True)}", rep.ref(f"{top}.{g}.abstained_rows"), rep.ref(f"{top}.{g}.rows"), *full_keys)
+
     strat = "stratified_issued_minus_abstained_skill"
     return Table("fmt-abstention-composition", "lrr", [" & P1 & P2"], [
         ["issued, rows / tests", *group_size("issued")],
@@ -251,6 +265,8 @@ def abstention_composition(r):
         [r"issued minus abstained, within (90\%)", *both(lambda g: sci(rep, f"{top}.{g}.{strat}", "estimate"))],
         ["strata holding both groups", *both(lambda g: join("{} of {}", n(rep, f"{top}.{g}.{strat}.strata_with_both_groups"), n(rep, f"{top}.{g}.{strat}.strata_total")))],
         Raw(r"\midrule"),
+        ["abstention rate, all cells, of rows", *both(pooled_rate)],
+        [f"the same without {month_year(full['origin'])}", *both(rate_without_full)],
         ["abstention rate, headline-only, of rows", *rate("headline_only")],
         ["abstention rate, image-only, of rows", *rate("image_only")],
         ["abstention rate, smallest, of rows", *rate("both")],
@@ -331,6 +347,27 @@ def drift_null(r):
                  [row("P0"), row("P1"), row("P2")])
 
 
+def calibration_shift(r):
+    """X8b: the ECE before and after an oracle level shift per origin and cell, with the null built from the shifted forecasts."""
+    rep = r(EXTRAS)
+    top = "calibration_within_period"
+
+    def row(label, rung, group):
+        at = f"{top}.rungs.{rung}.by_stratum_group.{group}"
+        return [label, n(rep, f"{at}.rows"), v(rep, f"{at}.ece_before", 4), v(rep, f"{at}.ece_after", 4), v(rep, f"{at}.share_of_ece_removed", 2),
+                v(rep, f"{at}.null_mean", 4), v(rep, f"{at}.after_percentile_in_null", 1)]
+
+    return Table("fmt-calibration-shift", "lrrrrrr",
+                 ["rung, stratum & rows & ECE as & ECE after & share & null mean, & percentile in", r" & & issued & the shift & removed & shifted & that null"], [
+        row("P0, all cells", "P0", "ALL"),
+        row("P1, all cells", "P1", "ALL"),
+        row("P2, all cells", "P2", "ALL"),
+        row("P1, headline-only", "P1", "headline_only"),
+        row("P1, image-only", "P1", "image_only"),
+        row("P1, smallest", "P1", "both"),
+    ])
+
+
 def learning_paired(r):
     """X9: the learning curve paired with P1 on the same held-out rows."""
     rep = r(CURVE)
@@ -346,20 +383,23 @@ def learning_paired(r):
 
 
 def auc_by_year(r):
-    """X9: the event AUC within origin by year, which the 2015 skill is read against."""
+    """X9: the event AUC by year within origin and within origin and cell, which the 2015 skill is read against."""
     rep = r(EXTRAS)
 
     def auc(year, rung, name):
         return sci(rep, f'within_origin_auc_by_year.years["{year}"].{rung}.{name}', "estimate", 3)
 
-    def row(year):
+    def row(year, name):
         at = f'within_origin_auc_by_year.years["{year}"]'
-        return [year, n(rep, f"{at}.P1.tests"), auc(year, "P1", "auc_within_origin"), auc(year, "P2", "auc_within_origin"),
-                v(rep, f"{at}.P1.brier_skill", 4), v(rep, f"{at}.P2.brier_skill", 4)]
+        return [year, n(rep, f"{at}.P1.tests"), *[auc(year, rung, name) for rung in ("P0", "P1", "P2", "text_lr")]]
 
-    return Table("fmt-auc-by-year", "lrrrrr",
-                 ["year & tests & P1 AUC within & P2 AUC within & P1 Brier & P2 Brier", r" & & origin (90\%) & origin (90\%) & skill & skill"],
-                 [row("2013"), row("2014"), row("2015")])
+    return Table("fmt-auc-by-year", "lrrrrr", [r"year & tests & P0 (90\%) & P1 (90\%) & P2 (90\%) & text classifier (90\%)"], [
+        _heading("Within origin", 6),
+        row("2013", "auc_within_origin"), row("2014", "auc_within_origin"), row("2015", "auc_within_origin"),
+        Raw(r"\midrule"),
+        _heading("Within origin and cell", 6),
+        row("2013", "auc_within_origin_and_cell"), row("2014", "auc_within_origin_and_cell"), row("2015", "auc_within_origin_and_cell"),
+    ])
 
 
 def sizing(r):
@@ -421,23 +461,41 @@ def sizing(r):
 
 
 def assurance(r):
-    """X10 part A: forecast probability of significance against the realized rate across exposure bins, pooled over cells."""
+    """X10 part A: forecast probability of significance against the realized rate in each exposure bin, pooled over cells."""
     rep = r(EXTRAS)
+    rungs = ("P0", "P1", "P2", "text_lr")
 
-    def row(label, rung):
-        at = f"sizing_evaluation.assurance_by_exposure.rungs.{rung}.ALL"
-        bins = rep.get(f"{at}.bins")
-        low, high = min(b["bin"] for b in bins), max(b["bin"] for b in bins)
+    def at(rung):
+        return f"sizing_evaluation.assurance_by_exposure.rungs.{rung}.ALL"
 
-        def span(name):
-            return join("{} to {}", v(rep, f"{at}.bins[bin={low}].{name}"), v(rep, f"{at}.bins[bin={high}].{name}"))
+    names = {0: "lowest", 4: "highest"}
+    count = len(rep.get(f"{at('P1')}.bins"))
+    if count != 5:
+        raise ValueError("the table reads five exposure bins")
 
-        return [label, span("mean_forecast"), span("realized_rate"), sci(rep, f"{at}.slope_gap_on_standardized_log_exposure", "estimate")]
+    def row(b):
+        key = f"{at('P1')}.bins[bin={b}]"
+        return [names.get(b, str(b + 1)), n(rep, f"{key}.mean_exposure"), v(rep, f"{key}.realized_rate"), *[v(rep, f"{at(g)}.bins[bin={b}].mean_forecast") for g in rungs]]
 
-    return Table("fmt-assurance", "lrrr",
-                 ["rung & mean forecast, lowest to & realized rate, & slope, realized minus forecast", r" & highest exposure bin & same bins & on log exposure (90\%)"],
-                 [row("P0", "P0"), row("P1", "P1"), row("P2", "P2"), row("text classifier", "text_lr")])
+    def above(g):
+        bins = rep.get(f"{at(g)}.bins")
+        return derived(f"{sum(x['mean_forecast'] > x['realized_rate'] for x in bins)} of {len(bins)}", *[rep.ref(f"{at(g)}.bins[bin={x['bin']}].mean_forecast") for x in bins])
+
+    def slope(g, name):
+        return v(rep, f"{at(g)}.slope_gap_on_standardized_log_exposure.{name}", 4)
+
+    def bounds(g):
+        return lohi(rep, f"{at(g)}.slope_gap_on_standardized_log_exposure.lo", f"{at(g)}.slope_gap_on_standardized_log_exposure.hi", 4)
+
+    return Table("fmt-assurance", "lrrrrrr",
+                 ["exposure & mean & realized & P0 & P1 & P2 & text", "bin & exposure & rate & forecast & forecast & forecast & classifier"],
+                 [row(b) for b in range(count)] + [
+        Raw(r"\midrule"),
+        ["bins above the rate", "", "", *[above(g) for g in rungs]],
+        ["slope", "", "", *[slope(g, "estimate") for g in rungs]],
+        [r"\quad 90\%", "", "", *[bounds(g) for g in rungs]],
+    ])
 
 
-TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, learning_paired,
+TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired,
           auc_by_year, sizing, assurance]

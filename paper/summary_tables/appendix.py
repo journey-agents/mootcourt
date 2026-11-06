@@ -1,16 +1,15 @@
-"""Summary tables of the appendix: the deployment-shaped archive, the synthetic truth, the planted ledger, wall time and the snapshots."""
-import fnmatch
+"""Summary tables of the appendix: the deployment-shaped archive, the synthetic truth, the planted ledger and the snapshots."""
+import glob
 import os
 
 from mootcourt.sources.synthetic import _DEFAULT_CELLS
 from summary_tables import Raw, Table, ci, derived, fmt, join, n, v
 
 UPWORTHY, ASOS = "upworthy", "asos"
-RUN = "$RUN6"
 LOGSCORE_P1 = "tables.aggregate[cell=ALL,rung=P1].logscore"
 BRIER_P1 = "tables.aggregate[cell=ALL,rung=P1].brier_skill"
 SENSITIVITY = "positive_control_sensitivity.rows[n_tests=11100,text_effect_strength=1.0]"
-SPELLED = {2: "two", 3: "three", 10: "ten"}
+NOT_APPLICABLE = "n/a"
 
 
 def _rung(name):
@@ -99,7 +98,7 @@ def app_asos(r):
         heading("The exposure stand-in, correlation with the absolute standardized effect"),
         ["log of the user count", v(extras_a, "impressions_effect_correlation.corr_log_impressions_abs_z"),
          v(extras_u, "impressions_effect_correlation.corr_log_impressions_abs_z")],
-        ["log of the run length", v(extras_a, "impressions_effect_correlation.corr_log_run_length_abs_z"), ""],
+        ["log of the run length", v(extras_a, "impressions_effect_correlation.corr_log_run_length_abs_z"), NOT_APPLICABLE],
         rule,
         heading("Abstention and the support trigger"),
         ["abstention rate, main run", v(extras_a, f"{support_run}.issued_in_main.abstention_rate"),
@@ -107,11 +106,11 @@ def app_asos(r):
         ["abstention rate, support off", v(extras_a, f"{support_run}.issued_in_ablation.abstention_rate"),
          v(extras_u, f"{support_run}.issued_in_ablation.abstention_rate")],
         ["rows released, in tests", join("{} in {}", n(support_a, f"{released}.n"), n(support_a, f"{released}.n_tests")), n(support_u, f"{released}.n")],
-        ["Brier skill of the released rows", ci(support_a, released, "brier_skill"), ""],
+        ["Brier skill of the released rows", ci(support_a, released, "brier_skill"), NOT_APPLICABLE],
         rule,
         heading("Drift and the weekly replay"),
-        [join("P1 skill, first nominal year, {} tests", n(a, f"{first}.n_tests")), ci(a, first, "brier_skill"), ""],
-        [join("P1 skill, second nominal year, {} tests", n(a, f"{second}.n_tests")), ci(a, second, "brier_skill"), ""],
+        [join("P1 skill, first nominal year, {} tests", n(a, f"{first}.n_tests")), ci(a, first, "brier_skill"), NOT_APPLICABLE],
+        [join("P1 skill, second nominal year, {} tests", n(a, f"{second}.n_tests")), ci(a, second, "brier_skill"), NOT_APPLICABLE],
         ["weeks replayed", *replays(n, "header.n_weeks")],
         ["cards", *replays(n, "header.n_cards")],
         ["cards abstained", *replays(n, "totals.abstained")],
@@ -129,7 +128,7 @@ def app_asos(r):
         ["log score at $\\kappa = 0$ and $\\kappa = 80$", join("{}, {}", v(k0_a, LOGSCORE_P1), v(k80_a, LOGSCORE_P1)),
          join("{}, {}", v(k0_u, LOGSCORE_P1), v(k80_u, LOGSCORE_P1))],
         rule,
-        heading("The learning curve at the final origin, P1"),
+        heading("The learning curve at one origin, P1"),
         ["held-out rows", n(curve_a, "heldout_rows"), n(curve_u, "heldout_rows")],
         ["held-out tests", n(curve_a, "heldout_tests"), n(curve_u, "heldout_tests")],
         ["five-percent subsamples not fit", _skipped(curve_a), _skipped(curve_u)],
@@ -196,118 +195,25 @@ def app_pc_sizes(r):
     ])
 
 
-def _stages(r):
-    """Seconds by stage from the driver's ``stages.txt`` (lines of name, exit code, seconds); marker lines carry no seconds."""
-    stages = {}
-    with open(os.path.join(r.root, "stages.txt")) as fh:
-        for line in fh:
-            parts = line.split()
-            if len(parts) == 3:
-                stages[parts[0]] = int(parts[2])
-    return stages
-
-
-def app_driver(r):
-    stages = _stages(r)
-    used = set()
-
-    def pick(*patterns):
-        names = [s for s in stages if any(fnmatch.fnmatch(s, p) for p in patterns)]
-        if not names or used & set(names):
-            raise ValueError(f"{patterns}: stages empty or counted twice")
-        used.update(names)
-        return names
-
-    def seconds(names, *patterns):
-        return derived(fmt(sum(stages[s] for s in names), 0, comma=True), f"{RUN}/stages.txt {' '.join(patterns)}")
-
-    def group(label, *patterns):
-        names = pick(*patterns)
-        count = len(names)
-        return [label.format(count=count, word=SPELLED.get(count, count)), seconds(names, *patterns)]
-
-    outside = [
-        group("the {count} headline-archive ablations", "ablation-upworthy-*"),
-        group("the {word} extras files", "extras-*"),
-        group("the {word} learning curves", "lc-*"),
-        group("the planted ledgers", "pc*"),
-        group("the refresh check", "refresh-check"),
-        group("the {word} replays", "replay-*"),
-        group("the {word} deployment-shaped ablations", "ablation-asos-*"),
-        group("the cautionary run", "cautionary"),
-        group("the {word} guard comparisons", "guard-compare-*"),
-        group("the ablation that includes the randomization window", "window-ablation"),
-        group("the gates at each stratum's own dependence, {word} archives", "gates-strata-*"),
-        group("the sizing evaluation", "sizing-*"),
-    ]
-    outside_names = sorted(used)
-    timed_patterns = ("gates", "fit-*", "main-*", "audit-*", "latency")
-    timed_names = pick(*timed_patterns)
-    if used != set(stages):
-        raise ValueError(f"stages in no group: {sorted(set(stages) - used)}")
-    summary = [
-        ["outside the timed run's stages", derived(fmt(sum(stages[s] for s in outside_names), 0, comma=True), f"{RUN}/stages.txt outside the timed run's stage names")],
-        ["the timed run's stages", seconds(timed_names, *timed_patterns)],
-        Raw(r"\midrule"),
-        ["all stages", derived(fmt(sum(stages.values()), 0, comma=True), f"{RUN}/stages.txt seconds summed")],
-    ]
-    return Table("fmt-app-driver", "lr", ["stages & seconds"], [*outside, Raw(r"\midrule"), *summary])
-
-
-def app_latency(r):
-    rep = r("card-latency.json")
-
-    def dotted(top, name):
-        """A leaf whose top-level key holds a dot, which the key syntax cannot step into."""
-        return derived(fmt(rep.doc[top][name], 1), rep.ref(f"{top}.{name}"))
-
-    return Table("fmt-app-latency", "lrr", ["how the card is produced & median & at most"], [
-        ["in process, bundle preloaded", v(rep, "in_process_ms.p50", 1), v(rep, "in_process_ms.max", 1)],
-        ["same, weight forced to 0.5", dotted("in_process_lambda_0.5_ms", "p50"), dotted("in_process_lambda_0.5_ms", "max")],
-        ["through the loopback service", v(rep, "service_ms.p50", 1), v(rep, "service_ms.max", 1)],
-        ["fresh process", join("{} s", v(rep, "cli_fresh_process_ms.p50", 2, scale=0.001)), ""],
-        ["of which loading the bundle", v(rep, "bundle_load_ms", 0), ""],
-    ])
-
-
-def app_scale(r):
-    def row(size):
-        rep = r(f"scale/scale-{size}.json")
-        return [n(rep, "n_contrasts"), n(rep, "stages.fit.seconds"), v(rep, "card_latency_ms.p50_ms", 1), v(rep, "peak_rss_gb", 2)]
-
-    return Table("fmt-app-scale", "rrrr", ["contrasts & fit (s) & median card (ms) & peak memory (GiB)"], [row(100000), row(1000000)])
-
-
 def _tt(text, *keys):
     return derived(rf"\texttt{{{text}}}", *keys)
 
 
-def _snapshot(label, rep, prefix, feature_hash):
-    snapshot, model = f"{prefix}.snapshot_id", f"{prefix}.model_id"
+def _snapshot(label, rep):
+    snapshot, model, feature = "header.snapshot_id", "header.model_id", "header.feature_hash"
     date, digest = rep.get(snapshot).split("-")
-    feature = _tt(rep.get(f"{prefix}.feature_hash"), rep.ref(f"{prefix}.feature_hash")) if feature_hash else ""
-    return [label, _tt(date, rep.ref(snapshot)), _tt(digest, rep.ref(snapshot)), _tt(rep.get(model), rep.ref(model)), feature]
+    return [label, _tt(date, rep.ref(snapshot)), _tt(digest, rep.ref(snapshot)), _tt(rep.get(model), rep.ref(model)), _tt(rep.get(feature), rep.ref(feature))]
 
 
 def app_snapshots(r):
     return Table("fmt-app-snapshots", "lllll", ["ledger & date & snapshot & model & feature hash"], [
-        _snapshot("headline archive", _main(r, UPWORTHY), "header", True),
-        _snapshot("deployment-shaped", _main(r, ASOS), "header", True),
-        _snapshot("synthetic", _main(r, "synthetic"), "header", True),
-        _snapshot("positive control", r("positive-control/backtest-synthetic-*.json"), "header", False),
-        _snapshot("planted ledger, 11,100 tests", r("paper-extras-synthetic-*.json"), "positive_control_rungs.runs[n_tests=11100]", False),
+        _snapshot("headline archive", _main(r, UPWORTHY)),
+        _snapshot("headline archive, randomization window included", r("include-randomization-window/backtest-upworthy-*.json")),
+        _snapshot("deployment-shaped", _main(r, ASOS)),
+        _snapshot("synthetic", _main(r, "synthetic")),
+        _snapshot("planted ledger, 2,000 tests", r("positive-control/backtest-synthetic-*.json")),
+        _snapshot("planted ledger, 11,100 tests", r("positive-control/rungs/n11100/backtest-synthetic-*.json")),
     ])
-
-
-def app_tail(r):
-    rep = r("paper-extras-synthetic-*.json")
-
-    def row(size):
-        key = f"top_m_tail_share.by_size[contrasts={size}]"
-        share = f"{key}.share_p2_weight"
-        return [n(rep, f"{key}.contrasts"), v(rep, f"{share}.mean", 2), join("{} to {}", v(rep, f"{share}.p10", 2), v(rep, f"{share}.p90", 2))]
-
-    return Table("fmt-app-tail", "rrr", ["contrasts & mean share & 10th to 90th percentile"], [row(10000), row(100000), row(300000)])
 
 
 def gates_dependence(r):
@@ -329,25 +235,24 @@ def gates_dependence(r):
     ])
 
 
-def _p1_logscore(r, source, setting):
-    return v(_ablation(r, source, setting), LOGSCORE_P1)
-
-
-def ablations_asos_p1(r):
-    settings = ("p2-guard-off", "prior-normal", "kappa-0.0", "kappa-5.0", "kappa-80.0")
-    return Table("ablations-asos-p1", "lrrrrr", [r" & every other row & \emph{prior-normal} & $\kappa = 0$ & $\kappa = 5$ & $\kappa = 80$"],
-                 [["P1 log score", *[_p1_logscore(r, ASOS, s) for s in settings]]])
-
-
 def ablations_upworthy_p1(r):
-    settings = ("lambda-0.0", "prior-normal", "admission-prelaunch", "contrasts-one", "kappa-0.0", "kappa-5.0", "kappa-80.0")
-    header = [r" & every other row & \emph{prior-normal} & \emph{admission-prelaunch} & \emph{contrasts-one} & $\kappa = 0$ & $\kappa = 5$ & $\kappa = 80$"]
-    scored = [n(_ablation(r, UPWORTHY, s), "header.scored_rows") for s in ("admission-prelaunch", "contrasts-one")]
-    return Table("ablations-upworthy-p1", "lrrrrrrr", header, [
-        ["P1 log score", *[_p1_logscore(r, UPWORTHY, s) for s in settings]],
-        ["scored rows, where different", "", "", *scored, "", "", ""],
-    ])
+    """P1's log score and scored rows for each setting that changes either; a setting left out that does change one stops the build."""
+    named = ("prior-normal", "kappa-0.0", "kappa-5.0", "kappa-80.0", "admission-prelaunch", "contrasts-one", "s-star-realized",
+             "exposure-cell-median", "effect-scale-relative", "effect-scale-relative+s-star-realized")
+    main = _main(r, UPWORTHY)
+    for path in sorted(glob.glob(os.path.join(r.root, "ablations", "backtest-upworthy-*--*.json"))):
+        setting = os.path.basename(path)[:-len(".json")].split("--", 1)[1]
+        rep = _ablation(r, UPWORTHY, setting)
+        same = abs(rep.get(LOGSCORE_P1) - main.get(LOGSCORE_P1)) < 1e-9 and rep.get("header.scored_rows") == main.get("header.scored_rows")
+        if same == (setting in named):
+            raise ValueError(f"{setting}: P1's row must be printed exactly when the setting changes it")
+
+    def row(label, rep):
+        return [label, v(rep, LOGSCORE_P1), n(rep, "header.scored_rows")]
+
+    rows = [row("every other setting, and the main run", main), Raw(r"\midrule"),
+            *[row(rf"\emph{{{setting}}}", _ablation(r, UPWORTHY, setting)) for setting in named]]
+    return Table("ablations-upworthy-p1", "lrr", ["setting & P1 log score & scored rows"], rows)
 
 
-TABLES = [app_asos, app_syn_truth, app_pc_point, app_pc_sizes, app_driver, app_latency, app_scale, app_snapshots, app_tail,
-          gates_dependence, ablations_asos_p1, ablations_upworthy_p1]
+TABLES = [app_asos, app_syn_truth, app_pc_point, app_pc_sizes, app_snapshots, gates_dependence, ablations_upworthy_p1]

@@ -45,12 +45,17 @@ def abstention_triggers(r):
     sel = main.get("tables.p2_selection_by_cell")
     zero_keys = [main.ref(f"tables.p2_selection_by_cell[cell={c['cell']}].{f}") for c in sel for f in ("share_lambda_zero", "origins")]
     zero = derived(fmt(sum(c["share_lambda_zero"] * c["origins"] for c in sel), 0), *zero_keys)
-    novelty_share = derived(fmt(main.get(f"{row}.novelty") / main.get(f"{row}.n") * 100, 1) + r"\%", main.ref(f"{row}.novelty"), main.ref(f"{row}.n"))
+    def share(trigger):
+        return derived(fmt(main.get(f"{row}.{trigger}") / main.get(f"{row}.n") * 100, 1) + r"\%", main.ref(f"{row}.{trigger}"), main.ref(f"{row}.n"))
+
+    pairs = main.get("tables.p2_selection")
+    others = derived(WORDS[len(pairs) - int(round(sum(c["share_lambda_zero"] * c["origins"] for c in sel)))], main.ref("tables.p2_selection"), *zero_keys)
     return Table("fmt-abstention-triggers", r"lrrp{0.5\columnwidth}", ["trigger & rows & share & when it fires"], [
-        ["reliability", n(main, f"{row}.reliability"), "", derived(f"on every row of {full_words}, and never after", main.ref(f"{row}.reliability"), *full_keys)],
-        ["support", n(main, f"{row}.support"), "", join("on rows of the burn-in origin, in the {} cells with fewer than 30 visible rows", two)],
-        ["novelty", n(main, f"{row}.novelty"), novelty_share, derived("the only trigger at the origins after those", without_novelty.ref("tables.origins"))],
-        ["decision instability", n(main, f"{row}.instability"), "", join("never, being off by construction in the {} pairs where the precedent weight is zero", zero)],
+        ["reliability", n(main, f"{row}.reliability"), share("reliability"), derived(f"on every row of {full_words}, and never after", main.ref(f"{row}.reliability"), *full_keys)],
+        ["support", n(main, f"{row}.support"), share("support"), join("on rows of the burn-in origin, in the {} cells with fewer than 30 visible rows", two)],
+        ["novelty", n(main, f"{row}.novelty"), share("novelty"), derived("the only trigger at the origins after those", without_novelty.ref("tables.origins"))],
+        ["decision instability", n(main, f"{row}.instability"), share("instability"),
+         join("never: off by construction in the {} pairs where the precedent weight is zero, and it did not fire in the other {}", zero, others)],
         Raw(r"\midrule"),
         ["any trigger", n(extras, "issued_row_brier_skill.rungs.P2.abstained.n"), join(r"{}\%", v(main, f"{row}.rate", 1, scale=100)), "the pooled abstention rate"],
     ])
@@ -60,13 +65,18 @@ def abstention_rows(r):
     main, extras = r(MAIN), r(EXTRAS)
     agg = "tables.aggregate[cell=ALL,rung=P2]"
 
+    count, issued = f"{agg}.n", f"{agg}.n_nonabstained"
+    total, kept = main.get(f"{agg}.logscore"), main.get(f"{agg}.logscore_nonabstained")
+    abstained_log = derived(fmt((total * main.get(count) - kept * main.get(issued)) / (main.get(count) - main.get(issued))), main.ref(f"{agg}.logscore"),
+                            main.ref(f"{agg}.logscore_nonabstained"), main.ref(count), main.ref(issued))
+
     def row(label, side, log):
         key = f"issued_row_brier_skill.rungs.P2.{side}"
         return [label, n(extras, f"{key}.n"), ci(extras, key, "brier_skill", 4), log, v(extras, f"{key}.event_rate", 2)]
 
     return Table("fmt-abstention-rows", "lrrrr", [r"row set & rows & Brier skill (90\%) & log score & event rate"], [
         row("issued", "issued", v(main, f"{agg}.logscore_nonabstained")),
-        row("abstained", "abstained", ""),
+        row("abstained", "abstained", abstained_log),
         row("all rows", "all", v(main, f"{agg}.logscore")),
     ])
 
@@ -86,7 +96,7 @@ def abstention_released(r):
         key = "tables.released_rows[cell=ALL,rung=P2]"
         return [label, n(rep, f"{key}.n"), ci(rep, key, "logscore"), ci(rep, key, "direction_accuracy")]
 
-    return Table("fmt-abstention-released", "lrrr", [r"rows & count & log score (90\%) & direction accuracy (90\%)"], [
+    return Table("fmt-abstention-released", r"p{0.3\columnwidth}rrr", [r"rows & count & log score (90\%) & direction accuracy (90\%)"], [
         released("released by novelty", "novelty"),
         released(f"released by reliability alone, at {full_words}", "reliability"),
         Raw(r"\midrule"),
@@ -97,38 +107,56 @@ def abstention_released(r):
 def drift_year(r):
     main = r(MAIN)
 
-    def row(year, adjusted=False):
+    def row(year):
         key = f"tables.score_by_year[cell=ALL,rung=P1,year={year}]"
         return [v(main, f"{key}.year", 0), n(main, f"{key}.n_tests"), ci(main, key, "brier_skill", 4),
-                lohi(main, f"{key}.adjusted_lo", f"{key}.adjusted_hi", 4) if adjusted else "", v(main, f"{key}.event_rate")]
+                lohi(main, f"{key}.adjusted_lo", f"{key}.adjusted_hi", 4), v(main, f"{key}.event_rate")]
 
     return Table("fmt-drift-year", "rrrrr", [r"year & tests & P1 Brier skill (90\%) & adjusted interval & significant-positive rate"], [
-        row(2013), row(2014), row(2015, adjusted=True),
+        row(2013), row(2014), row(2015),
     ])
 
 
 def asos(r):
-    rep, gates = r(ASOS), r("gates.json")
+    rep = r(ASOS)
     extras, headline = r(ASOS_EXTRAS), r(EXTRAS)
     agg = "tables.aggregate[cell=ALL,rung=P1]"
     origins = "header.origins_scored"
-    base = rep.get(f"{agg}.gate_base_rate")
-    gate = f'by_base_rate["{fmt(base, 2)}"]'
+    own = "gates_by_stratum.strata.ALL"
     corr = "impressions_effect_correlation.corr_log_impressions_abs_z"
+
+    def recalibrated(rung):
+        return ci(rep, f"tables.aggregate[cell=ALL,rung={rung}+cal]", "brier_skill", 4)
+
+    def over_random(rung):
+        return ci(rep, f"tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung={rung}]", "diff_random", 4)
+
+    def over_matched(rung):
+        key = f"tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung={rung}]"
+        if abs(rep.get(f"{key}.diff_matched")) > 1e-9:
+            raise ValueError("the row says zero by construction")
+        return v(rep, f"{key}.diff_matched")
+
     return Table("fmt-asos", "lr", ["figure & value"], [
         ["scored contrasts", n(rep, "header.scored_rows")],
-        ["experiments", n(rep, "header.tests_scored")],
+        ["experiments scored", n(rep, "header.tests_scored")],
         ["nominal quarterly origins", derived(WORDS[rep.get(origins)], rep.ref(origins))],
-        [join("gate at base rate {} (tests)", v(rep, f"{agg}.gate_base_rate", 2)), join("{} and {}", n(gates, f"{gate}.n_200"), n(gates, f"{gate}.n_400"))],
+        [join("own gate at skill 0.20 and 0.10, tests (base rate {})", v(extras, f"{own}.dependence.base_rate", 2)),
+         join("{} and {}", n(extras, f"{own}.own_gate.n_200"), n(extras, f"{own}.own_gate.n_400"))],
         ["abstention rate", v(rep, f"{agg}.abstention_rate")],
         ["support trigger, rows at the early origins", n(rep, "tables.abstention[cell=ALL].support")],
-        [r"P1 Brier skill (90\%)", ci(rep, agg, "brier_skill")],
-        ["P1 Brier skill, adjusted interval", lohi(rep, f"{agg}.adjusted_lo", f"{agg}.adjusted_hi")],
+        [r"P1 Brier skill (90\%)", ci(rep, agg, "brier_skill", 4)],
+        ["P1 Brier skill, adjusted interval", lohi(rep, f"{agg}.adjusted_lo", f"{agg}.adjusted_hi", 4)],
         ["expected calibration error", v(rep, f"{agg}.ece")],
         ["calibration percentile", v(rep, f"{agg}.ece_percentile", 1)],
         ["design effect", v(rep, f"{agg}.design_effect", 1)],
         ["coverage of the 80 and 90 percent intervals", join("{} and {}", v(rep, f"{agg}.coverage_80", 2), v(rep, f"{agg}.coverage_90", 2))],
-        ["exposure stand-in against the absolute standardized effect, correlation", v(extras, corr)],
+        [r"boosted model, recalibrated Brier skill (90\%)", recalibrated("GBM")],
+        [r"local comparison set, recalibrated Brier skill (90\%)", recalibrated("local_eb")],
+        [r"boosted model, lift minus random order, quarter of tests (90\%)", over_random("GBM")],
+        [r"local comparison set, the same (90\%)", over_random("local_eb")],
+        ["both, lift minus the matched order, quarter of tests", join("{} and {}", over_matched("GBM"), over_matched("local_eb"))],
+        [r"exposure stand-in, correlation with $|$standardized effect$|$", v(extras, corr)],
         ["the same correlation on the headline archive", v(headline, corr)],
     ])
 
@@ -136,24 +164,33 @@ def asos(r):
 def control(r):
     extras, whole = r(SYNTHETIC_EXTRAS), r(CONTROL)
 
-    def row(size, cell_figure=False):
+    def split_row(size):
         key = f"positive_control_sensitivity.rows[n_tests={size},text_effect_strength=1.0]"
-        cell = v(extras, f"{key}.by_cell[cell=headline_only].recovered_fraction", 2) if cell_figure else ""
-        return [n(extras, f"{key}.n_tests"), n(extras, f"{key}.rows_per_cell"), join("{} of cells", pctw(extras, f"{key}.share_admitted")),
-                ci(extras, key, "recovered_fraction", 2), cell]
+        cell = f"{key}.by_cell[cell=headline_only]"
+        return [n(extras, f"{key}.n_tests"), n(extras, f"{key}.rows_per_cell"), pctw(extras, f"{key}.share_admitted"), ci(extras, key, "recovered_fraction", 4),
+                ci(extras, cell, "recovered_fraction", 4) if extras.get(f"{cell}.recovered_fraction") is not None else ""]
 
-    run = "positive_control_rungs.runs[n_tests=2000]"
-    scored = extras.get(f"{run}.rows_per_cell_scored")
+    def rolling_row(size):
+        run = f"positive_control_rungs.runs[n_tests={size}]"
+
+        def rung(cell):
+            return f'{run}.by_cell["{cell}"].rungs[rung=P2]'
+
+        return [n(extras, f"{run}.n_tests"), n(extras, f"{run}.rows_per_cell_scored"), pctw(extras, f"{run}.share_pairs_admitted"),
+                v(extras, f"{rung('ALL')}.recovered_fraction_logscore", 4), v(extras, f"{rung('headline_only')}.recovered_fraction_logscore", 4)]
+
     planted = "tables.p2_selection_by_cell[cell=headline_only].share_lambda_zero"
     if whole.get(planted) != 1.0:
-        raise ValueError("the guard admits a weight in the planted cell: the row's wording no longer holds")
-    return Table("fmt-control", "rrlrr", [r"tests & rows per cell & guard admits the lift & recovered (90\%) & headline-only recovered"], [
-        row(300),
-        row(1000),
-        [join("{} ({} contrasts)", n(extras, f"{run}.n_tests"), n(whole, "header.admitted_rows")),
-         derived("about " + fmt(round(scored, -2), 0, comma=True), extras.ref(f"{run}.rows_per_cell_scored")),
-         derived("none in the planted cell", whole.ref(planted)), "", ""],
-        row(11100, cell_figure=True),
+        raise ValueError("the guard admits a weight in the planted cell at 2,000 tests: the sentence reading the table no longer holds")
+    return Table("fmt-control", "rrrrr", [r"tests & rows per cell & guard admits & P2's share of the oracle's gain & headline-only cell"], [
+        Raw(r"\multicolumn{5}{@{}l}{\emph{End-of-ledger split: 15 percent of tests held out, 12 seeds; ledger rows per cell; share of cells admitted; 90\% intervals}} \\"),
+        split_row(300),
+        split_row(1000),
+        split_row(11100),
+        Raw(r"\midrule"),
+        Raw(r"\multicolumn{5}{@{}l}{\emph{Rolling backtest, the design the real archive gets: scored rows per cell; share of cell-origin pairs admitted}} \\"),
+        rolling_row(2000),
+        rolling_row(11100),
     ])
 
 
@@ -163,15 +200,17 @@ def control_rungs(r):
     def key(size, cell, rung):
         return f'positive_control_rungs.runs[n_tests={size}].by_cell["{cell}"].rungs[rung={rung}]'
 
-    def diff(size, cell, rung, name, nd):
-        return ci(extras, key(size, cell, rung), name, nd)
+    def both(fn):
+        return [fn(2000), fn(11100)]
 
-    return Table("fmt-control-rungs", "lrr", ["rung and measure & 2,000 tests & 11,100 tests"], [
-        ["text classifier, Brier skill", ci(extras, key(2000, "ALL", "text_lr"), "brier_skill"), ci(extras, key(11100, "ALL", "text_lr"), "brier_skill")],
-        ["boosted model, headline-only, Brier minus P1", diff(2000, "headline_only", "GBM", "diff_brier_vs_p1", 4), ""],
-        ["boosted model, headline-only, log score minus P1", v(extras, key(2000, "headline_only", "GBM") + ".diff_logscore_vs_p1"), ""],
-        ["P2, log score minus P1 (nats)", diff(2000, "ALL", "P2", "diff_logscore_vs_p1", 4), diff(11100, "ALL", "P2", "diff_logscore_vs_p1", 4)],
-        ["P2, share of the oracle's gain", "", v(extras, key(11100, "ALL", "P2") + ".recovered_fraction_logscore", 2)],
+    return Table("fmt-control-rungs", "lrr", [r"rung and measure (90\%) & 2,000 tests & 11,100 tests"], [
+        ["P1, Brier skill", *both(lambda s: ci(extras, key(s, "ALL", "P1"), "brier_skill", 4))],
+        ["text classifier, Brier skill", *both(lambda s: ci(extras, key(s, "ALL", "text_lr"), "brier_skill", 4))],
+        ["boosted model, headline-only, Brier minus P1", *both(lambda s: ci(extras, key(s, "headline_only", "GBM"), "diff_brier_vs_p1", 4))],
+        ["boosted model, headline-only, log score minus P1", *both(lambda s: ci(extras, key(s, "headline_only", "GBM"), "diff_logscore_vs_p1", 4))],
+        ["P2, log score minus P1, all cells", *both(lambda s: ci(extras, key(s, "ALL", "P2"), "diff_logscore_vs_p1", 4))],
+        ["P2, log score minus P1, headline-only", *both(lambda s: ci(extras, key(s, "headline_only", "P2"), "diff_logscore_vs_p1", 4))],
+        ["P2, Brier minus P1, all cells", *both(lambda s: ci(extras, key(s, "ALL", "P2"), "diff_brier_vs_p1", 5))],
     ])
 
 

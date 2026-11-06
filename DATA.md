@@ -82,7 +82,7 @@ The cell is the kind of change: `headline_only`, `image_only` or `both`, from co
 Time: `started_at` of a contrast is the later `created_at` of the two arms, the first instant at which both existed (34 tests have packages created
 up to 14.9 days after the reference). The final read and `usable_after` are test level: 7 days after the creation of the latest arm of the test, one instant for every contrast of that test, because the shared reference arm keeps accruing until the last arm ends and no row may expose it earlier. No row is visible before its variant existed. Seven days is a modeling choice, not a fact recorded in the archive. The period is the calendar quarter of the final read.
 
-Impressions: the archive records the impressions each arm realized, not the exposure that was planned. The feature builder and the forecaster's scale use the realized impressions as a stand-in for the planned exposure. That stand-in can leak, because a test that shows a large effect may be given more traffic: log impressions correlate +0.099 with the absolute standardized effect on the admitted rows (`docs/method.md`, call 53). It is a stated limitation, not a fixed one.
+Impressions: the archive records the impressions each arm realized, not the exposure that was planned. The feature builder and the forecaster's scale use the realized impressions as a stand-in for the planned exposure. That stand-in can leak, because a test that shows a large effect may be given more traffic: log impressions correlate +0.087 with the absolute standardized effect on the admitted rows of run 8 (+0.099 with the window included) (`docs/method.md`, call 53). It is a stated limitation, not a fixed one.
 
 ### ASOS
 
