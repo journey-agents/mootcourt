@@ -1190,7 +1190,7 @@ def test_data_md_and_readme_state_the_impressions_stand_in_and_what_it_can_leak(
     for rel in ("DATA.md", "README.md"):
         flat = " ".join((root / rel).read_text(encoding="utf-8").split()).lower()
         assert "stand in" in flat or "stand-in" in flat, rel
-        assert "planned exposure" in flat and "+0.099" in flat and "leak" in flat, rel
+        assert "planned exposure" in flat and "+0.087" in flat and "leak" in flat, rel
         assert "planned exposure" in flat and "realized impressions" in flat, rel
 
 
