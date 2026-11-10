@@ -616,7 +616,7 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol
 
 ```text output
 mootcourt 2025-06-18
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 ```
 
 **Common errors.** A client that reports the server "exited" usually ran `moot mcp` outside the project folder, or without the data root set: give it `MOOTCOURT_DATA_ROOT` and the folder with `mootcourt.toml`.

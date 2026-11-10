@@ -280,8 +280,8 @@ def spec_text():
 @pytest.fixture(scope="session")
 def spec_boundary_sentence(spec_text):
     """The boundary text exactly as spec section 1 gives it."""
-    m = re.search(r"The card prioritizes and sizes the test\. The live test decides\. "
-                  r"Moot Court never touches a ship, allocation or stopping rule\.", spec_text)
+    m = re.search(r"The card is advice before launch\. The live test decides\. "
+                  r"Moot Court never changes the decision to launch, the traffic split or when a test stops\.", spec_text)
     assert m, "boundary text not found in the spec"
     return m.group(0)
 

@@ -167,7 +167,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 
 ---
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 ```
 
 The sample ledger holds history only up to the end of 2025 and is never updated, so the card is issued as of the end of that history with `--now`. `--now` is the issue time: it sets what "recent" means for the reliability check. `--origin` is the time whose rows the forecaster may see, and it defaults to `--now`. With your own live ledger you leave both out and the card is issued as of today.

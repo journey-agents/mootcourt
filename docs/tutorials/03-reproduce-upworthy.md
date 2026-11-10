@@ -176,7 +176,7 @@ moot card --source upworthy --headline "A simple fact about your mornings" --ima
 
 ---
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 ```
 
 The card ends with the **Skill at this n** section, which reads the backtest you just ran: it gives the cell's own gated skill when the cell is decidable at its number of tests and otherwise the pooled figure, labelled, and the gate it was read against comes from the gates file, so it changes with the file (step 4). This card is for a headline-only change: the headline is the proposed variant and `--image-changed false` says the image stays. The cell is derived from that (headline only, image only, or both). Read the card as in [tutorial 1](01-first-card.md#5-ask-for-a-card).

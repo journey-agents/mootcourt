@@ -25,7 +25,7 @@ flowchart LR
 
 Read it from the left. Concluded experiments become the **ledger**. The ledger trains **models** and is replayed by the **backtest**, which says whether the models can be trusted and how many experiments it takes to tell. A **card** combines a model with the reliability report and either gives a forecast or abstains. The card is frozen, and it names the ledger row that will hold its result (its **row id**). When the live experiment ends, `moot join` finds the card by that row id and attaches the result to it as an **outcome**, but only if the card was issued, with its origin, at or before the test's start; a card issued later is recorded as post-hoc and never scored, and a row is scored once, by its earliest such card, and the outcomes become the reliability report that the next card reads. The loop is how the forecaster earns and loses trust.
 
-Nothing in the flow decides anything about the experiment. The card prioritizes and sizes the test. The live test decides.
+Nothing in the flow decides anything about the experiment. The card is advice before launch. The live test decides.
 
 ## Glossary
 

@@ -39,7 +39,7 @@ curl -s http://127.0.0.1:8731/health | python3 -m json.tool
     "sources": [
         "sample"
     ],
-    "boundary": "The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule."
+    "boundary": "The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops."
 }
 ```
 

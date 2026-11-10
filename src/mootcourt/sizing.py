@@ -5,7 +5,7 @@ A concluded archive test ran once, at one size, so sizing cannot be replayed. Tw
 Part A, ``sizing_assurance``: at the size a test actually had (its planned exposure, here the realized impressions), does the forecast probability of a
 significant-positive result match the realized rate across exposure bins?
 
-Part B, ``evaluate_test_and_roll``: the decision problem of Feige and McDowell (Test & Roll, Marketing Science 2019). A page has ``N`` impressions. A test gives ``n``
+Part B, ``evaluate_test_and_roll``: the decision problem of Feit and Berman (Test & Roll, Marketing Science 2019). A page has ``N`` impressions. A test gives ``n``
 impressions to each of the variant and the reference, and the arm with the higher observed rate is shown to the remaining ``N - 2 n``. With ``theta`` the true
 difference in rate (variant minus reference) and ``theta_hat ~ Normal(theta, s_n^2)``, ``s_n^2 = 2 c (1 - c) / n`` for a reference rate ``c``, the expected
 gain over always showing the reference is ``n theta + (N - 2 n) theta Phi(theta / s_n)``; the oracle gain is ``N max(theta, 0)``; regret is their difference.

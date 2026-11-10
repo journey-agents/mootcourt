@@ -4,7 +4,7 @@
 
 **What does it do, in one sentence?** It reads the record of your concluded experiments, forecasts what that record implies about a proposed one, checks each forecast against what the live test later showed, and declines to rule when the record has nothing to say.
 
-**Does it replace running the experiment?** No. The card helps you choose which tests to run and how large to make them, and the result of the live test is what counts. It never touches a ship, allocation or stopping rule, and a card never contains such a recommendation.
+**Does it replace running the experiment?** No. The card is advice before launch on which tests to run and how large to make them, and the result of the live test is what counts. It never changes the decision to launch, the traffic split or when a test stops, and a card never contains such a recommendation.
 
 **Who is it for?** A team that has an archive of concluded A/B tests and plans the next ones: a data scientist who maintains the experiment program, or a product team that wants a second look at the plan before launching.
 

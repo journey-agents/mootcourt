@@ -6,7 +6,7 @@ Status: approved scope (full end to end), 2 Nov 2026. This document is the singl
 
 Teams that run many online experiments accumulate a ledger of concluded tests: what was changed, what was measured, what the effect and its standard error were. Almost nobody uses that ledger to say anything about the next test before it runs. Moot Court (package mootcourt, command moot) is a small open-source reference implementation of one idea: before a test launches, issue a card that states what the ledger implies about its result, score every card against the live result once it lands, and abstain when the ledger has nothing to say.
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule. That sentence is the boundary and it appears in the README, the card footer and the service response.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops. That sentence is the boundary and it appears in the README, the card footer and the service response.
 
 The name is a metaphor the code follows: the ledger is the case law, the predictor weighs precedents, the card is a pre-trial opinion, abstention is the court declining to rule, and the robustness check counts how many precedents must be dismissed to change the opinion. The live experiment is the trial, and only the trial decides. The name sits in the author's Moot family of projects. Package name mootcourt, import name mootcourt, command line entry point moot.
 

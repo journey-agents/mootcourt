@@ -47,7 +47,7 @@ The backtest replays the history one quarter at a time, scores every rung of the
 moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
 ```
 
-The sample ledger is static, so the card is issued as of the end of its history (`--now`); with your own live ledger leave `--now` out. The card shows the chance that the test ends significant and positive, an interval for the true effect, how fragile the opinion is, the skill measured at this n, and whether the model abstains and why. It prioritizes and sizes the test; the live test decides.
+The sample ledger is static, so the card is issued as of the end of its history (`--now`); with your own live ledger leave `--now` out. The card shows the chance that the test ends significant and positive, an interval for the true effect, how fragile the opinion is, the skill measured at this n, and whether the model abstains and why. It is advice before launch; the live test decides.
 
 ## 6. Check health
 

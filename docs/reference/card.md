@@ -20,7 +20,7 @@ A card is one JSON file under `cards/`, named by its card id. The same content i
 | `abstention` | `status` (`issue` or `abstain`), `reasons` (the triggers that fired) and `details`. |
 | `team_forecast` | The team's own forecast, frozen with the card so that the join can score it beside the model's, or null when none was given (the Markdown card then prints "None provided"). It holds the team's probability of a significant positive result and its point estimate. `POST /card` takes it as the `team_forecast` field, an object with two keys, `"team_forecast": {"p_win_team": 0.4, "point_team": 0.02}`; `moot card` has no option for it. |
 | `withheld` | Only on an abstained card: the forecast that was withheld, kept in the frozen file. It has the same fields as `prediction`. No renderer, HTTP response or tool shows it; the weekly join scores it. |
-| `footer` | The boundary sentence: the card prioritizes and sizes the test, the live test decides. |
+| `footer` | The boundary sentence: the card is advice before launch, the live test decides. |
 
 ## `prediction`
 

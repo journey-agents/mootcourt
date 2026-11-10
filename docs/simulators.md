@@ -3,8 +3,8 @@
 A response simulator is an agent built outside this repository that gives a second opinion on a proposed test. It might
 be a pool of simulated readers backed by a language model, a trained click model, or a rule of thumb. Moot Court
 attaches it without a code change, scores it on the out-of-time backtest, and gives it zero weight until it earns some.
-The opinion never touches a ship, allocation or stopping rule: the card prioritizes and sizes the test, and the live test
-decides.
+The opinion never changes the decision to launch, the traffic split or when a test stops: the card is advice before launch,
+and the live test decides.
 
 ## What goes in and what comes out
 

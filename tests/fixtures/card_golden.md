@@ -45,4 +45,4 @@
 
 ---
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.

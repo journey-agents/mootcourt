@@ -4,7 +4,7 @@
 
 Moot Court is a Python package and command line for the people who plan A/B tests. It reads your concluded experiments, forecasts what that record implies about a proposed one, scores every forecast against what the live test later showed, and declines to rule when the record cannot carry an opinion. It is for a data scientist or an experimentation team with an archive of concluded tests, and it needs only aggregates: the effect, its standard error, the units per arm and the dates of each experiment. No user-level data.
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 
 Skill on headline tests does not transfer to product deployments, and nothing here shows that it does.
 
@@ -177,7 +177,7 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 
 ---
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 ```
 
 **6. Check the setup.** The output goes to a file so that the exit code can be printed; piping it into `tail` would hide the code:

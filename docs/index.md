@@ -4,7 +4,7 @@ Moot Court argues the next experiment from precedent before the trial. A ledger 
 ladder of predictors weighs the precedents. A card states an opinion in numbers, or declines to rule, and every opinion is
 scored against what the live test later showed.
 
-The card prioritizes and sizes the test. The live test decides. Moot Court never touches a ship, allocation or stopping rule.
+The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 
 **Who it is for.** A data scientist or experimentation team with an archive of concluded A/B tests, planning the next ones. You do not need user-level data: for each experiment, variant and metric, the effect, its standard error, the units per arm and the dates are enough.
 
