@@ -1,12 +1,21 @@
 # Moot Court
 
-**Forecast the next A/B test from the record of the ones you already ran, and know when that record has nothing to say.**
+**Forecast the next A/B test from the tests you already ran, and know when that record says too little.**
 
-Moot Court is a Python package and command line for the people who plan A/B tests. It reads your concluded experiments, forecasts what that record implies about a proposed one, scores every forecast against what the live test later showed, and declines to rule when the record cannot carry an opinion. It is for a data scientist or an experimentation team with an archive of concluded tests, and it needs only aggregates: the effect, its standard error, the units per arm and the dates of each experiment. No user-level data.
+Moot Court is a Python package and command line (`moot`) for teams that plan A/B tests. Before a test launches, it does four things:
+
+1. It reads your concluded experiments.
+2. It forecasts what a proposed experiment is likely to show.
+3. It scores every forecast against what the live test later showed.
+4. It abstains, and says why, when the record cannot support an opinion.
+
+It needs only aggregates for each experiment: the effect, its standard error, the units per arm and the dates. It never needs user-level data.
 
 The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 
 Skill on headline tests does not transfer to product deployments, and nothing here shows that it does.
+
+**What the study behind it found, in short.** On 2,949 public headline and image tests, a prior fitted to past tests forecasts how results will be distributed better than a base rate does. It does not tell which test will win, and its probabilities are miscalibrated. Weighting similar past tests does not measurably improve the forecast. Every result is exploratory. The [results section](#what-the-results-show-and-what-the-project-does-not-show) gives the details.
 
 **Contents:** [How it fits together](#how-it-fits-together) | [The ladder of predictors](#the-ladder-of-predictors) | [Quickstart](#quickstart) | [Reading a card](#reading-a-card) | [The weekly loop](#the-weekly-loop) | [What the results show](#what-the-results-show-and-what-the-project-does-not-show) | [Learn more](#learn-more) | [More you can do](#more-you-can-do) | [Citing](#citing)
 
@@ -36,20 +45,26 @@ Four ideas carry the whole package.
 
 ## The ladder of predictors
 
-A **rung** is one predictor in a ladder from simple to richer. Each rung adds one thing to the one below it, and a card says which rung produced it (the [concepts page](docs/concepts.md#ladder) explains each).
+A **rung** is one predictor in a ladder from simple to richer. Each rung adds one thing to the one below it, and a card says which rung produced it. The [concepts page](docs/concepts.md#ladder) explains each.
 
-| Rung | What it adds | Note |
+| Rung | In plain words | What it adds |
 |---|---|---|
-| **P0** | The empirical base rate of significant positive results in the cell | The reference that every other rung is scored against |
-| **P1** | A fitted, partially pooled Student-t prior that accounts for measurement error | The cell prior |
-| **P2** | Kernel-weighted precedents, similar past experiments, under an admission guard | At a weight of zero on precedents P2 reduces to P1 exactly |
-| Challengers | A gradient-boosted regressor, a local empirical Bayes rung, a text classifier | Optional comparisons: `moot backtest --source sample --challenger gbm` |
+| **P0** | How often past tests in the cell ended significant and positive | The empirical base rate, the reference that every other rung is scored against |
+| **P1** | A prior fitted to the cell's past tests | A partially pooled Student-t prior that accounts for measurement error |
+| **P2** | That prior moved toward similar past tests | Kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly |
+| Challengers | Three learned models, for comparison only | A gradient-boosted regressor, a local empirical Bayes rung and a text classifier: `moot backtest --source sample --challenger gbm` |
 
-In one sentence: P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard. The guard allows a weight above zero only when it beats zero on validation rows by more than two standard errors. That is a guard against fitting noise, not a promise that P2 beats P1 on later tests: on Upworthy, with precedent weights chosen by forward chaining, P2 ends level with P1 out of time. The [results page](docs/results.md) shows guarded and unguarded selection side by side, with the guard pairs and the positive-control table, which says how often the guard admits a weight at each ledger size and strength of a planted text signal.
+In one sentence: P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard.
+
+The guard allows a weight above zero on precedents only when that weight beats zero on validation rows by more than two standard errors. It guards against fitting noise. It is not a promise that P2 beats P1 on later tests: on the Upworthy archive P2 ends level with P1 out of time. The [results page](docs/results.md) shows guarded and unguarded selection side by side, with the positive-control table, which says how often the guard admits a weight at each ledger size and strength of a planted text signal.
 
 ## Quickstart
 
-**Requirements.** Python 3.11 or newer. Keep the clone and its environment on your **internal disk**: on an exFAT or other external volume macOS writes `._` sidecar files into the environment, and both install paths break (`pip install -e .` succeeds but `moot backtest` later fails with `Cannot decode configuration file ... .__classic_test_patch.mplstyle ... utf-8`; `uv sync` fails with `RECORD file doesn't match wheel contents ... ._ruff`). The [troubleshooting page](docs/troubleshooting.md#working-from-a-clone-on-an-exfat-volume) has both error texts and the cure. The data root may live on an external drive, but sample-sized commands are several times slower there (one measurement: `moot init` 90 s and `moot backtest` 97 s, against 24 s and 12 s on the internal disk).
+**Requirements.**
+
+- Python 3.11 or newer.
+- Keep the clone and its environment on your **internal disk**. On an exFAT or other external volume macOS writes `._` sidecar files into the environment, and both `pip install -e .` and `uv sync` then break. The [troubleshooting page](docs/troubleshooting.md#working-from-a-clone-on-an-exfat-volume) has the error texts and the cure.
+- The data root may live on an external drive, but sample-sized commands are several times slower there.
 
 **1. Install.** In the root of your clone, make and activate an environment and install the package:
 
@@ -230,9 +245,22 @@ The join finds a card by the ledger row it names: give `moot card` a row id with
 
 ## What the results show, and what the project does not show
 
+The paper asks three questions of two public archives: 2,949 scored headline and image tests from a publisher (Upworthy) and 68 scored experiments from a fashion retailer (ASOS). Every result is exploratory: one split was read repeatedly, and the method changed between runs.
+
+| Question | Short answer | What the backtest shows |
+|---|---|---|
+| Can past experiments predict new ones? | Partly | The fitted prior (P1) beats the base rate by 0.120 nats per comparison on the log score, in every quarter scored. It describes the spread of results, not which test will succeed. Its skill at forecasting a significant positive result is at most small, and its probabilities are miscalibrated. |
+| Do similar past tests help? | Not measurably | P2 matches P1 on log score and skill. It ranks tests a little better, but no better than rules that read only a test's number of arms or its traffic. A text classifier ranks best among the models, yet it fails a control with a planted signal. |
+| What improves prediction? | The shape of the forecast | A heavy-tailed forecast gained most, 0.075 of the 0.120 nats. Other settings barely moved the score. Sizing tests from the forecast shows no measurable advantage over the base rate. |
+
+The limits below matter as much as the results.
+
 - **Headline-test skill is not deployment skill.** The main archive is headline and image tests from one publisher. Nothing here measures whether a forecaster that predicts them predicts product experiments.
-- **The headline result is modest.** On the Upworthy archive skill on the significant-positive event is at most small and depends on how the event is defined: at realized precision no rung of the ladder is distinguishable from always forecasting the base rate, and at planned precision the unadjusted intervals of P1 and P2 lie just above zero. Weighing similar headlines does not measurably improve on the pooled prior on the log score out of time: P2 and P1 differ by less than a thousandth of a nat. Every number is exploratory: one split read repeatedly, with the method changed between runs.
-- **ASOS is undecidable at its n.** The deployment-shaped archive has a few hundred contrasts in under a hundred tests, and the results mark each cell as decidable or undecidable at the release gate, sized at the archive's own base rate; every ASOS cell is undecidable. That file has no dates, so its calendar is nominal and says nothing about drift.
+- **The skill is at most small, and it depends on a definition.** At realized precision no rung of the ladder is distinguishable from always forecasting the base rate. At planned precision the unadjusted intervals of P1 and P2 lie just above zero.
+- **The backtest is weak at detecting a signal from similar tests.** On a synthetic archive with a planted signal, P2 returns 0.09 of the gain of a model that is told the signal.
+- **The retailer's archive is too small to decide.** It has 68 scored experiments, and every one of its cells is undecidable at the release gate. The file has no dates, so its order is arbitrary and it tests only the mechanics.
+- **A flagged period is left out.** In June 2024 the Upworthy archive's maintainers reported randomization problems in tests from 25 June 2013 to 10 January 2014. The main analysis leaves those tests out, and `DATA.md` gives the rule.
+- **Abstaining is not shown to help.** Issued forecasts score above withheld ones on log score, not on skill, and the two sets differ in period and cell.
 - **Scores are against the observed estimate, not the unknown true effect.** A predictor is judged on the estimate a test produced, noise included.
 - **Two stand-ins on Upworthy.** The archive does not record when a test was read, so a test is treated as final seven days after its latest arm was created. It does not record planned exposure either, so realized impressions stand in, and that stand-in can leak: log impressions correlate +0.087 with the absolute standardized effect on the admitted rows (`DATA.md`, `docs/method.md`).
 - **Not every rung is exercised on real data.** The team-forecast rung needs a forecast frozen before the test, and no archive holds one. It runs on synthetic data only.
