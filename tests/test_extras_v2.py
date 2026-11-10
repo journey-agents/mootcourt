@@ -353,6 +353,27 @@ def test_learning_curve_pairs_each_rung_with_p1_on_the_same_rows():
     assert final_origin(ledger) is not None
 
 
+def test_learning_curve_pairs_each_rung_with_itself_at_the_full_history():
+    """The history-amount comparison (docs/superpowers/plans/2026-11-10-history-amount-comparison.md): each rung on a subsample
+    against the same rung on the full history, on the same held-out rows, with an interval by test."""
+    from mootcourt.harness import default_rungs
+    from mootcourt.learning_curve import run_learning_curve
+    from mootcourt.sources import synthetic as synth
+
+    ledger = synth.generate(synth.SyntheticConfig(seed=13, n_tests=300, variants_per_test=2))[0]
+    gates = {"n_200": 20, "n_400": 30}
+    doc = run_learning_curve(ledger, "synthetic", lambda frame: default_rungs("synthetic", frame, None, baselines=False), [0.5, 1.0], 2, gates, B=50)
+    rows = {(r["fraction"], r["rung"]): r for r in doc["paired_vs_full"]}
+    assert {(0.5, "P0"), (0.5, "P1"), (0.5, "P2")} <= set(rows) and not any(k[0] >= 1.0 for k in rows)   # the full history has no pair
+    r = rows[(0.5, "P1")]
+    assert r["n_seeds"] == 2 and r["n_paired"] == doc["heldout_rows"]
+    assert r["logscore_lo"] <= r["logscore_minus_full"] <= r["logscore_hi"] and np.isfinite(r["brier_gain_over_full"])
+    by = {(x["fraction"], x["rung"]): x["logscore"] for x in doc["rows"]}
+    assert r["logscore_minus_full"] == pytest.approx(by[(0.5, "P1")] - by[(1.0, "P1")], abs=1e-9)      # mean of pairs = difference of means
+    assert "full history" in doc["paired_vs_full_note"]
+    assert {(x["fraction"], x["rung"]) for x in doc["paired_vs_p1"]} >= {(0.5, "P0"), (1.0, "P0")}            # the existing key is unchanged
+
+
 def test_gates_by_stratum_script_simulates_each_strata_with_its_own_dependence(backtest_scores):
     import importlib.util
     from pathlib import Path

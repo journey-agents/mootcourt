@@ -131,6 +131,50 @@ def _paired_vs_p1(scores: pd.DataFrame, rung: str, B: int, seed: int) -> dict | 
     return out
 
 
+def _paired_vs_full(scores: pd.DataFrame, full_scores: pd.DataFrame, rung: str, B: int, seed: int) -> dict | None:
+    """One subsample run's paired difference of ``rung`` from the same rung fitted on the full history, on the held-out rows both scored
+    (docs/superpowers/plans/2026-11-10-history-amount-comparison.md): the mean of ``logscore(subsample) - logscore(full)`` (nats per row) and of
+    ``brier(full) - brier(subsample)`` (below zero when the smaller history is worse), with the by-test resample draws of each (the seed of
+    ``_paired_vs_p1``, so the two keys share their resamples)."""
+    g, ref = scores[scores["rung"] == rung], full_scores[full_scores["rung"] == rung]
+    if g.empty or ref.empty:
+        return None
+    r = ref.drop_duplicates("row_id").set_index("row_id")
+    g = g.drop_duplicates("row_id")
+    g = g[g["row_id"].isin(r.index)]
+    d_log = g["logscore"].to_numpy(float) - r["logscore"].reindex(g["row_id"]).to_numpy(float)
+    d_brier = r["brier_event"].reindex(g["row_id"]).to_numpy(float) - g["brier_event"].to_numpy(float)
+    out: dict = {"n_paired": int(len(g))}
+    for name, d in (("logscore", d_log), ("brier", d_brier)):
+        ok = np.isfinite(d)
+        if not ok.any():
+            out[name], out[name + "_draws"] = None, np.full(B, np.nan)
+            continue
+        part = g.loc[ok, ["test_id"]].assign(d=d[ok])
+        ts = hs._TestSums(part, {"d": part["d"].to_numpy(float)})
+        counts = ts.resample_counts(B, np.random.default_rng(seed))
+        den = counts @ ts.counts
+        out[name] = float(part["d"].mean())
+        out[name + "_draws"] = (counts @ ts.sums["d"]) / np.where(den > 0, den, np.nan)
+    return out
+
+
+def _paired_rows(paired: dict[tuple[float, str], list], log_key: str, brier_key: str) -> list[dict]:
+    """Per fraction and rung, the mean over seeds of a paired difference with the percentile interval of the seed-averaged by-test resamples."""
+    out = []
+    for (f, rung), ps in sorted(paired.items()):
+        row = {"fraction": f, "rung": rung, "n_seeds": len(ps), "n_paired": ps[0]["n_paired"]}
+        for name in ("logscore", "brier"):
+            vals = [p[name] for p in ps if p[name] is not None]
+            draws = np.nanmean(np.stack([p[name + "_draws"] for p in ps]), axis=0) if vals else np.full(len(ps[0][name + "_draws"]), np.nan)
+            lo, hi = np.nanpercentile(draws, [LEVEL_LO, LEVEL_HI]) if np.isfinite(draws).any() else (np.nan, np.nan)
+            row[log_key if name == "logscore" else brier_key] = float(np.mean(vals)) if vals else None
+            row[f"{name}_lo"], row[f"{name}_hi"] = lo, hi
+            row[f"{name}_seed_sd"] = float(np.std(vals, ddof=1)) if len(vals) > 1 else None
+        out.append(row)
+    return out
+
+
 def run_learning_curve(
     ledger: pd.DataFrame,
     source: str,
@@ -152,6 +196,7 @@ def run_learning_curve(
     base_ref = ref_scores.drop_duplicates("row_id").set_index("row_id")["brier_base"].astype(float)
     runs: dict[tuple[float, str], list] = {}
     paired: dict[tuple[float, str], list] = {}
+    paired_full: dict[tuple[float, str], list] = {}
     n_fit: dict[float, list[int]] = {}
     n_hist_tests: dict[float, list[int]] = {}
     held_rows = held_tests = 0
@@ -176,6 +221,9 @@ def run_learning_curve(
                 pr = _paired_vs_p1(sc, rung, B, seed)
                 if pr is not None:
                     paired.setdefault((f, rung), []).append(pr)
+                pf = _paired_vs_full(sc, ref_scores, rung, B, seed) if f < 1.0 else None
+                if pf is not None:
+                    paired_full.setdefault((f, rung), []).append(pf)
             if verbose:
                 print(f"learning curve: fraction {f}, seed {k}: {len(sub)} rows kept", flush=True)
     rows = []
@@ -219,17 +267,8 @@ def run_learning_curve(
                 "brier": avg("brier"),
             }
         )
-    paired_rows = []
-    for (f, rung), ps in sorted(paired.items()):
-        row = {"fraction": f, "rung": rung, "n_seeds": len(ps), "n_paired": ps[0]["n_paired"]}
-        for name in ("logscore", "brier"):
-            vals = [p[name] for p in ps if p[name] is not None]
-            draws = np.nanmean(np.stack([p[name + "_draws"] for p in ps]), axis=0) if vals else np.full(B, np.nan)
-            lo, hi = np.nanpercentile(draws, [LEVEL_LO, LEVEL_HI]) if np.isfinite(draws).any() else (np.nan, np.nan)
-            row[f"{name}_minus_p1" if name == "logscore" else "brier_gain_over_p1"] = float(np.mean(vals)) if vals else None
-            row[f"{name}_lo"], row[f"{name}_hi"] = lo, hi
-            row[f"{name}_seed_sd"] = float(np.std(vals, ddof=1)) if len(vals) > 1 else None
-        paired_rows.append(row)
+    paired_rows = _paired_rows(paired, "logscore_minus_p1", "brier_gain_over_p1")
+    paired_full_rows = _paired_rows(paired_full, "logscore_minus_full", "brier_gain_over_full")
     return clean(
         {
             "source": source,
@@ -258,6 +297,13 @@ def run_learning_curve(
                                  "the rung's log score minus P1's (nats per row, above zero is better), brier_gain_over_p1 is P1's Brier score "
                                  "minus the rung's (above zero is "
                                  "better); the interval is the percentile interval of the seed-averaged by-test resamples, as for the skill",
+            "paired_vs_full": paired_full_rows,
+            "paired_vs_full_note": "per fraction below 1, the mean over seeds of the paired difference of a rung fitted on the subsample from the "
+                                   "same rung fitted on the full history, on the same held-out rows: logscore_minus_full is the subsample's log "
+                                   "score minus the full history's (nats per row, below zero means the smaller history is worse), "
+                                   "brier_gain_over_full is the full history's Brier score minus the subsample's (below zero means the smaller "
+                                   "history is worse); the interval is the percentile interval of the seed-averaged by-test resamples, with the "
+                                   "resamples of paired_vs_p1 (design: docs/superpowers/plans/2026-11-10-history-amount-comparison.md)",
         }
     )
 
