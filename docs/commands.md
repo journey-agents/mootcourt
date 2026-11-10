@@ -597,7 +597,7 @@ wait $SERVER 2> /dev/null || true
 ```
 
 ```text output
-{"status":"ok","sources":["sample"],"boundary":"The card pri
+{"status":"ok","sources":["sample"],"boundary":"The card is
 ```
 
 The loop waits at most 30 seconds for the service to answer.
