@@ -2,22 +2,27 @@
 
 **Forecast the next A/B test from the tests you already ran, and know when that record says too little.**
 
-Moot Court is a Python package and command line (`moot`) for teams that plan A/B tests. Before a test launches, it does four things:
+Most A/B tests end flat. Before you spend traffic on the next one, Moot Court tells you how often tests like it ended significant in your own history and what range of effects to expect. It keeps a frozen record of every forecast, so you can check later whether the forecasts were any good.
 
-1. It reads your concluded experiments.
-2. It forecasts what a proposed experiment is likely to show.
-3. It scores every forecast against what the live test later showed.
-4. It abstains, and says why, when the record cannot support an opinion.
+Moot Court is a command-line tool (`moot`), installed as a Python package.
 
-It needs only aggregates for each experiment: the effect, its standard error, the units per arm and the dates. It never needs user-level data.
+- **You give it** a table of your concluded tests. Each row needs only aggregates: the effect, its standard error, the units per arm and the dates. It never needs user-level data.
+- **You get back** a **card**: a one-page forecast for one proposed test. Its main lines look like this:
+
+```text
+- Base rate of significant positive results in the cell (P0): 0.042
+- P(significant and positive): 0.052
+- 80 percent interval for the true effect: -0.06 to 0.01 units of the ledger's effect
+- Status: issue
+```
+
+Here the chance of a significant win is 5 percent, against 4 percent for past tests of this kind: no reason to expect more than usual. When your history is too thin or too different to support a forecast, the card abstains and says why.
 
 The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 
-Skill on headline tests does not transfer to product deployments, and nothing here shows that it does.
+**Status: research software.** In our study of 2,949 public headline tests, it predicted the spread of results better than the historical win rate, but not which test would win. A result on headline tests does not transfer automatically to product deployments, which the study did not test. Expect to need a few hundred concluded tests of one kind before the tool can show whether its forecasts beat your own win rate; below that, it says so. Read the [results and limits](#what-the-results-show-and-what-the-project-does-not-show) before you rely on it.
 
-**What the study behind it found, in short.** On 2,949 public headline and image tests, a prior fitted to past tests forecasts how results will be distributed better than a base rate does. It does not tell which test will win, and its probabilities are miscalibrated. Weighting similar past tests does not measurably improve the forecast. Every result is exploratory. The [results section](#what-the-results-show-and-what-the-project-does-not-show) gives the details.
-
-**Contents:** [How it fits together](#how-it-fits-together) | [The ladder of predictors](#the-ladder-of-predictors) | [Quickstart](#quickstart) | [Reading a card](#reading-a-card) | [The weekly loop](#the-weekly-loop) | [What the results show](#what-the-results-show-and-what-the-project-does-not-show) | [Learn more](#learn-more) | [More you can do](#more-you-can-do) | [Citing](#citing)
+**Contents:** [How it fits together](#how-it-fits-together) | [Quickstart](#quickstart) | [Reading a card](#reading-a-card) | [The weekly loop](#the-weekly-loop) | [The ladder of predictors](#the-ladder-of-predictors) | [What the results show](#what-the-results-show-and-what-the-project-does-not-show) | [Learn more](#learn-more) | [More you can do](#more-you-can-do) | [License and data](#license-and-data) | [Citing](#citing)
 
 ## How it fits together
 
@@ -26,7 +31,7 @@ flowchart TB
     A["Your archive of concluded A/B tests<br>effect, standard error, units per arm, dates"] -->|moot ingest| LG["Ledger<br>one row per variant, metric and test, grouped into cells"]
     LG -->|moot fit| LAD["Ladder of predictors<br>P0 base rate, P1 pooled prior, P2 precedents, optional challengers"]
     LG -->|moot backtest| BT["Backtest<br>replay by quarter, score every forecast, size the gates"]
-    LAD -->|moot card| CARD["Card for a proposed test<br>P(significant and positive), interval, fragility, or an abstention with its reason"]
+    LAD -->|moot card| CARD["Card for a proposed test<br>P(significant and positive), interval, robustness, or an abstention with its reason"]
     BT --> REL["Reliability and gates<br>may the next card speak?"]
     REL --> CARD
     CARD -.->|the live test runs| OUT["Outcome lands in the ledger"]
@@ -34,69 +39,37 @@ flowchart TB
     CARD --> SRV["moot serve and moot mcp<br>the same card over HTTP or MCP"]
 ```
 
-Four ideas carry the whole package.
+Five ideas carry the whole package.
 
 | Idea | What it is |
 |---|---|
-| **Ledger** | The table of your concluded experiments: one row per variant, per metric, per experiment. One command imports results, and rows that fail an admission rule are kept and counted, never dropped. |
+| **Ledger** | The table of your concluded experiments: one row per variant, per metric, per experiment. One command imports results. A row that fails a quality rule is kept and counted but does not teach the models. |
 | **Cell** | A group of experiments forecast together, by default one per metric. Every forecast is made inside one cell. |
-| **Card** | The forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how fragile that opinion is. A card can abstain, and then it says why. Cards are frozen under a digest of their content, so nobody can edit one after the result is known. |
-| **Backtest** | A replay of the ledger quarter by quarter: forecast every past experiment from what was final before it, score the forecast, size the gates. It says whether the cards can be trusted, and how many experiments it takes to tell. |
-
-## The ladder of predictors
-
-A **rung** is one predictor in a ladder from simple to richer. Each rung adds one thing to the one below it, and a card says which rung produced it. The [concepts page](docs/concepts.md#ladder) explains each.
-
-| Rung | In plain words | What it adds |
-|---|---|---|
-| **P0** | How often past tests in the cell ended significant and positive | The empirical base rate, the reference that every other rung is scored against |
-| **P1** | A prior fitted to the cell's past tests | A partially pooled Student-t prior that accounts for measurement error |
-| **P2** | That prior moved toward similar past tests | Kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly |
-| Challengers | Three learned models, for comparison only | A gradient-boosted regressor, a local empirical Bayes rung and a text classifier: `moot backtest --source sample --challenger gbm` |
-
-In one sentence: P1 adds a fitted partially pooled Student-t prior that accounts for measurement error, and P2 adds kernel-weighted precedents under an admission guard.
-
-The guard allows a weight above zero on precedents only when that weight beats zero on validation rows by more than two standard errors. It guards against fitting noise. It is not a promise that P2 beats P1 on later tests: on the Upworthy archive P2 ends level with P1 out of time. The [results page](docs/results.md) shows guarded and unguarded selection side by side, with the positive-control table, which says how often the guard admits a weight at each ledger size and strength of a planted text signal.
+| **Card** | The forecast for one proposed experiment: the chance that it ends significant and positive, an interval for the true effect and how robust that opinion is. A card can abstain, and then it says why. Each card is stored with a digest of its content, so any later edit is detectable. |
+| **Backtest** | A replay of the ledger quarter by quarter: forecast every past experiment from the results that were final before it started, then score the forecast. It says whether the cards can be trusted. |
+| **Gate** | The number of scored tests needed before a claim of skill can be made. Below it, the backtest and the card report "undecidable at this n". |
 
 ## Quickstart
 
-**Requirements.**
+The quickstart runs on a synthetic sample, so you need no data of your own. It takes about two minutes.
 
-- Python 3.11 or newer.
-- Keep the clone and its environment on your **internal disk**. On an exFAT or other external volume macOS writes `._` sidecar files into the environment, and both `pip install -e .` and `uv sync` then break. The [troubleshooting page](docs/troubleshooting.md#working-from-a-clone-on-an-exfat-volume) has the error texts and the cure.
-- The data root may live on an external drive, but sample-sized commands are several times slower there.
+**Requirements.** Python 3.11 or newer. Keep the clone and its environment on your internal disk, not on an external volume ([why](docs/troubleshooting.md#working-from-a-clone-on-an-exfat-volume)).
 
-**1. Install.** In the root of your clone, make and activate an environment and install the package:
+**1. Install.** Clone the repository, then make and activate an environment and install the package:
 
 ```bash
+git clone https://github.com/journey-agents/mootcourt.git && cd mootcourt
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
 
-With `uv`, run `uv sync --all-extras` in the clone instead (on an external volume, first set `UV_PROJECT_ENVIRONMENT` to a path on the internal disk). `uv run moot ...` finds the package only from inside the clone. Once you leave it, either activate the environment (`source /path/to/clone/.venv/bin/activate`, or the folder named by `UV_PROJECT_ENVIRONMENT`) and call `moot`, or write `uv run --project /path/to/clone moot ...` wherever the commands below say `moot ...`.
+With `uv`, run `uv sync --all-extras` in the clone instead. Outside the clone, either activate that environment or write `uv run --project /path/to/clone moot ...` wherever the commands below say `moot ...`.
 
 **2. Create a project** next to the clone, not inside it. `moot init` writes the settings, the data folders, a synthetic sample ledger and a quick gates file (about 30 seconds):
 
-```bash run
+```bash run quiet
 mkdir moot-demo && cd moot-demo
 moot init
-```
-
-```text output
-the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (11 s elapsed)
-the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (21 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (23 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (27 s elapsed)
-wrote ~/moot-demo/mootcourt.toml
-data root ~/moot-demo/mootcourt-data (layout created)
-sample ledger ~/moot-demo/mootcourt-data/data/sample-ledger.csv (synthetic)
-quick gates ~/moot-demo/mootcourt-data/reports/gates.json (400 replicates; run `moot simulate gate-power` for the full simulation)
-Next, from the project folder:
-  1. moot ingest --format generic --input ~/moot-demo/mootcourt-data/data/sample-ledger.csv --source-name sample
-  2. moot fit --source sample && moot backtest --source sample
-  3. moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
 ```
 
 **3. Import and fit** (5 to 15 seconds). `ingest` reports how many rows were admitted to teach the models:
@@ -117,27 +90,17 @@ fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable a
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
 ```
 
-The model id covers the snapshot id, so yours differs on another day; compare the numbers. The last line of `fit` is expected: the new model has no backtest yet, and the next step fills that slot. You do not need to run `fit` again.
+The ids contain the date of the import, so yours will differ. The last line of `fit` is expected: the new model has no backtest yet, and the next step fills that slot.
 
-**4. Backtest** (about 20 seconds with the data root on the internal disk, several times longer on an exFAT volume). This is the step that says whether to trust a card:
+**4. Backtest** (about 20 seconds). This is the step that says whether to trust a card:
 
-```bash run
+```bash run quiet
 moot backtest --source sample
 ```
 
-```text output
-gates read from ~/moot-demo/mootcourt-data/reports/gates.json: {"base_rate": 0.09, "by_target": {"0.80": {"n_200": 125, "n_400": 200}, "0.90": {"n_200": 175, "n_400": 250}}, "decision_target": 0.9, "icc": 0.13, "interval": {"by": "test", "dependence": "per base rate in by_base_rate: rows per test and the binary within-test correlation measured on the archive of that rate (docs/method.md call 170)", "icc": 0.13, "level": 0.9, "rows_per_test": 3.5}, "n_200": 175, "n_400": 250, "rows_per_test": 3.5}
-gate sizes by base rate (tests): 0.09: n_200 175, n_400 250
-filled the backtest summary of model 6b43ae900d91
-scored 330 rows over 11 origins in 3.9 s (report writing 16.3 s; the whole run 20.3 s)
-wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
-wrote ~/moot-demo/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
-wrote ~/moot-demo/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
-```
+The command prints the paths of the report it wrote. Open the `.md` file. On this synthetic sample the forecasts do not beat the base rate, by design, and the first table reads "undecidable at this n": the 110 scored tests are below the gate of 175. That is the right reading of a sample with no structure.
 
-The first two lines say which gates the backtest read: `moot init` wrote them with a quick simulation at one base rate (0.09), and `moot simulate gate-power` sizes them at the base rate of your own archive. Open the report it names. The Brier skill (how much better than always forecasting the base rate) is in the section whose heading starts "Brier score of p_sig", row `ALL`, rung `P2`. On this synthetic sample its interval contains zero, and the column `decidable_by_tests` of the first table reads "undecidable at this n": the 110 scored tests are below the gate of 175 tests for even a skill difference of 0.20 (`decidable_research_by_tests` is the same reading at the power 0.80 screen). That is the right reading of a sample with no structure, and it is what the report is for.
-
-**5. Ask for a card** (about a second). The sample is static, so `--now` issues it as of the end of its history; on a live ledger you leave `--now` out:
+**5. Ask for a card** (about a second). The sample is static, so `--now` issues the card as of the end of its history. On a live ledger you leave `--now` out:
 
 ```bash run
 moot card --source sample --cell checkout_conversion --impressions 20000 --now 2025-12-30T00:00:00+00:00
@@ -195,37 +158,21 @@ moot card --source sample --cell checkout_conversion --impressions 20000 --now 2
 The card is advice before launch. The live test decides. Moot Court never changes the decision to launch, the traffic split or when a test stops.
 ```
 
-**6. Check the setup.** The output goes to a file so that the exit code can be printed; piping it into `tail` would hide the code:
+The card reads "Status: issue" although its skill line says "undecidable at this n". The two are separate. The gate says whether the record is large enough to judge the forecasts. The card abstains only for one of four reasons: too few past tests in the cell, a proposal unlike anything in the record, a missing or stale reliability report, or a forecast that changes when the precedents are resampled.
 
-```bash run head=6
-moot doctor > doctor.txt; echo "exit code: $?"
-tail -n 5 doctor.txt
-```
-
-```text output
-exit code: 1
-OK    model sample: champion 6b43ae900d91 on snapshot 20261105-b04b5b1dd18c
-WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 311 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
-OK    cells: 3 configured cells, each with 20 or more admitted rows
-WARN  cards sample: 0 scored outcomes, 0 post-hoc cards (issued after their test started: recorded, never scored), 0 reissues (a later card for a row another card scores); no join scores these as they stand, cards with no row id: 1
-status: warn
-```
-
-The exit code is 0 when healthy, 1 with warnings and 2 with failures. Both warnings are expected here. The sample ledger ends in 2025, so its reliability report is old, and cards for a live ledger abstain when that report is older than 14 days. The card you just issued names no ledger row (`cards with no row id: 1`), so no join could score it; give a card `--row-id` or `--test-id` with `--variant-id` when you want its outcome recorded.
+[Tutorial 1](docs/tutorials/01-first-card.md) continues from here: it explains each line and checks the setup with `moot doctor`.
 
 ## Reading a card
 
 1. **Abstention** first. If the card declines, it says why, and nothing below it is an opinion.
 2. **`P(significant and positive)`**, read against the cell's base rate: the chance that the live test will show a significant positive estimate.
 3. **`P(true effect above 0)`**: the chance that the true effect is positive, whatever the test shows.
-4. **The intervals**, one for the true effect and one for the result the test will show at the planned standard error.
+4. **The intervals**, one for the true effect and one for the result the test will show at the planned standard error. They are in the units your ledger records effects in.
 5. **Skill at this n**, the card's own record: how forecasts like it did recently and in the backtest, with intervals and the gate verdict.
-
-[Tutorial 1](docs/tutorials/01-first-card.md) explains each line of the card.
 
 ## The weekly loop
 
-A weekly step joins each concluded experiment to the card that forecast it, and the record of hits and misses decides whether the next card may speak.
+A weekly step joins each concluded experiment to the card that forecast it. The record of hits and misses decides whether the next card may speak.
 
 ```mermaid
 sequenceDiagram
@@ -241,39 +188,52 @@ sequenceDiagram
     MC->>MC: reliability report and gates decide whether the next card speaks or abstains
 ```
 
-The join finds a card by the ledger row it names: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`), and give `POST /card` and the MCP tool `get_card` the same `row_id`. A card without a row id is valid, but no outcome can be attached to it. Only a card issued, with its origin, at or before the test's start counts as evidence, and a row is scored once, by its earliest such card: a card issued later is recorded as post-hoc and never scored, and a card whose origin is after its issue time is refused. The [concepts page](docs/concepts.md) has the glossary.
+To have a card scored, name the ledger row it forecasts: give `moot card` a row id with `--row-id` (or `--test-id` with `--variant-id`). Only a card issued before its test started counts as evidence, and a row is scored once, by its earliest such card. The [concepts page](docs/concepts.md) has the details and the glossary.
+
+## The ladder of predictors
+
+A **rung** is one predictor in a ladder from simple to richer. A card says which rung produced it, and the backtest scores every rung.
+
+| Rung | In plain words | What it adds |
+|---|---|---|
+| **P0** | The historical win rate of the cell | The empirical base rate, the reference that every other rung is scored against |
+| **P1** | A statistical summary of the cell's past effects | A partially pooled Student-t prior that accounts for measurement error |
+| **P2** | P1 moved toward similar past tests, called precedents | Kernel-weighted precedents under an admission guard. At a weight of zero on precedents P2 reduces to P1 exactly |
+| Challengers | Three learned models, for comparison only | A gradient-boosted regressor, a local empirical Bayes rung and a text classifier: `moot backtest --source sample --challenger gbm` |
+
+In one sentence: P1 adds a fitted prior, and P2 adds kernel-weighted precedents under an admission guard. The guard lets precedents carry weight only when they improve held-out forecasts by more than two standard errors. It guards against fitting noise and is not a promise that P2 beats P1 on later tests. The [results page](docs/results.md) shows guarded and unguarded selection side by side.
 
 ## What the results show, and what the project does not show
 
-The paper asks three questions of two public archives: 2,949 scored headline and image tests from a publisher (Upworthy) and 68 scored experiments from a fashion retailer (ASOS). Every result is exploratory: one split was read repeatedly, and the method changed between runs.
+The paper asks three questions of two public archives: 2,949 scored headline and image tests from a publisher (Upworthy) and 68 scored experiments from a fashion retailer (ASOS). Every result is exploratory, meaning the same data was analysed more than once and the method changed along the way, so the results need testing on fresh data.
 
 | Question | Short answer | What the backtest shows |
 |---|---|---|
-| Can past experiments predict new ones? | Partly | The fitted prior (P1) beats the base rate by 0.120 nats per comparison on the log score, in every quarter scored. It describes the spread of results, not which test will succeed. Its skill at forecasting a significant positive result is at most small, and its probabilities are miscalibrated. |
-| Do similar past tests help? | Not measurably | P2 matches P1 on log score and skill. It ranks tests a little better, but no better than rules that read only a test's number of arms or its traffic. A text classifier ranks best among the models, yet it fails a control with a planted signal. |
-| What improves prediction? | The shape of the forecast | A heavy-tailed forecast gained most, 0.075 of the 0.120 nats. Other settings barely moved the score. Sizing tests from the forecast shows no measurable advantage over the base rate. |
+| Can past experiments predict new ones? | Partly | The fitted prior (P1) forecasts the whole distribution of results better than the base rate, in every quarter scored. It does not say which test will succeed. Its skill at forecasting a significant positive result is at most small, and its probabilities are miscalibrated. |
+| Do similar past tests help? | Not measurably | P2 matches P1. It ranks tests a little better, but no better than rules that read only a test's number of arms or its traffic. A text classifier ranks best among the models, yet it misses a signal planted in synthetic data, so its ranking is unexplained. |
+| What improves prediction? | The shape of the forecast | A heavy-tailed forecast gained most. Other settings barely moved the score. Sizing tests from the forecast shows no measurable advantage over the base rate. |
 
-The limits below matter as much as the results.
+The limits that matter most to a user:
 
 - **Headline-test skill is not deployment skill.** The main archive is headline and image tests from one publisher. Nothing here measures whether a forecaster that predicts them predicts product experiments.
-- **The skill is at most small, and it depends on a definition.** At realized precision no rung of the ladder is distinguishable from always forecasting the base rate. At planned precision the unadjusted intervals of P1 and P2 lie just above zero.
-- **The backtest is weak at detecting a signal from similar tests.** On a synthetic archive with a planted signal, P2 returns 0.09 of the gain of a model that is told the signal.
-- **The retailer's archive is too small to decide.** It has 68 scored experiments, and every one of its cells is undecidable at the release gate. The file has no dates, so its order is arbitrary and it tests only the mechanics.
-- **A flagged period is left out.** In June 2024 the Upworthy archive's maintainers reported randomization problems in tests from 25 June 2013 to 10 January 2014. The main analysis leaves those tests out, and `DATA.md` gives the rule.
-- **Abstaining is not shown to help.** Issued forecasts score above withheld ones on log score, not on skill, and the two sets differ in period and cell.
-- **Scores are against the observed estimate, not the unknown true effect.** A predictor is judged on the estimate a test produced, noise included.
+- **The skill is at most small.** On the event "significant and positive", no rung of the ladder is clearly distinguishable from always forecasting the base rate.
+- **The retailer's archive is too small to decide.** It has 68 scored experiments, below every gate, and no dates.
+- **Abstaining is not shown to help.** Issued forecasts are not shown to be more skilful than withheld ones.
 - **Two stand-ins on Upworthy.** The archive does not record when a test was read, so a test is treated as final seven days after its latest arm was created. It does not record planned exposure either, so realized impressions stand in, and that stand-in can leak: log impressions correlate +0.087 with the absolute standardized effect on the admitted rows (`DATA.md`, `docs/method.md`).
-- **Not every rung is exercised on real data.** The team-forecast rung needs a forecast frozen before the test, and no archive holds one. It runs on synthetic data only.
 - **It is not a decision tool.** No ship, rollout, allocation, ramp or stopping recommendation comes out of it.
 
+The [limitations page](docs/limitations.md) has the full list.
+
 ### Headline results
+
+A test has several variants, so 2,949 tests give 10,697 scored rows. Brier skill scores the forecast of a significant positive result against the base rate, and zero means no better than the base rate.
 
 <!-- moot-headline:start -->
 - Upworthy, 10697 scored rows: Brier skill against the base rate on all rows is 0.0023 (-0.0012 to 0.0061) for P1 (not distinguishable from the constant base rate) and 0.0032 (-0.0004 to 0.0072) for P2 (not distinguishable from the constant base rate); 1 of 3 cells are undecidable at this n at the release gate.
 - ASOS, 337 scored rows: Brier skill against the base rate on all rows is -0.1073 (-0.2366 to -0.0020) for P1 (worse than the constant base rate) and -0.1073 (-0.2366 to -0.0020) for P2 (worse than the constant base rate); 4 of 4 cells are undecidable at this n at the release gate.
 <!-- moot-headline:end -->
 
-The full tables (calibration, abstention, decision value, challengers, ablations, the cautionary first run and run times) are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run8-randomization-window` for the published ones.
+The full tables are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run8-randomization-window` for the published ones.
 
 ## Learn more
 
@@ -307,6 +267,4 @@ MIT. Data: Matias et al., Scientific Data 8, 195 (2021), doi 10.1038/s41597-021-
 
 ## Citing
 
-If you use Moot Court, please cite the software release and the paper. The repository carries a `CITATION.cff`; GitHub's "Cite this
-repository" button formats it. The software release 1.0.0 is archived at Zenodo, DOI 10.5281/zenodo.23988587 (https://doi.org/10.5281/zenodo.23988587); the concept
-DOI 10.5281/zenodo.23988586 resolves to the latest release. The paper is on arXiv as <arXiv identifier, filled in after upload>; until then, cite the repository and the release.
+If you use Moot Court, please cite the software release. The repository carries a `CITATION.cff`, and GitHub's "Cite this repository" button formats it. Release 1.0.0 is archived at Zenodo, DOI 10.5281/zenodo.23988587 (https://doi.org/10.5281/zenodo.23988587). The concept DOI 10.5281/zenodo.23988586 resolves to the latest release. The paper is not yet on arXiv.
