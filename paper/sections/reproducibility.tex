@@ -6,27 +6,27 @@ The released code (Python package \texttt{mootcourt}, MIT license) regenerates e
 % src: .github/workflows/ci.yml (test job on ubuntu-latest, Python 3.11, 3.12 and 3.13; steps after the suite on each version) and scripts/ci_score_report.py: artifact score-report-<python> with the P0, P1 and P2 log score and Brier skill of a fixed-seed backtest of the bundled sample ledger (docs/method.md call 239); tests/test_quick_check.py against tests/fixtures/quick-check/backtest-sample.json (built on macOS; relative 1e-9, 2.0 points on the percentile fields; docs/method.md call 255)
 Continuous integration backtests the bundled sample ledger on three Python versions on one runner image (ubuntu) and uploads the pooled scores of P0, P1 and P2 as an artifact, so agreement across Python versions is read from the job. The cross-platform reading is the quick check in the same job, which regenerates the sample backtest on the runner and compares it with a fixture built on macOS at a relative $10^{-9}$ (2 points on the percentile fields). Content hashes differ in their last bits between systems, so cards are compared by their stored identifiers (Appendix~\ref{app:walltime}).
 % src: docs/method.md call 255 (under the strict comparison, ece_percentile and ece_percentile_independent moved by up to 1.1 points between macOS and ubuntu on the same seed and by 5.2 points in the worst case on the sample report; the mid-rank rule counts a draw within a relative 1e-9 of the observed value as half); scripts/quick_check.py PERCENTILE_TOLERANCE 2.0
-The calibration percentile counts a draw within a relative $10^{-9}$ of the observed value as half. The strict comparison it replaced let such draws fall on either side, which moved the percentile by up to 1.1 points between macOS and ubuntu on the same seed and by 5.2 in the worst case on the sample ledger.
+The calibration percentile is the rank of the observed calibration error among the bootstrap draws of its null. A draw within a relative $10^{-9}$ of the observed value counts as half. The strict comparison this replaced let such draws fall on either side, which moved the percentile by up to 1.1 points between macOS and ubuntu on the same seed and by 5.2 in the worst case on the sample ledger.
 
-\paragraph{Benchmark artifact.} A new result is the same backtest on the same snapshot and a published report card. Released:
+\paragraph{Benchmark artifact.} To add a result, a contributor runs the same backtest on the same snapshot and publishes its report card. The release holds three things.
 \begin{itemize}
-\item the ledger schema (Table~\ref{tab:schema}), the snapshot digests and admission rules of Section~\ref{sec:setting}, the quarterly origins and the names of the refused files;
+\item It holds the ledger schema (Table~\ref{tab:schema}), the snapshot digests and admission rules of Section~\ref{sec:setting}, the quarterly origins and the names of the refused files.
 % src: README.md, License and citations (MIT)
-\item the harness and the report card under the MIT license;
+\item It holds the harness and the report card under the MIT license.
 % src: README.md, License and citations (Upworthy Research Archive CC BY 4.0; ASOS Digital Experiments Dataset CC BY 4.0)
-\item not the raw archive files, which are fetched under CC BY 4.0 and never redistributed.
+\item It does not hold the raw archive files, which are fetched under CC BY 4.0 and never redistributed.
 \end{itemize}
-How it is kept:
+The benchmark is kept as follows.
 \begin{itemize}
-\item the author maintains the benchmark through the repository (issues and pull requests);
-\item a report card from a new archive is submitted as a pull request that adds a run folder under \texttt{paper/data} with its README, as the contributing page describes;
+\item The author maintains it through the repository, by issues and pull requests.
+\item A report card from a new archive is submitted as a pull request that adds a run folder under \texttt{paper/data} with its README, as the contributing page describes.
 % src: CHANGELOG.md (semantic versioning; before 1.0.0 a schema change is a minor version)
-\item the repository is under semantic versioning, with the released snapshot digests named by version 1.0.0 and a schema change counted as a minor version before it;
-\item the snapshot digest names the data a result was read on;
+\item The repository is under semantic versioning. Version 1.0.0 names the released snapshot digests, and before it a schema change counted as a minor version.
+\item The snapshot digest names the data a result was read on.
 % src: Zenodo record https://zenodo.org/api/records/23988587 (doi 10.5281/zenodo.23988587, conceptdoi 10.5281/zenodo.23988586, read 5 November 2026); $RUN6/README.md (commit 5e4fedf, the code state of this paper's run)
-\item release 1.0.0 is archived at Zenodo under DOI\newline \mbox{10.5281/zenodo.23988587}; it predates the date rule of Section~\ref{sec:setting}, and the numbers in this paper come from commit 5e4fedf;
+\item Release 1.0.0 is archived at Zenodo under DOI\newline \mbox{10.5281/zenodo.23988587}. It predates the date rule of Section~\ref{sec:setting}, and the numbers in this paper come from commit 5e4fedf.
 % src: Zenodo record https://zenodo.org/api/records/23988587 (conceptdoi 10.5281/zenodo.23988586, read 5 November 2026)
-\item the concept DOI, which resolves to the latest release:\newline \mbox{10.5281/zenodo.23988586};
+\item The concept DOI,\newline \mbox{10.5281/zenodo.23988586}, resolves to the latest release.
 % src: references.bib mootcourt2026plan (posted 2026-11-04)
-\item the plan is the copy posted publicly on 4 November 2026 \cite{mootcourt2026plan}.
+\item The plan is the copy posted publicly on 4 November 2026 \cite{mootcourt2026plan}.
 \end{itemize}

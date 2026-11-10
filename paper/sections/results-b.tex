@@ -1,9 +1,17 @@
-% Results, second half: abstention, drift, the deployment-shaped archive and the synthetic archive. Source comments follow the convention of results.tex: a "% src:" line names the report and key behind the one line that follows it.
+% Results, second half: abstention, drift, the retailer's archive and the synthetic archive. Source comments follow the convention of results.tex: a "% src:" line names the report and key behind the one line that follows it.
 \subsection{Abstention}
 \label{sec:abstention-results}
 A card is the frozen forecast a team sees before launch. It abstains when one of four triggers fires, and an abstained card keeps the forecast it withheld, which is scored but never shown. Table~\ref{tab:fmt-abstention-triggers} condenses the trigger counts of Table~\ref{tab:abstention-upworthy} (Appendix~\ref{app:tables}), and Table~\ref{tab:fmt-abstention-composition} gives the rate after the burn-in origin, the first origin, at which no reliability report exists yet.
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json abstention_composition.P2 abstained_rows 2722, rows 10018 (0.272); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.origins origin=2014-01-01 n_scored 1236, abstention_rate 1.0
-The rate after burn-in is 27.2 percent, and that includes January 2014, where every row abstains. This is a consequence of the rule on the randomization window: the gap in results leaves the reliability reports stale at that origin. Without that origin the rate is lower, and by cell the novelty trigger makes it highest in the image-only cell.
+The rate after burn-in is 27.2 percent, and that includes January 2014, where every row abstains. That origin is a consequence of the rule on the randomization window.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.notice (25 June 2013 to 10 January 2014); DATA.md, The archive's 2024 randomization notice
+The excluded window runs from 25 June 2013 to 10 January 2014.
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.origins origin=2014-01-01 abstention_rate 1.0; src/mootcourt/harness.py _outcomes_for_reliability (outcomes with usable_after at or before the origin; the last ones are from tests started before 25 June 2013); src/mootcourt/reliability.py build_reliability (a cell with no outcome in the trailing window keeps its old as_of)
+At the origin of 1 January 2014 every test of the preceding six months is excluded, so no outcome has reached any cell's reliability report since the middle of 2013.
+% src: src/mootcourt/config.py RELIABILITY_MAX_AGE_DAYS 14; src/mootcourt/abstain.py staleness_reason
+Each report is then older than its staleness limit of 14 days, and the reliability trigger withholds every card (Section~\ref{sec:method}).
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json abstention_composition.P2 abstained_rows 2722, rows 10018; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.origins origin=2014-01-01 n_scored 1236, abstention_rate 1.0 (derived: 1486 of 8782 = 0.169); tables/fmt-abstention-composition.tex
+Without that origin the rate is 16.9 percent. By cell it is highest in the image-only cell, where the novelty trigger fires most (Table~\ref{tab:fmt-abstention-composition}).
 
 \begin{table}[t]\centering\scriptsize
 % table: tab:abstention-upworthy; tables/fmt-abstention-triggers.tex
@@ -12,7 +20,7 @@ The rate after burn-in is 27.2 percent, and that includes January 2014, where ev
 \input{tables/fmt-abstention-triggers}
 \end{table}
 
-Issued rows do not have the higher skill. With the burn-in origin included the abstained rows score above the issued rows on Brier skill (Table~\ref{tab:fmt-abstention-rows}), and the abstained rows carry that origin and a higher event rate. With it excluded the two groups do not differ measurably, pooled or within the strata that hold both groups, whose interval spans zero (Table~\ref{tab:fmt-abstention-composition}).
+Issued rows do not have the higher skill. With the burn-in origin included, the abstained rows score above the issued rows on Brier skill (Table~\ref{tab:fmt-abstention-rows}). But every row of that origin abstains, since no reliability report exists yet, so the abstained set is weighted toward one period, and the two sets differ in event rate as well. The comparison mixes periods. With the burn-in origin excluded the two groups do not differ measurably, pooled or within the strata that hold both groups, whose interval spans zero (Table~\ref{tab:fmt-abstention-composition}).
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json issued_row_brier_skill bootstrap_resamples 500, level 0.9; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P2] logscore, logscore_nonabstained, n, n_nonabstained; tables/fmt-abstention-rows.tex
@@ -29,7 +37,7 @@ Issued rows do not have the higher skill. With the burn-in origin included the a
 \end{table}
 
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.origins (abstention rate 1.0 at 2014-01-01); tables/fmt-abstention-rows.tex; tables/fmt-abstention-released.tex
-The log score reads differently, and it is not stratified. Issued rows score above abstained rows, and above each group of withheld rows scored with its trigger switched off (Table~\ref{tab:fmt-abstention-released}, condensed from Table~\ref{tab:trigger-released}, Appendix~\ref{app:tables}). These row sets differ in origin and in cell, and no report compares them within strata, so this is not evidence that abstention selected the worse forecasts. So issued rows are better on the log score and not on Brier skill, and abstention is not shown to filter quality on this archive. We keep it as a label of evidence, a purpose we revised after seeing this result. Direction accuracy points the other way for the novelty trigger, the only one that fires after January 2014: its released rows are above the issued rows on direction accuracy and below them on the log score. Support and instability release no rows.
+The log score tells a different story, though not within strata. Issued rows score above abstained rows, and above each group of withheld rows scored with its trigger switched off (Table~\ref{tab:fmt-abstention-released}, condensed from Table~\ref{tab:trigger-released}, Appendix~\ref{app:tables}). These row sets differ in origin and in cell, and no report compares them within strata, so this is not evidence that abstention selected the worse forecasts. So issued rows are better on the log score and not on Brier skill, and abstention is not shown to filter quality on this archive. We keep it as a label of evidence, a purpose we revised after seeing this result. Direction accuracy points the other way for the novelty trigger, the only one that fires after January 2014: its released rows are above the issued rows on direction accuracy and below them on the log score. Support and instability release no rows.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--drop-trigger-novelty.json tables.released_rows cell=ALL rung=P2 n 1486; tables/trigger-released-upworthy.tex; tables/fmt-abstention-released.tex
@@ -40,18 +48,18 @@ The log score reads differently, and it is not stratified. Issued rows score abo
 
 \subsection{Drift and the weekly replay}
 \label{sec:drift-results}
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year cell=ALL rung=P1 brier_skill_lo, brier_skill_hi, adjusted_lo, adjusted_hi, event_rate, years 2013, 2014, 2015
-Table~\ref{tab:fmt-drift-year} condenses Table~\ref{tab:drift} (Appendix~\ref{app:tables}) by the calendar year in which the test started. P1's skill shows no trend: its unadjusted interval lies above zero in 2013 and 2015 and below zero in 2014, and every adjusted interval spans zero. The significant-positive rate falls, a shift that P0's trailing base rate lags and that the drift rule, which watches the log score against P0 alone, cannot see.
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year cell=ALL rung=P1 brier_skill_lo, brier_skill_hi, adjusted_lo, adjusted_hi, event_rate, years 2013, 2014, 2015; src/mootcourt/config.py DRIFT_LOGSCORE_MARGIN 0.10 (the drift rule compares a cell's rolling log score with P0's); src/mootcourt/reliability.py build_reliability
+Table~\ref{tab:fmt-drift-year} condenses Table~\ref{tab:drift} (Appendix~\ref{app:tables}) by the calendar year in which the test started. P1's skill shows no trend. Its unadjusted interval lies above zero in 2013 and 2015 and below zero in 2014, and every adjusted interval spans zero. The significant-positive rate falls from year to year. P0's trailing base rate lags that fall, since it is the rate over rows already visible. The drift rule cannot see it either. The rule watches only the gap between a cell's rolling log score and P0's, and a fall in the rate that both forecasts miss together leaves that gap unchanged.
 
 \begin{table}[t]\centering\scriptsize
-% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year cell=ALL rung=P1 family_size 156 (tables/drift-upworthy.tex); tables/fmt-drift-year.tex
-\caption{The prior by calendar year of the test's start on the headline archive, from Table~\ref{tab:drift} (Appendix~\ref{app:tables}). Columns: tests, P1's Brier skill, that interval adjusted for the table's 156 intervals, and the significant-positive rate. The tests of 2013 are the burn-in origin's, with the excluded window removed.}
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year family_size 156 (96 Brier skill intervals of positive width over 8 rungs, 4 cells and 3 years, plus 60 log score intervals over 5 rungs; src/mootcourt/harness_stats.py apply_bonferroni, by_year); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.origins origin=2013-04-01 n_tests 245 (tables/drift-upworthy.tex); tables/fmt-drift-year.tex
+\caption{The prior by calendar year of the test's start on the headline archive, from Table~\ref{tab:drift} (Appendix~\ref{app:tables}). Columns: tests, P1's Brier skill, the same interval adjusted for the 156 intervals of the by-year family, which spans every cell and rung the report scores and not only the rows Table~\ref{tab:drift} shows, and the significant-positive rate. The tests of 2013 are the burn-in origin's, with the excluded window removed.}
 \label{tab:fmt-drift-year}
 \input{tables/fmt-drift-year}
 \end{table}
 
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json within_origin_auc_by_year.years["2015"] P0, P1, P2, text_lr auc_within_origin, auc_within_origin_and_cell; tables/fmt-auc-by-year.tex
-Table~\ref{tab:fmt-auc-by-year} asks whether the 2015 skill is better ranking. Within origin P1's AUC clears one half that year, but so does P0's, and P0 ranks only by cell. Within origin and cell P1's interval spans one half. So the order P1 gives in 2015 is largely between cells, and its skill that year is not shown to be better ranking inside them, while P2 and the text classifier clear one half within origin and cell in that year. The part of that skill due to P0 lagging a falling rate is not separated here.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json within_origin_auc_by_year.years["2015"] P0, P1, P2, text_lr auc_within_origin, auc_within_origin_and_cell (P0 auc_within_origin 0.582, lo 0.524; P1 auc_within_origin_and_cell lo 0.486); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_year[cell=ALL,rung=P1,year=2015] brier_skill_lo 0.0129; tables/fmt-auc-by-year.tex
+P1's skill in 2015 is positive before adjustment, and Table~\ref{tab:fmt-auc-by-year} asks whether it comes from ranking tests. Within an origin, P1's AUC clears one half that year, but so does P0's. P0 gives one forecast per cell and origin, so within an origin it orders tests only by cell, and an AUC above one half for P0 means that the cells with the higher trailing rate also had the higher realized rate. Within origin and cell P1's interval spans one half. So the order P1 gives in 2015 is largely between cells, and its skill that year is not shown to come from ranking tests inside a cell. P2 and the text classifier do clear one half within origin and cell in that year. How much of the 2015 skill comes from P0 lagging a falling rate is not separated here.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json within_origin_auc_by_year (500 resamples); tables/fmt-auc-by-year.tex
@@ -60,41 +68,49 @@ Table~\ref{tab:fmt-auc-by-year} asks whether the 2015 skill is better ranking. W
 \resizebox{\columnwidth}{!}{\input{tables/fmt-auc-by-year}}
 \end{table}
 
-The weekly replay (Table~\ref{tab:replay}, Appendix~\ref{app:tables}) runs the released loop under its own rules: one scored card per admitted row, issued at the week start at or before the test's start, with a bundle refit at every quarterly origin. It joins outcomes at the first weekly join on or after the horizon, scores each with the card's own predictive (abstained cards on the withheld forecast) and evaluates the drift rule weekly.
+The backtest reads each cell's reliability report once a quarter, at the origin. In use, the package's loop runs weekly (Section~\ref{sec:method}). The weekly replay (Table~\ref{tab:replay}, Appendix~\ref{app:tables}) runs that loop over the archive under its own rules. It issues one scored card per admitted row at the start of the week in which the test starts, from the bundle fitted at the latest quarterly origin on or before that week. It joins each outcome at the first weekly join on or after the date the result became usable, the test's assigned end on this archive (Section~\ref{sec:setting}), scores it with the card's own predictive (an abstained card on the forecast it withheld) and applies the drift rule at every join.
 \begin{itemize}
 % src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json header.n_weeks 111, header.n_cards 10697 (tables/replay-upworthy.tex)
 \item Span: 111 weeks and 10,697 cards.
 % src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.abstained 2022, totals.abstained_by_trigger reliability 271; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json issued_row_brier_skill.rungs.P2.abstained.n 3401; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.abstention[cell=ALL].reliability 1915 (tables/replay-upworthy.tex)
-\item Abstained: 2,022 cards, against 3,401 rows in the backtest. The replay refreshes reliability at every weekly join, so a stale report clears within weeks (271 cards on that trigger); the backtest reads it at the quarterly origin, so a stale report holds the whole quarter (1,915 rows).
+\item Abstained: 2,022 cards, against 3,401 rows in the backtest. The replay refreshes the reliability report at every weekly join, so a stale report clears within weeks (271 cards on that trigger). The backtest reads it at the quarterly origin, so a stale report holds for the whole quarter (1,915 rows).
 % src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.outcomes_joined 10697, header.n_outcomes 10697 (tables/replay-upworthy.tex)
 \item Outcomes joined: every card (10,697).
 % src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.coverage_90_all 0.8965 (coverage_90_all_n 8675, the outcomes of issued cards: 10697 minus 2022 abstained)
-\item Coverage: 89.6 percent of the 8,675 outcomes of issued cards fell in the card's 90 percent interval; an abstained card shows no interval.
+\item Coverage: 89.6 percent of the 8,675 outcomes of issued cards fell inside the card's interval. That interval is the 90 percent one for the observed estimate at the planned standard error, and an abstained card shows none.
 % src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.n_flagged_weeks 6; drift_onsets both 2014-03-31 and 2015-04-20; weeks[].flagged 2014-03-31, 2014-04-07, 2015-04-20 to 2015-05-11 (tables/replay-upworthy.tex)
-\item Weeks flagged: 6, all in the smallest cell, two from 31 March 2014 and four from 20 April 2015 to the end of the archive (Appendix~\ref{app:replay}).
+\item Weeks flagged: 6, all in the smallest cell. Two run from 31 March 2014, and four from 20 April 2015 to the end of the archive (Appendix~\ref{app:replay}).
 \end{itemize}
 
-\subsection{The deployment-shaped archive}
+\subsection{The retailer's archive}
 \label{sec:asos-results}
-Table~\ref{tab:fmt-asos} condenses Table~\ref{tab:main-asos} (Appendix~\ref{app:tables}), the same protocol on the deployment-shaped archive.
-% src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json gates_by_stratum.strata (ALL and metric_1 to metric_4, every verdict undecidable at this n); $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.tests_scored 68
-Every metric cell and the pooled table are undecidable at their own gates, a result 68 experiments could not have avoided, so this archive cannot say whether the protocol's findings hold on product experiments.
-The abstention rate is high mostly because the support trigger fires at the early origins.
-What the archive does show is that the prior is overconfident there: the skill interval lies below zero before adjustment and spans it after, and the expected calibration error is past the rejection line.
+Table~\ref{tab:fmt-asos} condenses Table~\ref{tab:main-asos} (Appendix~\ref{app:tables}), the same protocol on the retailer's archive, where the cell is the metric (Section~\ref{sec:setting}).
+Every cell and the pooled archive are undecidable at their own gates.
+% src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json gates_by_stratum.strata.ALL own_gate.n_200 175, n_400 275, verdict undecidable at this n (metric_1 to metric_4 the same, every rung)
+The smallest of those gates asks for 175 tests at a skill of 0.20.
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json header.tests_scored 68
+The archive has 68. This result could not have been avoided, and the archive cannot say whether the findings above hold on product experiments.
+% src: src/mootcourt/config.py SUPPORT_MIN 30; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.abstention[cell=ALL] support 126, n 337, rate 0.457 (154 abstained rows); tables.origins abstention_rate 1.0, 1.0, 0.75 at the first three origins and 0 at the fourth and fifth; $RUN6/replay-asos-20261103-6bb5a15c5ff0.json weeks[].abstained_by_trigger.support 45, 48 and 36 in the first three quarters, 0 after
+The abstention rate is high mostly because of the support trigger, which withholds a card when its cell has fewer than 30 visible rows (Section~\ref{sec:method}). It fires at the first three origins and never after, and accounts for most of the abstained rows.
+What the archive does show is that the prior is miscalibrated there, in the direction of too much confidence. Its skill interval lies below zero before adjustment and spans it after. Its expected calibration error is past the rejection line of the clustered null.
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1] coverage_80 0.7834, coverage_90 0.8605, p_sig_mean 0.1784, event_rate 0.1395; tables/fmt-asos.tex
+Its 80 and 90 percent intervals cover less than they promise, and its mean forecast of a significant positive result is above the realized rate (Table~\ref{tab:fmt-asos}).
 
 \begin{table}[t]\centering\scriptsize
 % table: tab:main-asos; tables/fmt-asos.tex
-\caption{The deployment-shaped archive, from Table~\ref{tab:main-asos} (Appendix~\ref{app:tables}). Rows: one figure each. The adjusted interval is for the table's intervals. The calibration percentile is against the clustered null.}
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=P1] family_size 55 (the intervals of tables/main-asos.tex), design_effect 3.82; tables/fmt-asos.tex
+\caption{The retailer's archive, from Table~\ref{tab:main-asos} (Appendix~\ref{app:tables}). Rows: one figure each. The adjusted interval is for the 55 intervals of Table~\ref{tab:main-asos}. The calibration percentile is against the clustered null, and the design effect is the variance inflation from the contrasts of one test moving together, which that null matches.}
 \label{tab:fmt-asos}
 \resizebox{\columnwidth}{!}{\input{tables/fmt-asos}}
 \end{table}
 
-% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.p2_selection_by_cell share_lambda_zero 1.00 in all four cells; tables.decision_value origin=ALL budget=0.25 policy=p_win diff_random, diff_matched (src/mootcourt/decision_value.py _matched_value)
-P2 equals P1 because the guard holds its weight at zero everywhere. The two challengers that run without text on this archive sit at the base rate once recalibrated. Their captured lift spans zero against random order and is exactly zero against the matched order, which on this archive returns the value of the chosen set itself (Appendix~\ref{app:asos}).
+% src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.p2_selection_by_cell share_lambda_zero 1.00 in all four cells; header.challengers GBM, GBM+cal, local_eb, local_eb+cal (no text classifier); tables.aggregate[cell=ALL] brier_skill GBM -0.7184, local_eb -0.3832, GBM+cal -0.0090 (-0.0756, 0.0446), local_eb+cal 0.0150 (-0.0351, 0.0691); tables.decision_value origin=ALL budget=0.25 policy=p_win diff_random, diff_matched 0.0 (src/mootcourt/decision_value.py _matched_value)
+P2 equals P1 on every row: the admission guard of Section~\ref{sec:method} admits no precedent weight in any cell at any origin. The two challengers that run here are the boosted model and the local comparison set. The text classifier needs headlines, which this archive lacks. Both challengers are far below the base rate raw and sit at it once recalibrated. Their captured lift spans zero against random order and is exactly zero against the matched order, which on this archive returns the value of the chosen set itself (Appendix~\ref{app:asos}).
 
 \subsection{Synthetic truth and the positive control}
 \label{sec:synthetic-results}
-On the synthetic archive with no text signal (Appendix~\ref{app:synthetic}) the pooled prior recovers the generator's cell means and spreads within a few tenths, and the guard holds the precedent weight at zero everywhere.
+% src: src/mootcourt/sources/synthetic.py _DEFAULT_CELLS (headline_only 2.0, 3.0; image_only -1.0, 1.5; both 0.5, 2.0; percent lift; variants_per_test 2 beside a reference); $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json header.tests_scored 907, origins_scored 8, text_effect_strength 0.0; tables.split_half fitted means within 0.14 and spreads within 0.26 of the truth, spreads below it in both halves of image_only and both (tables/fmt-app-syn-truth.tex); tables.p2_selection_by_cell share_lambda_zero 1.0 in every cell
+The synthetic archive (Appendix~\ref{app:synthetic}) has three cells with known means and spreads in percent lift, two variants per test beside a reference, and no text signal, and it scores 907 tests over eight origins. On it the pooled prior recovers the generator's cell means within two tenths and its spreads within three tenths, the spreads a little low in two cells (Table~\ref{tab:fmt-app-syn-truth}), and the guard holds the precedent weight at zero everywhere. For the prior:
 \begin{itemize}
 % src: $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json tables.aggregate[cell=ALL] rung=P1 coverage_80 0.7834
 \item Coverage of the 80 percent interval: 78 percent.
@@ -110,8 +126,8 @@ On the synthetic archive with no text signal (Appendix~\ref{app:synthetic}) the 
 \item Decision value: ranking by $\pwin$ gains plus 0.195 (0.173 to 0.216) for the prior itself, because the cells differ in their means.
 \end{itemize}
 
-% src: $RUN6/positive-control/backtest-synthetic-20261106-8cc34d3af720.json header.admitted_rows 4000 (text_effect_strength 1.0, a third of the headline_only prior sd of 3.0); $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows strength_over_prior_sd headline_only 0.333
-The positive control plants a text lift of 1.0 percent between headlines with and without a signal word, a third of the prior standard deviation in the headline-only cell. It runs under two designs, read apart in Table~\ref{tab:fmt-control} (from Tables~\ref{tab:positive-control}, \ref{tab:positive-control-gain} and~\ref{tab:positive-control-rungs}, Appendix~\ref{app:tables}). The end-of-ledger split holds out 15 percent of a ledger's tests. The rolling backtest is the design the real archive gets. Each recovered figure is a fraction of an oracle's gain in log score, not a fraction of the lift, and the oracle is P1 told the planted term.
+% src: $RUN6/positive-control/backtest-synthetic-20261106-8cc34d3af720.json header.admitted_rows 4000 (text_effect_strength 1.0, a third of the headline_only prior sd of 3.0; src/mootcourt/sources/synthetic.py theta adds strength times (signal minus 0.5)); $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows strength_over_prior_sd headline_only 0.333; positive_control_sensitivity.inputs held_out_share_of_tests 0.15, seeds 0 to 11 (twelve), share_admitted (selected lambda above zero in a cell), oracle_gain (P1 refit with the planted term removed from y, its location moved back by the row's term); positive_control_rungs.inputs share_pairs_admitted, oracle
+The positive control plants a text lift of 1.0 percent between headlines with and without a signal word, a third of the prior standard deviation in the headline-only cell. It runs under two designs, read apart in Table~\ref{tab:fmt-control} (from Tables~\ref{tab:positive-control}, \ref{tab:positive-control-gain} and~\ref{tab:positive-control-rungs}, Appendix~\ref{app:tables}). The end-of-ledger split holds out 15 percent of a ledger's tests, fits on the rest, and repeats this over twelve ledgers drawn with different seeds. The rolling backtest is the design the real archive gets. The guard \emph{admits} a cell, or a cell and origin, when the precedent weight it selects there is above zero. Each recovered figure is a fraction of an oracle's gain in log score over P1, not a fraction of the lift. The oracle is P1 fit with the planted term subtracted from every outcome and added back to each row's forecast, so it knows the signal exactly.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows (12 seeds, 36 cells per point, held_out_share_of_tests 0.15); positive_control_rungs.runs; tables/positive-control-gain.tex; tables/fmt-control.tex
@@ -123,7 +139,7 @@ The positive control plants a text lift of 1.0 percent between headlines with an
 What the guard admits:
 \begin{itemize}
 % src: $RUN6/positive-control/backtest-synthetic-20261106-8cc34d3af720.json tables.p2_selection cell=headline_only: lambda 0.0 at all 8 origins; tables.aggregate[cell=headline_only] rung=P2 logscore -2.6348 equal to rung=P1; $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=2000].rows_per_cell_scored 1192
-\item In the rolling backtest at 2,000 tests, with 1,192 scored rows per cell, the guard admits no weight in the planted headline-only cell at any of the eight origins, so P2 equals P1 in that cell.
+\item In the rolling backtest at 2,000 tests, with a mean of 1,192 scored rows per cell, the guard admits no weight in the planted headline-only cell at any of the eight origins, so P2 equals P1 in that cell.
 % src: $RUN6/positive-control/backtest-synthetic-20261106-8cc34d3af720.json tables.p2_selection cell=headline_only: gain -0.0002 to 0.0093
 \item In the same backtest the in-selection gains in that headline-only cell run from minus 0.0002 to 0.0093 nats, none past two standard errors.
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows n_tests 11100 rows_per_cell 7400 text_effect_strength 0.0 share_admitted 0.000
@@ -150,11 +166,11 @@ What the rolling backtest returns, the figures to set against the real archive:
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=11100].by_cell ALL rungs[rung=P2].recovered_fraction_logscore 0.0919; headline_only 0.0319
 \item At 11,100 tests P2 recovers 0.09 of the oracle's gain pooled and 0.03 in the headline-only cell.
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=11100].by_cell headline_only rungs[rung=P2].rows 6354; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.abstention[cell=headline_only].n 5966
-\item At 11,100 tests that planted cell has 6,354 scored rows and the real headline-only cell 5,966, so it is the cell of the real one's size. The match is in size, not in the effects.
+\item At 11,100 tests the planted cell has 6,354 scored rows and the real headline-only cell 5,966, so the two are of one size. The match is in size only, not in the effects.
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=11100].by_cell headline_only rungs[rung=P2].diff_logscore_vs_p1 0.0004 (0.0001, 0.0007); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=headline_only,rung=P2] logscore_vs_p1 0.0002 (-0.0007, 0.0010)
 \item At 11,100 tests P2 minus P1 in that planted cell is 0.0004 nats, which lies inside the real headline-only interval of minus 0.0007 to 0.0010.
 \end{itemize}
-So the real interval contains what a planted signal of that size returns, and the level result on the real archive does not refute one. The control shows that this backtest is weak at this size: it bounds what a precedent signal of this form could have shown, and it does not separate an archive with no such signal from one whose signal P2 recovers this little of.
+So the real interval contains what a planted signal of that size returns: the real archive's result, a P2 gain over P1 that spans zero, does not refute such a signal. The control shows that this backtest is weak at this size. It bounds what a precedent signal of this form could have shown, and it does not separate an archive with no such signal from one whose signal P2 recovers this little of.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs (planted lift 1.0) n_tests 2000 and 11100 (tables/positive-control-rungs.tex); tables/fmt-control-rungs.tex
@@ -174,8 +190,8 @@ The other rungs on the planted ledgers, under the rolling backtest (Table~\ref{t
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=11100].by_cell["headline_only"].rungs[rung=GBM] diff_brier_vs_p1, diff_logscore_vs_p1; tables/fmt-control-rungs.tex
 \item At 11,100 tests the boosted model loses to P1 on the log score in the headline-only cell, and its Brier difference there spans zero.
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=2000].by_cell["ALL"].rungs[rung=P2] diff_brier_vs_p1, diff_logscore_vs_p1; tables/fmt-control-rungs.tex
-\item At 2,000 tests P2 is within the interval of P1 on both scores.
+\item At 2,000 tests P2's difference from P1 spans zero on both scores.
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=11100].by_cell["ALL"].rungs diff_brier_vs_p1, diff_logscore_vs_p1; positive_control_decision_value.n11100.paired.budgets["0.25"].differences.P2_minus_P1 adjusted_lo, adjusted_hi; tables/fmt-ranking-paired.tex
 \item At 11,100 tests P2 is above P1 on both scores, the only rung that is, and at a quarter of the tests its paired ranking gain over P1 spans zero after adjustment (Table~\ref{tab:fmt-ranking-paired}).
 \end{itemize}
-The text classifier is the rung that ranks best on the real archive, and it fails this control on skill and ranks below the prior here. The control therefore neither validates nor explains its value on the real archive: whatever it reads there is not a location shift of this form, and one exploratory split is all the evidence for it.
+The text classifier is the rung that ranks best on the real archive, and here it fails the control on skill and ranks below the prior. The control therefore neither validates nor explains its value on the real archive. Whatever it reads there is not a location shift of this form, and one exploratory run on one archive is all the evidence for it.

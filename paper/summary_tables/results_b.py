@@ -1,4 +1,4 @@
-"""Summary tables, group results_b: abstention, drift, the deployment-shaped archive and the positive control (Sections 6.5 to 6.8)."""
+"""Summary tables, group results_b: abstention, drift, the retailer's archive and the positive control (Sections 6.5 to 6.8)."""
 from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, month_year, n, pctw, v
 
 MAIN = "backtest-upworthy-*.json"
@@ -151,6 +151,7 @@ def asos(r):
         ["calibration percentile", v(rep, f"{agg}.ece_percentile", 1)],
         ["design effect", v(rep, f"{agg}.design_effect", 1)],
         ["coverage of the 80 and 90 percent intervals", join("{} and {}", v(rep, f"{agg}.coverage_80", 2), v(rep, f"{agg}.coverage_90", 2))],
+        ["P1 mean forecast of the event and realized rate", join("{} and {}", v(rep, f"{agg}.p_sig_mean", 2), v(rep, f"{agg}.event_rate", 2))],
         [r"boosted model, recalibrated Brier skill (90\%)", recalibrated("GBM")],
         [r"local comparison set, recalibrated Brier skill (90\%)", recalibrated("local_eb")],
         [r"boosted model, lift minus random order, quarter of tests (90\%)", over_random("GBM")],
@@ -188,7 +189,7 @@ def control(r):
         split_row(1000),
         split_row(11100),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{5}{@{}l}{\emph{Rolling backtest, the design the real archive gets: scored rows per cell; share of cell-origin pairs admitted}} \\"),
+        Raw(r"\multicolumn{5}{@{}l}{\emph{Rolling backtest, the design the real archive gets: scored rows per cell, mean over cells; share of cell-origin pairs admitted}} \\"),
         rolling_row(2000),
         rolling_row(11100),
     ])

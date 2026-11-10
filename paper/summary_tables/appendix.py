@@ -1,4 +1,4 @@
-"""Summary tables of the appendix: the deployment-shaped archive, the synthetic truth, the planted ledger and the snapshots."""
+"""Summary tables of the appendix: the retailer's archive, the synthetic truth, the planted ledger and the snapshots."""
 import glob
 import os
 
@@ -135,7 +135,7 @@ def app_asos(r):
         ["skill at fraction 0.05", ci(curve_a, curve.format(0.05), "skill"), ci(curve_u, curve.format(0.05), "skill")],
         ["skill at the full ledger", ci(curve_a, curve.format(1.0), "skill"), ci(curve_u, curve.format(1.0), "skill")],
     ]
-    return Table("fmt-app-asos", "lll", ["figure & deployment-shaped & headline"], rows)
+    return Table("fmt-app-asos", "lll", ["figure & retailer & headline"], rows)
 
 
 def app_syn_truth(r):
@@ -188,7 +188,7 @@ def app_pc_sizes(r):
         return v(rep, f"{run(size)}.by_cell.headline_only.rungs[rung={rung}].auc_event")
 
     return Table("fmt-app-pc-sizes", "lrr", [" & 2,000 tests & 11,100 tests"], [
-        ["scored rows per cell", *[n(rep, f"{run(s)}.rows_per_cell_scored") for s in sizes]],
+        ["scored rows per cell, mean over cells", *[n(rep, f"{run(s)}.rows_per_cell_scored") for s in sizes]],
         ["pairs admitted", *[pairs(s) for s in sizes]],
         ["event AUC, text classifier", *[auc(s, "text_lr") for s in sizes]],
         ["event AUC, P1", *[auc(s, "P1") for s in sizes]],
@@ -209,7 +209,7 @@ def app_snapshots(r):
     return Table("fmt-app-snapshots", "lllll", ["ledger & date & snapshot & model & feature hash"], [
         _snapshot("headline archive", _main(r, UPWORTHY)),
         _snapshot("headline archive, randomization window included", r("include-randomization-window/backtest-upworthy-*.json")),
-        _snapshot("deployment-shaped", _main(r, ASOS)),
+        _snapshot("retailer", _main(r, ASOS)),
         _snapshot("synthetic", _main(r, "synthetic")),
         _snapshot("planted ledger, 2,000 tests", r("positive-control/backtest-synthetic-*.json")),
         _snapshot("planted ledger, 11,100 tests", r("positive-control/rungs/n11100/backtest-synthetic-*.json")),

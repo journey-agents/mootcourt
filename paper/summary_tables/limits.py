@@ -176,7 +176,7 @@ def verdicts(r):
         raise ValueError("the row says January 2014 abstains on every row and stays in the after-burn-in rate")
     guard_off = r(ASOS_GUARD_OFF)
     if guard_off.get(f"{_cell('P2', 'ALL')}.logscore_vs_p1") == 0:
-        raise ValueError("the row says the guard is what keeps P2 at P1 on the deployment-shaped archive")
+        raise ValueError("the row says the guard is what keeps P2 at P1 on the retailer's archive")
     rows = [
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (Section~\ref{sec:ladder-results})} \\"),
         _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in", _h1_part1(up, extras), "held"),
@@ -226,7 +226,7 @@ def verdicts(r):
                   span(up, f"{_dv('P1')}.diff_matched_lo", f"{_dv('P1')}.diff_matched_hi")), "failed"),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H6, held} (Section~\ref{sec:asos-results})} \\"),
-        _row("H6 part 1", "every gate undecidable on the deployment-shaped archive", "undecidable at every gate",
+        _row("H6 part 1", "every gate undecidable on the retailer's archive", "undecidable at every gate",
              join("held, a result {} tests could not have avoided", n(_asos, f"{_cell('P2', 'ALL')}.n_tests"))),
         _row("H6 part 2", "P2 equals P1", "P2 equals P1 on this archive, because the guard holds the weight at zero", "held"),
     ]

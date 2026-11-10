@@ -2,33 +2,36 @@
 \section{Limitations and Ethics}
 \label{sec:limitations}
 
-\paragraph{Every number is exploratory.} Every run read the same exploratory split of the headline archive, and the method changed between runs after results were seen. P2's family, the text classifier's pairwise design, the guard and the selection rule all came that way, and the selection rule's comparison ran on the rows that score it. So every number here is exploratory, the text classifier's ranking result included, and agreement between runs on one split is not replication. The archive's confirmatory split is unopened and is the next test.
+\paragraph{Every number is exploratory.} Every run read the same exploratory split of the headline archive, and the method changed between runs after results were seen. The form of the precedent rung, the text classifier's reading of the reference headline beside the variant, the guard and the selection rule all came that way, and the selection rule's comparison ran on the rows that score it. So every number here is exploratory, the text classifier's ranking result included, and agreement between runs on one split is not replication. The archive's confirmatory split is unopened and is the next test.
 
 \paragraph{The archive's notice.}
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.notice (about 22 percent of tests; 25 June 2013 to 10 January 2014), counts.main tests_scored 2949; $RUN6/README.md
-The main analysis excludes every test that started inside the window the archive's maintainers discourage, by date, because the file we read has no flag column. A date rule cannot see a randomization problem outside that window and drops any sound test inside it. Including the window is the ablation of Table~\ref{tab:fmt-window}, and January 2014 abstains on every row because the gap leaves its reliability reports stale, a consequence of the rule and not a finding. Version 1.0.0 of this paper's package predates this handling.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.notice (June 2024: evidence of randomization problems in about 22 percent of tests)
+In June 2024 the archive's maintainers reported evidence of randomization problems in about 22 percent of tests.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.notice (causal or confirmatory use of tests from 25 June 2013 to 10 January 2014 is discouraged), counts.main tests_scored 2949; $RUN6/README.md
+They discourage causal or confirmatory use of tests from 25 June 2013 to 10 January 2014.
+The main analysis excludes every test that started inside that window, by date, because the file we read has no flag column. A date rule cannot see a randomization problem outside that window and drops any sound test inside it. Including the window is the ablation of Table~\ref{tab:fmt-window}, and January 2014 abstains on every row because the gap leaves its reliability reports stale, a consequence of the rule and not a finding. Version 1.0.0 of this paper's package predates this handling.
 
 \paragraph{Scope.}
 % src: Section 3, the two archives; Table tab:schema and docs/tutorials/02-your-own-archive.md (the package takes any ledger of concluded contrasts with an effect and a standard error); no report measures any design below
-The evidence is on randomized A/B and A/B/n tests, mainly one publisher's headline and image tests. The package accepts other online randomized experiments, such as model launches or pricing, and those are untested. Switchback, geo and quasi-experiments are untested, and their dependence may invalidate the gates. Non-randomized studies are out of scope.
+The evidence is on randomized A/B and A/B/n tests, mainly one publisher's headline and image tests. The ledger format asks only for an effect, its standard error and the counts per arm, so the package accepts other online randomized experiments, such as model launches or pricing, and those are untested. Designs that randomize periods of time or regions and not users, and designs with no randomization of the treatment, are untested, and their dependence may invalidate the gates. Observational studies are out of scope.
 
-\paragraph{The archives and the design.} Headline tests on one publisher are one kind of change in one product. The deployment-shaped archive is too small for any gate and carries no dates, so the protocol is measured on real experiments without transfer or real drift, from one archive of each kind, one main seed and one design.
+\paragraph{The archives and the design.} Headline tests on one publisher are one kind of change in one product. The retailer's archive is too small for any gate and carries no dates, so the protocol is measured on real experiments without transfer or real drift, from one archive of each kind, one main seed and one design.
 
 \paragraph{The scores and the stand-ins.} No true effect is ever observed, so every score is against the test's own estimate, with floors and ceilings beside it. Two post-launch quantities stand in for pre-launch ones.
 \begin{itemize}
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json impressions_effect_correlation corr_log_impressions_abs_z 0.087, n_rows 10903
-\item Realized impressions stand in for the planned exposure the archives do not record. On the headline archive their log correlates 0.087 with the absolute standardized effect, which is an association and not an effect on any score.
+\item Realized impressions stand in for the planned exposure the archives do not record. On the headline archive their log correlates 0.087 with the absolute standardized effect, the effect divided by its standard error with the sign dropped. That is an association and not an effect on any score.
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median.json tables.aggregate[cell=ALL,rung=P1] logscore -0.7676, brier_skill 0.0059; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] logscore -0.7566, brier_skill 0.0023; tables/fmt-exposure-fixed.tex
-\item The effect on the scores is measured by fixing exposure at each cell's median (Table~\ref{tab:fmt-exposure-fixed}): P1's log score falls by 0.011 nats and its within-stratum AUC falls to chance, while its Brier skill rises, its interval then above zero, for a reason we have not explained. These archives cannot say whether a true planned exposure would carry the same signal, so this is a dependence on the stand-in and we do not call it a leak.
+\item The effect on the scores is measured by fixing exposure at each cell's median (Table~\ref{tab:fmt-exposure-fixed}): P1's log score falls by 0.011 nats and its ability to rank tests within an origin and cell falls to chance, while its Brier skill rises, its interval then above zero, for a reason we have not explained. These archives cannot say whether a true planned exposure would carry the same signal, so this is a dependence on the stand-in and we do not call it a leak.
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation corr_log_impressions_abs_z 0.2152, corr_log_run_length_abs_z 0.1522
-\item On the deployment-shaped archive the stand-in is the user count at the end of a run of varying length, and its log correlates 0.215 with the absolute standardized effect. The log of the run length, which no feature reads, correlates 0.152.
+\item On the retailer's archive the stand-in is the user count at the end of a run of varying length, and its log correlates 0.215 with the absolute standardized effect. The log of the run length, which no feature reads, correlates 0.152.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] event_rate 0.0854, event_rate_planned 0.0778 (tables/event-definition-upworthy.tex)
 \item The headline significant-positive event and the floor ingredients use the realized standard error. Table~\ref{tab:event-definition} also scores the event defined on the planned one, where the event rate falls from 0.0854 to 0.0778.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] brier_skill_planned rung=P1 0.0046 (0.0008, 0.0083), rung=P2 0.0058 (0.0018, 0.0095); $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json and $RUN6/backtest-synthetic-20261103-bf4fd286e2b2.json brier_skill_planned equal to brier_skill for every rung (tables/event-definition-upworthy.tex)
 \item On that planned event the skill of P1 and of P2 rises, and both intervals lie above zero, unadjusted (P1 at 0.0046, P2 at 0.0058).
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=text_lr] brier_skill_planned 0.0159 (0.0082, 0.0238)
 \item On that planned event the raw text classifier's interval also lies above zero, unadjusted, at 0.0159. So skill on this event is at most small, and whether an interval clears zero depends on the event's definition. On the other two archives the two events coincide.
-\item The deployment-shaped archive keeps two post-launch display fields, the checkpoint count and the final offset in days, at the top level of its features. No model reads them, which the feature allow-list and its test enforce, and moving them would rewrite every snapshot identifier the run folders cite.
+\item The retailer's archive keeps two post-launch display fields, the checkpoint count and the final offset in days, at the top level of its features. No model reads them, which the feature allow-list and its test enforce, and moving them would rewrite every snapshot identifier the run folders cite.
 \end{itemize}
 
 \paragraph{The gates and the families.}
@@ -43,7 +46,17 @@ Each concluded test ran once at one size, so sizing cannot be replayed. The eval
 
 \paragraph{What remains undone.}
 \begin{itemize}
-\item In the method: a Student-t predictive for the challengers, whose log scores carry the normal-family penalty of Section~\ref{sec:method}; a scale mixture over the uncertain click-through level, which might close the coverage gradient of Section~\ref{sec:calibration-results}; a held-out choice of P2's scale term; a held-out split for the guard's gain in small cells; an empirical-Bayes variance for P1's period level; and a guard between P0 and P1, for which the loop's drift rule stands in. The degrees-of-freedom grid stops at 3, and fits on that boundary are reported as they are.
+\item In the method, six things:
+\begin{itemize}
+\item The boosted model and the local comparison set issue a normal forecast, which the log score penalizes in the tails (Section~\ref{sec:method}). A Student-t forecast for them is untried.
+\item Coverage falls as the realized click-through level rises (Section~\ref{sec:calibration-results}). A forecast that mixes over the uncertain level might close that gap.
+\item The width of the precedent rung's forecast is not chosen on held-out rows.
+\item The guard's gain in small cells is not measured on a held-out split.
+\item The size of P1's period deviation is set by a fixed rule and is not estimated from the data.
+\item No guard decides between the base rate and the prior. The loop's drift rule stands in for one.
+\end{itemize}
+% src: src/mootcourt/config.py NU_GRID (3, 5, 10, 30, inf)
+The grid of degrees of freedom for the Student-t prior stops at 3. A fit on that edge might prefer a heavier tail, and such fits are reported as they are.
 \item In the protocol: planned-exposure and planned-duration columns in the exchange format, and adjusted bounds for the tables that lack them.
 \item Not run: a single-headline run of the challengers, so what the reference headline bought the text classifier is unmeasured.
 \end{itemize}

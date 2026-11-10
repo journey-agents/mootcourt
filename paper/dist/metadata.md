@@ -35,7 +35,7 @@ Release. Benchmark and Moot Court, an MIT-licensed package.
 
 ## Comments line
 
-41 pages including the appendix, 6 figures, 86 tables. Code, the data pipeline and the run folders behind every table:
+45 pages including the appendix, 6 figures, 86 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 
@@ -53,5 +53,5 @@ value with its report path) is the one file worth attaching.
 
 ## Other fields
 
-- Report number: none. Journal reference: none. DOI field: leave empty (it is for the paper's own DOI); the software release's Zenodo DOI 10.5281/zenodo.23988587 is cited in Section 10 and the README.
+- Report number: none. Journal reference: none. DOI field: leave empty (it is for the paper's own DOI); the software release's Zenodo DOI 10.5281/zenodo.23988587 is cited in Section 11 and the README.
 - ACM class (optional): G.3 Probability and Statistics; I.2.6 Learning.

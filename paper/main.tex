@@ -290,28 +290,77 @@ Cards are served as a command, a read-only service and a tool interface, each ke
 \label{sec:protocol}
 \paragraph{Rolling origin.} At each quarterly origin $t_k$, the predictors are fit on the rows visible at $t_k$ and score every admitted contrast that started in $[t_k, t_{k+1})$, with the pre-launch $s_\ast$ of Section~\ref{sec:method} as the forecast's standard error \cite{tashman2000outofsample}. The realized standard error enters only the outcome, never the forecast: it defines the significant-positive event (the observed estimate exceeds 1.96 times it), our main definition, and the floor's ingredients. The same event defined on the planned standard error is scored beside it (Table~\ref{tab:event-definition}). A guard around every fit, the challengers and their calibrators included, stops the run if any scored row was visible to the model that scored it. After the run, an audit recomputes that no fit row was usable after its origin and that $s_\ast$ equals the pre-launch value.
 
-\paragraph{Scores.} The log score and the CRPS of the $y^\ast$ predictive at the observed $y$; the Brier score of $\psig$ against the significant-positive event with its irreducible floor $\mathbb{E}[p_\theta (1 - p_\theta)]$ and Brier skill $1 - \mathrm{Brier}/\mathrm{Brier}_{\mathrm{base}}$ against the cell's visible event rate, the quantity P0 forecasts; direction accuracy against its ceiling $\mathbb{E}[\Phi(|\theta|/s)]$, on all rows and on the decisive rows ($|y| > 1.96\,s$) the winner-prediction literature scores; and, apart from skill, the area under the receiver operating characteristic curve (AUC) of each probability and its Murphy resolution term over ten equal-mass bins (biased upward by about $9/N$ times the rate times one minus the rate, so read as a ranking of rungs on the same rows). Floor and ceiling integrate the shrunken posterior of each row's true effect under the pooled prior (the Student-t replaced by the normal of the same standard deviation, a stated approximation) and sit beside every score because there is no ground truth for $\theta$; the floor is an in-hindsight bound, since it reads the realized estimate the forecast could not.
+\paragraph{Scores.} Every forecast is scored five ways:
+\begin{itemize}
+\item \textbf{log score} of the $y^\ast$ predictive at the observed $y$, in nats per row, higher better; and the \textbf{CRPS}, in the units of $y$, lower better;
+\item \textbf{Brier score} of $\psig$ against the significant-positive event, beside its irreducible floor $\mathbb{E}[p_\theta (1 - p_\theta)]$, what a forecaster who knew each true effect would score;
+\item \textbf{Brier skill} $1 - \mathrm{Brier}/\mathrm{Brier}_{\mathrm{base}}$ against the cell's visible event rate, the quantity P0 forecasts, so skill above zero means beating the base rate;
+% src: src/mootcourt/config.py Z 1.96
+\item \textbf{direction accuracy} against its ceiling $\mathbb{E}[\Phi(|\theta|/s)]$, on all rows and on the decisive rows ($|y| > 1.96\,s$) that the winner-prediction literature scores;
+% src: src/mootcourt/harness_stats.py RESOLUTION_BINS 10 (ten bins); murphy_resolution docstring, bias (n_bins - 1)/N times obar(1 - obar), so 9/N
+\item \textbf{ranking:} the area under the receiver operating characteristic curve (AUC) of each probability, and its Murphy resolution term over ten equal-mass bins. Resolution is biased upward by about $9/N$ times the rate times one minus the rate, so it is read as a ranking of rungs on the same rows.
+\end{itemize}
+Floor and ceiling integrate the shrunken posterior of each row's true effect under the pooled prior, with the Student-t replaced by the normal of the same standard deviation, a stated approximation. They sit beside every score because there is no ground truth for $\theta$. The floor is an in-hindsight bound, since it reads the realized estimate the forecast could not.
 
-\paragraph{Intervals and families.} Every score has a 90 percent percentile bootstrap interval in its report, resampling whole tests, and the tables print those the text reads. The calibration null is a draw from a calibrated world, not a resample of the data; the gate simulation uses the same 90 percent by-test criterion. The aggregate, year, calibration and decision-value tables carry Bonferroni-adjusted bounds beside the unadjusted ones (the bootstrap standard error times the normal quantile for $1 - 0.05/m$, $m$ the number of intervals in the table). Intervals in the remaining tables are read as descriptive, as are per-cell and per-year intervals unless a table prints their adjusted bounds. The pooled interval is the primary claim, a rule fixed in this paper after the data were seen (see the end of this section).
+% src: src/mootcourt/harness_stats.py LEVEL 0.90 (90 percent); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500
+\paragraph{Intervals and families.} Every score has a 90 percent percentile bootstrap interval in its report, from 500 resamples of whole tests, so the contrasts of one test stay together. The tables print only the intervals the text reads; the rest are in the reports. The calibration null and the gate simulation are simulations, not resamples, and use the same 90 percent by-test criterion.
 
-\paragraph{Calibration and coverage.} The expected calibration error against its distribution under a perfect-calibration null that draws the contrasts of one test together through a one-factor Gaussian copula whose latent correlation is solved so that the null's design effect equals the one measured on the rows (the design effect and the independent null are reported beside it), over equal-width and equal-mass bins; coverage of the 80 and 90 percent intervals for $y$; and calibration within deciles of planned exposure and coverage within deciles of the ratio of realized to planned standard error, which the forecaster never reads.
-% src: src/mootcourt/harness_stats.py NULL_DRAWS 500, the percentile resolves at most (draws - 1) / draws
-The number of null draws sets the resolution of the percentile (Table~\ref{tab:fmt-protocol}), so 100 means above every draw, and a percentile above 95 rejects calibration.
+% src: src/mootcourt/harness_stats.py apply_bonferroni, normal quantile of 1 - 0.05/family (LEVEL 0.90, two tails); tables/ece-upworthy.tex adjusted bounds (m)
+One table holds many intervals, and some would exclude zero by chance alone. So the aggregate, year, calibration and decision-value tables also print Bonferroni-adjusted bounds, chosen so that all the intervals in the table cover together with probability at least 90 percent. Each bound is the bootstrap standard error times the normal quantile for $1 - 0.05/m$, where $m$ is the number of intervals in the table. Intervals in the other tables are read as descriptive, and so are per-cell and per-year intervals unless a table prints their adjusted bounds. The pooled interval is the primary claim, a rule fixed in this paper after the data were seen (Section~\ref{sec:hypotheses}).
 
-\paragraph{Gates.} A skill claim about a group of tests, a \emph{stratum}, is decidable when its scored tests reach that stratum's gate: the size at which a simulated calibrated forecaster of that skill clears a 90 percent by-test bootstrap interval with power 0.90. One rule applies to every stratum and rung. The simulation draws tests with the base rate, the rows per test and the within-test correlation of outcomes measured on the stratum's own rows (Table~\ref{tab:fmt-gates-strata}), with calibrated probabilities from a Beta distribution whose mean is the base rate and whose variance gives the stated Brier skill exactly. A gate is a sizing convention. It assumes the calibration Section~\ref{sec:calibration-results} rejects, so a test count above it says only that the interval is worth reading, and the interval is the evidence.
+\paragraph{Calibration and coverage.} Three checks:
+\begin{itemize}
+\item \textbf{Calibration.} The expected calibration error (ECE) is the gap between forecast probability and observed frequency, averaged over bins of the forecast with each bin weighted by its rows. It is computed over equal-width and equal-mass bins. We compare it with its distribution under a perfect-calibration null, which draws each outcome from the forecast's own probability. Contrasts of one test share a reference arm, so their outcomes move together. The null therefore draws them together through a one-factor Gaussian copula. Its correlation is solved so that the null's design effect, the factor by which this sharing inflates the variance, equals the one measured on the rows. The design effect and the null with independent outcomes are reported beside it.
+% src: src/mootcourt/harness_stats.py interval_coverage of lo80/hi80 and lo90/hi90 (coverage_80, coverage_90)
+\item \textbf{Coverage} of the 80 and 90 percent intervals for $y$.
+\item \textbf{By precision.} Calibration within deciles of planned exposure, and coverage within deciles of the ratio of realized to planned standard error. The forecaster never reads the realized standard error, so this second check shows whether intervals fail where the test turned out noisier than planned.
+\end{itemize}
+% src: src/mootcourt/harness_stats.py NULL_DRAWS 500, the percentile resolves at most (draws - 1) / draws; null_percentile, 100 when above every draw
+The number of null draws sets the resolution of the percentile (Table~\ref{tab:fmt-protocol}). A percentile of 100 means the observed ECE is above every draw, and a percentile above 95 rejects calibration.
+
+% src: src/mootcourt/simulate.py DEFAULT_TARGET 0.90 (power), DEFAULT_LEVEL 0.90 (interval), GATE_SKILLS n_200 0.20, n_400 0.10, RESEARCH_TARGET 0.80
+\paragraph{Gates.} A skill claim about a group of tests, a \emph{stratum}, is decidable when its scored tests reach that stratum's gate. The gate is the number of tests at which a simulated calibrated forecaster with a given Brier skill has power 0.90 to clear zero, that is, to put the lower end of its 90 percent by-test bootstrap interval above zero. There are two gates, one for a skill of 0.20 and one for a skill of 0.10. A research screen at power 0.80 is reported beside them. One rule applies to every stratum and rung.
+
+The simulation copies the stratum: its base rate, its rows per test and the within-test correlation of outcomes measured on its own rows (Table~\ref{tab:fmt-gates-strata}). Each simulated test gets one calibrated probability, drawn from a Beta distribution whose mean is the base rate and whose variance gives the stated Brier skill exactly.
+
+A gate is a sizing convention. It assumes calibration, which Section~\ref{sec:calibration-results} rejects, so a test count above it says only that the interval is worth reading; the interval is the evidence.
+
 % src: $RUN6/gates.json by_base_rate["0.09"].icc 0.13, by_base_rate["0.30"].icc 0.13, dependence_source "the public archive nearest this base rate"; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json gates_by_stratum.strata.ALL.dependence.icc 0.197; docs/method.md call 183 (values measured on earlier backtests, kept in simulate.SOURCE_DEPENDENCE)
-The package's harness still reads an older simulation at three fixed base rates (Table~\ref{tab:gates}), whose correlation for each rate is assumed from the public archive nearest it and was measured on an earlier backtest: 0.13 at the headline archive's base rate, where this run's rows measure 0.20. Its verdicts agree with the rule above on every stratum here.
+The package itself still labels its reports with an older simulation at three fixed base rates (Table~\ref{tab:gates}). There, the correlation for each rate was taken from the nearest public archive on an earlier backtest. At the headline archive's base rate it assumed 0.13, where this run's rows measure 0.20. Its verdicts agree with the rule above on every stratum of both archives.
 
-\paragraph{Decision value.} For each origin, a budget of $K$ tests, a share of the period's tests (Table~\ref{tab:fmt-protocol}), is chosen three ways: at random, whose expected capture is exactly $K/n$ by linearity; by $\pwin$ (a test's score is its largest contrast's); and by an oracle that knows the outcome, a test's value being its best positive observed lift. Decision value is the share of the period's realized positive lift a policy captures, taken as a difference from the random order or from the random order matched on the number of arms. A test with more arms has a larger best lift, so the matched order is the baseline a rung must beat (Section~\ref{sec:decision-results}). We report each with the regret against the oracle and a 90 percent bootstrap interval by test within origin. A rung whose $\pwin$ is constant within a cell (P0, and P1 and P2 wherever $\lambda = 0$) chooses by cell and then at random, so its capture differs from random order only through between-cell differences.
+% src: src/mootcourt/decision_value.py BUDGETS (0.25, 0.10, 0.50), main 0.25 (Table tab:fmt-protocol); POLICIES random, random_matched, arm_count, p_win, oracle (five)
+\paragraph{Decision value.} At each origin, a team with a budget of $K$ tests picks which of the period's $n$ tests to run. The budget is 25 percent of the period's tests, with 10 and 50 percent reported beside it (Table~\ref{tab:fmt-protocol}). A test's value is its best positive observed lift, or zero if every contrast lost, in the units of $y$. Five orders pick the $K$ tests:
+\begin{itemize}
+\item \textbf{random}, whose expected capture is exactly $K/n$ of the period's value, by linearity;
+\item \textbf{random matched on arms}: random within groups of tests with the same number of arms, matched to the arm counts of the set a rung picks;
+\item \textbf{arm count}: the tests with the most contrasts, reading no forecast;
+\item \textbf{$\pwin$}: a test's score is its largest contrast's $\pwin$ under a rung;
+\item \textbf{oracle}: the tests with the highest value, which needs the outcome.
+\end{itemize}
+% src: src/mootcourt/decision_value.py LEVEL 0.90, BOOTSTRAP 500 resamples of tests within each origin
+Decision value is the share of the period's value an order captures, read as a difference from random order or from random order matched on arms. A test with more arms has a larger best lift by chance alone, and its arm count is known before launch. So the matched order is the baseline a rung must beat (Section~\ref{sec:decision-results}). Each order is reported with its regret against the oracle and a 90 percent bootstrap interval that resamples tests within each origin. A rung whose $\pwin$ is constant within a cell (P0, and P1 and P2 wherever $\lambda = 0$) chooses by cell and then at random, so its capture differs from random order only through differences between cells.
 
-% src: src/mootcourt/sizing.py AUDIENCE_MULTIPLES 5, 20, 100, PRIMARY_MULTIPLE 20, POWER_REL_LIFT 0.10, POWER_LEVEL 0.80, POWER_ALPHA 0.05; docs/superpowers/plans/2026-11-06-x10-sizing-design.md, fixed before any sizing number existed
-\paragraph{Test size.} A concluded test ran once, at one size, so sizing cannot be replayed. We measure two things instead. First, whether the forecast probability of a significant positive result at the size a test had matches the realized rate across five equal-mass bins of exposure (Table~\ref{tab:fmt-assurance}). Second, in simulation, the regret of three sizing rules in the test-and-roll frame \cite{feit2019test}: a page has a synthetic audience, a multiple of the cell's median planned exposure with no money attached, a rule sets the impressions per arm, and the arm with the higher observed rate gets the rest. Each rule reads only data visible at the origin.
+\paragraph{Test size.} A concluded test ran once, at one size, so sizing cannot be replayed. We measure two things instead, on the headline archive only.
+
+% src: src/mootcourt/sizing.py sizing_assurance n_bins 5 (five equal-mass bins of exposure); docs/superpowers/plans/2026-11-06-x10-sizing-design.md "upworthy only"
+First, we check whether the forecast probability of a significant positive result, at the size a test actually had, matches the realized rate across five equal-mass bins of exposure (Table~\ref{tab:fmt-assurance}).
+
+Second, we simulate the test-and-roll problem \cite{feit2019test}, in three steps:
+\begin{enumerate}
+% src: src/mootcourt/sizing.py AUDIENCE_MULTIPLES 5, 20, 100, PRIMARY_MULTIPLE 20; n_med median exposure of the cell's visible rows
+\item A page has an audience of 20 times the median exposure of the cell's visible rows, with 5 and 100 times beside it.
+\item A rule sets the impressions per arm.
+\item The arm with the higher observed rate is shown to the rest of the audience.
+\end{enumerate}
+Gain is counted in clicks, with no money attached. Each rule reads only data visible at the origin.
 \begin{itemize}
 \item The \emph{prior rule} maximizes expected gain under P1's prior.
 \item The \emph{base-rate rule} maximizes it under a normal prior whose spread reproduces the cell's visible rate of significant positive results.
+% src: src/mootcourt/sizing.py POWER_LEVEL 0.80, POWER_ALPHA 0.05, POWER_REL_LIFT 0.10
 \item The \emph{fixed power rule} takes the size with 80 percent power at the 5 percent level for a 10 percent relative lift.
 \end{itemize}
-Regret is measured under a world that is not the prior being tested: a nonparametric distribution of effects fitted to the rows scored at that origin and cell, with worlds scaled narrower and wider beside it (Table~\ref{tab:fmt-sizing}). A design note fixed all of this before any sizing number existed.
+% src: src/mootcourt/sizing.py WORLD_SCALES 1.0, 0.67, 1.5 (effects theta times the scale); npmle (Kiefer and Wolfowitz); design note, relative regret
+A rule's regret is what it loses against an oracle that shows the better arm to the whole audience. The primary figure is relative regret: regret summed over origins and cells, divided by the summed oracle gain. Regret is measured in a world that is not the prior being tested: the nonparametric maximum-likelihood distribution of effects fitted to the rows scored at that origin and cell, with its effects scaled by 0.67 and 1.5 beside it (Table~\ref{tab:fmt-sizing}). A design note fixed all of this before any sizing number existed.
 
 \begin{table}[t]\centering\scriptsize
 % src: src/mootcourt/config.py; src/mootcourt/reliability.py MIN_DRIFT_N 10; src/mootcourt/harness_stats.py NULL_DRAWS 500; $RUN6/gates.json target_power 0.9, research_target 0.8; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value budget 0.1, 0.25, 0.5; src/mootcourt/sizing.py
@@ -392,11 +441,20 @@ The plan's six hypotheses, verbatim (Section~\ref{sec:verdicts} gives when they 
 % src: paper/plan.md line 32, verbatim
 \item[H6] On ASOS every gate is undecidable and P2 equals P1 (cell-only features); the paper reports this as the expected outcome.
 \end{enumerate}
-Each is read on its claim parts from the pooled interval of the table Section~\ref{sec:verdicts} names; per-cell and per-year intervals are descriptive. A clause stating the condition under which a part is read (a decidable gate, a quantity reported as is) is not a part. This rule was fixed in this paper after the data were seen. Under it the second hypothesis's final-origin part and the third's most-origins part are read pooled, and Section~\ref{sec:verdicts} also gives each as written. The fifth hypothesis names random order; its verdict reads the stricter order matched on the number of arms, and Section~\ref{sec:verdicts} gives both. A part takes one of three words, and a part read two ways takes one for each.
+The plan's words map to this paper's as follows: \emph{burn-in} is the first origin; \emph{issued cards} are rows whose card does not abstain; \emph{the released gate (power 0.90)} is the gate defined above; \emph{the final origin} is read two ways in Section~\ref{sec:verdicts}, as the last calendar origin and as the last origin with enough tests to clear a gate.
+
+We read the hypotheses by rules fixed in this paper after the data were seen:
+\begin{itemize}
+\item Each hypothesis is split into claim parts, and each part is read from the pooled interval of the table Section~\ref{sec:verdicts} names. Per-cell and per-year intervals are descriptive.
+\item A clause that states when a part can be read is not a part. In H2, ``the released gate is decidable there'' says when skill can be read; it is not a claim that can hold or fail. The same goes for H5's ``regret reported as is''.
+\item H2's final-origin part and H3's most-origins part are read pooled. Section~\ref{sec:verdicts} also gives each as written.
+\item H5 names random order. Its verdict reads the stricter order matched on the number of arms, and Section~\ref{sec:verdicts} gives both.
+\end{itemize}
+A part takes one of three words, and a part read two ways takes one for each:
 \begin{itemize}
 \item \emph{Held}: the reading meets the part's claim.
 \item \emph{Failed}: the estimate lies on the wrong side of the claim, or a test of the claim rejects it.
-\item \emph{Not shown}: the estimate lies on the claim's side and its interval also contains no effect, so this run cannot tell the claim from its absence. A part not shown has not failed.
+\item \emph{Not shown}: the estimate lies on the claim's side, but its interval also contains no effect, so this run cannot tell the claim from its absence. A part not shown has not failed.
 \end{itemize}
 A hypothesis whose parts differ is marked \emph{in part}.
 

@@ -306,7 +306,7 @@ def gates_strata(r):
     families = {rep.get(f"{top}.{s}.family_size") for s in ("ALL", "headline_only", "image_only", "both")}
     if len(families) != 1:
         raise ValueError("the headline archive's strata hold different families")
-    family_note = join("Brier skill with adjusted interval (family of {} on the headline archive, {} on the deployment-shaped one)",
+    family_note = join("Brier skill with adjusted interval (family of {} on the headline archive, {} on the retailer's)",
                        n(rep, f"{top}.ALL.family_size"), n(asos, f"{top}.ALL.family_size"))
     return Table("fmt-gates-strata", "lrrrrrrl",
                  ["stratum & tests & base & rows & within-test & gate, skill & gate, skill & decidable", " & & rate & per test & corr. & 0.20 & 0.10 & "], [
@@ -314,7 +314,7 @@ def gates_strata(r):
         gate_row("headline-only", rep, "headline_only"),
         gate_row("image-only", rep, "image_only"),
         gate_row("smallest", rep, "both"),
-        gate_row("deployment-shaped, pooled", asos, "ALL"),
+        gate_row("retailer, pooled", asos, "ALL"),
         Raw(r"\midrule"),
         [join(r"\multicolumn{{8}}{{@{{}}l}}{{\emph{{{}}}}}", family_note)],
         Raw(r"stratum & \multicolumn{2}{r}{P1} & \multicolumn{2}{r}{P2} & \multicolumn{3}{r}{text classifier} \\"),
@@ -323,7 +323,7 @@ def gates_strata(r):
         skill_row("headline-only", rep, "headline_only"),
         skill_row("image-only", rep, "image_only"),
         skill_row("smallest", rep, "both"),
-        skill_row("deployment-shaped, pooled", asos, "ALL"),
+        skill_row("retailer, pooled", asos, "ALL"),
     ])
 
 
