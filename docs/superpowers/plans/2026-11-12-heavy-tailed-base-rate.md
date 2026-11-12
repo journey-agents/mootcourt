@@ -65,3 +65,27 @@ origins, rows and seed of run 8. Its report is `ablations/backtest-upworthy-<sna
 
 - The code gives a cell with fewer than five visible rows the normal density (`_MIN_ROWS_T` in `p0.py`). This rule was in the committed code before the run and is missing from the list above. Every scored cell and origin of run 8 has far more visible rows, so it did not act.
 - A review of the result pointed out that the gain against the heavy-tailed base rate is not separated from the traffic stand-in: the prior reads the row's standard error and the base rate does not. The paper says so and prints no number for the part that would survive a fixed exposure, since no run combines the two settings.
+
+## A second run: the same comparison with exposure fixed (written 12 November 2026, before its result exists)
+
+Why. The prior reads each row's standard error, which the archive supplies from realized traffic, and the base rate reads none. Two
+reviewers of the first result asked how much of the 0.020 nats survives when that stand-in is removed. The existing ablation
+`--exposure cell-median` gives every row of a cell the cell's median exposure. No run combines it with the Student-t base rate, so the
+paper could only set two pooled means side by side.
+
+What was seen before this was written. From two separate reports, P1's pooled log score with exposure fixed is minus 0.7676 and the
+Student-t base rate's is minus 0.7761, a difference of about 0.009 with no interval. Nothing from a run with both settings has been seen.
+
+What is added. One more ablation of the headline archive, with both settings and nothing else changed:
+`moot backtest --source upworthy --bootstrap 500 --base-density t --exposure cell-median`. No code changes; the setting joins the list in
+`scripts/run_ablations.sh`.
+
+Decisions fixed now.
+
+1. Primary reading: P1 minus the Student-t base rate on the pooled log score with exposure fixed, with the report's unadjusted 90 percent
+   interval by test.
+2. Words: above zero wholly, "the prior's lead over a heavy-tailed base rate survives a fixed exposure"; containing zero, "not shown to
+   survive"; below zero wholly, "the heavy-tailed base rate is ahead once exposure is fixed".
+3. Either way the paper prints the number beside the 0.020 and replaces the sentence that says no run combines the two settings.
+4. It does not show what a true planned exposure would give: fixing exposure at the cell median removes all variation in the row's
+   standard error within a cell, which is more than removing the realized part of it.

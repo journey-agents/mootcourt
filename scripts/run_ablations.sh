@@ -37,6 +37,7 @@ case "$SOURCE" in
       "--admission prelaunch"
       "--contrasts one"
       "--effect-scale relative" "--s-star realized" "--exposure cell-median"
+      "--base-density t --exposure cell-median"
       "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;
   asos)
