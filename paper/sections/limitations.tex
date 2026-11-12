@@ -36,6 +36,10 @@ The evidence is on randomized A/B and A/B/n tests, mainly one publisher's headli
 \item The captured lift of a test is its best positive observed lift, and the largest of several noisy arms is larger by chance alone. The matched baseline removes the part of that inflation that follows arm count. Whether what remains inflates a ranking result is a reading we did not test (Section~\ref{sec:decision-results}).
 \end{itemize}
 
+%% tmlr:move-begin morelimits
+%% tmlr:note morelimits Limits of the gates, of the interval families and of the sizing evaluation, and the work that remains undone, are in Appendix~\ref{sec:more-limits}.
+%% tmlr:title morelimits Further limits
+\label{sec:more-limits}
 \paragraph{The gates and the families.}
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate family_size 52, tables.score_by_year family_size 156, tables.decision_value family_size 6
 The gate sizes assume the calibration the backtest is meant to judge, so we read the gates as a sizing convention and rest every claim on its interval. The aggregate and year tables of the headline archive read 52 and 156 intervals, with adjusted bounds beside them. The decision table reads six per budget, and the gate, paired ranking and sizing tables adjust within the smaller families their captions name. The remaining tables, the calibration tables among them, carry no adjusted bounds and are read as descriptive.
@@ -63,6 +67,7 @@ Each concluded test ran once at one size, so sizing cannot be replayed. The eval
 \item In the protocol: planned-exposure and planned-duration columns in the exchange format, and adjusted bounds for the tables that lack them.
 \item Not run: a single-headline run of the challengers, so what the reference headline bought the text classifier is unmeasured.
 \end{itemize}
+%% tmlr:move-end morelimits
 
 \paragraph{Ethics, data norms and misuse.} Both archives are aggregate, published under CC BY 4.0 and credited by name. Nothing in the system ingests user-level data, and only the exploratory split of the headline archive is used (Section~\ref{sec:setting}). The system never decides: it forecasts a result, ranks candidates and can suggest a size, and the live test decides. Three misuses are foreseeable.
 \begin{itemize}

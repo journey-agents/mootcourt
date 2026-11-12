@@ -156,3 +156,21 @@ def test_with_a_stubs_marker_the_pointer_sentences_form_one_paragraph_there(pape
     assert "\\paragraph{Reported in the appendix.} Sizing is reported in Appendix~\\ref{sec:sizing}." in body
     assert body.index("After the block.") < body.index("\\paragraph{Reported in the appendix.}") < body.index("Last line.")
     assert body.count("Sizing is reported") == 1 and "tmlr:" not in body
+
+
+def test_a_block_of_paragraphs_takes_a_title_and_leaves_a_note_in_place():
+    lines = ["Before.", "%% tmlr:move-begin limits", "%% tmlr:note limits More limits are in Appendix~\\ref{sec:more}.",
+             "%% tmlr:title limits Further limits", "\\label{sec:more}", "\\paragraph{One.} Text.", "%% tmlr:move-end limits", "After.",
+             "%% tmlr:stubs-here", "\\appendix", "\\section{Old}"]
+    out = tb.move_blocks(lines)
+    body, appendix = out[: out.index("\\appendix")], out[out.index("\\appendix"):]
+    assert "More limits are in Appendix~\\ref{sec:more}." in body and body.index("Before.") < body.index("After.")
+    assert not any("Reported in the appendix" in line for line in body)          # a note is not gathered with the stubs
+    assert appendix.index("\\section{Further limits}") < appendix.index("\\paragraph{One.} Text.") < appendix.index("\\section{Old}")
+
+
+def test_a_reference_to_a_moved_section_says_appendix(paper):
+    main = paper / "main.tex"
+    main.write_text(main.read_text().replace("Body text.", "Body text (Section~\\ref{sec:sizing}; Section~\\ref{sec:intro})."))
+    text = tb.assemble(paper)
+    assert "Appendix~\\ref{sec:sizing}; Section~\\ref{sec:intro}" in text

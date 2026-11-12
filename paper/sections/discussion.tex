@@ -42,7 +42,7 @@ The edge may be traffic and not precedents. A policy that reads only the exposur
 \item The text classifier's skill on significance has the same dependence: its interval spans zero at realized precision and lies above zero, unadjusted, at planned precision (Section~\ref{sec:limitations}).
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_decision_value (tables/fmt-ranking-paired.tex: planted ledgers, text classifier minus P1 -0.0119 and -0.0199)
 \item The text classifier fails the planted control on skill and ranks below P1 there, so the control neither validates nor explains its value on the real archive. The control shows only that this classifier does not read a planted lift of this size, tied to one word in the headline, on a synthetic ledger. What it reads on the real archive is left open.
-\item Issued rows score above abstained rows on the log score, on row sets that differ in origin and cell, and not on Brier skill, so abstention is not shown to improve what is issued on this archive (Section~\ref{sec:abstention-results}). We designed it as a filter on quality and revised that purpose after this result. It stays as a label of evidence: it names which of the four conditions the forecast met, thin, novel, stale or drifted evidence, and claims nothing about the forecast's quality. The card prints beside every forecast the latest gated skill of its cell, or the pooled figure, labelled, when the cell is undecidable.
+\item Issued rows score above abstained rows on the log score, on row sets that differ in origin and cell, and not on Brier skill, so abstention is not shown to improve what is issued on this archive (Section~\ref{sec:abstention-results}). We designed it as a filter on quality and revised that purpose after this result. It stays as a label of evidence: it names which of the four triggers fired (thin support, novelty, a stale or drifted reliability record, or an unstable decision) and claims nothing about the forecast's quality. The card prints beside every forecast the latest gated skill of its cell, or the pooled figure, labelled, when the cell is undecidable.
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json sizing_evaluation.test_and_roll.by_audience["20"].paired_differences.prior_minus_base_rate estimate -0.0016, adjusted_lo -0.0042, adjusted_hi 0.0010 (tables/fmt-sizing.tex)
 \item Sizing was evaluated on a synthetic horizon, with no money involved (Table~\ref{tab:fmt-sizing}).
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json sizing_evaluation.test_and_roll primary_multiple 20, by_audience["20"].paired_differences.prior_minus_base_rate estimate -0.0016, adjusted_lo -0.0042, adjusted_hi 0.0010; prior_minus_power adjusted (-1.349, -1.083), relative regret, lower is better (tables/fmt-sizing.tex)
@@ -64,12 +64,16 @@ Without the guard the selected weight still costs 0.004 nats under the default s
 \item Not tested, so these are candidates and not findings: recording planned exposure, stronger text models, choosing the width of the precedent rung's forecast on held-out rows, and team forecasts frozen before launch.
 \end{itemize}
 
+%% tmlr:move-begin production
+%% tmlr:note production Notes on using the package in production, where it has not been deployed, are in Appendix~\ref{sec:production}.
+%% tmlr:title production Using this in production
+\label{sec:production}
 \paragraph{Using this in production.} This system has never been deployed in a production experimentation platform, and the evidence is a replay. What it offers a team is a way to test forecasts on its own ledger. It needs only aggregates, and the ledger never leaves the organization. The order of use is fixed.
 \begin{enumerate}
 \item Import the concluded experiments and run the backtest on them first. That report, not this paper's numbers, says whether forecasts can be trusted on that ledger and how many tests it takes to tell.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,policy=p_win,rung=P2] diff_matched_adjusted_lo 0.0018 at budget 0.10, -0.0026 at 0.25, -0.0203 at 0.50; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json ranking_paired.budgets differences.P2_minus_arm_count (-0.0249, 0.0008) at "0.10", (-0.0554, -0.0149) at "0.25", (-0.0830, -0.0375) at "0.50"
 \item Where a claim is decidable, use a card before launch to see what result to expect. Ranking candidate tests by the card beats a random order matched on arm count at a tenth of the tests only, after adjustment. A rule that only counts arms captured more lift than the card did, with a paired interval below zero at a quarter and a half of the tests, so a team should check ranking on its own backtest before relying on it. A card can also suggest a size, and its value over a base rate is not shown.
-\item Join outcomes weekly. The card abstains when evidence is thin, novel, stale or drifted, which labels the evidence and is not shown to improve what is issued.
+\item Join outcomes weekly. The card abstains on thin support, novelty, a stale or drifted reliability record or an unstable decision, which labels the evidence and is not shown to improve what is issued.
 % src: $RUN6/replay-upworthy-20261106-2dc461f52ea4.json totals.n_flagged_weeks 6, header.n_weeks 111, weeks[].drifted_cells both only (tables/replay-upworthy.tex); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=both,rung=P1] n_tests 173, the fewest of the three cells
 On this archive the weekly loop flagged drift in 6 of 111 weeks, all in the smallest cell (Section~\ref{sec:drift-results}).
 Anything above the prior must earn its place on a paired, gated comparison.
@@ -81,3 +85,4 @@ Four limits apply to that use.
 \item This paper makes no promise of improvement on product experiments, because the one archive of them is undecidable.
 \item A team that ranks by the forecast selects its own future ledger, so rows should record whether a card influenced the test (Section~\ref{sec:limitations}).
 \end{itemize}
+%% tmlr:move-end production

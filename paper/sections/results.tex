@@ -106,6 +106,10 @@ P1's skill on which test will be significant is at most small, and it depends on
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate rung=P1 cell=image_only brier_skill_lo 0.0034, adjusted_lo -0.0030, family_size 52
 The per-cell intervals are descriptive. The image-only interval lies above zero, and adjusted for the 52 intervals of the aggregate table it spans zero. In the main run the headline-only and smallest-cell intervals span zero.
 
+%% tmlr:move-begin gatesres
+%% tmlr:note gatesres The pooled archive and its two larger cells clear the gates of Section~\ref{sec:protocol}, and the smallest cell and the retailer's archive do not (Appendix~\ref{sec:gates-detail}).
+%% tmlr:title gatesres Gates and decidability on the headline archive
+\label{sec:gates-detail}
 \paragraph{Gates and decidability.}
 \label{sec:gates-results}
 % src: $RUN6/gates.json interval.level 0.9, decision target 0.90; by_base_rate["0.09"] n_200 175, n_400 250, against the smallest cell's own 275 and 450 (tables/fmt-gates-strata.tex)
@@ -133,6 +137,7 @@ Families matter at this scale. The lower block of the table adjusts for a family
 \label{tab:main-upworthy}
 \resizebox{0.85\textwidth}{!}{\input{tables/main-upworthy}}
 \end{table*}
+%% tmlr:move-end gatesres
 
 \paragraph{Precedents.}
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_admitted 4, pairs_in_selection 21; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.p2_selection_by_cell, tables.p2_selection[].selection forward (src/mootcourt/config.py P2_SELECTION_DEFAULT)
@@ -290,7 +295,7 @@ Table~\ref{tab:fmt-drift-null} asks a narrower question. Its null draws outcomes
 \end{table}
 
 Table~\ref{tab:fmt-deciles} reads P1 by two sets of deciles (with Table~\ref{tab:calibration-upworthy} and Figure~\ref{fig:coverage-exposure}, Appendix~\ref{app:tables}). Across deciles of planned exposure the mean forecast rises from the first decile to the last, and the realized rate rises by less and not steadily (Table~\ref{tab:calibration-upworthy}), which Section~\ref{sec:sizing-results} takes up. The ranges in Table~\ref{tab:fmt-deciles} run from the lowest decile value to the highest, so they are not a change from first to last.
-Across deciles of the ratio of realized to planned standard error the picture changes (Figure~\ref{fig:coverage}). The ratio spans so wide a range because the forecaster fixes the click-through level at the cell median while the realized level moves; a higher realized level means a larger realized standard error, so the ratio exceeds one. From the lowest ratio to the highest, P1's coverage falls while its mean $\psig$ stays nearly flat and the event rate rises. Row by row the intervals are too wide at one end and too narrow at the other, and they average to nominal. The absolute-difference scale still couples the effect with the level, in a milder form than the cautionary run. A scale mixture over the uncertain level might adapt to this and is not built (Section~\ref{sec:limitations}).
+Across deciles of the ratio of realized to planned standard error the picture changes (Figure~\ref{fig:coverage}). The ratio spans so wide a range because the forecaster fixes the click-through level at the cell median while the realized level moves; a higher realized level means a larger realized standard error, so the ratio exceeds one. From the lowest ratio to the highest, P1's coverage falls while its mean $\psig$ stays nearly flat and the event rate rises. Row by row the intervals are too wide at one end and too narrow at the other, and they average to nominal. The absolute-difference scale still couples the effect with the level, in a milder form than the cautionary run. A scale mixture over the uncertain level might adapt to this and is not built (\iftmlr Appendix~\ref{sec:more-limits}\else Section~\ref{sec:limitations}\fi).
 
 % Figure 1: paper/figures/coverage-se-upworthy.pdf, drawn by scripts/paper_figures.py from $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.coverage_by_se_ratio (coverage_80, coverage_90 by rung and decile) and tables.aggregate[cell=ALL] coverage_80, coverage_90 (open markers); every plotted value is listed in paper/figures/figures.json.
 \begin{figure}[t]\centering

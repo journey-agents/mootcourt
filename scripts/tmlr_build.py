@@ -12,7 +12,9 @@ main file, ``paper/tmlr-submission.tex``, from the same text, so the two version
    cut from the body and placed at the start of the appendix, in the order of the blocks; a first ``\\subsection`` heading of a moved
    block becomes a ``\\section`` (inside it ``\\paragraph`` stays). A line ``%% tmlr:stub ID TEXT`` right after the begin marker gives the
    sentence left in the body where the block was; with a line ``%% tmlr:stubs-here`` in the sources the stub sentences are gathered
-   there as one paragraph, in the order of the blocks.
+   there as one paragraph, in the order of the blocks. ``%% tmlr:note ID TEXT`` is a pointer that always stays in place, and
+   ``%% tmlr:title ID TITLE`` gives an appendix heading to a block that has none of its own (a run of paragraphs). A reference
+   ``Section~\\ref{sec:X}`` to a label inside a moved block becomes ``Appendix~\\ref{sec:X}``.
 4. Bibliography style. ``ACM-Reference-Format`` becomes ``tmlr`` when ``paper/tmlr/tmlr.bst`` exists and ``plainnat`` otherwise.
 5. Layout and name. Floats are placed where they are cited and tables keep their natural size up to the text width
    (``single_column_layout``). The package's name is replaced by a neutral one (``withhold_name``), since the name leads to the repository.
@@ -40,6 +42,8 @@ _INPUT = re.compile(r"^\\input\{sections/([A-Za-z0-9_-]+)\}\s*$")
 _BEGIN = re.compile(r"^%% tmlr:move-begin (\S+)\s*$")
 _END = re.compile(r"^%% tmlr:move-end (\S+)\s*$")
 _STUB = re.compile(r"^%% tmlr:stub (\S+) (.+)$")
+_NOTE = re.compile(r"^%% tmlr:note (\S+) (.+)$")
+_TITLE = re.compile(r"^%% tmlr:title (\S+) (.+)$")
 STUBS_HERE = "%% tmlr:stubs-here"
 # tables too wide to read at the text width of one column; they are set on a turned page
 SIDEWAYS = ("tab:glance", "tab:main-upworthy")
@@ -92,6 +96,10 @@ def move_blocks(lines: list[str]) -> list[str]:
             stubs.append(s.group(2))
             if not gather:
                 body += ["", s.group(2), ""]
+        elif _NOTE.match(line) and current == _NOTE.match(line).group(1) and not block:
+            body += ["", _NOTE.match(line).group(2), ""]          # a pointer that stays where the block was, never gathered
+        elif _TITLE.match(line) and current == _TITLE.match(line).group(1) and not block:
+            block.append("\\section{" + _TITLE.match(line).group(2) + "}")          # a block with no heading of its own
         elif current is not None:
             block.append(line)
         else:
@@ -107,7 +115,10 @@ def move_blocks(lines: list[str]) -> list[str]:
     if len(at) != 1:
         raise ValueError("the sources must hold exactly one \\appendix line")
     flat = [line for blk in moved for line in ["", *blk]]
-    return body[: at[0] + 1] + flat + body[at[0] + 1:]
+    out = body[: at[0] + 1] + flat + body[at[0] + 1:]
+    labels = {m for line in flat for m in re.findall(r"\\label\{(sec:[^}]+)\}", line)}
+    word = re.compile(r"Section~\\ref\{(" + "|".join(sorted(re.escape(x) for x in labels)) + r")\}") if labels else None
+    return [word.sub(lambda m: "Appendix~\\ref{" + m.group(1) + "}", line) for line in out] if word else out
 
 
 def _promote(block: list[str]) -> list[str]:
