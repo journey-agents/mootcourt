@@ -98,3 +98,68 @@ Seed and resample count are the ablation report's (0 and 500).
 - Part B code: `scripts/by_origin_difference.py`, with a test on a small frame.
 - Both are committed before anything runs. The run folder's README names the commit, and the paper's Versions list does too.
 - Tables come from the reports through `paper/summary_tables/`.
+
+## Notes added after the runs (12 November 2026)
+
+- Code commit 3971829. Part A ran as three stages of `scripts/run_experiments.sh --only` and Part B as two calls of
+  `scripts/by_origin_difference.py` on the saved scores of the two Student-t ablations. The targeted tests passed before the commit;
+  the full suite was run afterwards on the final state of the branch, not before the commit.
+- The equalities hold in all three Part A reports: the log score of every rung and the Brier score of P1 and P2 are the main run's.
+- Part B reproduces the pooled differences of the two ablation reports (0.01955 and 0.00854).
+- Nothing in the method was changed after the results were seen.
+
+## Second addendum: three additions asked for by a second reading (written 12 November 2026, before their results exist)
+
+A second, fresh referee report on the revised paper asked for three things that need new numbers.
+
+### What was seen before this was written
+
+- Everything above, with the results of Parts A and B.
+- The referee computed, from the seven by-origin differences printed in the Part B reports, a t interval on their mean, and reported
+  that it spans zero for both Student-t comparisons (roughly minus 0.006 to 0.030, and minus 0.012 to 0.022 with exposure fixed) and
+  stays clear of zero for the normal base rate. No report key holds these.
+- Nothing from a forecaster without history, and nothing from an exposure fixed at a median over visible rows, has been computed or seen.
+
+### Part C: quarters as the unit
+
+`scripts/by_origin_difference.py` gains one key, `origin_level`: the mean of the origin differences with a 90 percent Student-t interval
+on those values (degrees of freedom one less than their count). The script is also run on the main run's scores, so the normal base
+rate has the same reading.
+
+Decisions. An interval that contains zero: the paper says the lead is not shown once quarters are the units, in the abstract and the
+conclusion as well as the results. An interval above zero: the paper says the lead holds with quarters as units. Seven values are few,
+and the interval assumes they are exchangeable, which the paper says. The pooled by-test interval stays in the tables as the description
+of these rows.
+
+### Part D: a reference that reads no history
+
+No model is run. A script reads saved scores and scores, on the same rows, a forecaster that knows only each row's planned standard
+error and assumes no effect: a normal density centred on zero with that standard error. It writes the log score of that reference and
+the paired differences of P1 and of P0 from it (pooled, with the interval by test, and by origin). It runs on the main run's scores
+(P0 with a normal density) and on the Student-t ablation's scores.
+
+Decisions. Primary reading: P0 minus the reference and P1 minus the reference on the pooled log score. Above zero wholly: "a forecast
+fitted to past tests beats one that reads none", which is what the title asks at its weakest. This reference is a floor and not a
+serious opponent: it denies that tests differ at all. The paper says so and does not present a large gap as a discovery. A fixed
+heavy-tailed density chosen without the archive is not scored, because its scale would have to be chosen, and any choice made now has
+seen the archive. If either difference contains zero or lies below it the paper says history is not shown to help even against that floor.
+
+### Part E: exposure fixed without reading later rows
+
+The setting `--exposure cell-median` gives every row its cell's median exposure over the whole ledger, rows after the origin included.
+The referee is right that this breaks the paper's visibility rule. A second mode, `--exposure cell-median-visible`, gives each row
+the median exposure of its cell over the admitted rows that were usable by the start of the calendar quarter in which the row's test
+started, which is the set visible at the row's origin. A row with no such earlier rows (the first quarters, which are burn-in and are
+not scored) takes the earliest median its cell has.
+
+Two ablations: `--exposure cell-median-visible` and `--base-density t --exposure cell-median-visible`, on the ledger, origins and seed
+of run 8, 500 resamples. Part B's script is run on the second.
+
+Decisions. The paper relabels the whole-ledger run as a diagnostic that reads later rows wherever it is quoted. Primary reading of the
+new runs: P1 minus the Student-t base rate on the pooled log score, by test, and its leave-one-origin-out and quarter-level readings;
+secondary, P1's Brier skill from the first run. If the new figures agree in sign and reading with the whole-ledger ones, the paper
+reports the visible-median figures as the ones that obey the rule and keeps the others in the table as the diagnostic. If they
+disagree, the paper reports the visible-median figures and says the earlier reading depended on later rows. The other tables that read
+the whole-ledger run (ranking within strata, calibration by exposure) are not rerun; the paper says which run each reads.
+
+Nothing in the method changes because of these results.

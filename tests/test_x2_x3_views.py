@@ -3,6 +3,7 @@
 import json
 
 import numpy as np
+import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
@@ -63,6 +64,31 @@ def test_cell_median_exposure_is_constant_within_a_cell_and_leaves_y_and_s(imp, 
         assert np.allclose(s_star[g.index], s_star[g.index[0]])
 
 
+def test_cell_median_exposure_over_visible_rows_reads_nothing_after_the_quarter_start(imp, make_synth):
+    scale = imp("mootcourt.scale")
+    ledger = _upworthy_like(make_synth)
+    half = len(ledger) // 2
+    early, late = ledger.index[:half], ledger.index[half:]
+    for rows, month in ((early, 2), (late, 5)):
+        ledger.loc[rows, "started_at"] = pd.Timestamp(2014, month, 1, tz="UTC")
+        ledger.loc[rows, "usable_after"] = pd.Timestamp(2014, month, 10, tz="UTC")
+    ledger.loc[late, ["n_ref", "n_var"]] = ledger.loc[late, ["n_ref", "n_var"]].to_numpy() * 50      # later tests get far more traffic
+    view = scale.cell_median_exposure_ledger(ledger, visible_only=True)
+    expo, raw = scale.planned_exposure(view), scale.planned_exposure(ledger)
+    adm = (ledger["status"] == "admitted").to_numpy()
+    for cell in ledger["cell"].unique():
+        in_cell = (ledger["cell"] == cell).to_numpy()
+        e, la = np.flatnonzero(in_cell & ledger.index.isin(early)), np.flatnonzero(in_cell & ledger.index.isin(late))
+        if len(e) == 0 or len(la) == 0:
+            continue
+        seen = float(np.median(raw[in_cell & adm & ledger.index.isin(early)]))
+        assert np.allclose(expo[la], seen, atol=1.0)                    # the second quarter reads only the first quarter's rows
+        assert np.allclose(expo[e], seen, atol=1.0)                     # the first quarter has no earlier rows: the earliest median
+        whole = scale.planned_exposure(scale.cell_median_exposure_ledger(ledger))
+        assert whole[la[0]] > expo[la[0]]                               # the whole-ledger median has seen the later traffic
+    assert view["y"].equals(ledger["y"]) and view["s"].equals(ledger["s"])
+
+
 def test_exposure_flag_is_validated_and_upworthy_only(imp, tmp_path):
     cli = imp("mootcourt.cli")
     res = CliRunner().invoke(cli.app, ["backtest", "--source", "synthetic", "--exposure", "cell-median"], env={"MOOTCOURT_DATA_ROOT": str(tmp_path)})
@@ -75,6 +101,8 @@ def test_variant_names_of_the_new_runs(imp):
     cli = imp("mootcourt.cli")
     v = cli._variant_settings("both", None, None, None, "t", None, None, exposure="cell-median")
     assert v == {"exposure": "cell-median"} and cli._variant_name(v) == "exposure-cell-median"
+    v = cli._variant_settings("both", None, None, None, "t", None, None, exposure="cell-median-visible", base_density="t")
+    assert cli._variant_name(v) == "exposure-cell-median-visible+base-density-t"
     v = cli._variant_settings("both", None, None, None, "t", None, None, effect_scale="relative")
     assert cli._variant_name(v) == "effect-scale-relative" and cli._variant_flags(v) == " --effect-scale relative"
     v = cli._variant_settings("both", None, None, None, "t", None, None, s_star="realized")

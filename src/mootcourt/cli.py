@@ -456,7 +456,8 @@ def backtest(
         "planned",
         "--exposure",
         help="planned (default): the planned exposure of a row is the mean of its arms' impressions; cell-median: every row gets its cell's median "
-        "(X3 of the paper v2 plan: what the realized-exposure stand-in does to each score). Upworthy only.",
+        "over the whole ledger (X3 of the paper v2 plan: what the realized-exposure stand-in does to each score; a diagnostic, it reads rows "
+        "that conclude later); cell-median-visible: the median over the cell's rows visible at the row's quarterly origin. Upworthy only.",
     ),
     base_density: str = typer.Option(
         "normal",
@@ -527,7 +528,8 @@ def backtest(
     for name, value, allowed in (("--effect-scale", effect_scale, ("absolute", "relative")), ("--s-star", s_star, ("prelaunch", "realized")),
                                  ("--admission", admission, ("realized", "prelaunch")), ("--recalibration", recalibration, ("platt", "isotonic")),
                                  ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one")),
-                                 ("--exposure", exposure, ("planned", "cell-median")), ("--base-density", base_density, ("normal", "t")),
+                                 ("--exposure", exposure, ("planned", "cell-median", "cell-median-visible")),
+                                 ("--base-density", base_density, ("normal", "t")),
                                  ("--base-recency", base_recency, ("none", "quarter", "cell-quarter"))):
         if value not in allowed:
             raise typer.BadParameter(f"{name} must be one of {', '.join(allowed)}")
@@ -608,11 +610,12 @@ def backtest(
         n_before = int((df["status"] == "admitted").sum())
         df = one_contrast_per_test_ledger(df)         # a view: the snapshot id above is the stored ledger's
         typer.echo(f"one contrast per test: {int((df['status'] == 'admitted').sum())} of {n_before} admitted contrasts kept")
-    if exposure == "cell-median":
+    if exposure in ("cell-median", "cell-median-visible"):
         from mootcourt.scale import cell_median_exposure_ledger
 
-        df = cell_median_exposure_ledger(df)         # a view: the snapshot id above is the stored ledger's
-        typer.echo("exposure fixed at the cell median: every row of a cell gets the cell's median planned exposure")
+        df = cell_median_exposure_ledger(df, visible_only=exposure == "cell-median-visible")  # a view: the snapshot id is the stored ledger's
+        typer.echo("exposure fixed at the cell median" + (" of the rows visible at each row's origin" if exposure == "cell-median-visible"
+                                                           else ": every row of a cell gets the cell's median planned exposure"))
     if learning_curve is not None:
         from mootcourt.learning_curve import parse_fractions, run_learning_curve, write_learning_curve
 

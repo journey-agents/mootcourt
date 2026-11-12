@@ -205,8 +205,14 @@ def relative_lift_ledger(ledger: pd.DataFrame, planned: bool = False) -> pd.Data
     return out
 
 
-def cell_median_exposure_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
+def cell_median_exposure_ledger(ledger: pd.DataFrame, visible_only: bool = False) -> pd.DataFrame:
     """The ledger with the planned exposure of every Upworthy row set to the median of its cell (X3, the exposure stand-in fixed).
+
+    By default the median is over the whole ledger, rows that conclude after a forecast's origin included: a diagnostic, since no forecast
+    could have had that value. With ``visible_only`` each row gets the median over the cell's admitted rows that were usable by the start
+    of the calendar quarter (UTC) in which the row's test started, which is the set visible at the row's quarterly origin. A row with no
+    such earlier rows (the first quarters of a cell) takes the earliest such median its cell has, or the whole-ledger median when the cell
+    never has one (docs/superpowers/plans/2026-11-12-base-rate-recency-and-origins.md, Part E).
 
     The planned exposure of a row is the mean of its two arms' realized impressions (``planned_exposure``), a stand-in for the exposure a
     launch would have planned. Here both arms of every row get their cell's median planned exposure over the admitted rows (at least one
@@ -221,6 +227,19 @@ def cell_median_exposure_ledger(ledger: pd.DataFrame) -> pd.DataFrame:
         m = adm & (out["cell"] == cell).to_numpy()
         med = max(int(round(float(np.median(expo[m])))), 1)
         sel = up & (out["cell"] == cell).to_numpy()
+        if visible_only:
+            started = pd.to_datetime(out["started_at"], utc=True)
+            quarter = pd.to_datetime({"year": started.dt.year, "month": (started.dt.month - 1) // 3 * 3 + 1, "day": 1}, utc=True)
+            usable = pd.to_datetime(out["usable_after"], utc=True)
+            by_quarter = {}
+            for q in sorted(quarter[sel].unique()):
+                vis = m & (usable <= q).to_numpy()
+                by_quarter[q] = max(int(round(float(np.median(expo[vis])))), 1) if vis.any() else None
+            first = next((x for x in by_quarter.values() if x is not None), med)
+            values = np.array([by_quarter[q] if by_quarter[q] is not None else first for q in quarter[sel]])
+            out.loc[sel, "n_ref"] = values
+            out.loc[sel, "n_var"] = values
+            continue
         out.loc[sel, "n_ref"] = med
         out.loc[sel, "n_var"] = med
     out["n_ref"], out["n_var"] = out["n_ref"].astype("int64"), out["n_var"].astype("int64")

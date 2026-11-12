@@ -7,7 +7,8 @@ and writes, for ``logscore(P1) - logscore(P0)`` on the rows both rungs scored (n
 * ``pooled``: the mean and its interval by test, which reproduces the report's ``logscore_vs_p1`` of P0 with the sign turned;
 * ``by_origin``: the mean at each origin with an interval that resamples the tests of that origin;
 * ``leave_one_origin_out``: the pooled mean with each origin removed in turn, each with its interval by test;
-* ``equal_origin_weight``: the mean of the origin means, each origin counting once, with an interval that resamples tests within each origin.
+* ``equal_origin_weight``: the mean of the origin means, each origin counting once, with an interval that resamples tests within each origin;
+* ``origin_level``: the same mean with the origins as the units, a Student-t interval on the origin means (it treats them as exchangeable).
 
 No model is run. The resample count and the seed are the report's. The intervals do not resample origins.
 
@@ -23,6 +24,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from mootcourt import harness_stats as hs
 
@@ -55,6 +57,8 @@ def summarize(d: pd.DataFrame, B: int, seed: int, level: float = 0.9) -> dict:
         den = counts @ ts.counts
         draws.append((counts @ ts.sums["d"]) / np.where(den > 0, den, np.nan))
     lo, hi = hs._percentile_interval(np.mean(np.vstack(draws), axis=0), level)
+    means = np.array([r["difference"] for r in by_origin], dtype=float)
+    half = float(stats.t.ppf(0.5 + level / 2.0, len(means) - 1) * means.std(ddof=1) / np.sqrt(len(means))) if len(means) > 1 else float("nan")
     return {
         "pooled": one(d),
         "by_origin": by_origin,
@@ -64,6 +68,8 @@ def summarize(d: pd.DataFrame, B: int, seed: int, level: float = 0.9) -> dict:
         "leave_one_origin_out": loo,
         "leave_one_origin_out_above_zero": int(sum(1 for r in loo if r["lo"] > 0)),
         "equal_origin_weight": {"difference": float(np.mean([r["difference"] for r in by_origin])), "lo": lo, "hi": hi, "origins": len(by_origin)},
+        "origin_level": {"difference": float(means.mean()), "lo": float(means.mean() - half), "hi": float(means.mean() + half),
+                         "origins": len(means), "note": "Student-t interval on the origin means, the origins as exchangeable units"},
         "bootstrap_resamples": int(B), "seed": int(seed), "level": level,
         "unit": "nats per row of log score, P1 minus P0; intervals resample tests and hold the origins fixed",
     }
