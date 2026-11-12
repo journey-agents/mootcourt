@@ -424,6 +424,9 @@ def learning_vs_full(r):
 def base_density(r):
     """The prior's gain on the log score over the base rate, with the base rate's density normal (the main run) and heavy-tailed (an ablation)."""
     main, heavy = r(MAIN), r("ablations/backtest-upworthy-*--base-density-t.json")
+    fixed, plain_fixed = r("ablations/backtest-upworthy-*--exposure-cell-median+base-density-t.json"), r("ablations/backtest-upworthy-*--exposure-cell-median.json")
+    if abs(fixed.get(f"{_agg('P1')}.logscore") - plain_fixed.get(f"{_agg('P1')}.logscore")) > 1e-12:
+        raise ValueError("P1 with exposure fixed differs between the two reports that fix it")
     for rung in ("P1", "P2"):          # the setting changes P0's density only: the skill of the rungs must be the main run's
         if abs(main.get(f"{_agg(rung)}.brier_skill") - heavy.get(f"{_agg(rung)}.brier_skill")) > 1e-12:
             raise ValueError(f"the Brier skill of {rung} differs between the two base densities")
@@ -432,11 +435,12 @@ def base_density(r):
         key = f"tables.aggregate[cell={cell},rung=P0]"
         return [label, n(main, f"{key}.n"), v(main, f"{key}.logscore", 4), v(heavy, f"{key}.logscore", 4),
                 sci(main, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
-                sci(heavy, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
+                sci(heavy, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
+                sci(fixed, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
 
-    return Table("fmt-base-density", "lrrrrr",
-                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0,",
-                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%)"],
+    return Table("fmt-base-density", "lrrrrrr",
+                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & P1 minus P0, Student-t",
+                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%) & base rate, exposure fixed (90\%)"],
                  [row("all cells", "ALL"), row("headline-only", "headline_only"), row("image-only", "image_only"), row("smallest", "both")])
 
 
