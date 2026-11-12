@@ -1,6 +1,6 @@
 % $RUN6 = paper/data/run8-randomization-window. Ablation reports: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--<setting>.json, each with tables.aggregate[cell=ALL] rows for P1 and P2; guard-off variants are named <setting>+p2-guard-off.
 %% tmlr:move-begin ablations
-%% tmlr:stub ablations Ablations and the learning curve are reported in Appendix~\ref{sec:ablations}. The heavy-tailed forecast shape gained most, and more history improved the forecast of the distribution.
+%% tmlr:stub ablations Ablations and the learning curve are reported in Appendix~\ref{sec:ablations}. A heavy-tailed density gained most, for the base rate as well as the prior, and more history improved the forecast of the distribution.
 \section{Ablations and Learning Curve}
 \label{sec:ablations}
 This section changes one setting at a time and asks whether any change moves a conclusion of Section~\ref{sec:results}. The shape of the prior matters, a forced precedent weight costs, and no setting lets precedents beat the prior by more than a thousandth of a nat.

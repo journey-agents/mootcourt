@@ -60,3 +60,8 @@ origins, rows and seed of run 8. Its report is `ablations/backtest-upworthy-<sna
 - The setting joins the ablation list of the headline archive in `scripts/run_ablations.sh`.
 - The run is made at a later commit than run 8 (5e4fedf). The run folder's README and the paper's Versions list name that commit.
 - A table row comes from the report through `paper/summary_tables/`, not typed.
+
+## Notes added after the run (12 November 2026)
+
+- The code gives a cell with fewer than five visible rows the normal density (`_MIN_ROWS_T` in `p0.py`). This rule was in the committed code before the run and is missing from the list above. Every scored cell and origin of run 8 has far more visible rows, so it did not act.
+- A review of the result pointed out that the gain against the heavy-tailed base rate is not separated from the traffic stand-in: the prior reads the row's standard error and the base rate does not. The paper says so and prints no number for the part that would survive a fixed exposure, since no run combines the two settings.

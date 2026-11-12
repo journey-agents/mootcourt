@@ -15,7 +15,7 @@ Yingjie Li (Independent researcher)
 Problem. Before launching a change, a team wants to know what result to expect, whether the test is worth running and how large to make it. Industrial screening systems are evaluated on private data. We found no public evaluation showing whether forecasts from past experiments can be trusted, or when they say too little.
 Method. We simulate how a team would have forecast each test, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 scored experiments from a retailer (ASOS; no dates). We fit on earlier tests only. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
 Findings.
-- For the publisher, a fitted prior forecasts the next result's distribution better than a base rate scored with a normal density (0.120 nats). Of that, 0.075 is its heavy-tailed shape; with both normal the gain is 0.045 (90 percent interval 0.034 to 0.055). It does not say which test will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it, unadjusted, at planned precision and only without the flagged period. Its probabilities fail a calibration test. The retailer's tests are too few to decide.
+- For the publisher, a fitted prior forecasts the next result's distribution better than a base rate scored with a normal density (0.120 nats). Most of that is the density's shape: against a heavy-tailed base rate the gain is 0.020, above zero pooled. It does not say which test will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it, unadjusted, at planned precision and only without the flagged period. Its probabilities fail a calibration test. The retailer's tests are too few to decide on skill.
 - Weighting similar past tests matches the prior on score and skill. It ranks tests better, but worse than arm count alone at a quarter or half of the tests, and no better than traffic alone. With a planted signal it recovers 0.09 of the gain of a model told the signal. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, no more than arm count alone, and fails that control. Abstaining is not shown to help.
 - Sizing tests from the forecast shows no consistent gain over the base rate.
 Release. Protocol and Moot Court (MIT).
@@ -35,7 +35,7 @@ Release. Protocol and Moot Court (MIT).
 
 ## Comments line
 
-51 pages including the appendix, 6 figures, 87 tables. Code, the data pipeline and the run folders behind every table:
+51 pages including the appendix, 6 figures, 88 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 

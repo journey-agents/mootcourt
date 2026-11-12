@@ -421,6 +421,25 @@ def learning_vs_full(r):
                  [row(f) for f in ("0.01", "0.02", "0.05", "0.1", "0.25", "0.5")])
 
 
+def base_density(r):
+    """The prior's gain on the log score over the base rate, with the base rate's density normal (the main run) and heavy-tailed (an ablation)."""
+    main, heavy = r(MAIN), r("ablations/backtest-upworthy-*--base-density-t.json")
+    for rung in ("P1", "P2"):          # the setting changes P0's density only: the skill of the rungs must be the main run's
+        if abs(main.get(f"{_agg(rung)}.brier_skill") - heavy.get(f"{_agg(rung)}.brier_skill")) > 1e-12:
+            raise ValueError(f"the Brier skill of {rung} differs between the two base densities")
+
+    def row(label, cell):
+        key = f"tables.aggregate[cell={cell},rung=P0]"
+        return [label, n(main, f"{key}.n"), v(main, f"{key}.logscore", 4), v(heavy, f"{key}.logscore", 4),
+                sci(main, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
+                sci(heavy, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
+
+    return Table("fmt-base-density", "lrrrrr",
+                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0,",
+                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%)"],
+                 [row("all cells", "ALL"), row("headline-only", "headline_only"), row("image-only", "image_only"), row("smallest", "both")])
+
+
 def auc_by_year(r):
     """X9: the event AUC by year within origin and within origin and cell, which the 2015 skill is read against."""
     rep = r(EXTRAS)
@@ -536,5 +555,5 @@ def assurance(r):
     ])
 
 
-TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired, learning_vs_full,
+TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired, learning_vs_full, base_density,
           auc_by_year, sizing, assurance]

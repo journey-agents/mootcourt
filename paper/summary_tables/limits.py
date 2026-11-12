@@ -179,7 +179,7 @@ def verdicts(r):
         raise ValueError("the row says the guard is what keeps P2 at P1 on the retailer's archive")
     rows = [
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (see~\ref{sec:ladder-results})} \\"),
-        _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in", _h1_part1(up, extras), "held"),
+        _row("H1 part 1", "P1 beats P0, scored with a normal density as written, on log score at every origin after burn-in", _h1_part1(up, extras), "held"),
         _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, syn), "not shown"),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
              join("{} nats, {}: the guard admitted no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),

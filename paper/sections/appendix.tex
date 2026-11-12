@@ -239,6 +239,8 @@ The boosted model and the text classifier now receive one indicator column per c
 \item Every report of the run folder comes from one code state\iftmlr\else , commit 5e4fedf\fi, in one run, except the timed run and the scale measurements above.
 % src: $RUN6/README.md (the two learning-curve reports rewritten at commit a7e9f44 on 10 November 2026; additive keys paired_vs_full and paired_vs_full_note, no existing key changed)
 \item The two learning-curve reports were written again at \iftmlr a later code state\else a later commit, a7e9f44\fi, which adds the comparison of Table~\ref{tab:fmt-learning-vs-full} and changes no number that was there before.
+% src: $RUN6/README.md (the base-density ablation report written at commit f4566ca on 12 November 2026; a new file, no other report changed)
+\item The ablation with a Student-t base rate (Table~\ref{tab:fmt-base-density}) was run at \iftmlr a later code state still\else commit f4566ca\fi. It adds one report and changes no other.
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.ablation_vs_run7.report_leaves leaves_compared 18742, leaves_different 0
 \item The ablation that includes the randomization window regenerates the earlier run's main report, with none of 18,742 numeric values different.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json header.bootstrap_resamples 500; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json bootstrap_resamples 500
