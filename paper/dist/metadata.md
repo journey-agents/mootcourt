@@ -35,7 +35,7 @@ Release. Protocol and Moot Court (MIT).
 
 ## Comments line
 
-50 pages including the appendix, 6 figures, 87 tables. Code, the data pipeline and the run folders behind every table:
+51 pages including the appendix, 6 figures, 87 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 

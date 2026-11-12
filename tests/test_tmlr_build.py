@@ -153,8 +153,8 @@ def test_with_a_stubs_marker_the_pointer_sentences_form_one_paragraph_there(pape
     results = paper / "sections" / "results.tex"
     results.write_text(results.read_text() + "%% tmlr:stubs-here\nLast line.\n")
     body = tb.assemble(paper).split("\\appendix\n")[0]
-    assert "\\paragraph{Reported in the appendix.} Sizing is reported in Appendix~\\ref{sec:sizing}." in body
-    assert body.index("After the block.") < body.index("\\paragraph{Reported in the appendix.}") < body.index("Last line.")
+    assert "\\subsection{Results reported in the appendix}\nSizing is reported in Appendix~\\ref{sec:sizing}." in body
+    assert body.index("After the block.") < body.index("\\subsection{Results reported in the appendix}") < body.index("Last line.")
     assert body.count("Sizing is reported") == 1 and "tmlr:" not in body
 
 
@@ -165,7 +165,7 @@ def test_a_block_of_paragraphs_takes_a_title_and_leaves_a_note_in_place():
     out = tb.move_blocks(lines)
     body, appendix = out[: out.index("\\appendix")], out[out.index("\\appendix"):]
     assert "More limits are in Appendix~\\ref{sec:more}." in body and body.index("Before.") < body.index("After.")
-    assert not any("Reported in the appendix" in line for line in body)          # a note is not gathered with the stubs
+    assert not any("reported in the appendix" in line for line in body)          # a note is not gathered with the stubs
     assert appendix.index("\\section{Further limits}") < appendix.index("\\paragraph{One.} Text.") < appendix.index("\\section{Old}")
 
 

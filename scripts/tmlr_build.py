@@ -108,7 +108,7 @@ def move_blocks(lines: list[str]) -> list[str]:
         raise ValueError(f"move block {current} is not closed")
     if gather:
         at_stub = body.index(STUBS_HERE)
-        body[at_stub:at_stub + 1] = ["", "\\paragraph{Reported in the appendix.} " + " ".join(stubs), ""] if stubs else []
+        body[at_stub:at_stub + 1] = ["", "\\subsection{Results reported in the appendix}", " ".join(stubs), ""] if stubs else []
     if not moved:
         return body
     at = [i for i, line in enumerate(body) if line.strip() == "\\appendix"]

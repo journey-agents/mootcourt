@@ -89,9 +89,9 @@ Table~\ref{tab:fmt-p1-cells} sets P1 against P0, pooled and by cell.
 \end{table}
 
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p1_minus_p0_by_origin.by_origin_clear_of_zero 7 of 7, level 0.9 (unadjusted); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.score_by_origin cell=ALL: narrowest margin at origin 2015-01-01
-P1 is above P0 on the log score at every origin, and each unadjusted 90 percent interval is clear of zero. The margin is narrowest at January 2015. So the first part of the first hypothesis holds.
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.8316, against the main run's P1 -0.7566 and P0 -0.8762: of the pooled gain, 0.0750 is the family
-Most of the pooled gain is the Student-t family, and Section~\ref{sec:ablations} says what that does and does not show about the effects.
+P1 is above P0 on the log score at every origin, and each unadjusted 90 percent interval is clear of zero. The report holds the paired difference at each origin, and the tables here print the narrowest. The margin is narrowest at January 2015. So the first part of the first hypothesis holds.
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P0] logscore_vs_p1 -0.0446 (-0.0548, -0.0336), negated 0.045 (tables/fmt-prior-settings.tex), tables.aggregate[cell=ALL,rung=P1] logscore -0.8316, against the main run's P1 -0.7566 and P0 -0.8762: of the pooled gain, 0.0750 is the family
+Most of the pooled gain is the Student-t family. With a normal prior in its place the gain over the base rate is 0.045 nats, with an interval clear of zero (Table~\ref{tab:fmt-prior-settings}). Section~\ref{sec:ablations} says what that does and does not show about the effects.
 P1's skill on which test will be significant is at most small, and it depends on how that event is defined.
 \begin{itemize}
 \item With the event at realized precision, the main reading, P1's pooled Brier skill interval spans zero, and that interval is the evidence.
@@ -106,10 +106,6 @@ P1's skill on which test will be significant is at most small, and it depends on
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate rung=P1 cell=image_only brier_skill_lo 0.0034, adjusted_lo -0.0030, family_size 52
 The per-cell intervals are descriptive. The image-only interval lies above zero, and adjusted for the 52 intervals of the aggregate table it spans zero. In the main run the headline-only and smallest-cell intervals span zero.
 
-%% tmlr:move-begin gatesres
-%% tmlr:note gatesres The pooled archive and its two larger cells clear the gates of Section~\ref{sec:protocol}, and the smallest cell and the retailer's archive do not (Appendix~\ref{sec:gates-detail}).
-%% tmlr:title gatesres Gates and decidability on the headline archive
-\label{sec:gates-detail}
 \paragraph{Gates and decidability.}
 \label{sec:gates-results}
 % src: $RUN6/gates.json interval.level 0.9, decision target 0.90; by_base_rate["0.09"] n_200 175, n_400 250, against the smallest cell's own 275 and 450 (tables/fmt-gates-strata.tex)
@@ -137,7 +133,6 @@ Families matter at this scale. The lower block of the table adjusts for a family
 \label{tab:main-upworthy}
 \resizebox{0.85\textwidth}{!}{\input{tables/main-upworthy}}
 \end{table*}
-%% tmlr:move-end gatesres
 
 \paragraph{Precedents.}
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_admitted 4, pairs_in_selection 21; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.p2_selection_by_cell, tables.p2_selection[].selection forward (src/mootcourt/config.py P2_SELECTION_DEFAULT)
@@ -249,7 +244,7 @@ Table~\ref{tab:fmt-calibration} gives the ladder's calibration error and pooled 
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] rung=P0, P1, P2 ece_percentile 100.0, ece_equal_mass_percentile 100.0
 All three rungs sit at the 100th percentile on both binnings, against a rejection line of 95 (Section~\ref{sec:protocol}), so the test rejects calibration for each as issued, P0's included (Figure~\ref{fig:reliability} in the appendix).
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[rung=P1] ece_percentile and ece_equal_mass_percentile: headline_only 100.0 and 99.4, both 98.4 and 88.2, image_only 71.7 and 91.6; $RUN6/include-randomization-window/backtest-upworthy-20261106-4bfb354b87e3.json image_only 99.0 and 98.6
-By cell the test is less uniform. In the main run it rejects P1's calibration in the headline-only cell on both binnings, in the smallest cell on the equal-width bins only, and in the image-only cell on neither. With the randomization window included it rejects the image-only cell on both.
+By cell the test is less uniform. In the main run it rejects P1's calibration in the headline-only cell on both binnings, in the smallest cell on the equal-width bins only, and in the image-only cell on neither. With the randomization window included it rejects the image-only cell on both. The percentiles by cell are in the backtest reports and are not printed here.
 % src: src/mootcourt/harness_stats.py (ece_percentile is computed on p_sig against the realized event; no report key holds it for the planned event); results-b.tex, the synthetic archive (no report key holds the rejection rate of the clustered null on a forecaster calibrated by construction)
 Two limits apply to this test. It scores each forecast, which is issued for the event at planned precision, against the event at realized precision, and it was not repeated on the planned event, so part of the error may come from that difference. And how often its null rejects a forecaster that is calibrated by construction is not measured (Section~\ref{sec:synthetic-results}).
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json lowest_reliability_bin.rungs.P1 (bin 0 to 0.1), gap -0.0002, by_origin (2013-04-01 mean_forecast 0.0847 against observed_frequency 0.1176; 2014-07-01 0.0753 against 0.0511); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.reliability_bins[rung=P1,bin=1], bin=2

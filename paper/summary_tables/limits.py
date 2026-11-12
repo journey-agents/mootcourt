@@ -178,7 +178,7 @@ def verdicts(r):
     if guard_off.get(f"{_cell('P2', 'ALL')}.logscore_vs_p1") == 0:
         raise ValueError("the row says the guard is what keeps P2 at P1 on the retailer's archive")
     rows = [
-        Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (Section~\ref{sec:ladder-results})} \\"),
+        Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (see~\ref{sec:ladder-results})} \\"),
         _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in", _h1_part1(up, extras), "held"),
         _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, syn), "not shown"),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
@@ -192,7 +192,7 @@ def verdicts(r):
         _row("H2, as written", "the same at the final origin; the gate decidable there", _h2_as_written(up, curve, extras),
              join("above zero at {}, with that caution, not counted as holding; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{4}{@{}l}{\textbf{H3, in part} (Section~\ref{sec:calibration-results})} \\"),
+        Raw(r"\multicolumn{4}{@{}l}{\textbf{H3, in part} (see~\ref{sec:calibration-results})} \\"),
         _row("H3 part 1", "ECE of issued cards inside the central 90 percent of the null at most origins",
              join("inside at {} of the {} origins that issue cards, not at most of them; pooled at the {}th percentile of the clustered null",
                   n(extras, f"{issued}.origins_inside_central_90"), n(extras, f"{issued}.origins"), n(extras, pooled_percentile)),
@@ -205,7 +205,7 @@ def verdicts(r):
                   v(up, deciles.format(1), 2), v(up, deciles.format(10), 2)),
              "held, read pooled; the fall across deciles is descriptive"),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{4}{@{}l}{\textbf{H4, in part} (Section~\ref{sec:abstention-results})} \\"),
+        Raw(r"\multicolumn{4}{@{}l}{\textbf{H4, in part} (see~\ref{sec:abstention-results})} \\"),
         _row("H4 part 1", "issued cards above the full set on skill",
              join("issued rows {}, {}, against {} for the full set", w(extras, f"{skill}.issued.brier_skill", 4),
                   span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi", 4), w(extras, f"{skill}.all.brier_skill", 4)),
@@ -225,7 +225,7 @@ def verdicts(r):
              join("at the matched order within noise, {}, {}", w(up, f"{_dv('P1')}.diff_matched"),
                   span(up, f"{_dv('P1')}.diff_matched_lo", f"{_dv('P1')}.diff_matched_hi")), "failed"),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{4}{@{}l}{\textbf{H6, held} (Section~\ref{sec:asos-results})} \\"),
+        Raw(r"\multicolumn{4}{@{}l}{\textbf{H6, held} (see~\ref{sec:asos-results})} \\"),
         _row("H6 part 1", "every gate undecidable on the retailer's archive", "undecidable at every gate",
              join("held, a result {} tests could not have avoided", n(_asos, f"{_cell('P2', 'ALL')}.n_tests"))),
         _row("H6 part 2", "P2 equals P1", "P2 equals P1 on this archive, because the guard holds the weight at zero", "held"),
