@@ -50,3 +50,5 @@ paper/*.out
 # the arXiv package: the notes under paper/dist are committed, the tarballs are not (make arxiv rebuilds them)
 !paper/dist/
 paper/dist/*.tar.gz
+paper/tmlr/tmlr.sty
+paper/tmlr/tmlr.bst

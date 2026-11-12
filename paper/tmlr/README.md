@@ -19,9 +19,15 @@ The script refuses to write a file in which a forbidden string would still be ty
 
 ## The venue's style file
 
-The venue requires its own style file. It is not in this repository, because the project downloads nothing without a recorded approval.
-Without it the build uses a plain single-column layout with the same text width, which is enough to check the text, the order and the
-page count. To build the real submission, put the venue's `tmlr.sty` and `tmlr.bst` in this folder and run `make tmlr` again.
+The venue requires its own style file. `tmlr.sty` and `tmlr.bst` are not committed (git ignores them); fetch them into this folder from
+the venue's public template, which the user approved on 11 November 2026:
+
+```bash
+for f in tmlr.sty tmlr.bst; do curl -sSL -o paper/tmlr/$f https://raw.githubusercontent.com/JmlrOrg/tmlr-style-file/main/$f; done
+```
+
+With the files present `make tmlr` uses them and the first page reads "Under review as submission to TMLR". Without them the build
+falls back to a plain single-column layout of the same text width, which is enough to check the text, the order and the page count.
 
 ## Decisions recorded here
 

@@ -12,7 +12,7 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before launching a change, a team wants to know what result to expect, whether the test is worth running and how large to make it. Industrial screening systems use private evidence. We found no public evaluation showing whether forecasts from past experiments can be trusted, or when they say too little.
+Problem. Before launching a change, a team wants to know what result to expect, whether the test is worth running and how large to make it. Industrial screening systems are evaluated on private data. We found no public evaluation showing whether forecasts from past experiments can be trusted, or when they say too little.
 Method. We simulate how a team would have forecast each test, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 scored experiments from a retailer (ASOS; no dates). We fit on earlier tests only. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
 Findings.
 - For the publisher, a fitted prior forecasts the next result's distribution better than a base rate scored with a normal density (0.120 nats). Of that, 0.075 is its heavy-tailed shape; with both normal the gain is 0.045 (90 percent interval 0.034 to 0.055). It does not say which test will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it, unadjusted, at planned precision and only without the flagged period. Its probabilities fail a calibration test. The retailer's tests are too few to decide.
