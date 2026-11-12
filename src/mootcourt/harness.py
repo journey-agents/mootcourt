@@ -610,13 +610,15 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
                   bandwidth_mult: float | None = None, lam: float | None = None, kappa: float = KAPPA, prior: str = "t",
                   p2_selection: str | None = None, recency: str | float | None = None, local_k: int = LOCAL_EB_K,
                   baselines: bool = False, p2_guard: float | None = P2_GUARD_MULT, recalibrate: bool = False,
-                  recalibration: str = "platt", gbm_tuned: bool = True, pairwise: bool | None = None) -> dict[str, Callable]:
+                  recalibration: str = "platt", gbm_tuned: bool = True, pairwise: bool | None = None,
+                  base_density: str = "normal") -> dict[str, Callable]:
     """Rung factories ``factory(rows, origin)``: P0, P1, P2, P3 when the ledger has team forecasts, then challengers.
 
     ``challenger`` is a name, a comma-separated string or a list from ``CHALLENGERS`` (gbm, local_eb, text_lr).
     ``baselines`` adds the two direction baselines. The keyword arguments are the ablation switches: ``features``
     (``text``, ``structured`` or ``both``), a fixed ``bandwidth_mult`` and ``lam`` for P2, the P1 pooling strength
-    ``kappa``, the P1 ``prior`` (``t`` or ``normal``), and P2's ``p2_selection``, ``recency`` and ``p2_guard`` (the admission
+    ``kappa``, the P1 ``prior`` (``t`` or ``normal``), the density of P0's log score ``base_density``
+    (``normal`` or ``t``), and P2's ``p2_selection``, ``recency`` and ``p2_guard`` (the admission
     guard multiplier, None for no guard). With ``recalibrate`` every challenger also gets a recalibrated rung (``GBM+cal`` and so on; the
     ``moot backtest`` command turns it on by default); ``recalibration`` is ``platt`` or ``isotonic`` and ``gbm_tuned`` False restores
     the untuned GBM.
@@ -642,7 +644,7 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
         return shared.get("space", rows, origin, lambda: FeatureSpace.fit(rows, cell_only=cell_only, feature_set=features, pairwise=pairwise))
 
     def p0(rows, origin):
-        return P0Predictor().fit(rows)
+        return P0Predictor(density=base_density).fit(rows)
 
     def p2(rows, origin):
         return P2Predictor().fit(rows, space_of(rows, origin), p1_of(rows, origin), lambda_override=lam, selection=p2_selection,

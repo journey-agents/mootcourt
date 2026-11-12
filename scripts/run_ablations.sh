@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run the ablation backtests of one source, several at a time. Every run writes its own report under reports/ablations.
 # Usage: scripts/run_ablations.sh SOURCE [JOBS]      (or: scripts/run_ablations.sh SOURCE JOBS --list, which prints the settings and runs nothing)
-#   upworthy  P2 selection rule (leave-one-test-out, the counterfactual of the forward-chaining default), recency, feature sets, bandwidth, lambda, kappa, prior, P2 admission guard (off, 1.0), the single-headline
+#   upworthy  P2 selection rule (leave-one-test-out, the counterfactual of the forward-chaining default), recency, feature sets, bandwidth, lambda, kappa, prior, the base rate's density (--base-density t), P2 admission guard (off, 1.0), the single-headline
 #             feature space (--pairwise off), admission on exposure only (--admission prelaunch), one contrast per test (--contrasts one); the two single changes of the
 #             cautionary run (--effect-scale relative, at planned precision; --s-star realized, on the absolute effect) and the exposure fixed at the cell median
 #             (--exposure cell-median), paper v2 plan X2 and X3; the feature, bandwidth, selection, recency and
@@ -32,7 +32,7 @@ case "$SOURCE" in
     SETTINGS+=(
       "--lambda 0" "--lambda 0.2" "--lambda 0.5" "--lambda 1"
       "--kappa 0" "--kappa 5" "--kappa 80"
-      "--prior normal"
+      "--prior normal" "--base-density t"
       "--p2-guard off" "--p2-guard 1.0"
       "--admission prelaunch"
       "--contrasts one"

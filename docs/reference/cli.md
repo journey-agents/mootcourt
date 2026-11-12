@@ -29,6 +29,7 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--admission` | str | `realized` | realized (default: the ledger's statuses, including the minimum-clicks rule on realized clicks) or prelaunch: admit on exposure only, every contrast with a finite standard error (ablation). |
 | `--contrasts` | str | `all` | all (default) or one: keep one admitted contrast per test (the lowest row id), so a test has one headline against its reference (ablation of the arm-count structure, round 01 R3 minor 6). |
 | `--exposure` | str | `planned` | planned (default): the planned exposure of a row is the mean of its arms' impressions; cell-median: every row gets its cell's median (X3 of the paper v2 plan: what the realized-exposure stand-in does to each score). Upworthy only. |
+| `--base-density` | str | `normal` | Ablation: the density of P0's log score. normal (default) or t, a Student-t fitted to the visible estimates of the cell, a harder base rate for a prior with heavy tails. Probabilities, intervals and the Brier skill of every rung do not change. |
 | `--pairwise` | str | `on` | on (default): the feature space and the challengers read the reference headline where the ledger has one; off: the variant headline only. |
 | `--recalibrate`, `--no-recalibrate` | flag | `True` | Add a recalibrated rung (+cal) for every challenger, fit on visible rows only. |
 | `--recalibration` | str | `platt` | Map of the recalibrated rungs: platt or isotonic. |

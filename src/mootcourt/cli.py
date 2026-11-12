@@ -360,7 +360,8 @@ def _parse_guard(value: str | None):
 
 
 def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale="absolute", s_star="prelaunch",
-                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all", exposure="planned") -> dict:
+                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all", exposure="planned",
+                      base_density="normal") -> dict:
     """The ablation settings that differ from the defaults, as a dict; empty for the main run."""
     from mootcourt.config import KAPPA, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 
@@ -395,6 +396,8 @@ def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection,
         v["contrasts"] = contrasts
     if exposure != "planned":
         v["exposure"] = exposure
+    if base_density != "normal":
+        v["base_density"] = base_density
     if "p2_guard" in v:                      # last, so a run with the guard off is always named `<ablation>+p2-guard-off` (call 176)
         v["p2_guard"] = v.pop("p2_guard")
     return v
@@ -453,6 +456,12 @@ def backtest(
         help="planned (default): the planned exposure of a row is the mean of its arms' impressions; cell-median: every row gets its cell's median "
         "(X3 of the paper v2 plan: what the realized-exposure stand-in does to each score). Upworthy only.",
     ),
+    base_density: str = typer.Option(
+        "normal",
+        "--base-density",
+        help="Ablation: the density of P0's log score. normal (default) or t, a Student-t fitted to the visible estimates of the cell, "
+        "a harder base rate for a prior with heavy tails. Probabilities, intervals and the Brier skill of every rung do not change.",
+    ),
     pairwise: str = typer.Option(
         "on",
         "--pairwise",
@@ -509,7 +518,7 @@ def backtest(
     for name, value, allowed in (("--effect-scale", effect_scale, ("absolute", "relative")), ("--s-star", s_star, ("prelaunch", "realized")),
                                  ("--admission", admission, ("realized", "prelaunch")), ("--recalibration", recalibration, ("platt", "isotonic")),
                                  ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one")),
-                                 ("--exposure", exposure, ("planned", "cell-median"))):
+                                 ("--exposure", exposure, ("planned", "cell-median")), ("--base-density", base_density, ("normal", "t"))):
         if value not in allowed:
             raise typer.BadParameter(f"{name} must be one of {', '.join(allowed)}")
     if effect_scale == "relative" and source != "upworthy":
@@ -523,7 +532,7 @@ def backtest(
         if name not in TRIGGERS:
             raise typer.BadParameter(f"--drop-trigger must be one of {', '.join(TRIGGERS)}; got {name!r}")
     variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg,
-                                tuple(drop_trigger or ()), admission, pairwise, contrasts, exposure)
+                                tuple(drop_trigger or ()), admission, pairwise, contrasts, exposure, base_density)
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
     sid = ensure_snapshot(df, ledger_path.parent)
@@ -562,6 +571,7 @@ def backtest(
         recalibrate=recalibrate,
         recalibration=recalibration,
         **({"pairwise": False} if pairwise == "off" else {}),
+        **({"base_density": base_density} if base_density != "normal" else {}),
         **({"kappa": kappa} if kappa is not None else {}),
         **({} if guard_arg == "default" else {"p2_guard": guard_arg}),
     )

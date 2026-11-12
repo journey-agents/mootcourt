@@ -17,6 +17,11 @@ Units: ``y`` and ``s`` are in the ledger's units (percentage points of click-thr
 unitless. Origin semantics: only rows with status admitted and ``usable_after <= origin`` are used;
 this is applied at predict time, so one fitted P0 serves every origin. A cell with fewer than 2
 visible rows falls back to the global fit over all cells.
+
+``density="t"`` (an ablation, docs/superpowers/plans/2026-11-12-heavy-tailed-base-rate.md) scores the log score with a Student-t fitted
+by maximum likelihood to the same visible ``y``: location, scale and the degrees of freedom from ``NU_GRID``. It is a harder baseline
+for a rung whose own density has heavy tails. Nothing else changes: ``p_sig``, ``p_dir``, the quantile intervals and the CRPS are those
+of the default, so the Brier skill of every rung is the same under both densities.
 """
 from __future__ import annotations
 
@@ -24,14 +29,16 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from scipy import special
+from scipy import special, stats
 
-from mootcourt.config import Z
+from mootcourt.config import NU_GRID, Z
 from mootcourt.ledger import ADMITTED, series_ns, timestamp_ns
 from mootcourt.predictors.base import Predictive, build_grid
 
 _MIN_ROWS = 2
 _SD_FLOOR = 1e-6
+DENSITIES = ("normal", "t")
+_MIN_ROWS_T = 5          # with fewer visible rows a tail cannot be fitted: the t density is then its normal limit
 
 
 @dataclass(frozen=True)
@@ -80,8 +87,12 @@ class _CellSeries:
 class P0Predictor:
     """Base-rate predictor. ``fit(rows)`` returns self; rows are filtered by origin at predict time."""
 
-    def __init__(self, z: float = Z):
+    def __init__(self, z: float = Z, density: str = "normal"):
+        if density not in DENSITIES:
+            raise ValueError(f"density must be one of {DENSITIES}; got {density!r}")
         self.z = z
+        self.density = density
+        self._t_cache: dict[tuple[int, int], tuple[float, float, float]] = {}
         self._center = 0.0
         self._cells: dict[str, _CellSeries] = {}
         self._global: _CellSeries | None = None
@@ -96,6 +107,7 @@ class P0Predictor:
         self._cells = {c: _CellSeries(g, self._center, self.z) for c, g in adm.groupby("cell")}
         self._global = _CellSeries(adm, self._center, self.z)
         self._cache = {}
+        self._t_cache = {}
         return self
 
     def _pick(self, cell: str, origin) -> tuple[_CellSeries, int, bool]:
@@ -140,8 +152,43 @@ class P0Predictor:
             self._cache[key] = got
         return got
 
+    def density_params(self, cell: str, origin) -> tuple[float, float, float]:
+        """``(nu, location, scale)`` of the density the log score uses, in the units of y; ``nu`` is infinite for the normal.
+
+        The default is Normal(visible mean, visible variance). With ``density="t"`` each ``nu`` of ``NU_GRID`` is fitted by maximum
+        likelihood to the visible ``y`` and the likeliest is kept; the scale has the floor of the default's standard deviation, the
+        square root of the median squared standard error of the visible rows. Fewer than ``_MIN_ROWS_T`` visible rows give the normal.
+        """
+        f = self.forecast(cell, origin)
+        normal = (float("inf"), f.mean, max(float(np.sqrt(f.var)), _SD_FLOOR))
+        if self.density == "normal":
+            return normal
+        series, k, _ = self._pick(cell, origin)
+        key = (id(series), k)
+        got = self._t_cache.get(key)
+        if got is None:
+            got = normal
+            if k >= _MIN_ROWS_T:
+                y = series.y_raw[:k]
+                floor = max(float(np.sqrt(np.median(series.s_raw[:k] ** 2))), _SD_FLOOR)
+                best = float(stats.norm.logpdf(y, normal[1], normal[2]).sum())
+                for nu in NU_GRID:
+                    if not np.isfinite(nu):
+                        continue
+                    _, loc, scale = stats.t.fit(y, fdf=nu, loc=normal[1], scale=normal[2])
+                    scale = max(float(scale), floor)
+                    ll = float(stats.t.logpdf(y, nu, loc, scale).sum())
+                    if ll > best:
+                        best, got = ll, (float(nu), float(loc), scale)
+            self._t_cache[key] = got
+        return got
+
     def logscore(self, y, cell: str, origin):
-        """Log density of ``y`` under Normal(visible mean, visible variance); scalar or array in, same shape out."""
+        """Log density of ``y`` under the density of ``density_params``; scalar or array in, same shape out."""
+        if self.density == "t":
+            nu, loc, scale = self.density_params(cell, origin)
+            if np.isfinite(nu):
+                return stats.t.logpdf(np.asarray(y, dtype=np.float64), nu, loc, scale)
         f = self.forecast(cell, origin)
         sd = max(float(np.sqrt(f.var)), _SD_FLOOR)
         z = (np.asarray(y, dtype=np.float64) - f.mean) / sd
