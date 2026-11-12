@@ -36,7 +36,7 @@ import sys
 from pathlib import Path
 
 OUT_NAME = "tmlr-submission.tex"
-FORBIDDEN = ("yingjie", "journey", "github.com", "zenodo", "5e4fedf", "a7e9f44", "5a68256", "145eaf7", "f4566ca", "liyingjie",
+FORBIDDEN = ("yingjie", "journey", "github.com", "zenodo", "5e4fedf", "a7e9f44", "5a68256", "145eaf7", "f4566ca", "e05247e", "liyingjie",
              "moot court", "mootcourt", "independent researcher", "seattle")
 _INPUT = re.compile(r"^\\input\{sections/([A-Za-z0-9_-]+)\}\s*$")
 _BEGIN = re.compile(r"^%% tmlr:move-begin (\S+)\s*$")
