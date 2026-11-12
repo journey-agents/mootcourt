@@ -118,7 +118,11 @@ def exposure_fixed(r):
     def row(rung, run, label):
         at = f"{top}.by_cell.ALL.{run}.{rung}"
         constant = f"{top}.p_sig_constant_within_origin_and_cell.{run}.{rung}"
-        return [label, v(rep, f"{top}.auc_event_within_ties_exact.{run}.{rung}"), ci(rep, at, "auc_event_within", 3),
+        one, strata = rep.get(f"{constant}.strata_with_one_value"), rep.get(f"{constant}.origin_cell_strata")
+        # With one forecast in every stratum the report's AUC within strata is noise among ties, so the cell says so in place of that value.
+        within = (derived("one forecast per stratum", rep.ref(f"{constant}.strata_with_one_value"), rep.ref(f"{constant}.origin_cell_strata"))
+                  if one == strata else ci(rep, at, "auc_event_within", 3))
+        return [label, v(rep, f"{top}.auc_event_within_ties_exact.{run}.{rung}"), within,
                 sci(rep, at, "brier_skill", 4, "brier_skill_lo", "brier_skill_hi"), v(rep, f"{at}.logscore", 4), v(rep, f"{at}.ece", 4),
                 join("{} of {}", n(rep, f"{constant}.strata_with_one_value"), n(rep, f"{constant}.origin_cell_strata"))]
 
@@ -397,11 +401,13 @@ def learning_paired(r):
 
     def row(fraction):
         p2, text = f"paired_vs_p1[fraction={fraction},rung=P2]", f"paired_vs_p1[fraction={fraction},rung=text_lr]"
-        return [fraction, sci(rep, p2, "logscore_minus_p1", 4, "logscore_lo", "logscore_hi"), sci(rep, p2, "brier_gain_over_p1", 6, "brier_lo", "brier_hi"),
+        seeds = (v(rep, f"{p2}.logscore_seed_sd", 4) if rep.get(f"{p2}.logscore_seed_sd") is not None
+                 else derived("one history", rep.ref(f"{p2}.n_seeds")))
+        return [fraction, sci(rep, p2, "logscore_minus_p1", 4, "logscore_lo", "logscore_hi"), seeds, sci(rep, p2, "brier_gain_over_p1", 6, "brier_lo", "brier_hi"),
                 sci(rep, text, "brier_gain_over_p1", 4, "brier_lo", "brier_hi")]
 
-    return Table("fmt-learning-paired", "rrrr",
-                 ["fraction & P2 minus P1, & P2 Brier gain & text classifier Brier", r" & log score (90\%) & over P1 (90\%) & gain over P1 (90\%)"],
+    return Table("fmt-learning-paired", "rrrrr",
+                 ["fraction & P2 minus P1, & sd over & P2 Brier gain & text classifier Brier", r" & log score (90\%) & subsamples & over P1 (90\%) & gain over P1 (90\%)"],
                  [row(f) for f in ("0.01", "0.02", "0.05", "0.1", "0.25", "0.5", "1.0")])
 
 
@@ -413,11 +419,15 @@ def learning_vs_full(r):
         def log(rung):
             return sci(rep, f"paired_vs_full[fraction={fraction},rung={rung}]", "logscore_minus_full", 4, "logscore_lo", "logscore_hi")
 
-        return [fraction, n(rep, f"rows[fraction={fraction},rung=P1].n_history_tests"), log("P1"), log("P0"),
+        def seeds(rung):
+            return v(rep, f"paired_vs_full[fraction={fraction},rung={rung}].logscore_seed_sd", 4)
+
+        return [fraction, n(rep, f"rows[fraction={fraction},rung=P1].n_history_tests"), log("P1"), seeds("P1"), log("P0"), seeds("P0"),
                 sci(rep, f"paired_vs_full[fraction={fraction},rung=P1]", "brier_gain_over_full", 6, "brier_lo", "brier_hi")]
 
-    return Table("fmt-learning-vs-full", "rrrrr",
-                 ["fraction & history & P1 log score minus & P0 log score minus & P1 Brier gain over", r" & tests & full history (90\%) & full history (90\%) & full history (90\%)"],
+    return Table("fmt-learning-vs-full", "rrrrrrr",
+                 ["fraction & history & P1 log score minus & sd over & P0 log score minus & sd over & P1 Brier gain over",
+                  r" & tests & full history (90\%) & subsamples & full history (90\%) & subsamples & full history (90\%)"],
                  [row(f) for f in ("0.01", "0.02", "0.05", "0.1", "0.25", "0.5")])
 
 
@@ -427,6 +437,7 @@ def base_density(r):
     fixed, plain_fixed = r("ablations/backtest-upworthy-*--exposure-cell-median+base-density-t.json"), r("ablations/backtest-upworthy-*--exposure-cell-median.json")
     if abs(fixed.get(f"{_agg('P1')}.logscore") - plain_fixed.get(f"{_agg('P1')}.logscore")) > 1e-12:
         raise ValueError("P1 with exposure fixed differs between the two reports that fix it")
+    visible = r("ablations/backtest-upworthy-*--exposure-cell-median-visible+base-density-t.json")
     for rung in ("P1", "P2"):          # the setting changes P0's density only: the skill of the rungs must be the main run's
         if abs(main.get(f"{_agg(rung)}.brier_skill") - heavy.get(f"{_agg(rung)}.brier_skill")) > 1e-12:
             raise ValueError(f"the Brier skill of {rung} differs between the two base densities")
@@ -436,12 +447,88 @@ def base_density(r):
         return [label, n(main, f"{key}.n"), v(main, f"{key}.logscore", 4), v(heavy, f"{key}.logscore", 4),
                 sci(main, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
                 sci(heavy, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
+                sci(visible, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
                 sci(fixed, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
 
-    return Table("fmt-base-density", "lrrrrrr",
-                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & P1 minus P0, Student-t",
-                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%) & base rate, exposure fixed (90\%)"],
+    return Table("fmt-base-density", "lrrrrrrr",
+                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & Student-t base rate, exposure & Student-t base rate, exposure",
+                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%) & fixed on visible rows (90\%) & fixed on the whole ledger (90\%)"],
                  [row("all cells", "ALL"), row("headline-only", "headline_only"), row("image-only", "image_only"), row("smallest", "both")])
+
+
+def base_recency(r):
+    """P1's Brier skill against a base rate with a period term (three ablations; the plan fixed the readings before the runs)."""
+    main, fixed = r(MAIN), r("ablations/backtest-upworthy-*--exposure-cell-median.json")
+    quarter, quarter_fixed = r("ablations/backtest-upworthy-*--base-recency-quarter.json"), r("ablations/backtest-upworthy-*--exposure-cell-median+base-recency-quarter.json")
+    own = r("ablations/backtest-upworthy-*--base-recency-cell-quarter.json")
+    for rep, ref in ((quarter, main), (own, main), (quarter_fixed, fixed)):       # the setting moves P0's probability only
+        for rung in ("P0", "P1", "P2"):
+            if abs(rep.get(f"{_agg(rung)}.logscore") - ref.get(f"{_agg(rung)}.logscore")) > 1e-12:
+                raise ValueError(f"the log score of {rung} moved with the base rate's period term in {rep.name}")
+        if abs(rep.get(f"{_agg('P1')}.brier") - ref.get(f"{_agg('P1')}.brier")) > 1e-12:
+            raise ValueError(f"the Brier score of P1 moved with the base rate's period term in {rep.name}")
+
+    def skills(rep):
+        return [sci(rep, _agg("P1"), "brier_skill", 4, "brier_skill_lo", "brier_skill_hi"),
+                sci(rep, _agg("P1"), "brier_skill_planned", 4, "brier_skill_planned_lo", "brier_skill_planned_hi")]
+
+    def row(label, rep, rep_fixed):
+        return [label, v(rep, f"{_agg('P0')}.brier", 5), *skills(rep), *(skills(rep_fixed) if rep_fixed is not None else ["not run", "not run"])]
+
+    return Table("fmt-base-recency", "lrrrrr",
+                 ["base rate's probability & P0 Brier & P1 skill, event at & P1 skill, event at & exposure fixed: & exposure fixed:",
+                  r" & score & realized precision (90\%) & planned precision (90\%) & realized precision (90\%) & planned precision (90\%)"],
+                 [row("share of all visible rows (main run)", main, fixed), row("with the last quarter's term", quarter, quarter_fixed),
+                  row("the cell's own last quarter", own, None)])
+
+
+def by_origin(r):
+    """P1 minus the base rate on the log score at each origin and with each origin left out: the normal base rate, the Student-t one, and
+    the Student-t one with exposure fixed on visible rows. The whole-ledger fixing is checked here and read in the prose only."""
+    normal, heavy = r("by-origin-upworthy-*.json"), r("ablations/by-origin-upworthy-*--base-density-t.json")
+    fixed = r("ablations/by-origin-upworthy-*--exposure-cell-median-visible+base-density-t.json")
+    whole = r("ablations/by-origin-upworthy-*--exposure-cell-median+base-density-t.json")
+    backs = [r(MAIN), r("ablations/backtest-upworthy-*--base-density-t.json"),
+             r("ablations/backtest-upworthy-*--exposure-cell-median-visible+base-density-t.json"),
+             r("ablations/backtest-upworthy-*--exposure-cell-median+base-density-t.json")]
+    for rep, back in zip((normal, heavy, fixed, whole), backs):     # the script must reproduce each report's pooled difference
+        if abs(rep.get("pooled.difference") + back.get(f"{_agg('P0')}.logscore_vs_p1")) > 1e-9:
+            raise ValueError(f"{rep.name} does not reproduce the pooled difference of {back.name}")
+    origins = [o["origin"] for o in heavy.get("by_origin")]
+    for rep in (normal, fixed):
+        if origins != [o["origin"] for o in rep.get("by_origin")]:
+            raise ValueError("the by-origin reports hold different origins")
+
+    def row(o):
+        at, out = f"by_origin[origin={o}]", f"leave_one_origin_out[left_out={o}]"
+        return [month_year(o), n(heavy, f"{at}.n_tests"), sci(normal, at, "difference", 4), sci(heavy, at, "difference", 4),
+                sci(heavy, out, "difference", 4), sci(fixed, at, "difference", 4), sci(fixed, out, "difference", 4)]
+
+    def summary(label, key):
+        return [label, "", sci(normal, key, "difference", 4), sci(heavy, key, "difference", 4), "", sci(fixed, key, "difference", 4), ""]
+
+    return Table("fmt-by-origin", "lrrrrrr",
+                 ["origin & tests & normal base rate: & Student-t base rate: & Student-t: pooled & Student-t, exposure fixed on & the same: pooled",
+                  r" & & at this origin (90\%) & at this origin (90\%) & without this origin (90\%) & visible rows: at this origin (90\%) & without this origin (90\%)"],
+                 [*(row(o) for o in origins), summary("all origins, pooled by row", "pooled"),
+                  summary("all origins, each weighted equally", "equal_origin_weight"),
+                  summary("all origins as seven units (Student-t interval)", "origin_level")])
+
+
+def no_history(r):
+    """P0 and P1 against a reference that reads no history, Normal(0, s_star^2), on the log score."""
+    main, heavy = r("no-history-upworthy-*.json"), r("ablations/no-history-upworthy-*--base-density-t.json")
+    if abs(main.get("P1.minus_reference.difference") - heavy.get("P1.minus_reference.difference")) > 1e-12:
+        raise ValueError("P1 against the reference differs between the two score files")
+
+    def row(label, rep, rung):
+        return [label, v(rep, f"{rung}.logscore", 4), sci(rep, f"{rung}.minus_reference", "difference", 4),
+                join("{} of 7", n(rep, f"{rung}.by_origin_above_zero"))]
+
+    return Table("fmt-no-history", "lrrr",
+                 [r"forecaster & log score & minus the reference (90\%) & origins with the interval above zero"],
+                 [["reference: no effect, the row's planned standard error", v(main, "P1.reference_logscore", 4), "", ""],
+                  row("P0, normal density", main, "P0"), row("P0, Student-t density", heavy, "P0"), row("P1", main, "P1")])
 
 
 def auc_by_year(r):
@@ -559,5 +646,5 @@ def assurance(r):
     ])
 
 
-TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired, learning_vs_full, base_density,
+TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired, learning_vs_full, base_density, base_recency, by_origin, no_history,
           auc_by_year, sizing, assurance]

@@ -238,7 +238,8 @@ def gates_dependence(r):
 def ablations_upworthy_p1(r):
     """P1's log score and scored rows for each setting that changes either; a setting left out that does change one stops the build."""
     named = ("prior-normal", "kappa-0.0", "kappa-5.0", "kappa-80.0", "admission-prelaunch", "contrasts-one", "s-star-realized",
-             "exposure-cell-median", "exposure-cell-median+base-density-t", "effect-scale-relative", "effect-scale-relative+s-star-realized")
+             "exposure-cell-median", "exposure-cell-median+base-density-t", "exposure-cell-median+base-recency-quarter",
+             "exposure-cell-median-visible", "exposure-cell-median-visible+base-density-t", "effect-scale-relative", "effect-scale-relative+s-star-realized")
     main = _main(r, UPWORTHY)
     for path in sorted(glob.glob(os.path.join(r.root, "ablations", "backtest-upworthy-*--*.json"))):
         setting = os.path.basename(path)[:-len(".json")].split("--", 1)[1]

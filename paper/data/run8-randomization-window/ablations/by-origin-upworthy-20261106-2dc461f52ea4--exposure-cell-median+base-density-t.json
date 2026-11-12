@@ -1,0 +1,154 @@
+{
+  "pooled": {
+    "difference": 0.008538591082138657,
+    "lo": 0.004786022960465083,
+    "hi": 0.012275596754095133,
+    "n_rows": 10697,
+    "n_tests": 2949
+  },
+  "by_origin": [
+    {
+      "origin": "2013-04-01T00:00:00+00:00",
+      "difference": 0.023992387930550967,
+      "lo": 0.005574322323584899,
+      "hi": 0.039896677942066805,
+      "n_rows": 679,
+      "n_tests": 245
+    },
+    {
+      "origin": "2014-01-01T00:00:00+00:00",
+      "difference": -0.0409682881532589,
+      "lo": -0.0554682488556612,
+      "hi": -0.025487309446769177,
+      "n_rows": 1236,
+      "n_tests": 362
+    },
+    {
+      "origin": "2014-04-01T00:00:00+00:00",
+      "difference": 0.015809628636393607,
+      "lo": 0.011064026938241142,
+      "hi": 0.020474600314248612,
+      "n_rows": 1907,
+      "n_tests": 515
+    },
+    {
+      "origin": "2014-07-01T00:00:00+00:00",
+      "difference": 0.027390504417033362,
+      "lo": 0.022584522861910136,
+      "hi": 0.0316746437233034,
+      "n_rows": 2822,
+      "n_tests": 738
+    },
+    {
+      "origin": "2014-10-01T00:00:00+00:00",
+      "difference": 0.00787764262126717,
+      "lo": -0.0027878071129272624,
+      "hi": 0.017121215825084725,
+      "n_rows": 2640,
+      "n_tests": 689
+    },
+    {
+      "origin": "2015-01-01T00:00:00+00:00",
+      "difference": -0.0031691785917354583,
+      "lo": -0.014629622979536067,
+      "hi": 0.008799129882121878,
+      "n_rows": 1143,
+      "n_tests": 318
+    },
+    {
+      "origin": "2015-04-01T00:00:00+00:00",
+      "difference": 0.003939669977624533,
+      "lo": -0.015230615247935436,
+      "hi": 0.02048374507688453,
+      "n_rows": 270,
+      "n_tests": 83
+    }
+  ],
+  "by_origin_above_zero": 3,
+  "by_origin_below_zero": 1,
+  "by_origin_estimate_above_zero": 5,
+  "leave_one_origin_out": [
+    {
+      "left_out": "2013-04-01T00:00:00+00:00",
+      "difference": 0.007491163645517377,
+      "lo": 0.003467456785189841,
+      "hi": 0.010961187510115657,
+      "n_rows": 10018,
+      "n_tests": 2704
+    },
+    {
+      "left_out": "2014-01-01T00:00:00+00:00",
+      "difference": 0.01500624806712453,
+      "lo": 0.011517394378781565,
+      "hi": 0.018519068330557487,
+      "n_rows": 9461,
+      "n_tests": 2587
+    },
+    {
+      "left_out": "2014-04-01T00:00:00+00:00",
+      "difference": 0.006961131626397564,
+      "lo": 0.002703753213154408,
+      "hi": 0.0111751990819825,
+      "n_rows": 8790,
+      "n_tests": 2435
+    },
+    {
+      "left_out": "2014-07-01T00:00:00+00:00",
+      "difference": 0.0017830229004151162,
+      "lo": -0.003384503523317044,
+      "hi": 0.0067078343382061326,
+      "n_rows": 7875,
+      "n_tests": 2212
+    },
+    {
+      "left_out": "2014-10-01T00:00:00+00:00",
+      "difference": 0.008755161013465542,
+      "lo": 0.004906583364524871,
+      "hi": 0.012443210362315073,
+      "n_rows": 8057,
+      "n_tests": 2260
+    },
+    {
+      "left_out": "2015-01-01T00:00:00+00:00",
+      "difference": 0.00993925894243153,
+      "lo": 0.005649834739390809,
+      "hi": 0.013755838084213273,
+      "n_rows": 9554,
+      "n_tests": 2631
+    },
+    {
+      "left_out": "2015-04-01T00:00:00+00:00",
+      "difference": 0.008657676983953061,
+      "lo": 0.00452646819026197,
+      "hi": 0.012466906385169653,
+      "n_rows": 10427,
+      "n_tests": 2866
+    }
+  ],
+  "leave_one_origin_out_above_zero": 6,
+  "equal_origin_weight": {
+    "difference": 0.00498176669112504,
+    "lo": 0.0006200363120951146,
+    "hi": 0.009365250417732646,
+    "origins": 7
+  },
+  "origin_level": {
+    "difference": 0.00498176669112504,
+    "lo": -0.011894988178857265,
+    "hi": 0.021858521561107347,
+    "origins": 7,
+    "note": "Student-t interval on the origin means, the origins as exchangeable units"
+  },
+  "bootstrap_resamples": 500,
+  "seed": 0,
+  "level": 0.9,
+  "unit": "nats per row of log score, P1 minus P0; intervals resample tests and hold the origins fixed",
+  "inputs": {
+    "scores": "scores-upworthy-20261106-2dc461f52ea4--exposure-cell-median+base-density-t.parquet",
+    "report": "backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median+base-density-t.json",
+    "variant": {
+      "exposure": "cell-median",
+      "base_density": "t"
+    }
+  }
+}

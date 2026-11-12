@@ -168,7 +168,7 @@ def control(r):
     def split_row(size):
         key = f"positive_control_sensitivity.rows[n_tests={size},text_effect_strength=1.0]"
         cell = f"{key}.by_cell[cell=headline_only]"
-        return [n(extras, f"{key}.n_tests"), n(extras, f"{key}.rows_per_cell"), pctw(extras, f"{key}.share_admitted"), ci(extras, key, "recovered_fraction", 4),
+        return [n(extras, f"{key}.n_tests"), n(extras, f"{key}.rows_per_cell"), pctw(extras, f"{key}.share_admitted_fit_split"), ci(extras, key, "recovered_fraction", 4),
                 ci(extras, cell, "recovered_fraction", 4) if extras.get(f"{cell}.recovered_fraction") is not None else ""]
 
     def rolling_row(size):
@@ -184,7 +184,7 @@ def control(r):
     if whole.get(planted) != 1.0:
         raise ValueError("the guard admits a weight in the planted cell at 2,000 tests: the sentence reading the table no longer holds")
     return Table("fmt-control", "rrrrr", [r"tests & rows per cell & guard admits & P2's share of the oracle's gain & headline-only cell"], [
-        Raw(r"\multicolumn{5}{@{}l}{\emph{End-of-ledger split: 15 percent of tests held out, 12 seeds; ledger rows per cell; share of cells admitted; 90\% intervals}} \\"),
+        Raw(r"\multicolumn{5}{@{}l}{\emph{End-of-ledger split: 15 percent of tests held out, 12 seeds; ledger rows per cell; share of cells admitted by the fit that leaves those tests out; 90\% intervals}} \\"),
         split_row(300),
         split_row(1000),
         split_row(11100),

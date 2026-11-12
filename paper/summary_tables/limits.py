@@ -141,6 +141,29 @@ def _h4_part2(extras, skill):
                 w(extras, f"{composition}.issued.skill", 4), span(extras, f"{composition}.issued.lo", f"{composition}.issued.hi", 4))
 
 
+def _h2_gate(up, extras):
+    """H2's gate claim: the calendar's last origin by its test count against the pooled gates at power 0.90."""
+    last = up.get("header.last_origin")
+    last_tests = f"tables.origins[origin={last}].n_tests"
+    gate = "gates_by_stratum.strata.ALL.own_gate"
+    if up.get(last_tests) >= extras.get(f"{gate}.n_200"):
+        raise ValueError("the row says the last origin is below both released gates")
+    return join("the last origin of the calendar, {}, holds {} tests, below the gate of {} for a skill of 0.10 and below every other gate",
+                month_year(last), n(up, last_tests), n(extras, f"{gate}.n_400"))
+
+
+def _h4_part2_verdict(extras):
+    """The verdict of H4 part 2: failed with the burn-in origin; without it the pooled difference has no interval and the stratified one is on the wrong side."""
+    pooled = "abstention_composition.P2.pooled_issued_minus_abstained_skill"
+    stratified = "abstention_composition.P2.stratified_issued_minus_abstained_skill"
+    if extras.get(pooled) <= 0:
+        raise ValueError("the verdict says the pooled difference is on the claim's side without burn-in")
+    if extras.get(f"{stratified}.estimate") >= 0 or not extras.get(f"{stratified}.lo") < 0 < extras.get(f"{stratified}.hi"):
+        raise ValueError("the verdict says the difference within origin and cell is on the wrong side with an interval spanning zero")
+    return derived("failed on all rows; with burn-in excluded, on the claim's side pooled with no interval and on the wrong side within origin and cell",
+                   extras.ref(pooled), extras.ref(f"{stratified}.estimate"), extras.ref(f"{stratified}.lo"), extras.ref(f"{stratified}.hi"))
+
+
 def _not_shown_word(up, rung):
     """The verdict of a rung whose adjusted interval spans zero against the matched order: it holds against the plan's random order only where that adjusted bound clears zero."""
     if up.get(f"{_dv(rung)}.diff_matched_adjusted_lo") > 0:
@@ -179,18 +202,19 @@ def verdicts(r):
         raise ValueError("the row says the guard is what keeps P2 at P1 on the retailer's archive")
     rows = [
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (see~\ref{sec:ladder-results})} \\"),
-        _row("H1 part 1", "P1 beats P0, scored with a normal density as written, on log score at every origin after burn-in", _h1_part1(up, extras), "held"),
+        _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in, P0 scored with a normal density, as in the code committed with the plan", _h1_part1(up, extras), "held"),
         _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, syn), "not shown"),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
              join("{} nats, {}: the guard admitted no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
                   span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
         Raw(r"\midrule"),
-        _group("H2, not shown read pooled; undecidable as written; above zero at one earlier origin, where the base rate lags"),
+        _group("H2, in part: the gate claim failed; skill not shown read pooled and undecidable as written; above zero at one earlier origin, where the base rate lags"),
         _row("H2, read pooled", "P2's Brier skill positive, its interval clear of zero, pooled over origins",
              join("{}, {}, not clear of zero", w(up, f"{p2_all}.brier_skill", 4), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
              "not shown"),
-        _row("H2, as written", "the same at the final origin; the gate decidable there", _h2_as_written(up, curve, extras),
+        _row("H2, as written", "the same at the final origin", _h2_as_written(up, curve, extras),
              join("above zero at {}, with that caution, not counted as holding; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
+        _row("H2, the gate", "the released gate decidable at the final origin", _h2_gate(up, extras), "failed"),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H3, in part} (see~\ref{sec:calibration-results})} \\"),
         _row("H3 part 1", "ECE of issued cards inside the central 90 percent of the null at most origins",
@@ -210,7 +234,7 @@ def verdicts(r):
              join("issued rows {}, {}, against {} for the full set", w(extras, f"{skill}.issued.brier_skill", 4),
                   span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi", 4), w(extras, f"{skill}.all.brier_skill", 4)),
              "failed"),
-        _row("H4 part 2", "abstained rows lower on skill when forced", _h4_part2(extras, skill), "failed on all rows; not shown once burn-in is excluded"),
+        _row("H4 part 2", "abstained rows lower on skill when forced", _h4_part2(extras, skill), _h4_part2_verdict(extras)),
         _row("H4 part 3", "abstention below 30 percent after burn-in",
              join("{} percent pooled and {} percent after the burn-in origin, January 2014 included", pct(up, "tables.abstention[cell=ALL].rate"), _h4_after_burn_in(up)),
              "held"),

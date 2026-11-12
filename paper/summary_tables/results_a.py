@@ -80,9 +80,9 @@ def direction(r):
 
     def row(label, rung, auc=True):
         a = agg(rung)
-        return [label, v(main, f"{a}.direction_accuracy"), v(main, f"{a}.direction_accuracy_decisive"), ci(main, a, "auc_direction") if auc else "none, one forecast"]
+        return [label, v(main, f"{a}.direction_accuracy"), v(main, f"{a}.direction_accuracy_decisive"), ci(main, a, "auc_direction_within") if auc else "none, one forecast"]
 
-    return Table("fmt-direction", "lrrr", [r"rung & accuracy & accuracy, decisive & direction AUC (90\%)"], [
+    return Table("fmt-direction", "lrrr", [r"rung & accuracy & accuracy, decisive & direction AUC within strata (90\%)"], [
         row("P1", "P1"),
         row("precedent rung (P2)", "P2"),
         row("text classifier", "text_lr"),

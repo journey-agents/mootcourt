@@ -64,8 +64,10 @@ def glance(r):
 
     return Table("glance", "lrrr", [" & Upworthy (headline archive) & ASOS (product experiments) & Synthetic (no planted text signal)"], [
         ["scored tests / rows", *[join("{} / {}", n(a, "header.tests_scored"), n(a, "header.scored_rows")) for a in archives]],
-        ["P1 log score gain over P0, nats (90\\%)", *[_gain_over_p0(a) for a in archives]],
-        ["P1 Brier skill, event at realized precision (90\\%)", *[ci(a, p1, "brier_skill", 4) for a in archives]],
+        ["P1 log score gain over P0 scored with a normal density, nats (90\\%)", *[_gain_over_p0(a) for a in archives]],
+        ["P1 log score gain over P0 scored with a Student-t density, nats (90\\%)",
+         _gain_over_p0(r("ablations/backtest-upworthy-*--base-density-t.json")), "not run", "not run"],
+        ["P1 Brier skill, event at realized precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill", 4) for a in archives]],
         ["P1 Brier skill, event at planned precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
         ["tests to read a skill of 0.10, at base rate; verdict at that skill", _gate(up_extras), _gate(asos_extras), _gate_scaled(syn)],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],

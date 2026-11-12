@@ -828,7 +828,7 @@ def drift_table(rep, source, out, rungs=("P0", "P1", "P2")):
     for r in sorted(t, key=lambda x: (x["year"], rungs.index(x["rung"]))):
         lines.append(
             f"{r['year']} & {esc(r['rung'])} & {r['n']} & {r['n_tests']} & {f3(r.get('event_rate'), 4)} & {interval(r, 'logscore')} & "
-            f"{interval(r, 'brier_skill')} & "
+            f"{interval(r, 'brier_skill', 4)} & "
             f"{f3(r['direction_accuracy'])} & {f3(r['abstention_rate'])} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}"]
