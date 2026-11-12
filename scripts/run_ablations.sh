@@ -38,6 +38,7 @@ case "$SOURCE" in
       "--contrasts one"
       "--effect-scale relative" "--s-star realized" "--exposure cell-median"
       "--base-density t --exposure cell-median"
+      "--base-recency quarter" "--base-recency quarter --exposure cell-median" "--base-recency cell-quarter"
       "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;
   asos)

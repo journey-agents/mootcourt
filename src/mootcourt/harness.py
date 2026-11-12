@@ -611,14 +611,15 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
                   p2_selection: str | None = None, recency: str | float | None = None, local_k: int = LOCAL_EB_K,
                   baselines: bool = False, p2_guard: float | None = P2_GUARD_MULT, recalibrate: bool = False,
                   recalibration: str = "platt", gbm_tuned: bool = True, pairwise: bool | None = None,
-                  base_density: str = "normal") -> dict[str, Callable]:
+                  base_density: str = "normal", base_recency: str = "none") -> dict[str, Callable]:
     """Rung factories ``factory(rows, origin)``: P0, P1, P2, P3 when the ledger has team forecasts, then challengers.
 
     ``challenger`` is a name, a comma-separated string or a list from ``CHALLENGERS`` (gbm, local_eb, text_lr).
     ``baselines`` adds the two direction baselines. The keyword arguments are the ablation switches: ``features``
     (``text``, ``structured`` or ``both``), a fixed ``bandwidth_mult`` and ``lam`` for P2, the P1 pooling strength
     ``kappa``, the P1 ``prior`` (``t`` or ``normal``), the density of P0's log score ``base_density``
-    (``normal`` or ``t``), and P2's ``p2_selection``, ``recency`` and ``p2_guard`` (the admission
+    (``normal`` or ``t``), the period term of P0's probability ``base_recency`` (``none``, ``quarter`` or
+    ``cell-quarter``), and P2's ``p2_selection``, ``recency`` and ``p2_guard`` (the admission
     guard multiplier, None for no guard). With ``recalibrate`` every challenger also gets a recalibrated rung (``GBM+cal`` and so on; the
     ``moot backtest`` command turns it on by default); ``recalibration`` is ``platt`` or ``isotonic`` and ``gbm_tuned`` False restores
     the untuned GBM.
@@ -644,7 +645,7 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
         return shared.get("space", rows, origin, lambda: FeatureSpace.fit(rows, cell_only=cell_only, feature_set=features, pairwise=pairwise))
 
     def p0(rows, origin):
-        return P0Predictor(density=base_density).fit(rows)
+        return P0Predictor(density=base_density, recency=base_recency).fit(rows)
 
     def p2(rows, origin):
         return P2Predictor().fit(rows, space_of(rows, origin), p1_of(rows, origin), lambda_override=lam, selection=p2_selection,
@@ -874,7 +875,7 @@ def rolling_origin(
         # forecast p_sig is the same number; P0's forecast for this event is the visible rate of the same event (its own definition), so its
         # skill is zero here too. The visible rows' planned standard errors are the pre-launch ones computed from the visible set.
         event_planned = y > Z * s_star
-        p_base_planned = _planned_event_base(visible, scored, s_star_mode)
+        p_base_planned = _planned_event_base(visible, scored, s_star_mode, t, p0m.recency)
 
         outcomes = _outcomes_for_reliability(blocks, rel_rung, t)
         if prev_report is not None or len(outcomes):
@@ -931,13 +932,22 @@ def rolling_origin(
     return out
 
 
-def _planned_event_base(visible: pd.DataFrame, scored: pd.DataFrame, s_star_mode: str) -> np.ndarray:
+def _planned_event_base(visible: pd.DataFrame, scored: pd.DataFrame, s_star_mode: str, origin=None, recency: str = "none") -> np.ndarray:
     """Per scored row, the share of the visible rows of its cell with ``y > z s_star`` (the planned-standard-error event), the share over all
-    visible rows where the cell has fewer than two. The visible rows' ``s_star`` is the pre-launch one computed from the visible set."""
+    visible rows where the cell has fewer than two. The visible rows' ``s_star`` is the pre-launch one computed from the visible set.
+    ``recency`` is P0's rule (``predictors.p0.recent_share``), applied to this event as it is to the main one; ``none`` changes nothing."""
     s_vis = np.array(visible["s"].to_numpy(float), copy=True) if s_star_mode == "realized" else scale.s_star_rows(visible, visible)
     ev = pd.Series(visible["y"].to_numpy(float) > Z * s_vis, index=visible.index).astype(float)
     cells = visible["cell"].to_numpy()
     glob = float(ev.mean()) if len(ev) else float("nan")
+    if recency != "none" and len(ev):
+        from mootcourt.predictors.p0 import recent_share
+
+        e, per = ev.to_numpy(float), visible["period"].to_numpy(dtype=object)
+        thin = recent_share(e, per, e, per, origin, recency)
+        by_cell = {c: (recent_share(e[cells == c], per[cells == c], e, per, origin, recency) if (cells == c).sum() >= 2 else thin)
+                   for c in np.unique(cells)}
+        return scored["cell"].map(lambda c: by_cell.get(c, thin)).to_numpy(float)
     by_cell = {c: (float(ev[cells == c].mean()) if (cells == c).sum() >= 2 else glob) for c in np.unique(cells)}
     return scored["cell"].map(lambda c: by_cell.get(c, glob)).to_numpy(float)
 

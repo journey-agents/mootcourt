@@ -22,10 +22,17 @@ visible rows falls back to the global fit over all cells.
 by maximum likelihood to the same visible ``y``: location, scale and the degrees of freedom from ``NU_GRID``. It is a harder baseline
 for a rung whose own density has heavy tails. Nothing else changes: ``p_sig``, ``p_dir``, the quantile intervals and the CRPS are those
 of the default, so the Brier skill of every rung is the same under both densities.
+
+``recency`` (an ablation, docs/superpowers/plans/2026-11-12-base-rate-recency-and-origins.md) gives ``p_sig`` a period term, so the
+Brier skill of the other rungs is measured against a base rate that follows the level of the last quarter as P1 does. ``quarter``
+mirrors P1's rule: the cell's visible share plus half of (the share over all visible rows of the last complete quarter with at least
+``MIN_PERIOD_ROWS`` visible rows, minus the share over all visible rows), clipped to the unit interval. ``cell-quarter`` is the cell's
+own share in the last complete quarter that holds at least that many visible rows of the cell. Without such a quarter both leave the
+share as it is. Nothing else changes: the density, the intervals and ``p_dir`` are those of the default.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 import pandas as pd
@@ -34,11 +41,44 @@ from scipy import special, stats
 from mootcourt.config import NU_GRID, Z
 from mootcourt.ledger import ADMITTED, series_ns, timestamp_ns
 from mootcourt.predictors.base import Predictive, build_grid
+from mootcourt.predictors.p1 import MIN_PERIOD_ROWS, _period_end
 
 _MIN_ROWS = 2
 _SD_FLOOR = 1e-6
 DENSITIES = ("normal", "t")
 _MIN_ROWS_T = 5          # with fewer visible rows a tail cannot be fitted: the t density is then its normal limit
+RECENCIES = ("none", "quarter", "cell-quarter")
+
+
+def last_complete_period(periods: np.ndarray, origin) -> str | None:
+    """The latest period label among ``periods`` that is complete at ``origin`` (P1's test: its last day is on or before the origin's
+    day) and holds at least ``MIN_PERIOD_ROWS`` of the rows passed; None when there is none."""
+    day = pd.Timestamp(origin)
+    day = (day.tz_localize("UTC") if day.tzinfo is None else day.tz_convert("UTC")).date()
+    labels, counts = np.unique(np.asarray(periods, dtype=object).astype(str), return_counts=True)
+    ok = [p for p, n in zip(labels, counts) if n >= MIN_PERIOD_ROWS and (_period_end(p) - pd.Timedelta(days=1)).date() <= day]
+    return max(ok) if ok else None
+
+
+def recent_share(ev_cell: np.ndarray, per_cell: np.ndarray, ev_all: np.ndarray, per_all: np.ndarray, origin, rule: str) -> float:
+    """The base probability of an event under a recency ``rule`` of ``RECENCIES``, from visible rows only.
+
+    ``ev_cell`` and ``per_cell`` are the event indicator and the period label of the cell's visible rows (the caller passes all rows for a
+    thin cell); ``ev_all`` and ``per_all`` are those of all visible rows. Unitless, in [0, 1]."""
+    ev_cell, ev_all = np.asarray(ev_cell, dtype=np.float64), np.asarray(ev_all, dtype=np.float64)
+    share = float(ev_cell.mean())
+    if rule == "none":
+        return share
+    if rule == "quarter":
+        p = last_complete_period(per_all, origin)
+        if p is None:
+            return share
+        level = float(ev_all[np.asarray(per_all, dtype=object).astype(str) == p].mean())
+        return float(np.clip(share + (level - float(ev_all.mean())) / 2.0, 0.0, 1.0))
+    if rule == "cell-quarter":
+        p = last_complete_period(per_cell, origin)
+        return share if p is None else float(ev_cell[np.asarray(per_cell, dtype=object).astype(str) == p].mean())
+    raise ValueError(f"recency must be one of {RECENCIES}; got {rule!r}")
 
 
 @dataclass(frozen=True)
@@ -70,7 +110,9 @@ class _CellSeries:
         self.cum_n = np.arange(1, len(y) + 1, dtype=np.float64)
         self.cum_y = np.cumsum(y)
         self.cum_y2 = np.cumsum(y * y)
-        self.cum_sig = np.cumsum((df["y"].to_numpy() > z * df["s"].to_numpy()).astype(np.float64))
+        self.sig = (df["y"].to_numpy() > z * df["s"].to_numpy()).astype(np.float64)
+        self.cum_sig = np.cumsum(self.sig)
+        self.period = df["period"].to_numpy(dtype=object) if "period" in df.columns else None
         self.cum_min = np.minimum.accumulate(df["y"].to_numpy(dtype=np.float64))
         self.cum_max = np.maximum.accumulate(df["y"].to_numpy(dtype=np.float64))
 
@@ -87,11 +129,14 @@ class _CellSeries:
 class P0Predictor:
     """Base-rate predictor. ``fit(rows)`` returns self; rows are filtered by origin at predict time."""
 
-    def __init__(self, z: float = Z, density: str = "normal"):
+    def __init__(self, z: float = Z, density: str = "normal", recency: str = "none"):
         if density not in DENSITIES:
             raise ValueError(f"density must be one of {DENSITIES}; got {density!r}")
+        if recency not in RECENCIES:
+            raise ValueError(f"recency must be one of {RECENCIES}; got {recency!r}")
         self.z = z
         self.density = density
+        self.recency = recency
         self._t_cache: dict[tuple[int, int], tuple[float, float, float]] = {}
         self._center = 0.0
         self._cells: dict[str, _CellSeries] = {}
@@ -134,11 +179,24 @@ class P0Predictor:
 
     def sig_positive_frequency(self, cell: str, origin) -> float:
         """Share of visible rows in the cell with ``y > z s`` (unitless), global when the cell is thin."""
-        series, k, _ = self._pick(cell, origin)
-        return float(series.cum_sig[k - 1] / k)
+        return self.forecast(cell, origin).p_sig
 
     def forecast(self, cell: str, origin) -> P0Forecast:
-        """The empirical forecast of the cell's visible rows at the origin (global rows when the cell has fewer than 2)."""
+        """The empirical forecast of the cell's visible rows at the origin (global rows when the cell has fewer than 2).
+
+        With a ``recency`` rule ``p_sig`` carries its period term; every other field is the default's."""
+        f = self._plain_forecast(cell, origin)
+        if self.recency == "none":
+            return f
+        series, k, _ = self._pick(cell, origin)
+        glob = self._global
+        kg = glob.upto(timestamp_ns(origin))
+        if series.period is None or glob.period is None:
+            raise ValueError("a recency rule needs the ledger's period column")
+        p_sig = recent_share(series.sig[:k], series.period[:k], glob.sig[:kg], glob.period[:kg], origin, self.recency)
+        return replace(f, p_sig=p_sig)
+
+    def _plain_forecast(self, cell: str, origin) -> P0Forecast:
         series, k, fallback = self._pick(cell, origin)
         key = (id(series), k)
         got = self._cache.get(key)
@@ -159,7 +217,7 @@ class P0Predictor:
         likelihood to the visible ``y`` and the likeliest is kept; the scale has the floor of the default's standard deviation, the
         square root of the median squared standard error of the visible rows. Fewer than ``_MIN_ROWS_T`` visible rows give the normal.
         """
-        f = self.forecast(cell, origin)
+        f = self._plain_forecast(cell, origin)
         normal = (float("inf"), f.mean, max(float(np.sqrt(f.var)), _SD_FLOOR))
         if self.density == "normal":
             return normal

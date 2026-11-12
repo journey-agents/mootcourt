@@ -102,3 +102,72 @@ def test_the_base_density_setting_reaches_the_rung_and_names_the_ablation(imp, t
     args = ("both", None, None, None, "t", None, None)
     assert cli._variant_settings(*args) == {}                                                        # the main run keeps its name
     assert cli._variant_settings(*args, base_density="t") == {"base_density": "t"}
+
+
+def test_recent_share_mirrors_the_period_rule_of_the_prior(imp):
+    import numpy as np
+
+    p0_mod = imp("mootcourt.predictors.p0")
+    origin = pd.Timestamp("2014-07-01", tz="UTC")
+    # all rows: 40 in 2014Q1 at a share of 0.5, 40 in 2014Q2 at 0.1, 5 in 2014Q3 (the quarter being forecast, not complete)
+    ev_all = np.r_[np.tile([1.0, 0.0], 20), np.r_[np.ones(4), np.zeros(36)], np.ones(5)]
+    per_all = np.array(["2014Q1"] * 40 + ["2014Q2"] * 40 + ["2014Q3"] * 5, dtype=object)
+    ev_cell, per_cell = ev_all[:50], per_all[:50]                       # 40 rows of Q1 and 10 of Q2: the cell has no solid Q2 of its own
+    share = float(ev_cell.mean())
+    assert p0_mod.last_complete_period(per_all, origin) == "2014Q2"     # the newest quarter that has ended and holds 30 rows
+    assert p0_mod.last_complete_period(per_cell, origin) == "2014Q1"
+    assert p0_mod.recent_share(ev_cell, per_cell, ev_all, per_all, origin, "none") == share
+    quarter = p0_mod.recent_share(ev_cell, per_cell, ev_all, per_all, origin, "quarter")
+    assert quarter == pytest.approx(share + (0.1 - float(ev_all.mean())) / 2.0)
+    assert p0_mod.recent_share(ev_cell, per_cell, ev_all, per_all, origin, "cell-quarter") == pytest.approx(0.5)
+    early = pd.Timestamp("2014-01-15", tz="UTC")                        # no quarter is complete yet: both rules leave the share alone
+    for rule in ("quarter", "cell-quarter"):
+        assert p0_mod.recent_share(ev_cell, per_cell, ev_all, per_all, early, rule) == share
+    assert p0_mod.recent_share(np.ones(40), per_all[:40], np.ones(80), per_all[:80], origin, "quarter") == 1.0   # clipped to the unit interval
+    with pytest.raises(ValueError, match="recency"):
+        p0_mod.P0Predictor(recency="monthly")
+
+
+def test_a_recency_rule_moves_only_the_probability_of_the_event(imp, ledger_builder):
+    import numpy as np
+
+    p0_mod = imp("mootcourt.predictors.p0")
+    old = ledger_builder(n=300, mu=3.0, tau=1.0, seed=31, id_prefix="a")
+    new = ledger_builder(n=300, mu=-3.0, tau=1.0, seed=32, id_prefix="b")
+    old["usable_after"], old["period"] = pd.Timestamp("2014-02-01", tz="UTC"), "2014Q1"
+    new["usable_after"], new["period"] = pd.Timestamp("2014-05-01", tz="UTC"), "2014Q2"
+    df = pd.concat([old, new], ignore_index=True)
+    origin, cell = pd.Timestamp("2014-07-01", tz="UTC"), str(df["cell"].iloc[0])
+    plain = p0_mod.P0Predictor().fit(df)
+    y = np.linspace(-5.0, 5.0, 11)
+    f0 = plain.forecast(cell, origin)
+    for rule in ("quarter", "cell-quarter"):
+        rec = p0_mod.P0Predictor(recency=rule).fit(df)
+        f1 = rec.forecast(cell, origin)
+        assert f1.p_sig < f0.p_sig                                       # the last quarter's results are lower, so the probability falls
+        assert rec.sig_positive_frequency(cell, origin) == f1.p_sig
+        assert (f1.mean, f1.var, f1.p_dir, f1.lo80, f1.hi90) == (f0.mean, f0.var, f0.p_dir, f0.lo80, f0.hi90)
+        assert np.array_equal(rec.logscore(y, cell, origin), plain.logscore(y, cell, origin))
+    sig_new = float((new["y"] > p0_mod.Z * new["s"]).mean())
+    assert p0_mod.P0Predictor(recency="cell-quarter").fit(df).forecast(cell, origin).p_sig == pytest.approx(sig_new)
+
+
+def test_the_base_recency_setting_reaches_the_rung_the_planned_event_and_the_name(imp, tiny_ledger, origin):
+    import numpy as np
+
+    harness, cli = imp("mootcourt.harness"), imp("mootcourt.cli")
+    rung = harness.default_rungs("synthetic", tiny_ledger, base_recency="quarter")["P0"](tiny_ledger, origin)
+    assert rung.recency == "quarter" and harness.default_rungs("synthetic", tiny_ledger)["P0"](tiny_ledger, origin).recency == "none"
+    args = ("both", None, None, None, "t", None, None)
+    assert cli._variant_settings(*args, base_recency="quarter") == {"base_recency": "quarter"}
+    both = cli._variant_settings(*args, exposure="cell-median", base_recency="quarter")
+    assert cli._variant_name(both) == "exposure-cell-median+base-recency-quarter"
+    visible = tiny_ledger.copy()
+    half = len(visible) // 2
+    visible["period"] = ["2013Q1"] * half + ["2013Q2"] * (len(visible) - half)
+    visible.loc[visible.index[half:], "y"] = -50.0                       # the last quarter has no significant positive result
+    later = pd.Timestamp("2013-07-01", tz="UTC")
+    plain = harness._planned_event_base(visible, visible.head(5), "realized")
+    assert np.array_equal(plain, harness._planned_event_base(visible, visible.head(5), "realized", later, "none"))
+    moved = harness._planned_event_base(visible, visible.head(5), "realized", later, "cell-quarter")
+    assert np.all(moved == 0.0) and np.all(plain > 0.0)
