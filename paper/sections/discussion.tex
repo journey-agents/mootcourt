@@ -4,8 +4,10 @@ The answers below hold for one publisher's archive read in an exploratory way (S
 
 \paragraph{RQ1: can a team predict a new experiment's result from its concluded experiments?} Partly. The prior predicts the distribution of the next result, and at most a small part of which test will be significant.
 \begin{itemize}
-% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p1_minus_p0_by_origin.pooled difference 0.120 (0.106, 0.136), by_origin_clear_of_zero 7 (the seven origins after burn-in)
-\item The prior predicts the next result's distribution better than the base rate, by 0.120 nats on the log score pooled, and the paired difference is clear of zero at each of the seven origins after burn-in (Table~\ref{tab:glance}).
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json p1_minus_p0_by_origin.pooled difference 0.120 (0.106, 0.136), by_origin_clear_of_zero 7 (the seven scored origins; the first, 2013-04-01, is abstention_composition.burn_in_origin); tables/verdicts.tex H1 part 1
+\item The prior predicts the next result's distribution better than the base rate, by 0.120 nats on the log score pooled (Table~\ref{tab:glance}), and the paired difference is clear of zero at each of the seven scored origins, the burn-in origin included (Table~\ref{tab:verdicts}).
+% src: $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[fraction=0.01,rung=P1] n_history_tests 26; paired_vs_full[fraction=0.01,rung=P1] logscore_minus_full -0.0829 (-0.1086, -0.0592); final_origin 2015-01-01 (one origin); tables/fmt-learning-vs-full.tex
+\item Both forecasters are fitted to the same history, so this difference compares two ways of using it. What more history adds is measured separately, at one origin. There, P1 fitted on about 26 tests scores 0.083 nats per row below P1 fitted on the full history, with the interval clear of zero (Table~\ref{tab:fmt-learning-vs-full}).
 \item Its skill on which test will be significant is at most small, and it depends on how that event is defined.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] brier_skill 0.0023 (-0.0012, 0.0061)
 \item With the event at realized precision, the main reading, the prior's pooled skill is 0.0023 with an interval spanning zero. That interval is the evidence.
@@ -74,7 +76,7 @@ Anything above the prior must earn its place on a paired, gated comparison.
 Four limits apply to that use.
 \begin{itemize}
 \item The evidence is on randomized A/B and A/B/n tests, mainly one publisher's. The ledger format asks only for an effect, its standard error and the counts per arm, so the package accepts other online randomized experiments, such as model launches or pricing, and a team running them must treat them as untested. Designs that randomize periods of time or regions and not users, and designs with no randomization of the treatment, are untested too. Their dependence may invalidate the gates, and observational studies are out of scope (Section~\ref{sec:limitations}).
-\item The benchmark finds weak evidence and leakage in a backtest. It does not find defects in a change: bugs, instrumentation errors and harm remain the job of tests, guardrails and the live experiment.
+\item The protocol finds weak evidence and leakage in a backtest. It does not find defects in a change: bugs, instrumentation errors and harm remain the job of tests, guardrails and the live experiment.
 \item This paper makes no promise of improvement on product experiments, because the one archive of them is undecidable.
 \item A team that ranks by the forecast selects its own future ledger, so rows should record whether a card influenced the test (Section~\ref{sec:limitations}).
 \end{itemize}

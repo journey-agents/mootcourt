@@ -47,6 +47,9 @@ def window(r):
     def skill(rung):
         return both(sci, _agg(rung), "brier_skill", 4, "brier_skill_lo", "brier_skill_hi")
 
+    def planned(rung):
+        return both(sci, _agg(rung), "brier_skill_planned", 4, "brier_skill_planned_lo", "brier_skill_planned_hi")
+
     def within(rung):
         return both(sci, _agg(rung), "auc_event_within", 3, "auc_event_within_lo", "auc_event_within_hi")
 
@@ -58,6 +61,12 @@ def window(r):
         [r"P1 Brier skill (90\%)", *skill("P1")],
         [r"P2 Brier skill (90\%)", *skill("P2")],
         [r"text classifier Brier skill (90\%)", *skill("text_lr")],
+        Raw(r"\midrule"),
+        [r"P1 skill, planned precision (90\%)", *planned("P1")],
+        [r"P2 skill, planned precision (90\%)", *planned("P2")],
+        [r"text classifier skill, planned precision (90\%)", *planned("text_lr")],
+        [r"P1 Brier skill, headline-only cell (90\%)",
+         *both(sci, "tables.aggregate[cell=headline_only,rung=P1]", "brier_skill", 4, "brier_skill_lo", "brier_skill_hi")],
         Raw(r"\midrule"),
         [r"P1 minus P0, log score (90\%)", *both(sci, _agg("P0"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)],
         [r"P2 minus P1, log score (90\%)", *both(sci, _agg("P2"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi")],
@@ -113,9 +122,20 @@ def exposure_fixed(r):
                 sci(rep, at, "brier_skill", 4, "brier_skill_lo", "brier_skill_hi"), v(rep, f"{at}.logscore", 4), v(rep, f"{at}.ece", 4),
                 join("{} of {}", n(rep, f"{constant}.strata_with_one_value"), n(rep, f"{constant}.origin_cell_strata"))]
 
+    def tied_or_auc(cell, run, rung):
+        """The report's AUC within strata, or one half where the rung issues one forecast in every stratum (the report's value is then noise among ties)."""
+        constant = f"{top}.p_sig_constant_within_origin_and_cell.{run}.{rung}"
+        keys = [f"{constant}.strata_with_one_value", f"{constant}.origin_cell_strata"]
+        one, strata = (rep.get(k) for k in keys)
+        if one != strata:
+            return v(rep, f"{top}.by_cell.{cell}.{run}.{rung}.auc_event_within")
+        if abs(rep.get(f"{top}.auc_event_within_ties_exact.{run}.{rung}") - 0.5) > 1e-12:
+            raise ValueError(f"{rung} {run}: one forecast in every stratum but the tie-exact AUC is not one half")
+        return derived("0.500", *[rep.ref(k) for k in keys], rep.ref(f"{top}.auc_event_within_ties_exact.{run}.{rung}"))
+
     def by_cell(label, cell, rung):
         at = f"{top}.by_cell.{cell}"
-        return [label, v(rep, f"{at}.main.{rung}.auc_event_within"), v(rep, f"{at}.fixed.{rung}.auc_event_within"),
+        return [label, tied_or_auc(cell, "main", rung), tied_or_auc(cell, "fixed", rung),
                 v(rep, f"{at}.main.{rung}.brier_skill", 4), v(rep, f"{at}.fixed.{rung}.brier_skill", 4), "", ""]
 
     return Table("fmt-exposure-fixed", "lrrrrrr",
@@ -382,6 +402,22 @@ def learning_paired(r):
                  [row(f) for f in ("0.01", "0.02", "0.05", "0.1", "0.25", "0.5", "1.0")])
 
 
+def learning_vs_full(r):
+    """The learning curve paired with the same rung at the full history, on the same held-out rows (added after the review of version 2)."""
+    rep = r(CURVE)
+
+    def row(fraction):
+        def log(rung):
+            return sci(rep, f"paired_vs_full[fraction={fraction},rung={rung}]", "logscore_minus_full", 4, "logscore_lo", "logscore_hi")
+
+        return [fraction, n(rep, f"rows[fraction={fraction},rung=P1].n_history_tests"), log("P1"), log("P0"),
+                sci(rep, f"paired_vs_full[fraction={fraction},rung=P1]", "brier_gain_over_full", 6, "brier_lo", "brier_hi")]
+
+    return Table("fmt-learning-vs-full", "rrrrr",
+                 ["fraction & history & P1 log score minus & P0 log score minus & P1 Brier gain over", r" & tests & full history (90\%) & full history (90\%) & full history (90\%)"],
+                 [row(f) for f in ("0.01", "0.02", "0.05", "0.1", "0.25", "0.5")])
+
+
 def auc_by_year(r):
     """X9: the event AUC by year within origin and within origin and cell, which the 2015 skill is read against."""
     rep = r(EXTRAS)
@@ -497,5 +533,5 @@ def assurance(r):
     ])
 
 
-TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired,
+TABLES = [window, leak_choices, exposure_fixed, prior_family, ranking_paired, abstention_composition, gates_strata, drift_null, calibration_shift, learning_paired, learning_vs_full,
           auc_by_year, sizing, assurance]

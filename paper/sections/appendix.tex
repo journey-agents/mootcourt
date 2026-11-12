@@ -127,7 +127,7 @@ Two designs read it, with different numbers, and each figure below names its des
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows[n_tests=11100,text_effect_strength=1.0].rows_per_cell 7400; $RUN6/include-randomization-window/backtest-upworthy-20261106-4bfb354b87e3.json tables.aggregate[cell=headline_only,rung=P1].n 7417
 \item The largest ledger has 7,400 rows per cell, which matches the headline-only cell with the randomization window included, at 7,417 scored rows.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=headline_only,rung=P1].n 5966; $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_rungs.runs[n_tests=11100].by_cell.headline_only.rungs[rung=P2].rows 6354
-\item Against the main analysis, the rolling design scores 6,354 rows in the planted headline-only cell and the main analysis leaves the real one 5,966, so the two are of one size.
+\item Against the main analysis, the rolling design scores 6,354 rows in the planted ledger's headline-only cell and the main analysis leaves the real one 5,966, so the two are of one size.
 \end{itemize}
 
 The end-of-ledger split shows the following (Tables~\ref{tab:positive-control-gain} and~\ref{tab:fmt-app-pc-point}).
@@ -237,6 +237,8 @@ The boosted model and the text classifier now receive one indicator column per c
 \begin{itemize}
 % src: $RUN6/README.md (one code state: scripts/run8.sh on branch paper-v2 at commit 5e4fedf, in one run of all stages)
 \item Every report of the run folder comes from one code state, commit 5e4fedf, in one run, except the timed run and the scale measurements above.
+% src: $RUN6/README.md (the two learning-curve reports rewritten at commit a7e9f44 on 10 November 2026; additive keys paired_vs_full and paired_vs_full_note, no existing key changed)
+\item The two learning-curve reports were written again at a later commit, a7e9f44, which adds the comparison of Table~\ref{tab:fmt-learning-vs-full} and changes no number that was there before.
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.ablation_vs_run7.report_leaves leaves_compared 18742, leaves_different 0
 \item The ablation that includes the randomization window regenerates the earlier run's main report, with none of 18,742 numeric values different.
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.bootstrap_resamples 500; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json header.bootstrap_resamples 500; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json bootstrap_resamples 500
@@ -411,7 +413,7 @@ features & pre-launch fields; post-launch block kept apart \\
 \end{table}
 
 \begin{table}[tp]\centering\scriptsize
-\caption{Admission on realized clicks (the main run) against admission on exposure only (headline archive): scored rows, event rate, log score and Brier skill with 90 percent intervals by test.}
+\caption{Admission on realized clicks (the main run) against admission on exposure only (headline archive): scored rows, the base rate's Brier score, log score and Brier skill with 90 percent intervals by test.}
 \label{tab:admission}
 \resizebox{\columnwidth}{!}{\input{tables/admission-upworthy}}
 \end{table}

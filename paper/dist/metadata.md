@@ -4,7 +4,7 @@ Everything is as it should be pasted. The abstract below is condensed from the o
 
 ## Title
 
-Can Past Experiments Predict the Next One? A Public Benchmark for Pre-Launch Forecasts of A/B Tests
+Can Past Experiments Predict the Next One? A Scoring Protocol for Pre-Launch Forecasts of A/B Tests, Applied to Two Public Archives
 
 ## Authors
 
@@ -12,21 +12,21 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before launching a change, a team wants to know what its experiment is likely to show: what result to expect, whether the experiment is worth running and how large to make it. Past experiments may hold evidence. Industrial systems screen candidates before live tests, on private evidence. We found no public benchmark showing whether forecasts from past experiments can be trusted, or when they say too little.
-Method. We simulate how a team would have forecast each test at the time, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 experiments from a retailer (ASOS; no dates, arbitrary order). We fit on earlier tests only and predict each new test. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
+Problem. Before launching a change, a team wants to know what result to expect, whether the test is worth running and how large to make it. Industrial screening systems use private evidence. We found no public evaluation showing whether forecasts from past experiments can be trusted, or when they say too little.
+Method. We simulate how a team would have forecast each test, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 experiments from a retailer (ASOS; no dates, arbitrary order). We fit on earlier tests only and predict each new test. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
 Findings.
-- For the publisher, a fitted prior forecasts the next result's distribution better than the base rate (0.120 nats), but not which test in a group will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it at planned precision. Its probabilities are miscalibrated, mostly in level. The retailer's tests are too few to decide.
-- Weighting similar past tests matches the prior on score and skill and ranks tests better, but no better than arm count or traffic alone; a planted signal returns only 0.09 of an oracle's gain. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, but fails that control. Issued rows beat abstained rows on log score, not on skill.
-- A heavy-tailed predictive gained most, much of it a mixture over the click-through level. Sizing tests from the forecast shows no measurable advantage over the base rate.
-Release. Benchmark and Moot Court, an MIT-licensed package.
+- For the publisher, a fitted prior forecasts the next result's distribution better than the base rate (0.120 nats). Both read the same history, and more history helps. It does not say which test in a group will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it, unadjusted, at planned precision and only without the flagged period. Its probabilities are miscalibrated, mostly in level. The retailer's tests are too few to decide.
+- Weighting similar past tests matches the prior on score and skill and ranks tests better, but no better than arm count or traffic alone; a planted signal returns 0.09 of an oracle's gain. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, but fails that control. Issued rows beat abstained rows on log score, not on skill, so abstaining is not shown to help.
+- A heavy-tailed predictive gained most, much of it a mixture over the click-through level. Sizing tests from the forecast shows no measurable gain over the base rate.
+Release. Protocol and Moot Court (MIT).
 
 ## Categories
 
 - Primary: **cs.AI** (Artificial Intelligence). The work asks how well an AI system's forecasts of experiment outcomes hold up, and how a team should
   gate and audit them; the endorsement is for this category.
-- Cross-list: **stat.ML** (Machine Learning, Statistics). A benchmark and a scoring protocol for probabilistic forecasts (proper scores, calibration
+- Cross-list: **stat.ML** (Machine Learning, Statistics). A scoring protocol for probabilistic forecasts (proper scores, calibration
   under a clustered null, coverage by precision, sample-size gates), with empirical-Bayes and kernel estimators as the baselines.
-- Cross-list: **cs.LG** (Machine Learning). The benchmark, the challenger models (a boosted model, a text classifier), the leakage audit
+- Cross-list: **cs.LG** (Machine Learning). The protocol, the challenger models (a boosted model, a text classifier), the leakage audit
   and the reproducibility packaging are the computer-science side of the same work, and the readers who run experimentation platforms
   are there.
 - Cross-list: **stat.ME** (Methodology). The rolling-origin design with versioned snapshots, admission as a status, the planned standard
@@ -35,14 +35,14 @@ Release. Benchmark and Moot Court, an MIT-licensed package.
 
 ## Comments line
 
-45 pages including the appendix, 6 figures, 86 tables. Code, the data pipeline and the run folders behind every table:
+46 pages including the appendix, 6 figures, 87 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 
 ## License
 
 **CC BY 4.0** (Creative Commons Attribution). Both public archives the paper is built on are released under CC BY 4.0, the code is MIT,
-and the benchmark is meant to be reused, extended and re-reported by other teams with attribution; the attribution license is the most
+and the protocol is meant to be reused, extended and re-reported by other teams with attribution; the attribution license is the most
 permissive of arXiv's choices that keeps the authors named, and it does not restrict a later journal version.
 
 ## Ancillary files

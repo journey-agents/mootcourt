@@ -6,11 +6,11 @@ Every table in this section is generated from a report file of the final run by 
 
 As a reminder: a \emph{cell} is a kind of change (headline-only, image-only, or both at once, the smallest); an \emph{origin} is a quarterly date at which the models are refit; a \emph{rung} is P0 the base rate, P1 the empirical-Bayes prior or P2 the prior with weighted precedents; a \emph{stratum}, as in Section~\ref{sec:protocol}, is a cell or the pooled archive. AUC and resolution are also computed within each origin and cell and then averaged, which the tables call ``within strata'', so that a rung gets no credit for the base rate moving between periods and cells.
 
-Table~\ref{tab:fmt-window} sets the main run beside the ablation that keeps the tests from the period the archive's maintainers discourage (Section~\ref{sec:setting}). Every estimate keeps its sign, or its side of one half, under both. Excluding the window changes no conclusion; it shrinks the prior's gain over the base rate on the log score.
+Table~\ref{tab:fmt-window} sets the main run beside the ablation that keeps the tests from the period the archive's maintainers discourage (Section~\ref{sec:setting}). The estimates of skill on the main event, of the log score and of AUC keep their sign, or their side of one half, under both. Three readings do change. With the window included, the skill intervals of P1, P2 and the text classifier for the event at planned precision span zero, where the main run's lie above it. P1's skill in the headline-only cell lies below zero, where the main run's interval spans zero. The guard admits weight in more pairs of cell and origin. So the one skill reading that clears zero in the main run depends on leaving the window out. Excluding the window also shrinks the prior's gain over the base rate on the log score.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.origins_scored 7; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json randomization_window.counts; tables/fmt-window.tex
-\caption{The rule on the randomization window, on and off, headline archive. With the window excluded the origins of July and October 2013 score nothing, so seven origins remain. An ECE percentile above 95 rejects calibration.}
+\caption{The rule on the randomization window, on and off, headline archive. With the window excluded the origins of July and October 2013 score nothing, so seven origins remain. Planned precision sets significance at the precision expected from traffic. An ECE percentile above 95 rejects calibration.}
 \label{tab:fmt-window}
 \resizebox{\columnwidth}{!}{%
 \input{tables/fmt-window}}
@@ -98,8 +98,8 @@ The pooled archive and the two larger cells clear both gates, so their claims ar
 
 % src: $RUN6/gates.json decision target 0.90, GATE_SKILLS 0.20 and 0.10; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] brier_skill_hi 0.0061
 Decidable does not mean skilled. The gate is a sizing convention, and it assumes the calibration that Section~\ref{sec:calibration-results} rejects. The gates were sized for skills of 0.20 and 0.10. The interval that came back for P1 has an upper bound of 0.0061, far below either.
-% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows[n_tests=11100,text_effect_strength=1.0].brier_skill_oracle 0.0338 (the planted lift is 1 percent; the oracle knows each true effect)
-Nor are such skills realistic here: on the synthetic archive with a planted lift of 1 percent, a forecaster who knows each true effect reaches a skill of only 0.034 at 11,100 tests (Section~\ref{sec:synthetic-results}). A decidable gate therefore says that the interval is worth reading, not that a signal of realistic size could have been found.
+% src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json positive_control_sensitivity.rows[n_tests=11100,text_effect_strength=1.0].brier_skill_oracle 0.0338; positive_control_sensitivity.inputs.oracle_gain (P1 refit with the planted term removed and moved back by the row's term: the oracle is told the planted term only)
+Nor does the planted control suggest such skills. The synthetic archive plants a lift of 1 percent. At 11,100 tests, a forecaster that is told each test's planted term, and nothing else about its true effect, reaches a skill of 0.034 (Section~\ref{sec:synthetic-results}). That bounds what a text signal of that size could give a forecaster of P1's family. It does not bound what knowing every true effect would give. A decidable gate therefore says that the interval is worth reading, not that a signal of realistic size could have been found.
 
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json gates_by_stratum.strata.image_only.family_size 5, rungs.P1 adjusted_lo 0.0002; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=image_only,rung=P1] family_size 52, adjusted_lo -0.0030
 Families matter at this scale. The lower block of the table adjusts for a family of 5, and Table~\ref{tab:fmt-p1-cells} for the 52 intervals of the aggregate table. P1's image-only interval clears zero in the first and spans it in the second, an example of why the rule reads per-cell intervals as descriptive.
@@ -143,8 +143,8 @@ Table~\ref{tab:guard-pairs-rows} splits the pooled difference row by row. P2 gai
 The guard limits how much noise the selection fits, and removing it costs a measurable amount of log score (Table~\ref{tab:fmt-p2-vs-p1}); it does not promise that P2 beats P1 on later tests. This tie does not refute a precedent signal, because a planted signal of the size of Section~\ref{sec:synthetic-results} returns a gain inside the headline-only interval. On ranking, P2 is better than the prior, but no better than ordering tests by their number of arms or by traffic alone (Section~\ref{sec:decision-results}).
 
 \paragraph{Challengers.}
-% src: src/mootcourt/harness.py TextLR (y > 0 and y > Z * s; C 1.0)
-Three learned models run on the same origins and rows, each raw and recalibrated. Recalibration is the Platt fit of Section~\ref{sec:method} on visible rows; it moves each probability, not the order of the tests. The three are the boosted model, the local comparison set and the text classifier. The text classifier is a logistic regression on the TF-IDF of the headlines, fit once to a positive observed effect for its win probability and once to the significant-positive event for its significance probability. It is untuned, at scikit-learn's default regularization, so a search could move its result.
+% src: src/mootcourt/harness.py TextLR (y > 0 and y > Z * s; C 1.0); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=text_lr].auc_event_within 0.562, tables.aggregate[cell=ALL,rung=text_lr+cal].auc_event_within 0.541
+Three learned models run on the same origins and rows, each raw and recalibrated. Recalibration is the Platt fit of Section~\ref{sec:method} on visible rows. It moves each probability, and it can change the order of the tests. Within a period and group, the text classifier's AUC is 0.562 raw and 0.541 recalibrated. The three are the boosted model, the local comparison set and the text classifier. The text classifier is a logistic regression on the TF-IDF of the headlines, fit once to a positive observed effect for its win probability and once to the significant-positive event for its significance probability. It is untuned, at scikit-learn's default regularization, so a search could move its result.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL] family_size 52; tables/main-upworthy.tex; tables/fmt-challengers.tex
@@ -178,7 +178,7 @@ Realized exposure stands in for planned exposure (Section~\ref{sec:setting}). Th
 
 \begin{table*}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json exposure_fixed; tables/fmt-exposure-fixed.tex
-\caption{Exposure fixed at the cell median against the main run, headline archive. The first AUC column treats forecasts equal to nine decimals as tied; the second is the report's, in which rounding noise among forecasts that are in fact one number moves the value away from one half. The last column counts the origin-and-cell strata in which the rung issues one forecast.}
+\caption{Exposure fixed at the cell median against the main run, headline archive. The first AUC column treats forecasts equal to nine decimals as tied; the second is the report's, in which rounding noise among forecasts that are in fact one number moves the value away from one half. The last column counts the origin-and-cell strata in which the rung issues one forecast. Where a rung gives one forecast in every stratum, its AUC within strata is one half, and the lower panel prints that.}
 \label{tab:fmt-exposure-fixed}
 \input{tables/fmt-exposure-fixed}
 \end{table*}

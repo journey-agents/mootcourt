@@ -405,7 +405,7 @@ def ablation_table(reports_dir, source, out):
 
 
 def admission_table(rep, reports_dir, source, out):
-    """The main run beside the run that admits on exposure only (``--admission prelaunch``): scored rows, event rate, P1 and P2 skill."""
+    """The main run beside the run that admits on exposure only (``--admission prelaunch``): scored rows, the base rate's Brier score, P1 and P2 skill."""
     hits = sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*--admission-prelaunch.json")))
     if not hits:
         return
@@ -413,7 +413,7 @@ def admission_table(rep, reports_dir, source, out):
     lines = [
         r"\begin{tabular}{llrrrr}",
         r"\toprule",
-        r"admission & model & scored rows & event rate & log score & Brier skill (90\%) \\",
+        r"admission & model & scored rows & base Brier score & log score & Brier skill (90\%) \\",
         r"\midrule",
     ]
     for label, doc in (("realized clicks (main)", rep), ("exposure only", alt)):
@@ -429,7 +429,7 @@ def admission_table(rep, reports_dir, source, out):
     write(
         out,
         f"admission-{source}.tex",
-        f"{rep['_path']} and {hits[-1]} (the event rate column is the base-rate Brier score of P0 per row, so it falls with the event rate)",
+        f"{rep['_path']} and {hits[-1]} (the base Brier score column is the base-rate Brier score of P0 per row, so it falls with the event rate)",
         "\n".join(lines) + "\n",
     )
 

@@ -4,7 +4,7 @@ message: "If you use Moot Court in your work, please cite it as below."
 type: software
 title: "Moot Court: scored, gated pre-launch forecasts of A/B test outcomes from a ledger of precedents"
 abstract: >-
-  A benchmark and protocol for asking what a ledger of concluded online experiments says about a proposed test before it launches:
+  A protocol for asking what a ledger of concluded online experiments says about a proposed test before it launches:
   a ledger with admission as a status, a rolling-origin backtest over versioned snapshots, proper scores with floors and ceilings,
   calibration against a clustered null, sample-size gates, abstention, a frozen card and a weekly join that scores every card.
 version: 1.0.0
@@ -21,7 +21,7 @@ keywords:
   - forecasting
   - calibration
   - empirical Bayes
-  - benchmark
+  - evaluation protocol
   - abstention
 identifiers:
   - type: doi
