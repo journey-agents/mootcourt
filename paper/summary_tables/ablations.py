@@ -1,5 +1,5 @@
 """Summary tables of the ablations section."""
-from summary_tables import Table, ci, join, n, pctw, v
+from summary_tables import Table, ci, derived, fmt, join, n, pctw, v
 
 ALL = "tables.aggregate[cell=ALL]"
 P1, P2 = "tables.aggregate[cell=ALL,rung=P1]", "tables.aggregate[cell=ALL,rung=P2]"
@@ -82,9 +82,13 @@ def guard_threshold(r):
 def prior_settings(r):
     def row(label, pattern):
         rep = r(pattern)
-        return [label, v(rep, f"{P1}.logscore"), ci(rep, P1, "brier_skill", 4)]
+        gain = "tables.aggregate[cell=ALL,rung=P0]"
+        keys = [f"{gain}.logscore_vs_p1", f"{gain}.logscore_vs_p1_hi", f"{gain}.logscore_vs_p1_lo"]
+        x, lo, hi = (-rep.get(k) for k in keys)          # the report holds P0 minus P1; the column prints P1 minus P0
+        over_base = derived(f"{fmt(x, 3)} ({fmt(lo, 3)}, {fmt(hi, 3)})", *[rep.ref(k) for k in keys])
+        return [label, v(rep, f"{P1}.logscore"), over_base, ci(rep, P1, "brier_skill", 4)]
 
-    return Table("fmt-prior-settings", "lrr", ["prior & P1 log score & P1 Brier skill (90\\%)"], [
+    return Table("fmt-prior-settings", "lrrr", ["prior & P1 log score & P1 minus P0, & P1 Brier skill (90\\%)", " & & log score (90\\%) &"], [
         row("Student-t, $\\kappa = 0$", _abl("kappa-0.0")),
         row("Student-t, $\\kappa = 5$", _abl("kappa-5.0")),
         row("Student-t, $\\kappa = 20$ (the main run)", MAIN),

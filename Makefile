@@ -142,3 +142,8 @@ arxiv: paper-figures tables
 
 arxiv-check: arxiv
 	$(PY) scripts/arxiv_package.py --paper paper --out paper/dist --check
+
+# The anonymized single-column version for a double-blind venue, from the same sources (paper/tmlr/README.md): writes
+# paper/tmlr-submission.tex and paper/tmlr-submission.pdf, which git ignores.
+tmlr: paper-figures tables
+	$(PY) scripts/tmlr_build.py --paper paper --compile

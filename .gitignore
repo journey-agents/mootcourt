@@ -38,6 +38,8 @@ tools/dashboard-data.js
 
 # paper build outputs (rebuild with tectonic -X compile main.tex)
 paper/main.pdf
+paper/tmlr-submission.tex
+paper/tmlr-submission.pdf
 # vector figures are rebuilt by `make paper-figures`; figures.json (the provenance index) is committed
 paper/figures/*.pdf
 paper/*.aux

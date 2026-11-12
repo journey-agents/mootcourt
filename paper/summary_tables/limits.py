@@ -102,7 +102,7 @@ def _h1_part2(up, syn):
     planted = 'positive_control_rungs.runs[n_tests=11100].by_cell["headline_only"].rungs[rung=P2].diff_logscore_vs_p1'
     if not up.get(f"{headline}.logscore_vs_p1_lo") < syn.get(planted) < up.get(f"{headline}.logscore_vs_p1_hi"):
         raise ValueError("the row says the interval contains the planted gain")
-    return join("{}, {}, with the family held fixed; the interval contains the {} that a planted lift returns in a cell of this size under the same backtest",
+    return join("{}, {}; the interval contains the {} that a planted lift returns in a cell of this size under the same backtest",
                 w(up, f"{headline}.logscore_vs_p1", 4, plus=True),
                 span(up, f"{headline}.logscore_vs_p1_lo", f"{headline}.logscore_vs_p1_hi", 4),
                 w(syn, planted, 4))
@@ -124,7 +124,7 @@ def _h2_as_written(up, curve, extras):
     p0, event = f'drift_matched_null.rungs.P0.by_origin["{final}"].mean_forecast', f'drift_matched_null.rungs.P0.by_origin["{final}"].event_rate'
     if extras.get(p0) <= extras.get(event):
         raise ValueError("the row says the base rate lags above the event rate")
-    return join("at {}, the latest origin with enough held-out rows for the learning curve: {}, {}, on {} tests against the pooled gate of {}; there the base rate is {} and the event rate {},"
+    return join("at {}, the latest origin with enough held-out rows for the learning curve: {}, {}, on {} tests, where the pooled gate of {} was simulated at the pooled event rate and not at this origin's; there the base rate is {} and the event rate {},"
                 " so the base rate lags and part of the skill may be that lag; at {}, the last origin of the calendar: {} tests, below every gate",
                 month_year(final),
                 w(curve, f"{p2}.skill"), span(curve, f"{p2}.skill_lo", f"{p2}.skill_hi"), n(curve, "heldout_tests"), n(extras, gate_key),
@@ -185,12 +185,12 @@ def verdicts(r):
              join("{} nats, {}: the guard admitted no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
                   span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
         Raw(r"\midrule"),
-        _group("H2, not shown read pooled; held as written at one origin, where the base rate lags"),
+        _group("H2, not shown read pooled; undecidable as written; above zero at one earlier origin, where the base rate lags"),
         _row("H2, read pooled", "P2's Brier skill positive, its interval clear of zero, pooled over origins",
              join("{}, {}, not clear of zero", w(up, f"{p2_all}.brier_skill", 4), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
              "not shown"),
         _row("H2, as written", "the same at the final origin; the gate decidable there", _h2_as_written(up, curve, extras),
-             join("held at {}, with that caution; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
+             join("above zero at {}, with that caution, not counted as holding; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H3, in part} (Section~\ref{sec:calibration-results})} \\"),
         _row("H3 part 1", "ECE of issued cards inside the central 90 percent of the null at most origins",
@@ -199,18 +199,18 @@ def verdicts(r):
              "failed"),
         _row("H3 part 2", "80 and 90 percent coverage within 5 points of nominal",
              join("{} percent, {} to {}, and {} percent, {} to {}, within 5 points of nominal pooled; {} to {} across deciles"
-                  " (a range, not an interval) of the realized level",
+                  " (a range, not an interval) of the ratio of realized to planned standard error",
                   pct(up, f"{p1_all}.coverage_80"), pct(up, f"{p1_all}.coverage_80_lo"), pct(up, f"{p1_all}.coverage_80_hi"),
                   pct(up, f"{p1_all}.coverage_90"), pct(up, f"{p1_all}.coverage_90_lo"), pct(up, f"{p1_all}.coverage_90_hi"),
                   v(up, deciles.format(1), 2), v(up, deciles.format(10), 2)),
-             "holds pooled, fails within strata"),
+             "held, read pooled; the fall across deciles is descriptive"),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H4, in part} (Section~\ref{sec:abstention-results})} \\"),
         _row("H4 part 1", "issued cards above the full set on skill",
              join("issued rows {}, {}, against {} for the full set", w(extras, f"{skill}.issued.brier_skill", 4),
                   span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi", 4), w(extras, f"{skill}.all.brier_skill", 4)),
              "failed"),
-        _row("H4 part 2", "abstained rows lower on skill when forced", _h4_part2(extras, skill), "not shown once burn-in is excluded"),
+        _row("H4 part 2", "abstained rows lower on skill when forced", _h4_part2(extras, skill), "failed on all rows; not shown once burn-in is excluded"),
         _row("H4 part 3", "abstention below 30 percent after burn-in",
              join("{} percent pooled and {} percent after the burn-in origin, January 2014 included", pct(up, "tables.abstention[cell=ALL].rate"), _h4_after_burn_in(up)),
              "held"),

@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: Every finding is kept, the question labels and Tools are left to the PDF, and Problem, Method and Release are shorter.
+Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: the main findings are kept; the learning curve, the diagnostic of the prior's shape, the question labels and Tools are left to the PDF; and Problem, Method and Release are shorter.
 
 ## Title
 
@@ -13,11 +13,11 @@ Yingjie Li (Independent researcher)
 ## Abstract
 
 Problem. Before launching a change, a team wants to know what result to expect, whether the test is worth running and how large to make it. Industrial screening systems use private evidence. We found no public evaluation showing whether forecasts from past experiments can be trusted, or when they say too little.
-Method. We simulate how a team would have forecast each test, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 experiments from a retailer (ASOS; no dates, arbitrary order). We fit on earlier tests only and predict each new test. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
+Method. We simulate how a team would have forecast each test, on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out a period flagged for randomization problems, and 68 scored experiments from a retailer (ASOS; no dates). We fit on earlier tests only. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
 Findings.
-- For the publisher, a fitted prior forecasts the next result's distribution better than the base rate (0.120 nats). Both read the same history, and more history helps. It does not say which test in a group will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it, unadjusted, at planned precision and only without the flagged period. Its probabilities are miscalibrated, mostly in level. The retailer's tests are too few to decide.
-- Weighting similar past tests matches the prior on score and skill and ranks tests better, but no better than arm count or traffic alone; a planted signal returns 0.09 of an oracle's gain. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, but fails that control. Issued rows beat abstained rows on log score, not on skill, so abstaining is not shown to help.
-- A heavy-tailed predictive gained most, much of it a mixture over the click-through level. Sizing tests from the forecast shows no measurable gain over the base rate.
+- For the publisher, a fitted prior forecasts the next result's distribution better than a base rate scored with a normal density (0.120 nats). Of that, 0.075 is its heavy-tailed shape; with both normal the gain is 0.045 (90 percent interval 0.034 to 0.055). It does not say which test will succeed. Its skill on which test will be significant is at most small: its interval spans zero, or just clears it, unadjusted, at planned precision and only without the flagged period. Its probabilities fail a calibration test. The retailer's tests are too few to decide.
+- Weighting similar past tests matches the prior on score and skill. It ranks tests better, but worse than arm count alone at a quarter or half of the tests, and no better than traffic alone. With a planted signal it recovers 0.09 of the gain of a model told the signal. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, no more than arm count alone, and fails that control. Abstaining is not shown to help.
+- Sizing tests from the forecast shows no consistent gain over the base rate.
 Release. Protocol and Moot Court (MIT).
 
 ## Categories
@@ -35,7 +35,7 @@ Release. Protocol and Moot Court (MIT).
 
 ## Comments line
 
-46 pages including the appendix, 6 figures, 87 tables. Code, the data pipeline and the run folders behind every table:
+50 pages including the appendix, 6 figures, 87 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 

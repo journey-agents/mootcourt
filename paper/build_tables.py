@@ -405,7 +405,7 @@ def ablation_table(reports_dir, source, out):
 
 
 def admission_table(rep, reports_dir, source, out):
-    """The main run beside the run that admits on exposure only (``--admission prelaunch``): scored rows, the base rate's Brier score, P1 and P2 skill."""
+    """The main run beside the run that admits on exposure only (``--admission prelaunch``): scored rows, base Brier score, P1 and P2 skill."""
     hits = sorted(glob.glob(os.path.join(reports_dir, "ablations", f"backtest-{source}-*--admission-prelaunch.json")))
     if not hits:
         return
