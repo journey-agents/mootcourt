@@ -47,6 +47,10 @@ The edge may come from the number of arms or from traffic rather than from prece
 At the primary horizon, where the audience runs to 20 times the size of the median two-arm test in the cell, the size from the prior shows no measurable edge over the size from the base rate. Each of them beats a rule that was sized for a fixed power, but the win comes only because the rule reaches its cap at that horizon and ends up testing the entire audience, an outcome that loses more than not testing at all (Section~\ref{sec:sizing-results}). When the comparison is with the base rate, the sign flips as the horizon changes and as the assumed world changes. No claim is made in this paper that taking the size from the forecast does better than a base rate.
 \end{itemize}
 
+%% tmlr:move-begin production
+%% tmlr:note production What improved the prediction (RQ3) is read in Appendix~\ref{sec:production}, with notes on using the package in production, where it has not been deployed. Of the things put to the test, the biggest gain, on both forecasters, comes from a heavy-tailed density, and the bulk of the settings do not matter.
+%% tmlr:title production Further discussion: what improves the prediction, and production use
+\label{sec:production}
 \paragraph{RQ3: what improves the prediction?} Of the things put to the test, a handful of changes make a difference and the bulk of the settings do not matter.
 \begin{itemize}
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1] logscore -0.8316 against the main run's -0.7566 (0.075 nats); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P0].logscore -0.8762 against the base-density-t report's -0.7761 (the base rate gains more than 0.075 from the Student-t; tables/fmt-base-density.tex)
@@ -64,10 +68,6 @@ With the guard off, the selected weight still carries a cost of 0.004 nats under
 \item Not tested, so these are candidates and not findings: recording planned exposure, stronger text models, choosing the width of the precedent rung's forecast on held-out rows, and team forecasts frozen before launch.
 \end{itemize}
 
-%% tmlr:move-begin production
-%% tmlr:note production Notes on using the package in production, where it has not been deployed, are in Appendix~\ref{sec:production}.
-%% tmlr:title production Using this in production
-\label{sec:production}
 \paragraph{Using this in production.} No production experimentation platform has ever run this system in deployment, and a replay is what the evidence rests on. A team gets from it a means of putting forecasts to the test against the team's own ledger. Aggregates are all it requires, and at no point does the ledger go outside the organization. The order in which it is used is fixed.
 \begin{enumerate}
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json gates_by_stratum.strata.ALL rungs.P1.verdict "decidable at skill 0.20 and 0.10" (the two skills the gates are sized for); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1] brier_skill 0.0023 (-0.0012, 0.0061)
