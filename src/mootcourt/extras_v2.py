@@ -290,19 +290,32 @@ def effect_scale_choices(reports_dir, source: str, snapshot_id: str) -> dict | N
     }
 
 
-def exposure_fixed(reports_dir, source: str, snapshot_id: str) -> dict | None:
-    """X3. The main run against the run that sets every row's planned exposure to its cell's median."""
+EXPOSURE_FIXED_DEFINITIONS = {
+    "exposure-cell-median": "every Upworthy row's two arms get the median planned exposure of its cell (admitted rows); y, s and the statuses "
+                            "are unchanged",
+    "exposure-cell-median-visible": "every Upworthy row's two arms get the median planned exposure of its cell over the admitted rows usable "
+                                    "by the start of the row's calendar quarter, so no later row is read; y, s and the statuses are unchanged",
+}
+
+
+def exposure_fixed(reports_dir, source: str, snapshot_id: str, variant: str = "exposure-cell-median") -> dict | None:
+    """X3. The main run against the run that sets every row's planned exposure to its cell's median.
+
+    ``variant`` names the ablation report read: ``exposure-cell-median`` (the median over the whole ledger, a diagnostic that reads later
+    rows) or ``exposure-cell-median-visible`` (the median over the rows visible at the row's quarter)."""
+    if variant not in EXPOSURE_FIXED_DEFINITIONS:
+        raise ValueError(f"variant must be one of {sorted(EXPOSURE_FIXED_DEFINITIONS)}")
     if source != "upworthy":
         return None
     reports_dir = Path(reports_dir)
     main_doc = _load(reports_dir / f"backtest-{source}-{snapshot_id}.json")
-    jf, sf = _ablation(reports_dir, source, snapshot_id, "exposure-cell-median")
+    jf, sf = _ablation(reports_dir, source, snapshot_id, variant)
     fixed_doc = _load(jf)
     if main_doc is None or fixed_doc is None:
         return None
     rungs = ("P0", "P1", "P2", "text_lr", "GBM", "local_eb")
     out: dict = {
-        "definition": "every Upworthy row's two arms get the median planned exposure of its cell (admitted rows); y, s and the statuses are unchanged",
+        "definition": EXPOSURE_FIXED_DEFINITIONS[variant],
         "report": jf.name,
         "by_cell": {},
     }

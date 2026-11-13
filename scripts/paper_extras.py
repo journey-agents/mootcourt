@@ -55,7 +55,7 @@ the inputs it came from:
   two score tables).
 
 * The keys of the paper version 2 plan (run 8; ``mootcourt.extras_v2`` holds the functions, each with its definition): ``randomization_window`` (X1),
-  ``effect_scale_choices`` (X2), ``exposure_fixed`` (X3), ``prior_family_scale`` (X4), ``ranking_paired`` and
+  ``effect_scale_choices`` (X2), ``exposure_fixed`` (X3) and ``exposure_fixed_visible`` (the same against the run fixed on visible rows), ``prior_family_scale`` (X4), ``ranking_paired`` and
   ``positive_control_decision_value`` (X5), ``abstention_composition`` (X6), ``gates_by_stratum`` (X7, from ``scripts/gates_by_stratum.py``),
   ``drift_matched_null`` (X8), ``within_origin_auc_by_year`` and ``lowest_reliability_bin`` (X9). They read the stored score tables and reports
   (the ablations of run 8 for X1 to X3), never refit a model, and are None
@@ -1622,6 +1622,7 @@ def version2_keys(source: str, ledger: pd.DataFrame, reports_dir, snapshot_id: s
                                                                                run7_report=run7_report, run7_scores=run7_scores))
     step("effect_scale_choices", lambda: extras_v2.effect_scale_choices(reports_dir, source, snapshot_id))
     step("exposure_fixed", lambda: extras_v2.exposure_fixed(reports_dir, source, snapshot_id))
+    step("exposure_fixed_visible", lambda: extras_v2.exposure_fixed(reports_dir, source, snapshot_id, variant="exposure-cell-median-visible"))
     step("prior_family_scale", lambda: extras_v2.prior_family_scale(ledger, source))
     step("ranking_paired", lambda: None if scores is None else extras_v2.ranking_paired(scores))
     step("abstention_composition", lambda: None if scores is None else extras_v2.abstention_composition(scores))

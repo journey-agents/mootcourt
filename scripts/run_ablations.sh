@@ -40,6 +40,7 @@ case "$SOURCE" in
       "--base-density t --exposure cell-median"
       "--base-recency quarter" "--base-recency quarter --exposure cell-median" "--base-recency cell-quarter"
       "--exposure cell-median-visible" "--base-density t --exposure cell-median-visible"
+      "--base-recency quarter --exposure cell-median-visible"
       "--recalibrate-ladder on"
       "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;

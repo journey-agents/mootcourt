@@ -416,6 +416,7 @@ def test_version2_keys_fill_from_a_score_table_and_name_what_is_missing(backtest
         "randomization_window",
         "effect_scale_choices",
         "exposure_fixed",
+        "exposure_fixed_visible",
         "prior_family_scale",
         "gates_by_stratum",
         "positive_control_decision_value",
@@ -553,3 +554,43 @@ def test_a_curve_at_a_named_origin_is_written_beside_the_default_one(tmp_path):
     assert plain["json"].name == "learning-curve-synthetic-sid.json"
     assert named["json"].name == "learning-curve-synthetic-sid--origin-2014-07-01.json" and named["json"].exists()
     assert named["figure"] != plain["figure"] and named["md"] != plain["md"]
+
+
+# ---------------------------------------------------------------- exposure fixed on visible rows (reviewer runs, Part E)
+def _two_fixings(tmp_path, visible=True):
+    ab = tmp_path / "ablations"
+    ab.mkdir()
+    (tmp_path / "backtest-upworthy-S.json").write_text(json.dumps(_report({"P1": {"auc_event_within": 0.53, "brier_skill": 0.002}})))
+    rows = lambda p: pd.DataFrame({"origin": ["o"] * 4, "cell": ["a", "a", "b", "b"], "rung": ["P1"] * 4, "p_sig": p, "exposure": [1, 2, 3, 3]})  # noqa: E731
+    rows([0.1, 0.2, 0.3, 0.3]).to_parquet(tmp_path / "scores-upworthy-S.parquet")
+    for suffix, skill, on in (("exposure-cell-median", 0.001, True), ("exposure-cell-median-visible", 0.004, visible)):
+        if on:
+            (ab / f"backtest-upworthy-S--{suffix}.json").write_text(json.dumps(_report({"P1": {"auc_event_within": 0.50, "brier_skill": skill}})))
+            rows([0.1, 0.1, 0.3, 0.3]).to_parquet(ab / f"scores-upworthy-S--{suffix}.parquet")
+
+
+def test_exposure_fixed_default_variant_is_the_whole_ledger_run(tmp_path):
+    _two_fixings(tmp_path)
+    assert ex.exposure_fixed(tmp_path, "upworthy", "S") == ex.exposure_fixed(tmp_path, "upworthy", "S", variant="exposure-cell-median")
+    assert ex.exposure_fixed(tmp_path, "upworthy", "S")["report"].endswith("--exposure-cell-median.json")
+
+
+def test_exposure_fixed_on_visible_rows_reads_its_own_report(tmp_path):
+    _two_fixings(tmp_path)
+    doc = ex.exposure_fixed(tmp_path, "upworthy", "S", variant="exposure-cell-median-visible")
+    assert doc["report"].endswith("--exposure-cell-median-visible.json")
+    assert "start of the row's calendar quarter" in doc["definition"]
+    assert doc["by_cell"]["ALL"]["fixed_minus_main"]["P1"]["brier_skill"] == pytest.approx(0.002)
+    assert doc["p_sig_constant_within_origin_and_cell"]["fixed"]["P1"]["strata_with_one_value"] == 2
+
+
+def test_exposure_fixed_on_visible_rows_is_none_without_its_report(tmp_path):
+    _two_fixings(tmp_path, visible=False)
+    assert ex.exposure_fixed(tmp_path, "upworthy", "S", variant="exposure-cell-median-visible") is None
+    assert ex.exposure_fixed(tmp_path, "upworthy", "S") is not None
+
+
+def test_exposure_fixed_refuses_an_unknown_variant(tmp_path):
+    _two_fixings(tmp_path)
+    with pytest.raises(ValueError):
+        ex.exposure_fixed(tmp_path, "upworthy", "S", variant="exposure-other")
