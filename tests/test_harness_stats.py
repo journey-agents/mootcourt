@@ -113,6 +113,20 @@ def test_split_half_reports_gaps_per_cell(imp, tiny_ledger):
     assert row["mu_gap"] < 0.3 * 3.0 and row["tau_gap"] < 0.25 * 3.0
 
 
+def test_split_half_adds_degrees_of_freedom_and_a_standard_deviation_and_keeps_the_old_keys(imp, tiny_ledger):
+    hs, p1 = imp("mootcourt.harness_stats"), imp("mootcourt.predictors.p1")
+    ledger = tiny_ledger.copy()
+    ledger["test_id"] = [f"t{i // 2}" for i in range(len(ledger))]
+    row = hs.split_half(ledger)["headline_only"]
+    assert {"mu_odd", "mu_even", "tau_odd", "tau_even", "mu_gap", "tau_gap", "n_odd", "n_even"} <= set(row)
+    for half in ("odd", "even"):
+        nu, sd = row[f"nu_{half}"], row[f"sd_{half}"]
+        assert nu > 2 and sd == pytest.approx(p1.sd_equivalent(row[f"tau_{half}"], nu)) and sd >= row[f"tau_{half}"]
+    codes = pd.factorize(ledger["test_id"], sort=True)[0]
+    odd = p1.P1Predictor().fit(ledger[codes % 2 == 1]).fit_cell_params("headline_only")
+    assert row["mu_odd"] == odd["mu"] and row["tau_odd"] == odd["tau"] and row["nu_odd"] == odd["nu"]          # the old keys did not move
+
+
 @pytest.mark.parametrize("n,d20,d10", [(199, False, False), (200, True, False), (399, True, False), (400, True, True)])
 def test_gate_status_arithmetic_on_both_sides_of_n(imp, tmp_path, n, d20, d10):
     hs = imp("mootcourt.harness_stats")

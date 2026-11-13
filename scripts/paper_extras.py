@@ -55,7 +55,8 @@ the inputs it came from:
   two score tables).
 
 * The keys of the paper version 2 plan (run 8; ``mootcourt.extras_v2`` holds the functions, each with its definition): ``randomization_window`` (X1),
-  ``effect_scale_choices`` (X2), ``exposure_fixed`` (X3) and ``exposure_fixed_visible`` (the same against the run fixed on visible rows), ``prior_family_scale`` (X4), ``ranking_paired`` and
+  ``effect_scale_choices`` (X2), ``exposure_fixed`` (X3) and ``exposure_fixed_visible`` (the same against the run fixed on visible rows),
+  ``prior_family_scale`` (X4), ``ranking_paired`` and
   ``positive_control_decision_value`` (X5), ``abstention_composition`` (X6), ``gates_by_stratum`` (X7, from ``scripts/gates_by_stratum.py``),
   ``drift_matched_null`` (X8), ``within_origin_auc_by_year`` and ``lowest_reliability_bin`` (X9). They read the stored score tables and reports
   (the ablations of run 8 for X1 to X3), never refit a model, and are None
