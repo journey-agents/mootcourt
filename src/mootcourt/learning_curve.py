@@ -187,9 +187,13 @@ def run_learning_curve(
     seed: int = 0,
     heldout_min: int = HELDOUT_MIN,
     verbose: bool = False,
+    origin=None,
 ) -> dict:
-    """Run the curve. ``factory(ledger_subsample)`` returns the rung factories (``harness.default_rungs`` with the settings)."""
-    T = final_origin(ledger, heldout_min)
+    """Run the curve. ``factory(ledger_subsample)`` returns the rung factories (``harness.default_rungs`` with the settings).
+
+    ``origin`` names the quarter start whose rows are held out; None keeps ``final_origin(ledger, heldout_min)``. The document's key
+    ``final_origin`` holds the origin used either way, and ``origin_rule`` says which rule chose it (``final`` or ``given``)."""
+    T = final_origin(ledger, heldout_min) if origin is None else to_utc(origin)
     ref_scores = rolling_origin(ledger, factory(ledger), [T], source=source)  # the full history: the reference base rate of every point
     if ref_scores.empty:
         raise ValueError("the full history cannot be fitted, so the curve has no reference base rate")
@@ -273,6 +277,7 @@ def run_learning_curve(
         {
             "source": source,
             "final_origin": T.isoformat(),
+            "origin_rule": "final" if origin is None else "given",
             "heldout_rows": held_rows,
             "heldout_tests": held_tests,
             "fractions": list(fractions),
@@ -374,14 +379,18 @@ def plot_learning_curve(doc: dict, path) -> None:
     plt.close(fig)
 
 
-def write_learning_curve(doc: dict, out_dir, snapshot_id: str) -> dict:
-    """Write ``learning-curve-<source>-<snapshot>.json``/``.md`` and ``figures/learning_curve-<source>.png``; returns the paths."""
+def write_learning_curve(doc: dict, out_dir, snapshot_id: str, suffix: str | None = None) -> dict:
+    """Write ``learning-curve-<source>-<snapshot>.json``/``.md`` and ``figures/learning_curve-<source>.png``; returns the paths.
+
+    With ``suffix`` the three names carry ``--<suffix>``, so a curve at a named origin sits beside the default one."""
     from pathlib import Path
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    stem = f"learning-curve-{doc['source']}-{snapshot_id}"
-    paths = {"json": out_dir / f"{stem}.json", "md": out_dir / f"{stem}.md", "figure": out_dir / "figures" / f"learning_curve-{doc['source']}.png"}
+    tail = f"--{suffix}" if suffix else ""
+    stem = f"learning-curve-{doc['source']}-{snapshot_id}{tail}"
+    paths = {"json": out_dir / f"{stem}.json", "md": out_dir / f"{stem}.md",
+             "figure": out_dir / "figures" / f"learning_curve-{doc['source']}{tail}.png"}
     paths["json"].write_text(json.dumps(doc, indent=1, allow_nan=False) + "\n", encoding="utf-8")
     paths["md"].write_text(render_markdown(doc), encoding="utf-8")
     plot_learning_curve(doc, paths["figure"])

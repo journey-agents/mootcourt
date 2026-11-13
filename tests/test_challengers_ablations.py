@@ -352,6 +352,24 @@ def test_learning_curve_command_and_document(imp, tmp_path, make_synth):
     assert _cli(imp, ["backtest", "--source", "synthetic", "--learning-curve", "0,2"], root).exit_code != 0
 
 
+def test_learning_curve_command_at_a_named_origin(imp, tmp_path, make_synth):
+    root = tmp_path / "lcorigin"
+    ledger = _synth(make_synth, seed=71, n_tests=700)
+    imp("mootcourt.ledger").write_ledger(ledger, root / "data" / "ledger" / "ledger.parquet")
+    (root / "reports").mkdir(parents=True)
+    (root / "reports" / "gates.json").write_text(json.dumps(GATES))
+    lc, harness = imp("mootcourt.learning_curve"), imp("mootcourt.harness")
+    other = [o for o in harness.quarterly_origins(ledger) if o != lc.final_origin(ledger)][-3].strftime("%Y-%m-%d")
+    base = ["backtest", "--source", "synthetic", "--learning-curve", "1", "--seeds", "1", "--bootstrap", "40", "--no-baselines"]
+    res = _cli(imp, base + ["--learning-curve-origin", other], root)
+    assert res.exit_code == 0, res.output
+    js = json.loads(next((root / "reports").glob(f"learning-curve-synthetic-*--origin-{other}.json")).read_text())
+    assert js["final_origin"].startswith(other) and js["origin_rule"] == "given" and js["command"].endswith(f"--learning-curve-origin {other}")
+    assert (root / "reports" / "figures" / f"learning_curve-synthetic--origin-{other}.png").exists()
+    bad = _cli(imp, base + ["--learning-curve-origin", "2014-02-15"], root)          # not a quarter start
+    assert bad.exit_code != 0 and "quarterly origin" in bad.output
+
+
 def test_learning_curve_subsampling_keeps_whole_tests_and_the_held_out_rows(imp, make_synth):
     lc = imp("mootcourt.learning_curve")
     ledger = _synth(make_synth, seed=70, n_tests=300)

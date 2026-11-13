@@ -495,6 +495,12 @@ def backtest(
     baselines: bool = typer.Option(True, "--baselines/--no-baselines", help="Score the always_reference and always_variant baselines."),
     learning_curve: str | None = typer.Option(None, "--learning-curve", help="Comma-separated history fractions, for example 0.1,0.25,0.5,1."),
     seeds: int = typer.Option(3, "--seeds", help="Random history subsamples per fraction in the learning curve."),
+    learning_curve_origin: str | None = typer.Option(
+        None,
+        "--learning-curve-origin",
+        help="With --learning-curve: the quarter start (YYYY-MM-DD) whose rows are held out. Default: the latest quarter with enough rows. "
+        "The files then carry --origin-YYYY-MM-DD in their names.",
+    ),
     ledger_path: Path | None = typer.Option(None, "--ledger", help="Default: the storage root."),
     reports_dir: Path | None = typer.Option(None, "--reports-dir", help="Default: the storage root."),
     models_dir: Path | None = typer.Option(None, "--models-dir", help="Default: the storage root."),
@@ -634,9 +640,30 @@ def backtest(
             fractions = parse_fractions(learning_curve)
         except ValueError as exc:
             raise typer.BadParameter(str(exc)) from None
-        doc = run_learning_curve(df, source, make_rungs, fractions, seeds, gates, B=bootstrap, seed=seed, verbose=verbose)
-        doc["command"] = command + f" --learning-curve {learning_curve} --seeds {seeds}"
-        wrote = write_learning_curve(doc, reports_dir, sid)
+        lc_origin = lc_suffix = None
+        if learning_curve_origin is not None:
+            import pandas as pd
+
+            from mootcourt.harness import quarterly_origins
+
+            try:
+                lc_origin = pd.Timestamp(learning_curve_origin, tz="UTC")
+            except ValueError:
+                raise typer.BadParameter(f"--learning-curve-origin must be a date YYYY-MM-DD; got {learning_curve_origin!r}") from None
+            known = quarterly_origins(df)
+            if lc_origin not in known:
+                raise typer.BadParameter("--learning-curve-origin must be a quarterly origin of the ledger: "
+                                         + ", ".join(o.strftime("%Y-%m-%d") for o in known))
+            lc_suffix = f"origin-{lc_origin.strftime('%Y-%m-%d')}"
+        try:
+            doc = run_learning_curve(df, source, make_rungs, fractions, seeds, gates, B=bootstrap, seed=seed, verbose=verbose, origin=lc_origin)
+        except ValueError as exc:
+            if lc_origin is None:
+                raise
+            raise typer.BadParameter(f"--learning-curve-origin {learning_curve_origin}: {exc}") from None
+        doc["command"] = command + f" --learning-curve {learning_curve} --seeds {seeds}" + (
+            f" --learning-curve-origin {learning_curve_origin}" if lc_origin is not None else "")
+        wrote = write_learning_curve(doc, reports_dir, sid, suffix=lc_suffix)
         typer.echo(f"learning curve over {len(fractions)} fractions, {seeds} seeds, final origin {doc['final_origin']}, "
                    f"{doc['heldout_rows']} held-out rows, in {time.perf_counter() - t0:.1f} s")
         typer.echo("\n".join(f"wrote {p}" for p in wrote.values()))

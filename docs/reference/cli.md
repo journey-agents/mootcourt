@@ -40,6 +40,7 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--baselines`, `--no-baselines` | flag | `True` | Score the always_reference and always_variant baselines. |
 | `--learning-curve` | str |  | Comma-separated history fractions, for example 0.1,0.25,0.5,1. |
 | `--seeds` | int | `3` | Random history subsamples per fraction in the learning curve. |
+| `--learning-curve-origin` | str |  | With --learning-curve: the quarter start (YYYY-MM-DD) whose rows are held out. Default: the latest quarter with enough rows. The files then carry --origin-YYYY-MM-DD in their names. |
 | `--ledger` | path |  | Default: the storage root. |
 | `--reports-dir` | path |  | Default: the storage root. |
 | `--models-dir` | path |  | Default: the storage root. |

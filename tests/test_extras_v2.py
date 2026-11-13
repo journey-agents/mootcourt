@@ -501,3 +501,55 @@ def test_calibration_within_period_removes_a_level_error_but_not_a_shape_error()
     ]
     assert len(out2["unshifted_strata"]) == 1
     assert ex.calibration_within_period(sc.drop(columns="event")) is None
+
+
+# ---------------------------------------------------------------- the learning curve at a named origin (reviewer runs, Part D)
+def _curve_inputs():
+    from mootcourt.harness import default_rungs
+    from mootcourt.sources import synthetic as synth
+
+    ledger = synth.generate(synth.SyntheticConfig(seed=13, n_tests=300, variants_per_test=2))[0]
+    return ledger, (lambda frame: default_rungs("synthetic", frame, None, baselines=False)), {"n_200": 20, "n_400": 30}
+
+
+def test_the_learning_curve_at_its_default_origin_is_unchanged_by_naming_that_origin():
+    from mootcourt.learning_curve import final_origin, run_learning_curve
+
+    ledger, factory, gates = _curve_inputs()
+    a = run_learning_curve(ledger, "synthetic", factory, [0.5, 1.0], 2, gates, B=20)
+    b = run_learning_curve(ledger, "synthetic", factory, [0.5, 1.0], 2, gates, B=20, origin=final_origin(ledger))
+    assert a["final_origin"] == b["final_origin"] and a["rows"] == b["rows"] and a["paired_vs_full"] == b["paired_vs_full"]
+    assert a["origin_rule"] == "final" and b["origin_rule"] == "given"
+
+
+def test_the_learning_curve_at_another_origin_scores_that_quarter():
+    from mootcourt.learning_curve import final_origin, run_learning_curve
+
+    ledger, factory, gates = _curve_inputs()
+    other = pd.Timestamp("2014-07-01", tz="UTC")
+    assert other != final_origin(ledger)
+    doc = run_learning_curve(ledger, "synthetic", factory, [0.5, 1.0], 2, gates, B=20, origin=other)
+    adm = ledger[ledger["status"] == "admitted"]
+    in_quarter = adm[(adm["started_at"] >= other) & (adm["started_at"] < other + pd.DateOffset(months=3))]
+    assert doc["final_origin"] == other.isoformat() and 0 < doc["heldout_rows"] <= len(in_quarter)
+    assert {(r["fraction"], r["rung"]) for r in doc["paired_vs_full"]} >= {(0.5, "P1")}
+
+
+def test_a_fraction_too_small_to_fit_is_counted_and_does_not_stop_the_curve():
+    from mootcourt.learning_curve import run_learning_curve
+
+    ledger, factory, gates = _curve_inputs()
+    doc = run_learning_curve(ledger, "synthetic", factory, [0.001, 1.0], 2, gates, B=20, origin=pd.Timestamp("2014-07-01", tz="UTC"))
+    assert doc["skipped_runs"] == {"0.001": 2} and not any(r["fraction"] == 0.001 for r in doc["paired_vs_full"])
+
+
+def test_a_curve_at_a_named_origin_is_written_beside_the_default_one(tmp_path):
+    from mootcourt.learning_curve import run_learning_curve, write_learning_curve
+
+    ledger, factory, gates = _curve_inputs()
+    doc = run_learning_curve(ledger, "synthetic", factory, [1.0], 1, gates, B=20, origin=pd.Timestamp("2014-07-01", tz="UTC"))
+    plain = write_learning_curve(doc, tmp_path, "sid")
+    named = write_learning_curve(doc, tmp_path, "sid", suffix="origin-2014-07-01")
+    assert plain["json"].name == "learning-curve-synthetic-sid.json"
+    assert named["json"].name == "learning-curve-synthetic-sid--origin-2014-07-01.json" and named["json"].exists()
+    assert named["figure"] != plain["figure"] and named["md"] != plain["md"]
