@@ -361,7 +361,7 @@ def _parse_guard(value: str | None):
 
 def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale="absolute", s_star="prelaunch",
                       p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all", exposure="planned",
-                      base_density="normal", base_recency="none") -> dict:
+                      base_density="normal", base_recency="none", recalibrate_ladder="off") -> dict:
     """The ablation settings that differ from the defaults, as a dict; empty for the main run."""
     from mootcourt.config import KAPPA, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 
@@ -400,6 +400,8 @@ def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection,
         v["base_density"] = base_density
     if base_recency != "none":
         v["base_recency"] = base_recency
+    if recalibrate_ladder != "off":
+        v["recalibrate_ladder"] = recalibrate_ladder
     if "p2_guard" in v:                      # last, so a run with the guard off is always named `<ablation>+p2-guard-off` (call 176)
         v["p2_guard"] = v.pop("p2_guard")
     return v
@@ -482,6 +484,12 @@ def backtest(
         True, "--recalibrate/--no-recalibrate", help="Add a recalibrated rung (+cal) for every challenger, fit on visible rows only."
     ),
     recalibration: str = typer.Option("platt", "--recalibration", help="Map of the recalibrated rungs: platt or isotonic."),
+    recalibrate_ladder: str = typer.Option(
+        "off",
+        "--recalibrate-ladder",
+        help="Ablation: off (default) or on, which adds P0+cal, P1+cal and P2+cal, the ladder's rungs through the same map as the "
+        "challengers, fit on out-of-fold probabilities of the visible rows. Only the probability of the event is reported for them.",
+    ),
     local_k: int = typer.Option(50, "--local-k", help="Neighbors used by the local_eb challenger."),
     primary_metric: str | None = typer.Option(None, "--primary-metric", help="Multi-metric ledgers: the metric the decision value uses."),
     baselines: bool = typer.Option(True, "--baselines/--no-baselines", help="Score the always_reference and always_variant baselines."),
@@ -530,7 +538,8 @@ def backtest(
                                  ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one")),
                                  ("--exposure", exposure, ("planned", "cell-median", "cell-median-visible")),
                                  ("--base-density", base_density, ("normal", "t")),
-                                 ("--base-recency", base_recency, ("none", "quarter", "cell-quarter"))):
+                                 ("--base-recency", base_recency, ("none", "quarter", "cell-quarter")),
+                                 ("--recalibrate-ladder", recalibrate_ladder, ("off", "on"))):
         if value not in allowed:
             raise typer.BadParameter(f"{name} must be one of {', '.join(allowed)}")
     if effect_scale == "relative" and source != "upworthy":
@@ -544,7 +553,8 @@ def backtest(
         if name not in TRIGGERS:
             raise typer.BadParameter(f"--drop-trigger must be one of {', '.join(TRIGGERS)}; got {name!r}")
     variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg,
-                                tuple(drop_trigger or ()), admission, pairwise, contrasts, exposure, base_density, base_recency)
+                                tuple(drop_trigger or ()), admission, pairwise, contrasts, exposure, base_density, base_recency,
+                                recalibrate_ladder)
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
     sid = ensure_snapshot(df, ledger_path.parent)
@@ -585,6 +595,7 @@ def backtest(
         **({"pairwise": False} if pairwise == "off" else {}),
         **({"base_density": base_density} if base_density != "normal" else {}),
         **({"base_recency": base_recency} if base_recency != "none" else {}),
+        **({"recalibrate_ladder": True} if recalibrate_ladder == "on" else {}),
         **({"kappa": kappa} if kappa is not None else {}),
         **({} if guard_arg == "default" else {"p2_guard": guard_arg}),
     )

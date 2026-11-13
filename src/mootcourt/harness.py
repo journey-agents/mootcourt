@@ -571,6 +571,48 @@ class Recalibrated:
         return cols, np.ones(n, bool)
 
 
+class LadderInner:
+    """A ladder rung (P0, P1 or P2) behind the two methods ``Recalibrated`` asks of a challenger.
+
+    ``raw_p_sig`` is the fitted rung's own probability for the scored rows. ``oof_probabilities`` gives the visible rows probabilities the
+    rung did not fit on: the rows are put in start order and cut into ``n_folds`` contiguous folds (``recalibration.time_folds``, as the
+    challengers do), ``refit(train_rows, origin)`` fits the rung on the other folds, and each row is predicted at its own pre-launch
+    ``s_star``. Above ``max_rows`` a fixed subsample of the rows is predicted, the same rule as the challengers. Nothing from the scored
+    rows is read.
+    """
+
+    def __init__(self, model, rows: pd.DataFrame, origin, refit: Callable, n_folds: int = GBM_FOLDS, max_rows: int = CALIBRATION_MAX_ROWS,
+                 seed: int = 0):
+        self.model, self.rows, self.origin, self.refit = model, rows, pd.Timestamp(origin), refit
+        self.n_folds, self.max_rows, self.seed = n_folds, max_rows, seed
+
+    @staticmethod
+    def _p_sig(model, scored: pd.DataFrame, s_star, origin, X_cache=None) -> np.ndarray:
+        cols, _keep, _ = _score_rung(model, "", scored, np.zeros(len(scored)), np.asarray(s_star, dtype=float), origin,
+                                     {} if X_cache is None else X_cache, None, None, None, None)
+        return np.asarray(cols["p_sig"], dtype=float)
+
+    def raw_p_sig(self, scored: pd.DataFrame, s_star, X_cache=None) -> np.ndarray:
+        return self._p_sig(self.model, scored, s_star, self.origin, X_cache)
+
+    def oof_probabilities(self) -> tuple[np.ndarray, np.ndarray]:
+        from mootcourt.recalibration import time_folds
+
+        rows = self.rows.sort_values("started_at", kind="stable").reset_index(drop=True)
+        n = len(rows)
+        pick = np.arange(n) if n <= self.max_rows else np.sort(np.random.default_rng(self.seed).choice(n, self.max_rows, replace=False))
+        chosen = np.zeros(n, bool)
+        chosen[pick] = True
+        s_star = scale.s_star_rows(rows, rows)
+        event = (rows["y"].to_numpy(float) > Z * rows["s"].to_numpy(float)).astype(float)
+        p = np.full(n, np.nan)
+        for train, test in time_folds(n, self.n_folds):
+            te = test[chosen[test]]
+            if len(te):
+                p[te] = self._p_sig(self.refit(rows.iloc[train], self.origin), rows.iloc[te], s_star[te], self.origin)
+        return p[pick], event[pick]
+
+
 class DirectionBaseline:
     """Predict that the reference arm always wins, or that the variant always does. Direction accuracy only.
 
@@ -611,7 +653,7 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
                   p2_selection: str | None = None, recency: str | float | None = None, local_k: int = LOCAL_EB_K,
                   baselines: bool = False, p2_guard: float | None = P2_GUARD_MULT, recalibrate: bool = False,
                   recalibration: str = "platt", gbm_tuned: bool = True, pairwise: bool | None = None,
-                  base_density: str = "normal", base_recency: str = "none") -> dict[str, Callable]:
+                  base_density: str = "normal", base_recency: str = "none", recalibrate_ladder: bool = False) -> dict[str, Callable]:
     """Rung factories ``factory(rows, origin)``: P0, P1, P2, P3 when the ledger has team forecasts, then challengers.
 
     ``challenger`` is a name, a comma-separated string or a list from ``CHALLENGERS`` (gbm, local_eb, text_lr).
@@ -622,7 +664,8 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
     ``cell-quarter``), and P2's ``p2_selection``, ``recency`` and ``p2_guard`` (the admission
     guard multiplier, None for no guard). With ``recalibrate`` every challenger also gets a recalibrated rung (``GBM+cal`` and so on; the
     ``moot backtest`` command turns it on by default); ``recalibration`` is ``platt`` or ``isotonic`` and ``gbm_tuned`` False restores
-    the untuned GBM.
+    the untuned GBM. ``recalibrate_ladder`` gives P0, P1 and P2 the same map (``P0+cal`` and so on, through ``LadderInner``); it is off by
+    default and leaves the raw rungs as they are.
     ``pairwise`` None reads the reference headline where the rows carry one (the default), ``False`` is the single-headline space of earlier versions.
     """
     names = parse_challengers(challenger)
@@ -656,6 +699,18 @@ def default_rungs(source: str, ledger: pd.DataFrame | None = None, challenger=No
         rungs["P3"] = lambda rows, origin: TeamModel(rows)
     if recalibration not in RECAL_METHODS:
         raise ValueError(f"recalibration must be one of {RECAL_METHODS}")
+    if recalibrate_ladder:
+        def p1_fresh(rows, origin):
+            return P1Predictor(kappa=kappa, nu_grid=nu_grid).fit(rows, data_end=origin)
+
+        def p2_fresh(rows, origin):
+            space = FeatureSpace.fit(rows, cell_only=cell_only, feature_set=features, pairwise=pairwise)
+            return P2Predictor().fit(rows, space, p1_fresh(rows, origin), lambda_override=lam, selection=p2_selection, recency=recency,
+                                     bandwidth_override=bandwidth_mult, guard=p2_guard)
+
+        rungs["P0" + RECAL_SUFFIX] = lambda rows, origin: Recalibrated(LadderInner(p0(rows, origin), rows, origin, p0), recalibration)
+        rungs["P1" + RECAL_SUFFIX] = lambda rows, origin: Recalibrated(LadderInner(p1_of(rows, origin), rows, origin, p1_fresh), recalibration)
+        rungs["P2" + RECAL_SUFFIX] = lambda rows, origin: Recalibrated(LadderInner(p2(rows, origin), rows, origin, p2_fresh), recalibration)
 
     def gbm_of(rows, origin):
         return shared.get("gbm", rows, origin, lambda: GBMChallenger(space_of(rows, origin), rows, tuned=gbm_tuned))

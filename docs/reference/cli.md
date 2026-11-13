@@ -34,6 +34,7 @@ Rolling-origin backtest at calendar quarter starts; writes the report, figures a
 | `--pairwise` | str | `on` | on (default): the feature space and the challengers read the reference headline where the ledger has one; off: the variant headline only. |
 | `--recalibrate`, `--no-recalibrate` | flag | `True` | Add a recalibrated rung (+cal) for every challenger, fit on visible rows only. |
 | `--recalibration` | str | `platt` | Map of the recalibrated rungs: platt or isotonic. |
+| `--recalibrate-ladder` | str | `off` | Ablation: off (default) or on, which adds P0+cal, P1+cal and P2+cal, the ladder's rungs through the same map as the challengers, fit on out-of-fold probabilities of the visible rows. Only the probability of the event is reported for them. |
 | `--local-k` | int | `50` | Neighbors used by the local_eb challenger. |
 | `--primary-metric` | str |  | Multi-metric ledgers: the metric the decision value uses. |
 | `--baselines`, `--no-baselines` | flag | `True` | Score the always_reference and always_variant baselines. |

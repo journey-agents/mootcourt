@@ -1606,3 +1606,71 @@ def test_aggregate_scores_without_a_row_id_column_pairs_by_position_within_the_t
     b = hs.aggregate_scores(with_id, GATES, B=20).query("cell == 'ALL'").set_index("rung")
     assert a.loc["P2", "logscore_vs_p1"] == pytest.approx(-0.1) and a.loc["P0", "logscore_vs_p1"] == pytest.approx(-0.3)
     assert a.loc["P2", "logscore_vs_p1"] == b.loc["P2", "logscore_vs_p1"] and a.loc["P2", "n_paired"] == 80
+
+
+# ============================================================================ the ladder's rungs through the same map (reviewer runs, Part C)
+LADDER_CAL = ("P0+cal", "P1+cal", "P2+cal")
+
+
+def test_ladder_rungs_get_a_map_only_when_asked(visible_and_future):
+    from mootcourt.harness import default_rungs
+
+    ledger, adm, t = visible_and_future
+    plain = default_rungs("upworthy", ledger)
+    assert not any(k.endswith("+cal") for k in plain)
+    with_map = default_rungs("upworthy", ledger, recalibrate_ladder=True)
+    assert set(LADDER_CAL) <= set(with_map)
+    assert list(with_map)[:3] == list(plain)[:3]          # the raw rungs keep their order
+
+
+def test_a_recalibrated_ladder_rung_reports_only_p_sig_and_leaves_the_raw_rung_alone(visible_and_future):
+    from mootcourt.harness import default_rungs, quarterly_origins, rolling_origin
+
+    ledger, adm, t = visible_and_future
+    origins = quarterly_origins(ledger)
+    plain = rolling_origin(ledger, default_rungs("upworthy", ledger), origins, source="upworthy")
+    sc = rolling_origin(ledger, default_rungs("upworthy", ledger, recalibrate_ladder=True), origins, source="upworthy")
+    for raw_name in ("P0", "P1", "P2"):
+        cal, raw = sc[sc["rung"] == raw_name + "+cal"].set_index("row_id"), sc[sc["rung"] == raw_name].set_index("row_id")
+        assert len(cal) == len(raw) > 0 and cal["p_sig"].between(0, 1).all()
+        assert cal["logscore"].isna().all()
+        before = plain[plain["rung"] == raw_name].set_index("row_id")["p_sig"].reindex(raw.index)
+        assert np.allclose(raw["p_sig"], before)          # the option does not touch the raw rung
+    p1, p1cal = sc[sc["rung"] == "P1"].set_index("row_id")["p_sig"], sc[sc["rung"] == "P1+cal"].set_index("row_id")["p_sig"]
+    assert not np.allclose(p1, p1cal.reindex(p1.index))          # a map was fitted and applied
+
+
+def test_flipping_later_outcomes_does_not_move_the_recalibrated_ladder_at_earlier_origins(visible_and_future):
+    from mootcourt.harness import default_rungs, quarterly_origins, rolling_origin
+
+    ledger, adm, t = visible_and_future
+    origins = quarterly_origins(ledger)
+    flipped = ledger.copy()
+    late = flipped["started_at"] >= origins[-1]
+    flipped.loc[late, "y"] = -5.0 * flipped.loc[late, "y"] + 3.0
+    a = rolling_origin(ledger, default_rungs("upworthy", ledger, recalibrate_ladder=True), origins, source="upworthy")
+    b = rolling_origin(flipped, default_rungs("upworthy", flipped, recalibrate_ladder=True), origins, source="upworthy")
+    for rung in LADDER_CAL:
+        pa = a[a["rung"] == rung].set_index("row_id")["p_sig"]
+        pb = b[b["rung"] == rung].set_index("row_id")["p_sig"].reindex(pa.index)
+        assert len(pa) > 0 and np.allclose(pa, pb)
+
+
+def test_with_too_few_events_the_ladder_map_is_the_visible_base_rate(monkeypatch, visible_and_future):
+    from mootcourt import recalibration
+    from mootcourt.harness import default_rungs, quarterly_origins, rolling_origin
+
+    ledger, adm, t = visible_and_future
+    monkeypatch.setattr(recalibration, "MIN_EVENTS", 10**9)
+    sc = rolling_origin(ledger, default_rungs("upworthy", ledger, recalibrate_ladder=True), quarterly_origins(ledger), source="upworthy")
+    cal = sc[sc["rung"] == "P1+cal"]
+    assert len(cal) > 0 and cal.groupby("origin")["p_sig"].nunique().max() == 1
+
+
+def test_the_ladder_map_setting_names_its_report_and_its_command():
+    from mootcourt import cli
+
+    args = ("both", None, None, None, "t", None, None)
+    assert cli._variant_settings(*args) == {}
+    v = cli._variant_settings(*args, recalibrate_ladder="on")
+    assert cli._variant_name(v) == "recalibrate-ladder-on" and cli._variant_flags(v) == " --recalibrate-ladder on"
