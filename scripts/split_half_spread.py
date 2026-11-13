@@ -9,7 +9,7 @@ fitted degrees of freedom ``nu_*`` and the standard deviation ``sd_* = tau sqrt(
 ``matches_report`` is true when the refit reproduces the report's means and scales in every cell; the script exits with status 1 when it
 does not, so a table never mixes a report with a different ledger. An infinite ``nu`` (a normal fit) is written as the word "inf".
 
-Use: ``python scripts/split_half_spread.py --ledger LEDGER.parquet --report BACKTEST.json --out OUT.json``
+Use: ``python scripts/split_half_spread.py --ledger LEDGER.parquet --report BACKTEST.json --out OUT.json [--source synthetic]``
 """
 
 from __future__ import annotations
@@ -55,9 +55,13 @@ def main(argv=None) -> int:
     ap.add_argument("--ledger", required=True, type=Path)
     ap.add_argument("--report", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--source", default=None, help="fit only the rows of this source (a ledger file can hold several)")
     a = ap.parse_args(argv)
-    doc = build(read_ledger(a.ledger), json.loads(a.report.read_text(encoding="utf-8")))
-    doc["inputs"]["report"] = a.report.name
+    ledger = read_ledger(a.ledger)
+    if a.source is not None:
+        ledger = ledger[ledger["source"] == a.source].reset_index(drop=True)
+    doc = build(ledger, json.loads(a.report.read_text(encoding="utf-8")))
+    doc["inputs"]["report"], doc["inputs"]["source"] = a.report.name, a.source
     a.out.write_text(json.dumps(doc, indent=1, allow_nan=False) + "\n")
     print(f"wrote {a.out}; matches the report: {doc['matches_report']}", file=sys.stderr)
     return 0 if doc["matches_report"] else 1

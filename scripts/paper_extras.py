@@ -1705,6 +1705,12 @@ def main() -> int:
         action="store_true",
         help="X10: add only sizing_evaluation (docs/superpowers/plans/2026-11-06-x10-sizing-design.md) to the existing report of --source (Upworthy)",
     )
+    ap.add_argument(
+        "--exposure-fixed-visible-only",
+        action="store_true",
+        help="add only exposure_fixed_visible (the main run against the run with exposure fixed on visible rows) to the existing report of "
+        "--source (Upworthy); every other key is left as it is",
+    )
     ap.add_argument("--sizing-bootstrap", type=int, default=200, help="X10: by-test resamples of the nonparametric world in part B")
     ap.add_argument(
         "--version2-only",
@@ -1756,6 +1762,13 @@ def main() -> int:
         doc["sizing_evaluation"] = clean(evaluation)
         out.write_text(json.dumps(doc, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
         print(f"computed in {time.perf_counter() - t0:.1f} s")
+        print(f"wrote {out}")
+        return 0
+    if args.exposure_fixed_visible_only:
+        out = Path(args.reports_dir) / f"paper-extras-{args.source}-{sid}.json"
+        doc = json.loads(out.read_text(encoding="utf-8"))
+        doc["exposure_fixed_visible"] = clean(extras_v2.exposure_fixed(args.reports_dir, args.source, sid, variant="exposure-cell-median-visible"))
+        out.write_text(json.dumps(doc, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
         print(f"wrote {out}")
         return 0
     if args.version2_only:

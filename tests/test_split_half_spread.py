@@ -47,3 +47,25 @@ def test_the_document_matches_the_report_and_writes_infinity_as_a_word(sps, tmp_
     write_ledger(ledger, ledger_path)
     (tmp_path / "r.json").write_text(json.dumps(report))
     assert sps.main(["--ledger", str(ledger_path), "--report", str(tmp_path / "r.json"), "--out", str(tmp_path / "o.json")]) == 1
+
+
+def test_only_the_named_source_is_fitted(sps, tmp_path):
+    import pandas as pd
+
+    from mootcourt import harness_stats as hs
+    from mootcourt.ledger import write_ledger
+    from mootcourt.sources import synthetic as synth
+
+    ledger = synth.generate(synth.SyntheticConfig(seed=3, n_tests=400, variants_per_test=2))[0]
+    origin = ledger["started_at"].max().floor("D")
+    old = hs.split_half(ledger, origin)
+    report = {"header": {"last_origin": origin.isoformat()},
+              "tables": {"split_half": [{"cell": c, **{k: v[k] for k in ("mu_odd", "mu_even", "tau_odd", "tau_even")}} for c, v in old.items()]}}
+    other = ledger.head(200).copy()
+    other["source"], other["y"] = "other", other["y"] + 5.0
+    other["row_id"], other["test_id"] = "o-" + other["row_id"].astype(str), "o-" + other["test_id"].astype(str)
+    write_ledger(pd.concat([ledger, other], ignore_index=True), tmp_path / "ledger.parquet")
+    (tmp_path / "r.json").write_text(json.dumps(report))
+    args = ["--ledger", str(tmp_path / "ledger.parquet"), "--report", str(tmp_path / "r.json"), "--out", str(tmp_path / "o.json")]
+    assert sps.main(args + ["--source", "synthetic"]) == 0
+    assert json.loads((tmp_path / "o.json").read_text())["inputs"]["source"] == "synthetic"
