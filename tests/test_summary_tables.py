@@ -65,7 +65,7 @@ def test_the_glance_gives_the_skill_by_quarters_without_the_zero_base_rate_pair_
     labels = [str(row[0]) for row in rows]
     at = labels.index("P1 Brier skill, significance judged at the test's own standard error (90\\%, unadjusted)")
     assert labels[at + 1] == "the same, the seven quarters as units (90\\%)"
-    assert labels[at + 2] == "the same, without the one cell and quarter whose base rate is zero (90\\%)"
+    assert labels[at + 2] == "the same, the seven quarters as units, without the one cell and quarter whose base rate is zero (90\\%)"
     cell = rows[at + 2][1]
     at_key = "rungs.P1.realized.origin_level_without_zero_base_rate_strata"
     assert [k.split(" ", 1)[1] for k in cell.keys] == [f"{at_key}.{leaf}" for leaf in ("skill", "lo", "hi")]

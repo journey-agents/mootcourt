@@ -80,7 +80,7 @@ def glance(r):
         ["the same, the seven quarters as units (90\\%)",
          join("{} ({}, {})", v(skills, "rungs.P1.realized.origin_level.skill", 4), v(skills, "rungs.P1.realized.origin_level.lo", 4),
               v(skills, "rungs.P1.realized.origin_level.hi", 4)), "not computed"],
-        ["the same, without the one cell and quarter whose base rate is zero (90\\%)",
+        ["the same, the seven quarters as units, without the one cell and quarter whose base rate is zero (90\\%)",
          join("{} ({}, {})", v(skills, f"{without}.skill", 4), v(skills, f"{without}.lo", 4), v(skills, f"{without}.hi", 4)), "not computed"],
         ["P1 Brier skill, significance judged at the planned standard error (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],
