@@ -4,7 +4,7 @@ Everything is as it should be pasted. The abstract below is condensed from the o
 
 ## Title
 
-Can Past Experiments Predict the Next One? A Scoring Protocol for Pre-Launch Forecasts of A/B Tests, Applied to Two Public Archives
+Can Past Experiments Predict the Next One? A Scoring Protocol for Pre-Launch Forecasts of A/B Tests, Applied to a Public Archive of Headline Tests
 
 ## Authors
 

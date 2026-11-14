@@ -20,7 +20,7 @@
 
 \begin{document}
 
-\title{Can Past Experiments Predict the Next One? A Scoring Protocol for Pre-Launch Forecasts of A/B Tests, Applied to Two Public Archives}
+\title{Can Past Experiments Predict the Next One? A Scoring Protocol for Pre-Launch Forecasts of A/B Tests, Applied to a Public Archive of Headline Tests}
 
 \author{Yingjie Li}
 \affiliation{\institution{Independent researcher}\city{Seattle}\country{USA}}
@@ -245,30 +245,9 @@ Two fits are each shrunk toward the global fit $g$, with weight $n / (n + \kappa
 % src: mootcourt-data models 938be3f002b0/model.json and d3e813b146ce/model.json, p1 nu 3 at every level (global, every cell; the period fits are given the global nu); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.p2_selection holds no nu per origin
 On each full archive the fits select $\nu = 3$, the heaviest tail on the grid, for the global fit and for every cell; the fits at each origin are not recorded. Pooling the scale requires $\nu > 2$. So the data prefer tails at least as heavy as this, and no heavier tail was tried.
 
-% src: src/mootcourt/features.py PAIRWISE_SVD_DIMS 32, STRUCTURED_FEATURES (eight), EXPOSURE_FEATURES, PAIR_FEATURES (three), _structured_matrix (no arm count), _cell_matrix (arm count, the cell-only space of the retailer's archive); src/mootcourt/predictors/p2.py neighbor_state (neighbors of x in its cell); src/mootcourt/harness.py run loop (every model at an origin, the feature space included, is fit on visible_rows(adm, t))
-\paragraph{P2, weighted precedents.} \emph{Features.} The features $x$ of a contrast are a description of the pair. One TF-IDF and truncated SVD, fit at each origin on the headlines of the visible rows, yields 32 columns each for the variant headline, the reference headline and their difference. Eight features of the variant are added to those: its headline's word and character counts, and flags for a question mark, a digit, a quotation mark, an exclamation mark, a first word that is a pronoun, and a changed image. Then come three features of the pair: the differences in word and character count and the share of words in common. The last is the log planned exposure; because realized exposure stands in for the plan (Section~\ref{sec:setting}), this is the one feature that reads a post-launch quantity. All columns are standardized on the visible rows. Because precedents are searched inside the query's own cell, the kind of change is not a column. Only on the retailer's archive, which has no text, is the number of arms a feature.
+% src: src/mootcourt/predictors/p2.py _LAMBDA_TIE 1e-3 (0.001 nats, the guard's margin) and two standard errors clustered by test; src/mootcourt/features.py (the feature space); Appendix app:p2 holds the full description
+\paragraph{P2, weighted precedents.} P2 moves P1's forecast toward the results of similar past tests. Similarity is a kernel on standardized features of the pair of headlines: text embeddings, simple counts and flags, and the log exposure. A weight $\lambda$ mixes the kernel-weighted mean of past results with the cell's prior mean, and $\lambda = 0$ returns P1 exactly. The weight and the kernel's bandwidth are chosen per cell on validation rows that come later in time than the rows they are forecast from. An admission guard keeps $\lambda$ at zero unless the gain in log score on those rows exceeds 0.001 nats and two standard errors. Appendix~\ref{app:p2} gives the features, the estimator, the selection and the guard in full. The package holds two further designs that have no result in this paper (Appendix~\ref{sec:no-result}).
 
-\emph{Estimator.} Given a kernel $k(x, x_i) = \exp(-d^2/2h^2)$ on standardized features, and weights $w_i = k(x, x_i)/(s_i^2 + \sigma_c^2)$ over visible rows,
-\begin{align}
-m(x) &= \frac{\sum_i w_i y_i}{\sum_i w_i}, \qquad
-v_m(x) = \frac{\sum_i w_i^2 (s_i^2 + \sigma_c^2)}{(\sum_i w_i)^2}, \\
-\hat\theta(x) &= \lambda\, m(x) + (1-\lambda)\, \mu_c, \\
-v(x) &= \lambda \left(v_m(x) + \tau_{\mathrm{res},c}^2\right) + (1-\lambda)\, \sigma_c^2 ,
-\end{align}
-where $\tau_{\mathrm{res},c}^2 = \max\bigl(0,\ \overline{(y_i - m_i)^2} - \overline{s_i^2} - \overline{v_{m,i}}\bigr)$, with the means taken over the cell's validation rows and $m_i$ the precedent mean of row $i$. The quantity so defined is the spread of true effects that the precedent mean leaves unexplained. The working predictive is a Student-t with the $\nu$ that P1 uses for the cell (the cell's own, or the global one for a thin cell). Its location is $\hat\theta(x)$ and its scale is $\sqrt{v(x)(\nu-2)/\nu}$, so its variance is $v(x)$, and $\lambda = 0$ returns P1 exactly.
-
-\emph{Selection.} Per cell, the log score on forward-chained validation rows chooses the weight $\lambda$ and the bandwidth multiplier (a multiple of the median heuristic \cite{garreau2017large}; both grids are listed in Table~\ref{tab:fmt-protocol}). Three inner cuts sit at quantiles of the cell's start times (Table~\ref{tab:fmt-protocol}). A validation row is a row that starts at or after the first cut; its precedent mean uses only rows usable at the latest cut at or before its start, and never a row of its own test (leave-one-test-out is kept as an ablation). The precedent mean alone is out of time: the prior mixed with it is the P1 fit on all visible rows, and the validation rows themselves supply the estimate of $\tau_{\mathrm{res},c}^2$. The $\lambda = 0$ candidate is therefore scored in sample; that may make the guard harder or easier to pass, and we do not measure which. Every candidate, $\lambda = 0$ included, is scored at the validation row's realized standard error $s_i$ with the same marginal density as the P1 likelihood. Since the backtest scores at $s_\ast$, the gain tested by the guard is not exactly the gain measured in the backtest.
-
-% src: src/mootcourt/predictors/p2.py _LAMBDA_TIE 1e-3 (0.001 nats); src/mootcourt/config.py P2_GUARD_MULT 2.0 (two standard errors by test); Table tab:fmt-protocol, admission guard row
-\emph{Admission guard.} The guard limits the amount of noise the selection can fit. A candidate with $\lambda > 0$ is admitted only if its per-row log-score gain over $\lambda = 0$ on the validation rows exceeds 0.001 nats and two standard errors clustered by test. Otherwise $\lambda = 0$, and P2 equals P1 for that cell and origin. The guard makes no promise that P2 beats P1 on later tests; what it does is measured in Sections~\ref{sec:ladder-results}, \ref{sec:synthetic-results} and~\ref{sec:ablations}.
-
-%% tmlr:move-begin nodesign
-%% tmlr:note nodesign Two further designs of the package have no result in this paper (Appendix~\ref{sec:no-result}).
-%% tmlr:title nodesign Designs with no result
-\label{sec:no-result}
-% src: src/mootcourt/config.py EARN_WEIGHT_MARGIN 0.02; src/mootcourt/predictors/second_opinion.py earn_weight (a Brier skill gain on the later rows of at least the margin)
-\paragraph{Designs with no result here.} The package holds two further parts of the design, neither of which has a result in this paper. P3 is a probability and a point estimate that the team enters before the card is seen, frozen with a timestamp; no public archive holds historical forecasts. The \emph{second opinion} is an optional language-model forecast $p_{\mathrm{AI}}$. It is stacked as $p_{\mathrm{stack}} = (1 - w)\, \psig + w\, p_{\mathrm{AI}}$, with $w = 0$ until the stacked forecast beats $\psig$ out of time by a Brier skill margin of 0.02 at the gate's sample size.
-%% tmlr:move-end nodesign
 
 % src: src/mootcourt/config.py GBM_FOLDS 5; src/mootcourt/recalibration.py time_folds (contiguous blocks of time-ordered rows, each predicted from all the others); src/mootcourt/harness.py GBMChallenger._fit (dersimonian_laird over the visible rows; sd from the out-of-fold residuals less the mean of s squared)
 \paragraph{Challengers.} Three learned models are run on the same origins and rows, and each is reported both raw and after a Platt recalibration \cite{platt2000probabilities}. The map is fit on out-of-fold predictions, and of the visible rows only: those rows are cut into five blocks in order of start time, and a model fit on the other four, later blocks included, predicts each block.

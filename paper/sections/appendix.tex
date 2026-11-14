@@ -181,6 +181,30 @@ The results for the rolling design appear below (Tables~\ref{tab:positive-contro
 \input{tables/fmt-app-pc-sizes}
 \end{table}
 
+\section{The Precedent Rung in Detail}
+\label{app:p2}
+Section~\ref{sec:method} describes P2 in one paragraph. This appendix gives it in full.
+
+% src: src/mootcourt/features.py PAIRWISE_SVD_DIMS 32, STRUCTURED_FEATURES (eight), EXPOSURE_FEATURES, PAIR_FEATURES (three), _structured_matrix (no arm count), _cell_matrix (arm count, the cell-only space of the retailer's archive); src/mootcourt/predictors/p2.py neighbor_state (neighbors of x in its cell); src/mootcourt/harness.py run loop (every model at an origin, the feature space included, is fit on visible_rows(adm, t))
+\emph{Features.} The features $x$ of a contrast are a description of the pair. One TF-IDF and truncated SVD, fit at each origin on the headlines of the visible rows, yields 32 columns each for the variant headline, the reference headline and their difference. Eight features of the variant are added to those: its headline's word and character counts, and flags for a question mark, a digit, a quotation mark, an exclamation mark, a first word that is a pronoun, and a changed image. Then come three features of the pair: the differences in word and character count and the share of words in common. The last is the log planned exposure; because realized exposure stands in for the plan (Section~\ref{sec:setting}), this is the one feature that reads a post-launch quantity. All columns are standardized on the visible rows. Because precedents are searched inside the query's own cell, the kind of change is not a column. Only on the retailer's archive, which has no text, is the number of arms a feature.
+
+\emph{Estimator.} Given a kernel $k(x, x_i) = \exp(-d^2/2h^2)$ on standardized features, and weights $w_i = k(x, x_i)/(s_i^2 + \sigma_c^2)$ over visible rows,
+\begin{align}
+m(x) &= \frac{\sum_i w_i y_i}{\sum_i w_i}, \qquad
+v_m(x) = \frac{\sum_i w_i^2 (s_i^2 + \sigma_c^2)}{(\sum_i w_i)^2}, \\
+\hat\theta(x) &= \lambda\, m(x) + (1-\lambda)\, \mu_c, \\
+v(x) &= \lambda \left(v_m(x) + \tau_{\mathrm{res},c}^2\right) + (1-\lambda)\, \sigma_c^2 ,
+\end{align}
+where $\tau_{\mathrm{res},c}^2 = \max\bigl(0,\ \overline{(y_i - m_i)^2} - \overline{s_i^2} - \overline{v_{m,i}}\bigr)$, with the means taken over the cell's validation rows and $m_i$ the precedent mean of row $i$. The quantity so defined is the spread of true effects that the precedent mean leaves unexplained. The working predictive is a Student-t with the $\nu$ that P1 uses for the cell (the cell's own, or the global one for a thin cell). Its location is $\hat\theta(x)$ and its scale is $\sqrt{v(x)(\nu-2)/\nu}$, so its variance is $v(x)$, and $\lambda = 0$ returns P1 exactly.
+
+\emph{Selection.} Per cell, the log score on forward-chained validation rows chooses the weight $\lambda$ and the bandwidth multiplier (a multiple of the median heuristic \cite{garreau2017large}; both grids are listed in Table~\ref{tab:fmt-protocol}). Three inner cuts sit at quantiles of the cell's start times (Table~\ref{tab:fmt-protocol}). A validation row is a row that starts at or after the first cut; its precedent mean uses only rows usable at the latest cut at or before its start, and never a row of its own test (leave-one-test-out is kept as an ablation). The precedent mean alone is out of time: the prior mixed with it is the P1 fit on all visible rows, and the validation rows themselves supply the estimate of $\tau_{\mathrm{res},c}^2$. The $\lambda = 0$ candidate is therefore scored in sample; that may make the guard harder or easier to pass, and we do not measure which. Every candidate, $\lambda = 0$ included, is scored at the validation row's realized standard error $s_i$ with the same marginal density as the P1 likelihood. Since the backtest scores at $s_\ast$, the gain tested by the guard is not exactly the gain measured in the backtest.
+
+% src: src/mootcourt/predictors/p2.py _LAMBDA_TIE 1e-3 (0.001 nats); src/mootcourt/config.py P2_GUARD_MULT 2.0 (two standard errors by test); Table tab:fmt-protocol, admission guard row
+\emph{Admission guard.} The guard limits the amount of noise the selection can fit. A candidate with $\lambda > 0$ is admitted only if its per-row log-score gain over $\lambda = 0$ on the validation rows exceeds 0.001 nats and two standard errors clustered by test. Otherwise $\lambda = 0$, and P2 equals P1 for that cell and origin. The guard makes no promise that P2 beats P1 on later tests; what it does is measured in Sections~\ref{sec:ladder-results}, \ref{sec:synthetic-results} and~\ref{sec:ablations}.
+
+% src: src/mootcourt/config.py EARN_WEIGHT_MARGIN 0.02; src/mootcourt/predictors/second_opinion.py earn_weight (a Brier skill gain on the later rows of at least the margin)
+\paragraph{Designs with no result here.}\label{sec:no-result} The package holds two further parts of the design, neither of which has a result in this paper. P3 is a probability and a point estimate that the team enters before the card is seen, frozen with a timestamp; no public archive holds historical forecasts. The \emph{second opinion} is an optional language-model forecast $p_{\mathrm{AI}}$. It is stacked as $p_{\mathrm{stack}} = (1 - w)\, \psig + w\, p_{\mathrm{AI}}$, with $w = 0$ until the stacked forecast beats $\psig$ out of time by a Brier skill margin of 0.02 at the gate's sample size.
+
 \section{Tooling Landscape}
 \label{app:landscape}
 % src: docs/landscape.md, its summary (13 commercial platforms, 17 open-source platforms, libraries and registries, 16 internal platforms; the wave of 2023 to 2026)
