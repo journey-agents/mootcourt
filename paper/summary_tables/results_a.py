@@ -52,7 +52,7 @@ def cautionary(r):
 
 
 def p1_cells(r):
-    main, extras = r(MAIN), r(EXTRAS)
+    main = r(MAIN)
 
     def gain(cell):
         return ci_neg(main, agg("P0", cell), "logscore_vs_p1")
@@ -122,9 +122,14 @@ def auc_within(r):
     def row(label, rung):
         return [label, ci(main, agg(rung), field), ci(main, agg(rung, "headline_only"), field)]
 
+    extras = r(EXTRAS)
+    key = "exposure_realized.p_sig_constant_within_origin_and_cell.fixed.P1"
+    if extras.get(f"{key}.strata_with_one_value") != extras.get(f"{key}.origin_cell_strata"):
+        raise ValueError("the row says P1 gives one forecast per stratum")
+    tie = v(extras, "exposure_realized.auc_event_within_ties_exact.fixed.P1")
     return Table("fmt-auc-within", "lrr", [r"rung & all cells (90\%) & headline-only cell (90\%)"], [
         ["P0 (one forecast per stratum)", v(main, f"{agg('P0')}.{field}"), v(main, f"{agg('P0', 'headline_only')}.{field}")],
-        row("P1", "P1"),
+        ["P1 (one forecast per stratum)", tie, tie],
         row("precedent rung (P2)", "P2"),
         row("boosted model", "GBM"),
         row("local comparison set", "local_eb"),

@@ -1,5 +1,5 @@
 """Summary tables of the limitations section: the verdict on each hypothesis and the period rule of the guard."""
-from summary_tables import Raw, Table, derived, fmt, join, month_year, n, narrowest_origin, pct, pctw, v
+from summary_tables import Raw, Table, derived, fmt, join, month_year, n, pct, pctw, v
 
 UPWORTHY, ASOS, EXTRAS = "backtest-upworthy-*.json", "backtest-asos-*.json", "paper-extras-upworthy-*.json"
 CURVE, SYNTHETIC = "learning-curve-upworthy-*.json", "paper-extras-synthetic-*.json"
@@ -87,8 +87,8 @@ def _guard_verdict_wording(up, asos, extras, p2_all, p1_all, issued, skill):
     def fail(words):
         raise ValueError(f"the verdicts table says {words!r} and the report does not")
 
-    if up.get(f"{p2_all}.brier_skill_lo") <= 0 or up.get(f"{p2_all}.brier_skill") >= 0.01:
-        fail("clear of zero, and under one percent")
+    if up.get(f"{p2_all}.brier_skill_lo") <= 0 or up.get(f"{p2_all}.brier_skill") >= 0.015:
+        fail("clear of zero, and about one percent")
     if 2 * extras.get(f"{issued}.origins_inside_central_90") > extras.get(f"{issued}.origins"):
         fail("not at most of them")
     for name, nominal in (("coverage_80", 0.80), ("coverage_90", 0.90)):
@@ -105,18 +105,22 @@ def _guard_verdict_wording(up, asos, extras, p2_all, p1_all, issued, skill):
         fail("P2 equals P1 on this archive")
 
 
-def _h1_part2(up, syn):
-    """The headline-only difference beside what a planted lift returns in a cell of that size under the same backtest: the verdict word rests on the second being inside the first."""
+def _h1_part2(up, seeds):
+    """The headline-only difference beside what a planted lift returns in a cell of that size under the same backtest, at five ledger seeds."""
     headline = _cell("P2", "headline_only")
-    planted = 'positive_control_rungs.runs[n_tests=11100].by_cell["headline_only"].rungs[rung=P2].diff_logscore_vs_p1'
-    if not up.get(f"{headline}.logscore_vs_p1_lo") < syn.get(planted) < up.get(f"{headline}.logscore_vs_p1_hi"):
-        raise ValueError("the row says the interval contains the planted gain")
     if up.get(f"{headline}.logscore_vs_p1") >= 0 or up.get(f"{headline}.logscore_vs_p1_hi") <= 0:
         raise ValueError("the verdict says the estimate is on the wrong side and its interval contains zero")
-    return join("{}, {}; the interval contains the {} that a planted lift returns in a cell of this size under the same backtest",
+    if abs(seeds.get("real_interval.hi") - up.get(f"{headline}.logscore_vs_p1_hi")) > 1e-12:
+        raise ValueError("the seeds report was not read against this run's interval")
+    inside, total = seeds.get("inside_real_interval"), seeds.get("seeds")
+    if not 0 < inside < total:
+        raise ValueError("the row says the planted gain falls inside the interval at some seeds and not at all")
+    return join("{}, {}; the interval contains what a planted lift returns in a cell of this size under the same backtest at {} of {} ledger seeds"
+                " (median {}, largest {})",
                 w(up, f"{headline}.logscore_vs_p1", 4, plus=True),
                 span(up, f"{headline}.logscore_vs_p1_lo", f"{headline}.logscore_vs_p1_hi", 4),
-                w(syn, planted, 4))
+                derived(NUMBER_WORDS[inside], seeds.ref("inside_real_interval")), derived(NUMBER_WORDS[total], seeds.ref("seeds")),
+                w(seeds, "median.p2_minus_p1_headline_only", 4), w(seeds, "max.p2_minus_p1_headline_only", 4))
 
 
 def _h2_as_written(up, curve, extras):
@@ -146,7 +150,8 @@ def _h4_part2(extras, skill):
     composition = "abstention_composition.P2"
     if extras.get(f"{composition}.abstained.lo") > extras.get(f"{composition}.issued.skill") or extras.get(f"{composition}.abstained.hi") < extras.get(f"{composition}.issued.skill"):
         raise ValueError("the row says the two groups do not differ measurably without burn-in")
-    return join("abstained rows, scored on the withheld forecast: with the burn-in origin, above the full set at {}, {}; without it, {}, {}, against {}, {} for issued rows, no measurable difference",
+    return join("abstained rows, scored on the withheld forecast: with the burn-in origin, above the full set at {}, {}; without it, {}, {}, against {}, {} for issued rows,"
+                " no measurable difference; within a cell and origin the prior gives both groups the same probability, so no comparison there reads the forecasts",
                 w(extras, f"{skill}.abstained.brier_skill"), span(extras, f"{skill}.abstained.brier_skill_lo", f"{skill}.abstained.brier_skill_hi"),
                 w(extras, f"{composition}.abstained.skill", 4), span(extras, f"{composition}.abstained.lo", f"{composition}.abstained.hi", 4),
                 w(extras, f"{composition}.issued.skill", 4), span(extras, f"{composition}.issued.lo", f"{composition}.issued.hi", 4))
@@ -164,15 +169,12 @@ def _h2_gate(up, extras):
 
 
 def _h4_part2_verdict(extras):
-    """The verdict of H4 part 2: failed with the burn-in origin; without it the pooled difference has no interval and the stratified one is on the wrong side."""
+    """The verdict of H4 part 2: failed with the burn-in origin; without it the pooled difference is on the claim's side and has no interval."""
     pooled = "abstention_composition.P2.pooled_issued_minus_abstained_skill"
-    stratified = "abstention_composition.P2.stratified_issued_minus_abstained_skill"
     if extras.get(pooled) <= 0:
         raise ValueError("the verdict says the pooled difference is on the claim's side without burn-in")
-    if extras.get(f"{stratified}.estimate") >= 0 or extras.get(f"{stratified}.hi") >= 0:
-        raise ValueError("the verdict says the difference within origin and cell is on the wrong side with an interval below zero")
-    return derived("failed on all rows; with burn-in excluded, on the claim's side pooled with no interval and on the wrong side within origin and cell, the interval below zero",
-                   extras.ref(pooled), extras.ref(f"{stratified}.estimate"), extras.ref(f"{stratified}.lo"), extras.ref(f"{stratified}.hi"))
+    return derived("failed on all rows; with burn-in excluded, on the claim's side pooled, given as measured with no interval",
+                   extras.ref(pooled))
 
 
 def _not_shown_word(up, rung):
@@ -189,6 +191,9 @@ def _not_shown_word(up, rung):
 def verdicts(r):
     up, _asos, extras, curve, syn = r(UPWORTHY), r(ASOS), r(EXTRAS), r(CURVE), r(SYNTHETIC)
     first = r(FIRST)
+    skill_origin = r("by-origin-skill-upworthy-*.json")
+    if skill_origin.get("rungs.P2.realized.origin_level.lo") <= 0 or skill_origin.get("rungs.P2.realized.without_zero_base_rate_strata.lo") <= 0:
+        raise ValueError("the row says the skill of P2 is clear of zero with the quarters as units and without the stratum whose base rate is zero")
     if not first.get(f"{_cell('P2', 'ALL')}.brier_skill_lo") < 0 < first.get(f"{_cell('P2', 'ALL')}.brier_skill_hi"):
         raise ValueError("the row says the skill of P2 is not clear of zero in the first specification")
     p1_all, p2_all, image = _cell("P1", "ALL"), _cell("P2", "ALL"), _cell("P2", "image_only")
@@ -220,26 +225,32 @@ def verdicts(r):
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (see~\ref{sec:ladder-results})} \\"),
         _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in, P0 scored with a normal density, as in the code committed with the plan",
              _h1_part1(*(r(name) for name in BY_ORIGIN)), "held in the first specification; with exposure fixed, not shown against the normal base rate and failed in the main run"),
-        _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, syn), "failed: the estimate is on the wrong side, and its interval contains zero"),
+        _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, r("positive-control-seeds.json")), "failed: the estimate is on the wrong side, and its interval contains zero"),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
              join("{} nats, {}: the guard admitted no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
                   span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
         Raw(r"\midrule"),
-        _group("H2, in part: the gate claim failed; read pooled, a skill under one percent in the main run and none shown in the first specification"),
+        _group("H2, in part: the gate claim failed; read pooled, a skill of about one percent in the main run and none shown in the first specification"),
         _row("H2, read pooled", "P2's Brier skill positive, its interval clear of zero, pooled over origins",
-             join("{}, {}, clear of zero; in the first specification {}, {}, not clear of zero",
+             join("{}, {}, with tests resampled; {}, {}, with the seven quarters as units; without the one cell and quarter in which the base rate"
+                  " is zero, {}, {}; in the first specification {}, {}, not clear of zero",
                   w(up, f"{p2_all}.brier_skill", 4), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4),
+                  w(skill_origin, "rungs.P2.realized.origin_level.skill", 4),
+                  span(skill_origin, "rungs.P2.realized.origin_level.lo", "rungs.P2.realized.origin_level.hi", 4),
+                  w(skill_origin, "rungs.P2.realized.without_zero_base_rate_strata.skill", 4),
+                  span(skill_origin, "rungs.P2.realized.without_zero_base_rate_strata.lo", "rungs.P2.realized.without_zero_base_rate_strata.hi", 4),
                   w(first, f"{p2_all}.brier_skill", 4), span(first, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
-             "held in the main run at under one percent of the base rate's score; not shown in the first specification"),
+             "held in the main run, with either unit of resampling, at about one percent of the base rate's score; not shown in the first specification"),
         _row("H2, as written", "the same at the final origin", _h2_as_written(up, curve, extras),
              join("above zero at {}, with that caution, not counted as holding; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
         _row("H2, the gate", "the released gate decidable at the final origin", _h2_gate(up, extras), "failed"),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H3, in part} (see~\ref{sec:calibration-results})} \\"),
         _row("H3 part 1", "ECE of issued cards inside the central 90 percent of the null at most origins",
-             join("inside at {} of the {} origins that issue cards, not at most of them; pooled at the {}th percentile of the clustered null",
-                  n(extras, f"{issued}.origins_inside_central_90"), n(extras, f"{issued}.origins"), n(extras, pooled_percentile)),
-             "failed"),
+             join("inside at {} of the {} origins that issue cards, not at most of them; pooled over issued rows the percentile is {}, which is"
+                  " within simulation error of the line at 95 and is not read",
+                  n(extras, f"{issued}.origins_inside_central_90"), n(extras, f"{issued}.origins"), v(extras, pooled_percentile, 1)),
+             "failed, on the count of origins"),
         _row("H3 part 2", "80 and 90 percent coverage within 5 points of nominal",
              join("{} percent, {} to {}, and {} percent, {} to {}, within 5 points of nominal pooled; {} to {} across deciles"
                   " (a range, not an interval) of the ratio of realized to planned standard error",

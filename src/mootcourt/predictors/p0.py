@@ -18,7 +18,8 @@ unitless. Origin semantics: only rows with status admitted and ``usable_after <=
 this is applied at predict time, so one fitted P0 serves every origin. A cell with fewer than 2
 visible rows falls back to the global fit over all cells.
 
-``density="t"`` (an ablation, docs/superpowers/plans/2026-11-12-heavy-tailed-base-rate.md) scores the log score with a Student-t fitted
+``density="t"`` (first an ablation, docs/superpowers/plans/2026-11-12-heavy-tailed-base-rate.md, and the setting of ``moot backtest``
+since run 9; the default of this class stays the normal) scores the log score with a Student-t fitted
 by maximum likelihood to the same visible ``y``: location, scale and the degrees of freedom from ``NU_GRID``. It is a harder baseline
 for a rung whose own density has heavy tails. Nothing else changes: ``p_sig``, ``p_dir``, the quantile intervals and the CRPS are those
 of the default, so the Brier skill of every rung is the same under both densities.

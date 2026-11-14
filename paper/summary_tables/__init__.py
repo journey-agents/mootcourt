@@ -31,6 +31,7 @@ HAND_TYPED = {
     "tab:schema": "field names of the exchange format",
     "tab:commands": "command lines",
     "tab:checksums": "file sizes and digests from data/CHECKSUMS.json",
+    "tab:fmt-runs": "a description of the named runs; it holds no number",
 }
 
 

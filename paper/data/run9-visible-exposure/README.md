@@ -9,6 +9,8 @@ Three exceptions, at commit d58cb89, which changes two scripts and no file under
 - `leakage-audit-upworthy.json`. The audit stage failed in the run (exit code 1 in `stages.txt`): the script recomputed each row's `s_star` from that row's own exposure, the default before this run, so every row differed. The script now takes `--exposure cell-median-visible` and recomputes the fixed exposure itself from the rows visible at each origin, without the package's view. Rerun on the unchanged scores, it reports zero violations. A test shows that an exposure fixed on the whole ledger, which reads later rows, is flagged.
 - `horizon-14/by-origin-*.json` and `horizon-28/by-origin-*.json`. These were not planned. They were added after the 28-day result was seen, to put on record that its large gap comes from the first origin (see below).
 
+A fourth exception, at commit e903ef9, which adds one script and changes no file under `src/`: `by-origin-skill-upworthy-20261106-2dc461f52ea4.json`, the Brier skill of P1 and P2 by origin, with the origins as units and with each origin left out, written by `scripts/by_origin_skill.py` from the run's saved scores. A reviewer of the rewritten paper asked for it and had computed its main figures from the scores, so they were known when the reading was written down (the plan's addendum).
+
 Checks made before anything was read:
 
 - The main report's ladder rows equal run 8's ablation with the same setting (`exposure-cell-median-visible+base-density-t`) to 1e-9, as the plan required.

@@ -112,4 +112,31 @@ def horizon(r):
                  [row(*run) for run in runs])
 
 
-TABLES = [calibration_size, control_seeds, learning_origins, horizon]
+def skill_by_origin(r):
+    """The Brier skill of P1 and P2 at each origin, pooled with tests resampled, with the quarters as units, and without the stratum whose
+    base rate is zero (the addendum of 14 November 2026 to the run 9 plan; asked for by a reviewer of the rewritten paper)."""
+    rep, main = r("by-origin-skill-upworthy-*.json"), r(MAIN)
+    cols = (("P1", "realized"), ("P1", "planned"), ("P2", "realized"))
+    for rung, field in (("P1", "brier_skill"), ("P2", "brier_skill")):          # the script must reproduce the report's pooled skill
+        if abs(rep.get(f"rungs.{rung}.realized.pooled.skill") - main.get(f"tables.aggregate[cell=ALL,rung={rung}].{field}")) > 1e-9:
+            raise ValueError(f"the by-origin skill of {rung} does not reproduce the report's pooled skill")
+    origins = [o["origin"] for o in rep.get("rungs.P1.realized.by_origin")]
+
+    def cell(rung, event, at):
+        return sci(rep, f"rungs.{rung}.{event}.{at}", "skill", 4)
+
+    def row(label, at):
+        return [label, *(cell(rung, event, at) for rung, event in cols)]
+
+    zero = rep.get("rungs.P1.realized.zero_base_rate_strata")
+    if len(zero) != 1 or rep.get("rungs.P1.planned.zero_base_rate_strata"):
+        raise ValueError("the table prints one stratum with a base rate of zero, on the main event only")
+    without = ["pooled without the pair of origin and cell whose base rate is zero", cell("P1", "realized", "without_zero_base_rate_strata"), "none such",
+               cell("P2", "realized", "without_zero_base_rate_strata")]
+    return Table("fmt-skill-by-origin", "lrrr",
+                 ["origin & P1, event at & P1, event at & P2, event at", r" & realized precision (90\%) & planned precision (90\%) & realized precision (90\%)"],
+                 [*(row(month_year(o), f"by_origin[origin={o}]") for o in origins), Raw(r"\midrule"),
+                  row("all origins, pooled, tests resampled", "pooled"), row("all origins as seven units (Student-t interval)", "origin_level"), without])
+
+
+TABLES = [calibration_size, control_seeds, learning_origins, horizon, skill_by_origin]

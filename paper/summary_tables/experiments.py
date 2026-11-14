@@ -71,7 +71,6 @@ def window(r):
         [r"P1 minus P0, log score (90\%)", *both(sci, _agg("P0"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)],
         [r"P2 minus P1, log score (90\%)", *both(sci, _agg("P2"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi")],
         Raw(r"\midrule"),
-        [r"P1 AUC within strata (90\%)", *within("P1")],
         [r"P2 AUC within strata (90\%)", *within("P2")],
         [r"text classifier AUC within strata (90\%)", *within("text_lr")],
         Raw(r"\midrule"),
@@ -99,7 +98,13 @@ def leak_choices(r):
     def row(scale, precision, run):
         at = f"effect_scale_choices.runs.{run}"
         p1 = f"{at}.rungs.P1"
-        return [scale, precision, v(rep, f"{at}.event_rate", 3), ci(rep, p1, "auc_event", 3), ci(rep, p1, "auc_event_within", 3),
+        within = ci(rep, p1, "auc_event_within", 3)
+        if run == "main":          # with exposure fixed P1 gives one probability per stratum: the exact-tie AUC is one half, and no interval is printed
+            tie = "exposure_realized.auc_event_within_ties_exact.fixed.P1"
+            if abs(rep.get(tie) - 0.5) > 1e-12:
+                raise ValueError("the row says P1 gives one forecast per stratum in the main run")
+            within = derived("0.500, one forecast per stratum", rep.ref(tie))
+        return [scale, precision, v(rep, f"{at}.event_rate", 3), ci(rep, p1, "auc_event", 3), within,
                 sci(rep, p1, "brier_skill", 4, "brier_skill_lo", "brier_skill_hi"), below(run)]
 
     rows = [row("absolute", "planned (main)", "main"), row("relative", "planned", "relative_planned"), row("absolute", "realized", "absolute_realized"),
@@ -291,8 +296,9 @@ def abstention_composition(r):
         [r"abstained, Brier skill (90\%)", *skill("abstained")],
         Raw(r"\midrule"),
         ["issued minus abstained, pooled", *both(lambda g: v(rep, f"{top}.{g}.pooled_issued_minus_abstained_skill", 4))],
-        [r"issued minus abstained, within (90\%)", *both(lambda g: sci(rep, f"{top}.{g}.{strat}", "estimate"))],
-        ["strata holding both groups", *both(lambda g: join("{} of {}", n(rep, f"{top}.{g}.{strat}.strata_with_both_groups"), n(rep, f"{top}.{g}.{strat}.strata_total")))],
+        # the difference within pairs of origin and cell is not printed: a rung that gives both groups of a pair one probability cannot be
+        # compared there, so that difference reads event rates and not forecasts (review of 14 November 2026)
+        ["pairs of origin and cell holding both groups", *both(lambda g: join("{} of {}", n(rep, f"{top}.{g}.{strat}.strata_with_both_groups"), n(rep, f"{top}.{g}.{strat}.strata_total")))],
         Raw(r"\midrule"),
         ["abstention rate, all cells, of rows", *both(pooled_rate)],
         [f"the same without {month_year(full['origin'])}", *both(rate_without_full)],

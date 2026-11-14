@@ -55,6 +55,7 @@ def glance(r):
     """One archive and the synthetic check. The retailer's archive is an appendix check of the mechanics and has no column here."""
     up, syn = r(UPWORTHY), r(SYNTHETIC)
     up_extras, origins = r("paper-extras-upworthy-*.json"), r("by-origin-upworthy-*.json")
+    skills = r("by-origin-skill-upworthy-*.json")
     archives = (up, syn)
     p1, p2 = _agg("P1"), _agg("P2")
     if abs(origins.get("pooled.difference") + up.get(f"{_agg('P0')}.logscore_vs_p1")) > 1e-9:
@@ -72,8 +73,10 @@ def glance(r):
         ["the same, the seven quarters as units (90\\%)",
          join("{} ({}, {})", v(origins, "origin_level.difference", 3), v(origins, "origin_level.lo", 3), v(origins, "origin_level.hi", 3)), "not computed"],
         ["P1 Brier skill, event at realized precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill", 4) for a in archives]],
+        ["the same, the seven quarters as units (90\\%)",
+         join("{} ({}, {})", v(skills, "rungs.P1.realized.origin_level.skill", 4), v(skills, "rungs.P1.realized.origin_level.lo", 4),
+              v(skills, "rungs.P1.realized.origin_level.hi", 4)), "not computed"],
         ["P1 Brier skill, event at planned precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
-        ["tests to read a skill of 0.10, at base rate; verdict at that skill", _gate(up_extras), _gate_scaled(syn)],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],
         ["P1 coverage of the 80 / 90 percent intervals",
          *[join("{} / {}", v(a, f"{p1}.coverage_80", 2), v(a, f"{p1}.coverage_90", 2)) for a in archives]],

@@ -16,10 +16,10 @@ Problem. Before a launch, a team wants to know what its experiment will show. In
 Method. We replay one public archive: 2,949 headline and image tests of a publisher (Upworthy), scored over seven quarters, with models fitted on earlier tests only. The archive records realized, not planned, traffic, so each forecast gets the median traffic of earlier tests of its kind. All results are exploratory: we read one split many times and changed the main specification after seeing results; the first specification is reported beside it.
 Findings.
 - A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats on the log score; with the seven quarters as units of resampling the lead is not shown.
-- The prior's skill on which test will be significant is under one percent of the base rate's error, and within a kind of test and quarter every test gets the same probability.
-- The probabilities fail a calibration test; the error is one of level, and on average they sit too high.
-- No model is shown to rank tests better than counting a test's arms.
-- Weighting similar past tests is not shown to help, and it recovers under a tenth of a planted signal, so whether similar tests help cannot be tested here.
+- The prior's skill on which test will be significant is small (0.007 of the base rate's error), and within a kind of test and quarter every test gets the same probability: a better level, not a ranking.
+- The probabilities fail a calibration test: the level per kind of test and quarter is off, on average too high.
+- None of the models we ran, all simple stand-ins, is shown to rank tests better than counting a test's arms.
+- Weighting similar past tests does not beat the prior; it recovers under a tenth of the gain open to a model told a planted signal, so the tie does not rule out a signal of that size.
 Release. Protocol and Moot Court (MIT), which regenerates every table from its reports. The archive's confirmatory split is unopened.
 
 ## Categories
