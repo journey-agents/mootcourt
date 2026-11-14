@@ -8,7 +8,9 @@ and writes, for ``logscore(P1) - logscore(P0)`` on the rows both rungs scored (n
 * ``by_origin``: the mean at each origin with an interval that resamples the tests of that origin;
 * ``leave_one_origin_out``: the pooled mean with each origin removed in turn, each with its interval by test;
 * ``equal_origin_weight``: the mean of the origin means, each origin counting once, with an interval that resamples tests within each origin;
-* ``origin_level``: the same mean with the origins as the units, a Student-t interval on the origin means (it treats them as exchangeable).
+* ``origin_level``: the same mean with the origins as the units, a Student-t interval on the origin means (it treats them as exchangeable);
+* ``origin_level_leave_one_out``: that interval again with each origin removed in turn (added 14 November 2026, after the values by origin
+  had been seen).
 
 No model is run. The resample count and the seed are the report's. The intervals do not resample origins.
 
@@ -59,6 +61,16 @@ def summarize(d: pd.DataFrame, B: int, seed: int, level: float = 0.9) -> dict:
     lo, hi = hs._percentile_interval(np.mean(np.vstack(draws), axis=0), level)
     means = np.array([r["difference"] for r in by_origin], dtype=float)
     half = float(stats.t.ppf(0.5 + level / 2.0, len(means) - 1) * means.std(ddof=1) / np.sqrt(len(means))) if len(means) > 1 else float("nan")
+    def t_interval(values: np.ndarray) -> tuple[float, float, float]:
+        if len(values) < 2:
+            return float(values.mean()), float("nan"), float("nan")
+        h = float(stats.t.ppf(0.5 + level / 2.0, len(values) - 1) * values.std(ddof=1) / np.sqrt(len(values)))
+        return float(values.mean()), float(values.mean() - h), float(values.mean() + h)
+
+    level_loo = []
+    for k, r in enumerate(by_origin):
+        m, lo_k, hi_k = t_interval(np.delete(means, k))
+        level_loo.append({"left_out": r["origin"], "difference": m, "lo": lo_k, "hi": hi_k, "origins": len(means) - 1})
     return {
         "pooled": one(d),
         "by_origin": by_origin,
@@ -70,6 +82,8 @@ def summarize(d: pd.DataFrame, B: int, seed: int, level: float = 0.9) -> dict:
         "equal_origin_weight": {"difference": float(np.mean([r["difference"] for r in by_origin])), "lo": lo, "hi": hi, "origins": len(by_origin)},
         "origin_level": {"difference": float(means.mean()), "lo": float(means.mean() - half), "hi": float(means.mean() + half),
                          "origins": len(means), "note": "Student-t interval on the origin means, the origins as exchangeable units"},
+        "origin_level_leave_one_out": level_loo,
+        "origin_level_leave_one_out_above_zero": int(sum(1 for r in level_loo if r["lo"] > 0)),
         "bootstrap_resamples": int(B), "seed": int(seed), "level": level,
         "unit": "nats per row of log score, P1 minus P0; intervals resample tests and hold the origins fixed",
     }

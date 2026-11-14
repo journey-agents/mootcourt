@@ -68,3 +68,14 @@ def test_the_reference_without_history_is_a_centred_normal_at_the_planned_standa
     assert out["P1"]["reference_logscore"] == pytest.approx(out["P0"]["reference_logscore"]) and len(out["P1"]["by_origin"]) == 2
     with pytest.raises(ValueError):
         ref.summarize(good, B=10, seed=0)                               # P0 has no rows
+
+
+def test_the_interval_with_origins_as_units_is_also_given_with_each_origin_left_out(mod):
+    out = mod.summarize(mod.differences(_scores()), B=50, seed=0)
+    loo = {r["left_out"][:10]: r for r in out["origin_level_leave_one_out"]}
+    means = {r["origin"][:10]: r["difference"] for r in out["by_origin"]}
+    assert set(loo) == set(means)
+    rest = [v for k, v in means.items() if k != "2014-01-01"]
+    assert loo["2014-01-01"]["difference"] == pytest.approx(np.mean(rest)) and loo["2014-01-01"]["origins"] == 2
+    assert loo["2014-01-01"]["lo"] < loo["2014-01-01"]["difference"] < loo["2014-01-01"]["hi"]
+    assert out["origin_level_leave_one_out_above_zero"] == sum(1 for r in loo.values() if r["lo"] > 0)
