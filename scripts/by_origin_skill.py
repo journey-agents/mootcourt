@@ -14,7 +14,10 @@ rung and one definition of the event (``realized``: the event at realized precis
   ``origin_level_leave_one_out``, the same with each origin removed in turn;
 * ``zero_base_rate_strata``: each pair of origin and cell in which the base rate's probability is zero on every row, with its rows, the
   visible rows of the cell, its event rate and its share of the pooled Brier gain (the base rate's summed Brier score minus the rung's);
-* ``without_zero_base_rate_strata``: the pooled skill and its interval by test without those pairs.
+* ``without_zero_base_rate_strata``: the pooled skill and its interval by test without those pairs, and
+  ``origin_level_without_zero_base_rate_strata``, the Student-t interval on the origin skills without them;
+* ``level_gap``: the rung's mean probability minus the event rate, pooled with its interval by test, at each origin, and with a Student-t
+  interval on the origin gaps (second addendum of 14 November 2026).
 
 No model is run. The resample count and the seed are the report's.
 
@@ -63,7 +66,8 @@ def summarize(scores: pd.DataFrame, rung: str, event: str, B: int, seed: int, le
         raise ValueError(f"no scored row for {rung}")
     d = pd.DataFrame({"test_id": g["test_id"].to_numpy(), "origin": pd.to_datetime(g["origin"], utc=True).to_numpy(), "cell": g["cell"].to_numpy(),
                       "b": g[brier].to_numpy(float), "base": g[base].to_numpy(float), "p_base": g[p_base].to_numpy(float),
-                      "event": g[ev].to_numpy(float), "n_visible_cell": g["n_visible_cell"].to_numpy(float)})
+                      "event": g[ev].to_numpy(float), "n_visible_cell": g["n_visible_cell"].to_numpy(float),
+                      "gap": (g["p_sig"].to_numpy(float) - g[ev].to_numpy(float)) if "p_sig" in g else np.nan})
     groups = list(d.groupby("origin", sort=True))
     by_origin = [{"origin": pd.Timestamp(o).isoformat(), **_skill(f, B, seed, level)} for o, f in groups]
     loo = [{"left_out": pd.Timestamp(o).isoformat(), **_skill(d.drop(index=f.index), B, seed, level)} for o, f in groups] if len(groups) > 1 else []
@@ -92,7 +96,19 @@ def summarize(scores: pd.DataFrame, rung: str, event: str, B: int, seed: int, le
         "bootstrap_resamples": int(B), "seed": int(seed), "level": level,
     }
     if zero:
-        doc["without_zero_base_rate_strata"] = _skill(d[~drop], B, seed, level)
+        rest = d[~drop]
+        doc["without_zero_base_rate_strata"] = _skill(rest, B, seed, level)
+        doc["origin_level_without_zero_base_rate_strata"] = _t_interval(
+            np.array([1.0 - f["b"].sum() / f["base"].sum() for _, f in rest.groupby("origin", sort=True)], dtype=float), level)
+    if "p_sig" in g:          # the level: the rung's mean probability minus the event rate, with both units of resampling
+        def gap(frame: pd.DataFrame) -> dict:
+            iv = hs.bootstrap_by_test(frame, "gap", B=B, seed=seed, level=level)
+            return {"gap": float(iv.estimate), "lo": float(iv.lo), "hi": float(iv.hi), "n_rows": int(len(frame))}
+
+        gaps = [{"origin": pd.Timestamp(o).isoformat(), **gap(f)} for o, f in groups]
+        level_iv = _t_interval(np.array([r["gap"] for r in gaps], dtype=float), level)
+        doc["level_gap"] = {"pooled": gap(d), "by_origin": gaps, "by_origin_above_zero": int(sum(1 for r in gaps if r["gap"] > 0)),
+                            "origin_level": {"gap": level_iv["skill"], "lo": level_iv["lo"], "hi": level_iv["hi"], "origins": level_iv["origins"]}}
     return doc
 
 
@@ -104,7 +120,7 @@ def main() -> int:
     ap.add_argument("--rungs", nargs="+", default=["P1", "P2"])
     args = ap.parse_args()
     header = json.loads(args.report.read_text(encoding="utf-8"))["header"]
-    columns = ["row_id", "test_id", "origin", "cell", "rung", "n_visible_cell", *sorted({c for cols in EVENTS.values() for c in cols})]
+    columns = ["row_id", "test_id", "origin", "cell", "rung", "n_visible_cell", "p_sig", *sorted({c for cols in EVENTS.values() for c in cols})]
     sc = pd.read_parquet(args.scores, columns=columns)
     B, seed = int(header["bootstrap_resamples"]), int(header["seed"])
     doc = {"rungs": {r: {e: summarize(sc, r, e, B, seed) for e in EVENTS} for r in args.rungs},

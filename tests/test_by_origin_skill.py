@@ -50,3 +50,24 @@ def test_a_stratum_whose_base_rate_is_zero_is_listed_with_its_share_and_the_skil
     rest = s[~((s["origin"] == s["origin"].min()) & (s["cell"] == "a"))]
     assert doc["without_zero_base_rate_strata"]["skill"] == pytest.approx(1 - rest["brier_event"].sum() / rest["brier_base"].sum())
     assert _scores() is not None and bos.summarize(_scores(), "P1", "realized", B=20, seed=0)["zero_base_rate_strata"] == []
+
+
+def test_the_level_gap_is_the_mean_probability_minus_the_event_rate_with_both_units(bos):
+    s = _scores()
+    s["p_sig"] = 0.12
+    doc = bos.summarize(s, "P1", "realized", B=50, seed=0)
+    gap = doc["level_gap"]
+    assert gap["pooled"]["gap"] == pytest.approx(0.12 - s["event"].mean())
+    assert len(gap["by_origin"]) == 3 and gap["origin_level"]["origins"] == 3
+    assert gap["origin_level"]["gap"] == pytest.approx(np.mean([r["gap"] for r in gap["by_origin"]]))
+    assert gap["pooled"]["lo"] <= gap["pooled"]["gap"] <= gap["pooled"]["hi"]
+
+
+def test_the_origin_level_skill_is_also_given_without_the_zero_rate_pairs(bos):
+    s = _scores(zero_stratum=True)
+    s["p_sig"] = 0.12
+    doc = bos.summarize(s, "P1", "realized", B=50, seed=0)
+    w = doc["origin_level_without_zero_base_rate_strata"]
+    assert w["origins"] == 3 and w["lo"] <= w["skill"] <= w["hi"]
+    assert w["skill"] != pytest.approx(doc["origin_level"]["skill"])
+    assert "origin_level_without_zero_base_rate_strata" not in bos.summarize(_scores().assign(p_sig=0.12), "P1", "realized", B=20, seed=0)
