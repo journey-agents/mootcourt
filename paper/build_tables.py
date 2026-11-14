@@ -507,15 +507,25 @@ def discrimination_within_table(rep, source, out):
     lines = [
         r"\begin{tabular}{lrrrr}",
         r"\toprule",
-        "model & AUC, event, within strata (90\\%) & resolution, event, within strata & AUC, direction, within strata (90\\%) & "
+        "model & AUC, event, within pairs (90\\%) & resolution, event, within pairs & AUC, direction, within pairs (90\\%) & "
         f"AUC, event, within origins in {esc(big)} (90\\%) \\\\",
         r"\midrule",
     ]
+    # a rung that gives every test of a pair of origin and cell one probability has no ranking there: its event AUC is one half by
+    # construction, the report's value differs from it only through ties broken by rounding, and no interval is printed for it
+    extras_path = latest(os.path.join(os.path.dirname(rep["_path"]), f"paper-extras-{source}-*.json"))
+    constant = {}
+    if extras_path:
+        with open(extras_path, encoding="utf-8") as fh:
+            constant = ((json.load(fh).get("exposure_realized") or {}).get("p_sig_constant_within_origin_and_cell") or {}).get("fixed") or {}
+    one = {rung for rung, c in constant.items() if isinstance(c, dict) and c.get("strata_with_one_value") == c.get("origin_cell_strata")}
     for r in rows:
         b = by_big.get(r["rung"], {})
+        tied = r["rung"] in one
         lines.append(
-            f"{esc(r['rung'])} & {interval(r, 'auc_event_within')} & {f3(r.get('resolution_event_within'), 5)} & "
-            f"{interval(r, 'auc_direction_within')} & {interval(b, 'auc_event_within')} \\\\"
+            f"{esc(r['rung'])} & {'0.500, one forecast per pair' if tied else interval(r, 'auc_event_within')} & "
+            f"{f3(r.get('resolution_event_within'), 5)} & "
+            f"{interval(r, 'auc_direction_within')} & {'0.500, one forecast per pair' if tied else interval(b, 'auc_event_within')} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(

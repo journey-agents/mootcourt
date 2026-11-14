@@ -73,13 +73,12 @@ Those weights are not shown to gain anything on the rows they go on to forecast:
 
 \paragraph{The quarter rule and weights given without a signal.}
 \label{sec:guard-period}
-The weights that the guard once gave where no signal existed came from an error in the prior, and not from the guard. The rule now in force for the quarter level of the prior (Section~\ref{sec:method}) replaced an earlier one, here called the old rule (added after results; Appendix~\ref{sec:analysis-history}).
+The prior takes its quarter level from the last complete quarter (Section~\ref{sec:method}); this rule replaced an earlier one, here called the old rule (added after results; Appendix~\ref{sec:analysis-history}).
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows[arm=old_rule,n_tests=3700].share_admitted 0.556; guard_period_control.rows[arm=old_rule,n_tests=11100].share_admitted 0.333; tables/fmt-period-rule.tex
 On ledgers with no planted text effect, the old rule led the guard to give a weight in 56 percent of cells at the smaller of two ledger sizes and in 33 percent at the larger (Table~\ref{tab:fmt-period-rule}).
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows[arm=old_rule_no_period] share_admitted 0.028 at n_tests 3700 and 0.000 at n_tests 11100
-A control arm traces the cause to P1: with the global fit in place of the quarter deviation, the shares drop to 3 and 0 percent (Table~\ref{tab:guard-period-control}).
-% src: src/mootcourt/predictors/p1.py (cell and period: K_c + (P_p - g) / 2, the period deviation shrunk and halved); src/mootcourt/sources/synthetic.py _SPAN_DAYS 820 from 2013-01-01, so the data end falls in the first weeks of a quarter; $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows[arm=old_rule] mean_rows_in_period_level 62 at n_tests 3700 and 183 at n_tests 11100
-Under the old rule P1 put half of the most recent quarter's shrunken deviation into each cell's prior mean. A synthetic ledger ends about a week into a quarter, so that deviation rested on one week of rows. The precedent rung removed that noise, and the guard gave a weight for a gain that was real, against a P1 that was wrong. The rule now in force takes the level of the last complete quarter. At the backtest's origins the two rules give the same level, so the change moves no backtest number. Under the rule now in force:
+A control arm with the global fit in place of the quarter deviation brings those shares to 3 and 0 percent, so the weights came from the prior's quarter level and not from the guard (Table~\ref{tab:guard-period-control}).
+Under the rule now in force the share is close to that of the control arm, and at the backtest's origins the two rules give the same level, so the change moves no backtest number; what remains is the selection bias of a small cell:
 \begin{itemize}
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_gain_diagnostic.rows ratio_of_means 0.68, 0.63, 0.71, 0.67 at n_tests 300, 1000, 3700, 11100 (tables/guard-gain-diagnostic.tex)
 \item At no ledger size does the mean in-selection gain reach its standard error: the ratios run from 0.63 to 0.71 (Table~\ref{tab:guard-gain-diagnostic}).
@@ -88,7 +87,6 @@ Under the old rule P1 put half of the most recent quarter's shrunken deviation i
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_fit_fraction_stability.rows (n_tests 3700): share_admitted 0.056, 0.056, 0.028, 0.056 on the first 85, 90, 95 and 100 percent of rows and 0.056 on a random 85 percent (tables/guard-fit-fraction.tex)
 \item On ledgers of 3,700 tests the fit set does not change the decision. The guard selects a nonzero weight in 3 to 6 percent of cells under each fit set of Table~\ref{tab:guard-fit-fraction}.
 \end{itemize}
-We conclude that an error in the prior produced those weights. Under the rule now in force the share is close to that of the control arm with no quarter level (Table~\ref{tab:fmt-period-rule}). What remains is the selection bias of a small cell.
 
 \begin{table}[t]\centering\scriptsize
 % src: $RUN6/paper-extras-synthetic-20261103-bf4fd286e2b2.json guard_period_control.rows (planted lift zero, 12 seeds, 36 cells per size, multiplier 2.0), n_tests 3700 and 11100 (tables/guard-period-control.tex); tables/fmt-period-rule.tex

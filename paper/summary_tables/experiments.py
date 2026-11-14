@@ -71,8 +71,8 @@ def window(r):
         [r"P1 minus P0, log score (90\%)", *both(sci, _agg("P0"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)],
         [r"P2 minus P1, log score (90\%)", *both(sci, _agg("P2"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi")],
         Raw(r"\midrule"),
-        [r"P2 AUC within strata (90\%)", *within("P2")],
-        [r"text classifier AUC within strata (90\%)", *within("text_lr")],
+        [r"P2 AUC within pairs of origin and cell (90\%)", *within("P2")],
+        [r"text classifier AUC within pairs of origin and cell (90\%)", *within("text_lr")],
         Raw(r"\midrule"),
         ["P1 ECE percentile", *both(v, f"{_agg('P1')}.ece_percentile", 1)],
         ["P2 ECE percentile", *both(v, f"{_agg('P2')}.ece_percentile", 1)],
@@ -103,7 +103,7 @@ def leak_choices(r):
             tie = "exposure_realized.auc_event_within_ties_exact.fixed.P1"
             if abs(rep.get(tie) - 0.5) > 1e-12:
                 raise ValueError("the row says P1 gives one forecast per stratum in the main run")
-            within = derived("0.500, one forecast per stratum", rep.ref(tie))
+            within = derived("0.500, one forecast per pair", rep.ref(tie))
         return [scale, precision, v(rep, f"{at}.event_rate", 3), ci(rep, p1, "auc_event", 3), within,
                 sci(rep, p1, "brier_skill", 4, "brier_skill_lo", "brier_skill_hi"), below(run)]
 
@@ -127,7 +127,7 @@ def exposure_fixed(r):
         constant = f"{top}.p_sig_constant_within_origin_and_cell.{run}.{rung}"
         one, strata = rep.get(f"{constant}.strata_with_one_value"), rep.get(f"{constant}.origin_cell_strata")
         # With one forecast in every stratum the report's AUC within strata is noise among ties, so the cell says so in place of that value.
-        within = (derived("one forecast per stratum", rep.ref(f"{constant}.strata_with_one_value"), rep.ref(f"{constant}.origin_cell_strata"))
+        within = (derived("one forecast per pair", rep.ref(f"{constant}.strata_with_one_value"), rep.ref(f"{constant}.origin_cell_strata"))
                   if one == strata else ci(rep, at, "auc_event_within", 3))
         return [label, v(rep, f"{top}.auc_event_within_ties_exact.{run}.{rung}"), within,
                 sci(rep, at, "brier_skill", 4, "brier_skill_lo", "brier_skill_hi"), v(rep, f"{at}.logscore", 4), v(rep, f"{at}.ece", 4),
@@ -150,7 +150,7 @@ def exposure_fixed(r):
                 v(rep, f"{at}.fixed.{rung}.brier_skill", 4), v(rep, f"{at}.realized.{rung}.brier_skill", 4), "", ""]
 
     return Table("fmt-exposure-fixed", "lrrrrrr",
-                 ["all cells & AUC within, & AUC within & Brier skill & log score & ECE & strata with", r" & ties exact & (90\%) & (90\%) & & & one forecast"], [
+                 ["all cells & AUC within pairs, & AUC within & Brier skill & log score & ECE & pairs with", r" & ties exact & pairs (90\%) & (90\%) & & & one forecast"], [
         row("P1", "fixed", "P1, main run"),
         row("P1", "realized", "P1, own realized traffic"),
         row("P2", "fixed", "P2, main run"),
@@ -394,7 +394,7 @@ def calibration_shift(r):
                 v(rep, f"{at}.null_mean", 4), v(rep, f"{at}.after_percentile_in_null", 1)]
 
     return Table("fmt-calibration-shift", "lrrrrrr",
-                 ["rung, stratum & rows & ECE as & ECE after & share & null mean, & percentile in", r" & & issued & the shift & removed & shifted & that null"], [
+                 ["rung, cells & rows & ECE as & ECE after & share & null mean, & percentile in", r" & & issued & the shift & removed & shifted & that null"], [
         row("P0, all cells", "P0", "ALL"),
         row("P1, all cells", "P1", "ALL"),
         row("P2, all cells", "P2", "ALL"),
@@ -445,6 +445,7 @@ def base_density(r):
     normal base rate (an ablation) and with each row's own realized traffic (a diagnostic) beside it."""
     main, normal = r(MAIN), r("ablations/backtest-upworthy-*--base-density-normal.json")
     realized = r("ablations/backtest-upworthy-*--exposure-planned.json")
+    first = r("ablations/backtest-upworthy-*--exposure-planned+base-density-normal.json")
     for rung in ("P1", "P2"):          # the density setting changes P0's log score only: the rungs' skill and log score must be the main run's
         for field in ("brier_skill", "logscore"):
             if abs(main.get(f"{_agg(rung)}.{field}") - normal.get(f"{_agg(rung)}.{field}")) > 1e-12:
@@ -457,11 +458,12 @@ def base_density(r):
         return [label, n(main, f"{key}.n"), v(main, f"{key}.logscore", 4), v(normal, f"{key}.logscore", 4),
                 sci(main, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
                 sci(normal, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
-                sci(realized, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
+                sci(realized, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
+                sci(first, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
 
-    return Table("fmt-base-density", "lrrrrrr",
-                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & P1 minus P0, each row's",
-                  r" & & Student-t & normal & main run (90\%) & normal base rate (90\%) & own realized traffic (90\%)"],
+    return Table("fmt-base-density", "lrrrrrrr",
+                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & P1 minus P0, realized- & P1 minus P0, first",
+                  r" & & Student-t & normal & main run (90\%) & normal base-rate ablation (90\%) & traffic diagnostic (90\%) & specification (90\%)"],
                  [row("all cells", "ALL"), row("headline-only", "headline_only"), row("image-only", "image_only"), row("smallest", "both")])
 
 
@@ -537,7 +539,13 @@ def auc_by_year(r):
     """X9: the event AUC by year within origin and within origin and cell, which the 2015 skill is read against."""
     rep = r(EXTRAS)
 
+    constant = "exposure_realized.p_sig_constant_within_origin_and_cell.fixed.P1"
+    if rep.get(f"{constant}.strata_with_one_value") != rep.get(f"{constant}.origin_cell_strata"):
+        raise ValueError("the table says P1 gives one forecast per pair of origin and cell")
+
     def auc(year, rung, name):
+        if rung == "P1" and name == "auc_within_origin_and_cell":          # one probability per pair: one half by construction, no interval
+            return derived("0.500, one forecast per pair", rep.ref(f"{constant}.strata_with_one_value"), rep.ref(f"{constant}.origin_cell_strata"))
         return sci(rep, f'within_origin_auc_by_year.years["{year}"].{rung}.{name}', "estimate", 3)
 
     def row(year, name):

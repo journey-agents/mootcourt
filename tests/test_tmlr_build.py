@@ -190,3 +190,12 @@ def test_the_real_bibliography_shows_no_identity_once_anonymized_and_the_assembl
     assert not tb.bib_identity_hits(out)
     assert tb.bib_identity_hits((ROOT / "paper" / "references.bib").read_text())          # the named file does carry them
     assert "\\bibliography{" + tb.BIB_NAME.replace(".bib", "") + "}" in tb.assemble(ROOT / "paper")
+
+
+def test_a_pair_of_references_says_appendix_for_the_moved_one_only():
+    lines = ["Sections~\\ref{sec:a} and~\\ref{sec:b} hold it.", "Sections~\\ref{sec:b} and~\\ref{sec:c} too.",
+             "Sections~\\ref{sec:a} and~\\ref{sec:c}."]
+    out = tb.pair_references(lines, {"sec:b", "sec:c"})
+    assert out[0] == "Section~\\ref{sec:a} and Appendix~\\ref{sec:b} hold it."
+    assert out[1] == "Appendices~\\ref{sec:b} and~\\ref{sec:c} too."
+    assert out[2] == "Section~\\ref{sec:a} and Appendix~\\ref{sec:c}."

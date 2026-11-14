@@ -122,7 +122,25 @@ def move_blocks(lines: list[str]) -> list[str]:
     out = body[: at[0] + 1] + flat + body[at[0] + 1:]
     labels = {m for line in flat for m in re.findall(r"\\label\{(sec:[^}]+)\}", line)}
     word = re.compile(r"Section~\\ref\{(" + "|".join(sorted(re.escape(x) for x in labels)) + r")\}") if labels else None
-    return [word.sub(lambda m: "Appendix~\\ref{" + m.group(1) + "}", line) for line in out] if word else out
+    return pair_references([word.sub(lambda m: "Appendix~\\ref{" + m.group(1) + "}", line) for line in out], labels) if word else out
+
+
+_PAIR = re.compile(r"Sections~\\ref\{([^}]+)\} and~\\ref\{([^}]+)\}")
+
+
+def pair_references(lines: list[str], moved: set[str]) -> list[str]:
+    """``Sections~\\ref{a} and~\\ref{b}`` with one or both labels in a moved block: the moved ones are called appendices."""
+    def fix(m: re.Match) -> str:
+        a, b = m.group(1), m.group(2)
+        if a in moved and b in moved:
+            return f"Appendices~\\ref{{{a}}} and~\\ref{{{b}}}"
+        if b in moved:
+            return f"Section~\\ref{{{a}}} and Appendix~\\ref{{{b}}}"
+        if a in moved:
+            return f"Appendix~\\ref{{{a}}} and Section~\\ref{{{b}}}"
+        return m.group(0)
+
+    return [_PAIR.sub(fix, line) for line in lines]
 
 
 def _promote(block: list[str]) -> list[str]:

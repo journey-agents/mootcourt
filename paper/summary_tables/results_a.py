@@ -82,7 +82,7 @@ def direction(r):
         a = agg(rung)
         return [label, v(main, f"{a}.direction_accuracy"), v(main, f"{a}.direction_accuracy_decisive"), ci(main, a, "auc_direction_within") if auc else "none, one forecast"]
 
-    return Table("fmt-direction", "lrrr", [r"rung & accuracy & accuracy, decisive & direction AUC within strata (90\%)"], [
+    return Table("fmt-direction", "lrrr", [r"rung & accuracy & accuracy, decisive & direction AUC within pairs of origin and cell (90\%)"], [
         row("P1", "P1"),
         row("precedent rung (P2)", "P2"),
         row("text classifier", "text_lr"),
@@ -128,8 +128,8 @@ def auc_within(r):
         raise ValueError("the row says P1 gives one forecast per stratum")
     tie = v(extras, "exposure_realized.auc_event_within_ties_exact.fixed.P1")
     return Table("fmt-auc-within", "lrr", [r"rung & all cells (90\%) & headline-only cell (90\%)"], [
-        ["P0 (one forecast per stratum)", v(main, f"{agg('P0')}.{field}"), v(main, f"{agg('P0', 'headline_only')}.{field}")],
-        ["P1 (one forecast per stratum)", tie, tie],
+        ["P0 (one forecast per pair)", v(main, f"{agg('P0')}.{field}"), v(main, f"{agg('P0', 'headline_only')}.{field}")],
+        ["P1 (one forecast per pair)", tie, tie],
         row("precedent rung (P2)", "P2"),
         row("boosted model", "GBM"),
         row("local comparison set", "local_eb"),
