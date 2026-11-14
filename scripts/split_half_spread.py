@@ -35,7 +35,7 @@ def sd_or_none(tau: float, nu: float) -> float | None:
 def build(ledger: pd.DataFrame, report: dict) -> dict:
     """The split-half fit at the report's last origin with the added keys, checked against the report's own values."""
     origin = pd.Timestamp(report["header"]["last_origin"])
-    fit = hs.split_half(ledger, origin)
+    fit = hs.split_half(ledger, origin, spread=True)
     old = {r["cell"]: r for r in report["tables"]["split_half"]}
     same = set(fit) == set(old) and all(
         abs(float(fit[c][k]) - float(old[c][k])) <= TOL for c in fit if c in old for k in ("mu_odd", "mu_even", "tau_odd", "tau_even"))

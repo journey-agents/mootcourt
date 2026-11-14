@@ -117,8 +117,10 @@ def test_split_half_adds_degrees_of_freedom_and_a_standard_deviation_and_keeps_t
     hs, p1 = imp("mootcourt.harness_stats"), imp("mootcourt.predictors.p1")
     ledger = tiny_ledger.copy()
     ledger["test_id"] = [f"t{i // 2}" for i in range(len(ledger))]
-    row = hs.split_half(ledger)["headline_only"]
-    assert {"mu_odd", "mu_even", "tau_odd", "tau_even", "mu_gap", "tau_gap", "n_odd", "n_even"} <= set(row)
+    plain = hs.split_half(ledger)["headline_only"]
+    assert set(plain) == {"mu_odd", "mu_even", "tau_odd", "tau_even", "mu_gap", "tau_gap", "n_odd", "n_even"}       # what every report holds
+    row = hs.split_half(ledger, spread=True)["headline_only"]
+    assert {k: row[k] for k in plain} == plain
     for half in ("odd", "even"):
         nu, sd = row[f"nu_{half}"], row[f"sd_{half}"]
         assert nu > 2 and sd == pytest.approx(p1.sd_equivalent(row[f"tau_{half}"], nu)) and sd >= row[f"tau_{half}"]

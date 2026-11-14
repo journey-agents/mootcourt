@@ -413,12 +413,13 @@ def _sd_of_fit(fit: dict) -> float | None:
     return None if nu <= 2.0 else float(sd_equivalent(float(fit["tau"]), nu))
 
 
-def split_half(ledger: pd.DataFrame, origin=None) -> dict[str, dict[str, float]]:
+def split_half(ledger: pd.DataFrame, origin=None, spread: bool = False) -> dict[str, dict[str, float]]:
     """P1 fit on odd and on even tests; the gap in (mu, tau) per cell at ``origin`` (default every admitted row).
 
     Tests are ordered by id and numbered; odd and even refer to that number. Parameters are the unpooled
-    per-cell fit. A cell missing from either half is skipped. ``nu_*`` is the fitted degrees of freedom of each half and ``sd_*`` the
-    standard deviation that goes with it, which is comparable with a normal standard deviation where ``tau`` (a Student-t scale) is not.
+    per-cell fit. A cell missing from either half is skipped. With ``spread`` each cell also holds ``nu_*``, the fitted degrees of freedom
+    of each half, and ``sd_*``, the standard deviation that goes with it, which is comparable with a normal standard deviation where ``tau``
+    (a Student-t scale) is not. The backtest report calls this without ``spread``, so its table keeps the keys it has always had.
     """
     rows = visible_rows(ledger, origin) if origin is not None else ledger.loc[ledger["status"] == ADMITTED]
     codes = pd.Series(pd.factorize(rows["test_id"], sort=True)[0], index=rows.index)
@@ -438,11 +439,9 @@ def split_half(ledger: pd.DataFrame, origin=None) -> dict[str, dict[str, float]]
             "tau_gap": abs(odd["tau"] - even["tau"]),
             "n_odd": odd["n"],
             "n_even": even["n"],
-            "nu_odd": odd["nu"],
-            "nu_even": even["nu"],
-            "sd_odd": _sd_of_fit(odd),
-            "sd_even": _sd_of_fit(even),
         }
+        if spread:
+            out[cell].update({"nu_odd": odd["nu"], "nu_even": even["nu"], "sd_odd": _sd_of_fit(odd), "sd_even": _sd_of_fit(even)})
     return out
 
 
