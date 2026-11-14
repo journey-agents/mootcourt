@@ -36,6 +36,9 @@ import sys
 from pathlib import Path
 
 OUT_NAME = "tmlr-submission.tex"
+BIB_NAME = "tmlr-references.bib"            # the bibliography the anonymous version reads: no comments, no entry that names the authors
+BIB_IDENTIFYING = ("mootcourt2026plan",)    # entries cited only in the named branch of a conditional
+BIB_FORBIDDEN = ("yingjie", "journey-agents", "mootcourt", "moot court")
 FORBIDDEN = ("yingjie", "journey", "github.com", "zenodo", "5e4fedf", "a7e9f44", "5a68256", "145eaf7", "f4566ca", "e05247e",
              "3971829", "73d0d70", "3cda1ad", "6f5f3dc", "b2e3713", "85f2bb4", "d58cb89", "liyingjie",
              "moot court", "mootcourt", "independent researcher", "seattle")
@@ -166,6 +169,18 @@ def check_anonymous(text: str) -> list[str]:
     return hits
 
 
+def anonymous_bib(bib: str) -> str:
+    """The bibliography without comment lines and without the entries in ``BIB_IDENTIFYING``, so that uploading the sources shows no identity."""
+    entries = re.split(r"(?m)^(?=@)", "\n".join(line for line in bib.split("\n") if not line.lstrip().startswith("%")))
+    kept = [e.strip() for e in entries if e.strip() and not any(re.match(rf"@\w+\{{{re.escape(key)}\s*,", e) for key in BIB_IDENTIFYING)]
+    return "\n\n".join(kept) + "\n"
+
+
+def bib_identity_hits(bib: str) -> list[str]:
+    """Lines of a bibliography that carry a string of ``BIB_FORBIDDEN``."""
+    return [f"line {n}: {line.strip()[:90]!r}" for n, line in enumerate(bib.split("\n"), 1) if any(w in line.lower() for w in BIB_FORBIDDEN)]
+
+
 def single_column_layout(text: str) -> str:
     """Floats placed where they are cited, and tables at their natural size up to the text width.
 
@@ -215,6 +230,8 @@ def assemble(paper: Path) -> str:
     text = "\n".join(lines).replace("\\bibliographystyle{ACM-Reference-Format}", f"\\bibliographystyle{{{style}}}")
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = withhold_name(turn_wide_tables(single_column_layout(text)))
+    if "\\bibliography{references}" in text:
+        text = text.replace("\\bibliography{references}", "\\bibliography{" + BIB_NAME[:-4] + "}")
     hits = check_anonymous(text)
     if hits:
         raise ValueError("the anonymous version would show identity:\n  " + "\n  ".join(hits))
@@ -244,6 +261,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     out = a.paper / OUT_NAME
     out.write_text(text)
+    bib = anonymous_bib((a.paper / "references.bib").read_text())
+    hits = bib_identity_hits(bib)
+    if hits:
+        print("tmlr_build: the anonymous bibliography would show identity:\n  " + "\n  ".join(hits), file=sys.stderr)
+        return 1
+    (a.paper / BIB_NAME).write_text(bib)
     print(f"wrote {out} ({len(text.splitlines())} lines)")
     if a.compile:
         pages, undefined = compile_pdf(a.paper)

@@ -107,3 +107,13 @@ Written 14 November 2026 after run 9 finished and before any paper text that dep
 
 - Finding 2 of the abstract is reworded as above (a small pooled skill, none within a cell and quarter).
 - The horizon table reports 7, 14 and 28 days with the leave-first-origin-out reading at 28 days, labelled as added after the result.
+
+## Addendum: the Brier skill by origin (written 14 November 2026, after a review of the rewritten paper, before the script below has run)
+
+A statistics reviewer of the rewritten paper pointed out that the paper reads the prior's lead on the log score with the quarters as units and reads its Brier skill only with tests resampled, although it says the skill is a level per cell and quarter. The reviewer computed, from the saved scores, the skill by origin and a Student-t interval on the seven origin skills, and found that one stratum of the first origin (image-only, April 2013), where the base rate's probability is exactly zero, carries a large share of the pooled gain.
+
+What was seen before this was written: the reviewer's own figures (P1 on the main event about 0.010 with an interval just above zero with quarters as units; on the planned event an interval that contains zero; P2 about 0.014 with an interval above zero; the pooled skill without the zero-rate stratum about 0.004 with an interval above zero). No report key holds them, so none of them may enter the paper.
+
+What is added: `scripts/by_origin_skill.py`, which reads the saved scores of the main run and writes, for P1 and P2 and for the event at realized and at planned precision: the pooled skill with its interval by test (it must reproduce the report's value); the skill at each origin with an interval that resamples that origin's tests; the pooled skill with each origin left out; a Student-t interval on the origin skills with the origins as units, and that interval with each origin left out; and every stratum of origin and cell in which the base rate's probability is zero, with its rows, its visible rows, its event rate, its share of the pooled Brier gain and the pooled skill without it.
+
+Reading, fixed now: the skill is "shown with the quarters as units" only if the Student-t interval on the seven origin skills lies above zero. The paper prints both intervals side by side for the main event and for the planned event, says which strata have a base rate of zero, and gives the pooled skill without them. The verdict of the second hypothesis, read pooled, is worded with both units. Given what was seen, the expected branch is: shown with quarters as units on the main event, narrowly; not shown on the planned event.

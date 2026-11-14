@@ -174,3 +174,18 @@ def test_a_reference_to_a_moved_section_says_appendix(paper):
     main.write_text(main.read_text().replace("Body text.", "Body text (Section~\\ref{sec:sizing}; Section~\\ref{sec:intro})."))
     text = tb.assemble(paper)
     assert "Appendix~\\ref{sec:sizing}; Section~\\ref{sec:intro}" in text
+
+
+def test_the_anonymous_bibliography_drops_comments_and_identifying_entries():
+    bib = ("% a note naming the Moot Court paper\n@article{a2020x,\n  author = {A. Author},\n  title = {X},\n}\n\n"
+           "% the plan\n@misc{mootcourt2026plan,\n  author = {Someone Named},\n  url = {https://github.com/x/y},\n}\n\n@book{b2021y,\n  title = {Y},\n}\n")
+    out = tb.anonymous_bib(bib)
+    assert "a2020x" in out and "b2021y" in out
+    assert "mootcourt2026plan" not in out and "Someone Named" not in out and "%" not in out
+
+
+def test_the_real_bibliography_shows_no_identity_once_anonymized_and_the_assembled_file_reads_it():
+    out = tb.anonymous_bib((ROOT / "paper" / "references.bib").read_text())
+    assert not tb.bib_identity_hits(out)
+    assert tb.bib_identity_hits((ROOT / "paper" / "references.bib").read_text())          # the named file does carry them
+    assert "\\bibliography{" + tb.BIB_NAME.replace(".bib", "") + "}" in tb.assemble(ROOT / "paper")

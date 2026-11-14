@@ -52,3 +52,4 @@ paper/*.out
 paper/dist/*.tar.gz
 paper/tmlr/tmlr.sty
 paper/tmlr/tmlr.bst
+paper/tmlr-references.bib
