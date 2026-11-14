@@ -142,14 +142,24 @@ def app_syn_truth(r):
     rep = _main(r, "synthetic")
     source = "src/mootcourt/sources/synthetic.py _DEFAULT_CELLS"
 
+    spread_rep = r("split-half-synthetic-*.json")          # the same fit with degrees of freedom and a standard deviation (reviewer runs, Part F)
+    if spread_rep.get("matches_report") is not True:
+        raise ValueError("the split-half refit does not reproduce the synthetic report's means and scales")
+
+    def sd(cell, half):
+        at = f'split_half["{cell}"]'
+        if spread_rep.get(f"{at}.sd_{half}") is None:
+            return derived("none", spread_rep.ref(f"{at}.sd_{half}"), spread_rep.ref(f"{at}.nu_{half}"))
+        return v(spread_rep, f"{at}.sd_{half}", 2)
+
     def row(label, cell):
         key = f"tables.split_half[cell={cell}]"
         mean, spread = _DEFAULT_CELLS[cell]
         return [label, derived(fmt(mean, 1), f"{source} {cell}"), v(rep, f"{key}.mu_odd", 2), v(rep, f"{key}.mu_even", 2),
-                derived(fmt(spread, 1), f"{source} {cell}"), v(rep, f"{key}.tau_odd", 2), v(rep, f"{key}.tau_even", 2),
+                derived(fmt(spread, 1), f"{source} {cell}"), sd(cell, "odd"), sd(cell, "even"),
                 join("{} / {}", n(rep, f"{key}.n_odd"), n(rep, f"{key}.n_even"))]
 
-    header = [r" & \multicolumn{3}{c}{mean} & \multicolumn{3}{c}{spread} & ",
+    header = [r" & \multicolumn{3}{c}{mean} & \multicolumn{3}{c}{standard deviation} & ",
               "\\cmidrule(lr){2-4} \\cmidrule(lr){5-7}\ncell & true & odd & even & true & odd & even & rows, odd / even"]
     return Table("fmt-app-syn-truth", "lrrrrrrr", header,
                  [row("headline only", "headline_only"), row("image only", "image_only"), row("both", "both")])
@@ -239,7 +249,8 @@ def ablations_upworthy_p1(r):
     """P1's log score and scored rows for each setting that changes either; a setting left out that does change one stops the build."""
     named = ("prior-normal", "kappa-0.0", "kappa-5.0", "kappa-80.0", "admission-prelaunch", "contrasts-one", "s-star-realized",
              "exposure-cell-median", "exposure-cell-median+base-density-t", "exposure-cell-median+base-recency-quarter",
-             "exposure-cell-median-visible", "exposure-cell-median-visible+base-density-t", "effect-scale-relative", "effect-scale-relative+s-star-realized")
+             "exposure-cell-median-visible", "exposure-cell-median-visible+base-density-t", "exposure-cell-median-visible+base-recency-quarter",
+             "effect-scale-relative", "effect-scale-relative+s-star-realized")
     main = _main(r, UPWORTHY)
     for path in sorted(glob.glob(os.path.join(r.root, "ablations", "backtest-upworthy-*--*.json"))):
         setting = os.path.basename(path)[:-len(".json")].split("--", 1)[1]

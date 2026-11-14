@@ -111,9 +111,11 @@ def leak_choices(r):
 
 
 def exposure_fixed(r):
-    """X3: exposure fixed at the cell median against the main run."""
+    """X3: exposure fixed at the cell median over visible rows against the main run (the whole-ledger diagnostic stays under ``exposure_fixed``)."""
     rep = r(EXTRAS)
-    top = "exposure_fixed"
+    top = "exposure_fixed_visible"
+    if not rep.get(f"{top}.report").endswith("--exposure-cell-median-visible.json"):
+        raise ValueError("exposure_fixed_visible does not read the run fixed on visible rows")
 
     def row(rung, run, label):
         at = f"{top}.by_cell.ALL.{run}.{rung}"
@@ -447,19 +449,19 @@ def base_density(r):
         return [label, n(main, f"{key}.n"), v(main, f"{key}.logscore", 4), v(heavy, f"{key}.logscore", 4),
                 sci(main, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
                 sci(heavy, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
-                sci(visible, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
-                sci(fixed, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
+                sci(visible, key, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)]
 
-    return Table("fmt-base-density", "lrrrrrrr",
-                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & Student-t base rate, exposure & Student-t base rate, exposure",
-                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%) & fixed on visible rows (90\%) & fixed on the whole ledger (90\%)"],
+    return Table("fmt-base-density", "lrrrrrr",
+                 ["cell & rows & P0 log score, & P0 log score, & P1 minus P0, & P1 minus P0, & Student-t base rate, exposure",
+                  r" & & normal & Student-t & normal base rate (90\%) & Student-t base rate (90\%) & fixed on visible rows (90\%)"],
                  [row("all cells", "ALL"), row("headline-only", "headline_only"), row("image-only", "image_only"), row("smallest", "both")])
 
 
 def base_recency(r):
     """P1's Brier skill against a base rate with a period term (three ablations; the plan fixed the readings before the runs)."""
-    main, fixed = r(MAIN), r("ablations/backtest-upworthy-*--exposure-cell-median.json")
-    quarter, quarter_fixed = r("ablations/backtest-upworthy-*--base-recency-quarter.json"), r("ablations/backtest-upworthy-*--exposure-cell-median+base-recency-quarter.json")
+    main, fixed = r(MAIN), r("ablations/backtest-upworthy-*--exposure-cell-median-visible.json")
+    quarter = r("ablations/backtest-upworthy-*--base-recency-quarter.json")
+    quarter_fixed = r("ablations/backtest-upworthy-*--exposure-cell-median-visible+base-recency-quarter.json")
     own = r("ablations/backtest-upworthy-*--base-recency-cell-quarter.json")
     for rep, ref in ((quarter, main), (own, main), (quarter_fixed, fixed)):       # the setting moves P0's probability only
         for rung in ("P0", "P1", "P2"):

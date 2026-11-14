@@ -92,6 +92,10 @@ def direction(r):
 
 def challengers(r):
     main = r(MAIN)
+    ladder = r("ablations/backtest-upworthy-*--recalibrate-ladder-on.json")       # the ladder's rungs through the same map (reviewer runs, Part C)
+    for rung in ("P1", "P2"):          # the option adds rungs and must leave the raw ones as the main run has them
+        if abs(ladder.get(f"{agg(rung)}.brier_skill") - main.get(f"{agg(rung)}.brier_skill")) > 1e-12:
+            raise ValueError(f"the raw Brier skill of {rung} differs between the main run and the run that recalibrates the ladder")
 
     def interval(rung):
         return [ci(main, agg(rung), "brier_skill", 4), lohi(main, f"{agg(rung)}.adjusted_lo", f"{agg(rung)}.adjusted_hi", 4)]
@@ -99,14 +103,17 @@ def challengers(r):
     def row(label, rung):
         return [label, *interval(rung), *interval(f"{rung}+cal")]
 
+    def ladder_row(label, rung, raw=True):
+        return [label, *(interval(rung) if raw else ["", ""]), ci(ladder, agg(f"{rung}+cal"), "brier_skill", 4), "not adjusted"]
+
     return Table("fmt-challengers", "lrrrr", [r"rung & raw (90\%) & raw, adjusted & recalibrated (90\%) & recalibrated, adjusted"], [
-        [r"P1", *interval("P1"), "", ""],
-        ["precedent rung (P2)", *interval("P2"), "", ""],
+        ladder_row("base rate (P0)", "P0", raw=False),
+        ladder_row(r"P1", "P1"),
+        ladder_row("precedent rung (P2)", "P2"),
         row("boosted model", "GBM"),
         row("local comparison set", "local_eb"),
         row("text classifier", "text_lr"),
     ])
-
 
 def auc_within(r):
     main = r(MAIN)
