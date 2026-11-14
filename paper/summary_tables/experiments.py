@@ -296,8 +296,9 @@ def abstention_composition(r):
         [r"abstained, Brier skill (90\%)", *skill("abstained")],
         Raw(r"\midrule"),
         ["issued minus abstained, pooled", *both(lambda g: v(rep, f"{top}.{g}.pooled_issued_minus_abstained_skill", 4))],
-        # the difference within pairs of origin and cell is not printed: a rung that gives both groups of a pair one probability cannot be
-        # compared there, so that difference reads event rates and not forecasts (review of 14 November 2026)
+        # printed as measured and not read as a verdict: a rung that gives both groups of a pair one probability cannot be compared there, so the
+        # difference reads event rates and not forecasts (reviews of 14 November 2026)
+        [r"issued minus abstained, within pairs of origin and cell (90\%)", *both(lambda g: sci(rep, f"{top}.{g}.{strat}", "estimate"))],
         ["pairs of origin and cell holding both groups", *both(lambda g: join("{} of {}", n(rep, f"{top}.{g}.{strat}.strata_with_both_groups"), n(rep, f"{top}.{g}.{strat}.strata_total")))],
         Raw(r"\midrule"),
         ["abstention rate, all cells, of rows", *both(pooled_rate)],

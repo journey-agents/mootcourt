@@ -84,7 +84,7 @@ def app_asos(r):
         rule,
         heading("The guard on P2"),
         ["pairs at $\\lambda = 0$, guard on", _pairs(guard_a, "guarded", False), _pairs(guard_u, "guarded", False)],
-        ["pairs admitted, guard off", _pairs(guard_a, "unguarded", True), _pairs(guard_u, "unguarded", True)],
+        ["pairs given a weight, guard off", _pairs(guard_a, "unguarded", True), _pairs(guard_u, "unguarded", True)],
         ["P2 minus P1 log score, guard off", ci(off_a, _rung("P2"), "logscore_vs_p1", 5), ci(off_u, _rung("P2"), "logscore_vs_p1", 5)],
         rule,
         heading("The boosted model and the local comparison set"),
@@ -171,7 +171,7 @@ def app_pc_point(r):
     def recovered(cell):
         return v(rep, f"{SENSITIVITY}.by_cell[cell={cell}].recovered_fraction", 2)
 
-    return Table("fmt-app-pc-point", "lrrr", [" & P1 & P2 & oracle"], [
+    return Table("fmt-app-pc-point", "lrrr", [" & P1 & P2 & told forecaster"], [
         ["Brier skill", v(rep, f"{SENSITIVITY}.brier_skill_p1"), v(rep, f"{SENSITIVITY}.brier_skill_p2"), v(rep, f"{SENSITIVITY}.brier_skill_oracle")],
         Raw(r"\midrule"),
         Raw(r" & headline only & both & image only \\"),
@@ -199,7 +199,7 @@ def app_pc_sizes(r):
 
     return Table("fmt-app-pc-sizes", "lrr", [" & 2,000 tests & 11,100 tests"], [
         ["scored rows per cell, mean over cells", *[n(rep, f"{run(s)}.rows_per_cell_scored") for s in sizes]],
-        ["pairs admitted", *[pairs(s) for s in sizes]],
+        ["pairs given a weight", *[pairs(s) for s in sizes]],
         ["event AUC, text classifier", *[auc(s, "text_lr") for s in sizes]],
         ["event AUC, P1", *[auc(s, "P1") for s in sizes]],
     ])

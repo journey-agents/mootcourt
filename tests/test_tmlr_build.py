@@ -178,7 +178,8 @@ def test_a_reference_to_a_moved_section_says_appendix(paper):
 
 def test_the_anonymous_bibliography_drops_comments_and_identifying_entries():
     bib = ("% a note naming the Moot Court paper\n@article{a2020x,\n  author = {A. Author},\n  title = {X},\n}\n\n"
-           "% the plan\n@misc{mootcourt2026plan,\n  author = {Someone Named},\n  url = {https://github.com/x/y},\n}\n\n@book{b2021y,\n  title = {Y},\n}\n")
+           "% the plan\n@misc{mootcourt2026plan,\n  author = {Someone Named},\n  url = {https://github.com/x/y},\n}\n\n"
+           "@book{b2021y,\n  title = {Y},\n}\n")
     out = tb.anonymous_bib(bib)
     assert "a2020x" in out and "b2021y" in out
     assert "mootcourt2026plan" not in out and "Someone Named" not in out and "%" not in out

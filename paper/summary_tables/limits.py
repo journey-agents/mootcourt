@@ -151,7 +151,8 @@ def _h4_part2(extras, skill):
     if extras.get(f"{composition}.abstained.lo") > extras.get(f"{composition}.issued.skill") or extras.get(f"{composition}.abstained.hi") < extras.get(f"{composition}.issued.skill"):
         raise ValueError("the row says the two groups do not differ measurably without burn-in")
     return join("abstained rows, scored on the withheld forecast: with the burn-in origin, above the full set at {}, {}; without it, {}, {}, against {}, {} for issued rows,"
-                " no measurable difference; within a cell and origin the prior gives both groups the same probability, so no comparison there reads the forecasts",
+                " no measurable difference; within a pair of origin and cell the prior gives both groups the same probability, so a difference there reads"
+                " event rates and not forecasts",
                 w(extras, f"{skill}.abstained.brier_skill"), span(extras, f"{skill}.abstained.brier_skill_lo", f"{skill}.abstained.brier_skill_hi"),
                 w(extras, f"{composition}.abstained.skill", 4), span(extras, f"{composition}.abstained.lo", f"{composition}.abstained.hi", 4),
                 w(extras, f"{composition}.issued.skill", 4), span(extras, f"{composition}.issued.lo", f"{composition}.issued.hi", 4))
@@ -169,12 +170,13 @@ def _h2_gate(up, extras):
 
 
 def _h4_part2_verdict(extras):
-    """The verdict of H4 part 2: failed with the burn-in origin; without it the pooled difference is on the claim's side and has no interval."""
+    """The verdict of H4 part 2: failed with the burn-in origin; without it the pooled estimate and the estimate within pairs lie on opposite sides."""
     pooled = "abstention_composition.P2.pooled_issued_minus_abstained_skill"
-    if extras.get(pooled) <= 0:
-        raise ValueError("the verdict says the pooled difference is on the claim's side without burn-in")
-    return derived("failed on all rows; with burn-in excluded, on the claim's side pooled, given as measured with no interval",
-                   extras.ref(pooled))
+    within = "abstention_composition.P2.stratified_issued_minus_abstained_skill.estimate"
+    if extras.get(pooled) <= 0 or extras.get(within) >= 0:
+        raise ValueError("the verdict says the pooled estimate is on the claim's side and the estimate within pairs on the other")
+    return derived("failed on all rows; with burn-in excluded, the pooled estimate is on the claim's side and the estimate within pairs of origin"
+                   " and cell on the other, and neither reads the forecasts", extras.ref(pooled), extras.ref(within))
 
 
 def _not_shown_word(up, rung):
@@ -189,9 +191,15 @@ def _not_shown_word(up, rung):
 
 
 def verdicts(r):
-    up, _asos, extras, curve, syn = r(UPWORTHY), r(ASOS), r(EXTRAS), r(CURVE), r(SYNTHETIC)
+    up, _asos, extras, curve = r(UPWORTHY), r(ASOS), r(EXTRAS), r(CURVE)
     first = r(FIRST)
     skill_origin = r("by-origin-skill-upworthy-*.json")
+    burn = [o["origin"] for o in up.get("tables.origins") if o["burn_in"]]
+    if len(burn) != 1:
+        raise ValueError("the rows name one burn-in origin")
+    burn_in = burn[0]
+    if skill_origin.get(f"rungs.P2.realized.leave_one_origin_out[left_out={burn_in}].skill") >= extras.get("issued_row_brier_skill.rungs.P2.issued.brier_skill"):
+        raise ValueError("the row says issued rows are above the full set once burn-in is left out")
     if skill_origin.get("rungs.P2.realized.origin_level.lo") <= 0 or skill_origin.get("rungs.P2.realized.without_zero_base_rate_strata.lo") <= 0:
         raise ValueError("the row says the skill of P2 is clear of zero with the quarters as units and without the stratum whose base rate is zero")
     if not first.get(f"{_cell('P2', 'ALL')}.brier_skill_lo") < 0 < first.get(f"{_cell('P2', 'ALL')}.brier_skill_hi"):
@@ -227,7 +235,7 @@ def verdicts(r):
              _h1_part1(*(r(name) for name in BY_ORIGIN)), "held in the first specification; with exposure fixed, not shown against the normal base rate and failed in the main run"),
         _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, r("positive-control-seeds.json")), "failed: the estimate is on the wrong side, and its interval contains zero"),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
-             join("{} nats, {}: the guard admitted no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
+             join("{} nats, {}: the guard gave no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
                   span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
         Raw(r"\midrule"),
         _group("H2, in part: the gate claim failed; read pooled, a skill of about one percent in the main run and none shown in the first specification"),
@@ -240,14 +248,14 @@ def verdicts(r):
                   w(skill_origin, "rungs.P2.realized.without_zero_base_rate_strata.skill", 4),
                   span(skill_origin, "rungs.P2.realized.without_zero_base_rate_strata.lo", "rungs.P2.realized.without_zero_base_rate_strata.hi", 4),
                   w(first, f"{p2_all}.brier_skill", 4), span(first, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
-             "held in the main run, with either unit of resampling, at about one percent of the base rate's score; not shown in the first specification"),
+             "held in the main run, with tests resampled and with the seven quarters as the units, at about one percent of the base rate's score; not shown in the first specification"),
         _row("H2, as written", "the same at the final origin", _h2_as_written(up, curve, extras),
              join("above zero at {}, with that caution, not counted as holding; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
         _row("H2, the gate", "the released gate decidable at the final origin", _h2_gate(up, extras), "failed"),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H3, in part} (see~\ref{sec:calibration-results})} \\"),
         _row("H3 part 1", "ECE of issued cards inside the central 90 percent of the null at most origins",
-             join("inside at {} of the {} origins that issue cards, not at most of them; pooled over issued rows the percentile is {}, which is"
+             join("inside the central 90 percent (a two-sided count) at {} of the {} origins that issue cards, not at most of them; pooled over issued rows the percentile is {}, which is"
                   " within simulation error of the line at 95 and is not read",
                   n(extras, f"{issued}.origins_inside_central_90"), n(extras, f"{issued}.origins"), v(extras, pooled_percentile, 1)),
              "failed, on the count of origins"),
@@ -261,9 +269,11 @@ def verdicts(r):
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H4, in part} (see~\ref{sec:abstention-results})} \\"),
         _row("H4 part 1", "issued cards above the full set on skill",
-             join("issued rows {}, {}, against {} for the full set", w(extras, f"{skill}.issued.brier_skill", 4),
-                  span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi", 4), w(extras, f"{skill}.all.brier_skill", 4)),
-             "failed"),
+             join("issued rows {}, {}, against {} for the full set; without the burn-in origin, on which every card abstains, the full set is at {}",
+                  w(extras, f"{skill}.issued.brier_skill", 4),
+                  span(extras, f"{skill}.issued.brier_skill_lo", f"{skill}.issued.brier_skill_hi", 4), w(extras, f"{skill}.all.brier_skill", 4),
+                  w(skill_origin, f"rungs.P2.realized.leave_one_origin_out[left_out={burn_in}].skill", 4)),
+             "failed on all rows; with burn-in excluded, on the claim's side, given as measured with no interval"),
         _row("H4 part 2", "abstained rows lower on skill when forced", _h4_part2(extras, skill), _h4_part2_verdict(extras)),
         _row("H4 part 3", "abstention below 30 percent after burn-in",
              join("{} percent pooled and {} percent after the burn-in origin, January 2014 included", pct(up, "tables.abstention[cell=ALL].rate"), _h4_after_burn_in(up)),

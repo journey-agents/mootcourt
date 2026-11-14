@@ -15,10 +15,10 @@ Yingjie Li (Independent researcher)
 Problem. Before a launch, a team wants to know what its experiment will show. Industrial screening systems are evaluated on private data; public work scores winner predictors. We found no public evaluation that scores a forecast distribution and a probability of a significant result against concluded tests under a fixed rule for what a forecast may see.
 Method. We replay one public archive: 2,949 headline and image tests of a publisher (Upworthy), scored over seven quarters, with models fitted on earlier tests only. The archive records realized, not planned, traffic, so each forecast gets the median traffic of earlier tests of its kind. All results are exploratory: we read one split many times and changed the main specification after seeing results; the first specification is reported beside it.
 Findings.
-- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats on the log score; with the seven quarters as units of resampling the lead is not shown.
-- The prior's skill on which test will be significant is small (0.007 of the base rate's error), and within a kind of test and quarter every test gets the same probability: a better level, not a ranking.
-- The probabilities fail a calibration test: the level per kind of test and quarter is off, on average too high.
-- None of the models we ran, all simple stand-ins, is shown to rank tests better than counting a test's arms.
+- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats on the log score; with the seven quarters, not the tests, as units the lead is not shown.
+- The prior's skill on which test will be significant is small and fragile; within a kind of test and quarter every test gets the same probability: a better level, not a ranking.
+- In the main run the probabilities fail a calibration test: the level per kind of test and quarter is off, in both directions.
+- None of the models we ran, all simple stand-ins, is shown to rank tests better than counting a test's arms, on a target that grows with arm count.
 - Weighting similar past tests does not beat the prior; it recovers under a tenth of the gain open to a model told a planted signal, so the tie does not rule out a signal of that size.
 Release. Protocol and Moot Court (MIT), which regenerates every table from its reports. The archive's confirmatory split is unopened.
 
@@ -37,7 +37,7 @@ Release. Protocol and Moot Court (MIT), which regenerates every table from its r
 
 ## Comments line
 
-63 pages including the appendix, 6 figures, 95 tables. Code, the data pipeline and the run folders behind every table:
+66 pages including the appendix, 6 figures, 97 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 

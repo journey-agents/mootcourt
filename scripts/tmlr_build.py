@@ -40,7 +40,7 @@ BIB_NAME = "tmlr-references.bib"            # the bibliography the anonymous ver
 BIB_IDENTIFYING = ("mootcourt2026plan",)    # entries cited only in the named branch of a conditional
 BIB_FORBIDDEN = ("yingjie", "journey-agents", "mootcourt", "moot court")
 FORBIDDEN = ("yingjie", "journey", "github.com", "zenodo", "5e4fedf", "a7e9f44", "5a68256", "145eaf7", "f4566ca", "e05247e",
-             "3971829", "73d0d70", "3cda1ad", "6f5f3dc", "b2e3713", "85f2bb4", "d58cb89", "e903ef9", "liyingjie",
+             "3971829", "73d0d70", "3cda1ad", "6f5f3dc", "b2e3713", "85f2bb4", "d58cb89", "e903ef9", "4bccc5d", "liyingjie",
              "moot court", "mootcourt", "independent researcher", "seattle")
 _INPUT = re.compile(r"^\\input\{sections/([A-Za-z0-9_-]+)\}\s*$")
 _BEGIN = re.compile(r"^%% tmlr:move-begin (\S+)\s*$")

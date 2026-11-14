@@ -161,7 +161,9 @@ pool sizing-upworthy bash -c "if [ '${SKIP_SIZING:-0}' = 1 ]; then echo skipped;
 pool extras-synthetic $PY scripts/paper_extras.py --source synthetic --verbose --jobs 4 --positive-control-runs "$PC/rungs/n2000,$PC11"
 wait
 for src in upworthy asos synthetic; do
-  for f in "$ROOT"/scores-$src-*.parquet; do step "audit-$src" $PY scripts/leakage_audit.py --ledger "$LEDGER" --scores "$f" --out "$ROOT/leakage-audit-$src.txt" --json-out "$ROOT/leakage-audit-$src.json" $([ "$src" = upworthy ] && echo "--exposure cell-median-visible"); done
+  # the main Upworthy run fixes exposure on visible rows, and the audit recomputes that exposure itself when told so
+  AUDIT_EXPOSURE=stored; [ "$src" = upworthy ] && AUDIT_EXPOSURE=cell-median-visible
+  for f in "$ROOT"/scores-$src-*.parquet; do step "audit-$src" $PY scripts/leakage_audit.py --ledger "$LEDGER" --scores "$f" --out "$ROOT/leakage-audit-$src.txt" --json-out "$ROOT/leakage-audit-$src.json" --exposure "$AUDIT_EXPOSURE"; done
 done
 step latency $PY scripts/card_latency.py --source upworthy --json-out "$ROOT/card-latency.json"
 step refresh-check $PY scripts/refresh_discrimination.py "$ROOT" --check

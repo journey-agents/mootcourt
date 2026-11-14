@@ -61,8 +61,8 @@ def control_seeds(r):
     if count != rep.get("inside_real_interval"):
         raise ValueError("the count of seeds inside the real interval differs from the rows")
     return Table("fmt-control-seeds", "lrrrrrrl",
-                 ["ledger & oracle minus P1 & P2 minus P1 & share recovered, & share recovered, & P2 minus P1, & pairs & inside the real",
-                  " & (nats) & (nats) & pooled & headline-only & headline-only (nats) & admitted & interval"],
+                 ["ledger & told forecaster minus P1 & P2 minus P1 & share recovered, & share recovered, & P2 minus P1, & pairs & inside the real",
+                  " & (nats) & (nats) & pooled & headline-only & headline-only (nats) & given a weight & interval"],
                  [*(seed_row(s) for s in seeds), Raw(r"\midrule"), stat_row("median", "median"), stat_row("smallest", "min"),
                   stat_row("largest", "max")])
 
@@ -133,10 +133,12 @@ def skill_by_origin(r):
         raise ValueError("the table prints one stratum with a base rate of zero, on the main event only")
     without = ["pooled without the pair of origin and cell whose base rate is zero", cell("P1", "realized", "without_zero_base_rate_strata"), "none such",
                cell("P2", "realized", "without_zero_base_rate_strata")]
+    units = ["the same pair left out, the seven origins as units", cell("P1", "realized", "origin_level_without_zero_base_rate_strata"), "none such",
+             cell("P2", "realized", "origin_level_without_zero_base_rate_strata")]
     return Table("fmt-skill-by-origin", "lrrr",
                  ["origin & P1, event at & P1, event at & P2, event at", r" & realized precision (90\%) & planned precision (90\%) & realized precision (90\%)"],
                  [*(row(month_year(o), f"by_origin[origin={o}]") for o in origins), Raw(r"\midrule"),
-                  row("all origins, pooled, tests resampled", "pooled"), row("all origins as seven units (Student-t interval)", "origin_level"), without])
+                  row("all origins, pooled, tests resampled", "pooled"), row("all origins as seven units (Student-t interval)", "origin_level"), without, units])
 
 
 TABLES = [calibration_size, control_seeds, learning_origins, horizon, skill_by_origin]

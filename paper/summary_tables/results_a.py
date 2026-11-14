@@ -151,7 +151,7 @@ def guard(r):
         return derived("none" if float(count) == 0 else count, main.ref(f"{key}.share_lambda_zero"), main.ref(f"{key}.origins"))
 
     return Table("fmt-guard", "lrrr", [r" & P1 & P2, guarded & P2, unguarded"], [
-        [join("pairs admitted, of {}", n(extras, f"{summary}.pairs_in_selection")), "", n(extras, f"{summary}.pairs_admitted"), unguarded],
+        [join("pairs given a weight, of {}", n(extras, f"{summary}.pairs_in_selection")), "", n(extras, f"{summary}.pairs_admitted"), unguarded],
         ["headline-only, image-only, smallest", "", join("{}, {}, {}", by_cell("headline_only"), by_cell("image_only"), by_cell("both")), ""],
         ["log score", v(main, f"{p1}.logscore"), v(main, f"{p2}.logscore"), v(abl, "unguarded.logscore")],
         [r"Brier skill (90\%)", ci(main, p1, "brier_skill", 4), ci(main, p2, "brier_skill", 4), ci(abl, "unguarded", "brier_skill", 4)],
@@ -178,7 +178,7 @@ def p2_vs_p1(r):
 
     within = derived(f"within {fmt(max(move(o) for o in others), 3)} of zero", *[main.ref(origin_score(o, rung)) for o in others for rung in ("P1", "P2")])
     pooled = "guard_pairs_rows.pooled"
-    return Table("fmt-p2-vs-p1", "lrr", ["difference & all rows & admitted pairs' rows"], [
+    return Table("fmt-p2-vs-p1", "lrr", ["difference & all rows & rows of the pairs given a weight"], [
         ["P2 minus P1, pooled", ci(main, agg("P2"), "logscore_vs_p1", 4),
          ci(extras, "guard_pairs.summary", "pooled_realized_p2_minus_p1", 4, lo="pooled_lo", hi="pooled_hi")],
         ["P2 minus P1, headline-only", ci(main, agg("P2", "headline_only"), "logscore_vs_p1", 4), ""],

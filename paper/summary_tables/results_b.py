@@ -183,13 +183,13 @@ def control(r):
     planted = "tables.p2_selection_by_cell[cell=headline_only].share_lambda_zero"
     if whole.get(planted) != 1.0:
         raise ValueError("the guard admits a weight in the planted cell at 2,000 tests: the sentence reading the table no longer holds")
-    return Table("fmt-control", "rrrrr", [r"tests & rows per cell & guard admits & P2's share of the oracle's gain & headline-only cell"], [
-        Raw(r"\multicolumn{5}{@{}l}{\emph{End-of-ledger split: 15 percent of tests held out, 12 seeds; ledger rows per cell; share of cells admitted by the fit that leaves those tests out; 90\% intervals}} \\"),
+    return Table("fmt-control", "rrrrr", [r"tests & rows per cell & guard gives a weight & P2's share of the told forecaster's gain & headline-only cell"], [
+        Raw(r"\multicolumn{5}{@{}l}{\emph{End-of-ledger split: 15 percent of tests held out, 12 seeds; ledger rows per cell; share of cells given a weight by the fit that leaves those tests out; 90\% intervals}} \\"),
         split_row(300),
         split_row(1000),
         split_row(11100),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{5}{@{}l}{\emph{Rolling backtest, the design the real archive gets: scored rows per cell, mean over cells; share of cell-origin pairs admitted}} \\"),
+        Raw(r"\multicolumn{5}{@{}l}{\emph{Rolling backtest, the design the real archive gets: scored rows per cell, mean over cells; share of pairs of origin and cell given a weight}} \\"),
         rolling_row(2000),
         rolling_row(11100),
     ])
