@@ -110,5 +110,14 @@ step pc-seeds $PY scripts/positive_control_seeds.py --runs "${RUNS[@]}" \
 CURVES=("$ROOT/learning-curve-upworthy-$SID_UP.json")
 for o in $LC_ORIGINS; do CURVES+=("$ROOT/learning-curve-upworthy-$SID_UP--origin-$o.json"); done
 step lc-origins $PY scripts/learning_curve_origins.py --curves "${CURVES[@]}" --out "$ROOT/learning-curve-origins-upworthy-$SID_UP.json"
+# The curves by origin and their summary move to a folder of their own (added after the run of 14 November 2026, a move of files only): at
+# the top of the reports they match the pattern learning-curve-<source>-*.json, which other readers expect to name one curve.
+if [ "${MODE:-run}" != dry ]; then
+  mkdir -p "$ROOT/learning-curve-origins"
+  for f in "$ROOT"/learning-curve-upworthy-"$SID_UP"--origin-*.json "$ROOT"/learning-curve-upworthy-"$SID_UP"--origin-*.md \
+           "$ROOT/learning-curve-origins-upworthy-$SID_UP.json"; do
+    if [ -f "$f" ]; then mv "$f" "$ROOT/learning-curve-origins/"; fi
+  done
+fi
 [ "$MODE" = run ] && [ -z "$ONLY" ] && echo "reviewer-runs-done" >> "$STAGES"
 exit 0

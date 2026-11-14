@@ -594,3 +594,17 @@ def test_exposure_fixed_refuses_an_unknown_variant(tmp_path):
     _two_fixings(tmp_path)
     with pytest.raises(ValueError):
         ex.exposure_fixed(tmp_path, "upworthy", "S", variant="exposure-other")
+
+
+def test_the_curves_by_origin_and_the_control_seeds_keep_their_folders_in_a_run_folder(tmp_path):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location("assemble_v3", Path(__file__).resolve().parents[1] / "scripts" / "assemble_run_folder.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    rep = tmp_path / "reports"
+    curve = rep / "learning-curve-origins" / "learning-curve-upworthy-S--origin-2014-01-01.json"
+    seed = rep / "positive-control" / "seeds" / "seed-8" / "backtest-synthetic-T.json"
+    assert mod._relative_name(curve) == "learning-curve-origins/learning-curve-upworthy-S--origin-2014-01-01.json"
+    assert mod._relative_name(seed) == "positive-control/seeds/seed-8/backtest-synthetic-T.json"

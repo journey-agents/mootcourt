@@ -32,6 +32,9 @@ from pathlib import Path
 TOP = ("backtest-*.json", "learning-curve-*.json", "replay-*.json", "paper-extras-*.json", "gates-by-stratum-*.json")
 # the ablation run that includes the randomization window (paper v2 plan, X1); its report sits in this folder
 WINDOW_DIR = "include-randomization-window"
+# the learning curve at each scored origin and its summary (reviewer runs of 13 November 2026); a folder of their own, so that no reader
+# of ``learning-curve-<source>-*.json`` at the top of a run folder finds more than the one curve it expects
+ORIGINS_DIR = "learning-curve-origins"
 TOP_FILES = (
     "card-latency.json",
     "gates.json",
@@ -112,6 +115,10 @@ def _relative_name(path: Path) -> str:
         return f"positive-control/{path.name}"
     if parent.parent.name == "rungs":
         return f"positive-control/rungs/{parent.name}/{path.name}"
+    if parent.parent.name == "seeds":
+        return f"positive-control/seeds/{parent.name}/{path.name}"
+    if parent.name == ORIGINS_DIR:
+        return f"{ORIGINS_DIR}/{path.name}"
     return path.name
 
 

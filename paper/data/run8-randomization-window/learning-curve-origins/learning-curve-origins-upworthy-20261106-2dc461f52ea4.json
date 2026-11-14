@@ -1,0 +1,203 @@
+{
+ "rung": "P1",
+ "origins": 7,
+ "worse_at_quarter": 7,
+ "worse_at_half": 5,
+ "not_fitted": 0,
+ "rows": [
+  {
+   "origin": "2013-04-01",
+   "heldout_rows": 679,
+   "heldout_tests": 245,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.06609404294185398,
+    "log_lo": -0.08831992482709133,
+    "log_hi": -0.04605330944490392,
+    "brier_diff": -0.0016366865163831602,
+    "brier_lo": -0.0021379329808579824,
+    "brier_hi": -0.0010258687678229973,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": -0.015492120168443086,
+    "log_lo": -0.025126370493662453,
+    "log_hi": -0.0065456219564026035,
+    "brier_diff": -0.0008907923538415951,
+    "brier_lo": -0.0011782276521321397,
+    "brier_hi": -0.0006062449983282649,
+    "n_seeds": 20
+   }
+  },
+  {
+   "origin": "2014-01-01",
+   "heldout_rows": 1236,
+   "heldout_tests": 362,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.07260574104349624,
+    "log_lo": -0.09155252152138996,
+    "log_hi": -0.05331506286127335,
+    "brier_diff": -0.0008342852928643178,
+    "brier_lo": -0.0011940946542334273,
+    "brier_hi": -0.00047541097364060266,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": -0.012440829566982238,
+    "log_lo": -0.015469762151400107,
+    "log_hi": -0.009775102744523728,
+    "brier_diff": -0.00038012984748402907,
+    "brier_lo": -0.0005187809970129686,
+    "brier_hi": -0.00024471380742919395,
+    "n_seeds": 20
+   }
+  },
+  {
+   "origin": "2014-04-01",
+   "heldout_rows": 1907,
+   "heldout_tests": 515,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.012354154567559329,
+    "log_lo": -0.01558602735890108,
+    "log_hi": -0.009070364212776783,
+    "brier_diff": -0.0004455187123163209,
+    "brier_lo": -0.0005708534626044842,
+    "brier_hi": -0.00032840751799238105,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": -0.0045195702806088795,
+    "log_lo": -0.005447478357043787,
+    "log_hi": -0.003596954902225325,
+    "brier_diff": -0.00027934211108310834,
+    "brier_lo": -0.00035667400138214675,
+    "brier_hi": -0.00020153756593637681,
+    "n_seeds": 20
+   }
+  },
+  {
+   "origin": "2014-07-01",
+   "heldout_rows": 2822,
+   "heldout_tests": 738,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.004368286587635524,
+    "log_lo": -0.005983138083161461,
+    "log_hi": -0.0027769983609087666,
+    "brier_diff": -0.00020793442661195925,
+    "brier_lo": -0.00024460385267520613,
+    "brier_hi": -0.00017348896418002875,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": 8.448977580441412e-05,
+    "log_lo": -0.0008257695388370869,
+    "log_hi": 0.0009594699979582599,
+    "brier_diff": 6.244515665939566e-05,
+    "brier_lo": 1.979500589716685e-05,
+    "brier_hi": 0.00010242685947998872,
+    "n_seeds": 20
+   }
+  },
+  {
+   "origin": "2014-10-01",
+   "heldout_rows": 2640,
+   "heldout_tests": 689,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.003477947640660095,
+    "log_lo": -0.005052049763501991,
+    "log_hi": -0.0018148321532158668,
+    "brier_diff": -6.906646610424497e-05,
+    "brier_lo": -0.00011062090276637649,
+    "brier_hi": -2.8666426413991193e-05,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": -0.0010563333434412678,
+    "log_lo": -0.001829509984678611,
+    "log_hi": -0.0002364201788218388,
+    "brier_diff": -2.787454144437391e-05,
+    "brier_lo": -6.306308515369254e-05,
+    "brier_hi": 8.46058292636729e-06,
+    "n_seeds": 20
+   }
+  },
+  {
+   "origin": "2015-01-01",
+   "heldout_rows": 1143,
+   "heldout_tests": 318,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.005063299525640269,
+    "log_lo": -0.007497023467988008,
+    "log_hi": -0.0026752236876795435,
+    "brier_diff": -1.3043515216114164e-05,
+    "brier_lo": -6.912452905421974e-05,
+    "brier_hi": 5.276169407127243e-05,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": -0.001327999216196692,
+    "log_lo": -0.0025155814607821223,
+    "log_hi": -0.0003359731286166302,
+    "brier_diff": -7.569819088143773e-06,
+    "brier_lo": -4.964343123586268e-05,
+    "brier_hi": 4.459031188396081e-05,
+    "n_seeds": 20
+   }
+  },
+  {
+   "origin": "2015-04-01",
+   "heldout_rows": 270,
+   "heldout_tests": 83,
+   "seeds": 20,
+   "quarter": {
+    "fitted": true,
+    "log_diff": -0.005403854094768715,
+    "log_lo": -0.007855746101692651,
+    "log_hi": -0.0026384785907383524,
+    "brier_diff": 8.366327646301369e-06,
+    "brier_lo": -6.767746021519364e-05,
+    "brier_hi": 8.286316690278879e-05,
+    "n_seeds": 20
+   },
+   "half": {
+    "fitted": true,
+    "log_diff": -0.0012261590385239053,
+    "log_lo": -0.0025595559517048983,
+    "log_hi": 0.00010834991424483224,
+    "brier_diff": -9.164924056772979e-05,
+    "brier_lo": -0.00016327557705738405,
+    "brier_hi": -1.5159827989510778e-05,
+    "n_seeds": 20
+   }
+  }
+ ],
+ "definition": "log_diff: the log score of the rung fitted on the fraction of the history minus the same rung fitted on all of it, on the same held-out rows (below zero: the smaller history is worse); worse_at_*: origins whose interval of log_diff lies below zero",
+ "inputs": {
+  "curves": [
+   "learning-curve-upworthy-20261106-2dc461f52ea4.json",
+   "learning-curve-upworthy-20261106-2dc461f52ea4--origin-2013-04-01.json",
+   "learning-curve-upworthy-20261106-2dc461f52ea4--origin-2014-01-01.json",
+   "learning-curve-upworthy-20261106-2dc461f52ea4--origin-2014-04-01.json",
+   "learning-curve-upworthy-20261106-2dc461f52ea4--origin-2014-07-01.json",
+   "learning-curve-upworthy-20261106-2dc461f52ea4--origin-2014-10-01.json",
+   "learning-curve-upworthy-20261106-2dc461f52ea4--origin-2015-04-01.json"
+  ]
+ }
+}
