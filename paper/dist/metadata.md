@@ -15,8 +15,8 @@ Yingjie Li (Independent researcher)
 Problem. Before a launch, a team wants to know what result to expect. Industrial screening systems are evaluated on private data; public work scores winner predictors. We found no public evaluation that scores forecast distributions from past experiments and says when the record is too small to judge.
 Method. We replay forecasts on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out dates flagged for randomization problems, and 68 scored experiments from a retailer (ASOS; no dates). We fit on earlier tests only. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
 Findings.
-- For the publisher, a heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior's gain over it is 0.020 nats; its interval is above zero with the seven quarters held fixed and contains zero with quarters as units: the lead is not shown. Against a normal-density base rate, as first specified, the gain is 0.120, mostly the density's shape. Both beat a floor that assumes no effect. The prior's skill on which test will be significant has an interval that spans zero, or just clears it under a second definition, only without the flagged window and not against a base rate with a quarter term. Its probabilities fail a calibration test whose false-alarm rate is unmeasured. The retailer's tests are too few to decide on skill.
-- Weighting similar past tests is not shown to beat the prior on score or skill. With a planted signal it recovers 0.09 of the gain of a model told the signal. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, no more than arm count alone, and fails that control. Abstaining is not shown to help, nor is sizing from the forecast.
+- For the publisher, a heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior's gain over it is 0.020 nats; its interval is above zero with the seven quarters held fixed and contains zero with quarters as units: the lead is not shown. Against a normal-density base rate, as first specified, the gain is 0.120, mostly the density's shape. Both beat a floor that assumes no effect. The prior's skill on which test will be significant has an interval that spans zero, or just clears it under a second definition, only without the flagged window and not against a base rate with a quarter term. Its probabilities fail a calibration test. The retailer's tests are too few to decide on skill.
+- Weighting similar past tests is not shown to beat the prior on score or skill. With a planted signal it recovers 0.08 to 0.09 of the gain of a model told the signal. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, no more than arm count alone, and fails that control. Abstaining is not shown to help, nor is sizing from the forecast.
 Release. Protocol and Moot Court (MIT).
 
 ## Categories
@@ -34,7 +34,7 @@ Release. Protocol and Moot Court (MIT).
 
 ## Comments line
 
-59 pages including the appendix, 6 figures, 91 tables. Code, the data pipeline and the run folders behind every table:
+61 pages including the appendix, 6 figures, 94 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 
