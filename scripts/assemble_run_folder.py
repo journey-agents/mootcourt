@@ -35,6 +35,8 @@ WINDOW_DIR = "include-randomization-window"
 # the learning curve at each scored origin and its summary (reviewer runs of 13 November 2026); a folder of their own, so that no reader
 # of ``learning-curve-<source>-*.json`` at the top of a run folder finds more than the one curve it expects
 ORIGINS_DIR = "learning-curve-origins"
+# the ladder on a ledger rebuilt with another assumed end of a test, 14 and 28 days (run 9, Part B of its plan); one folder per value
+HORIZON_DIRS = ("horizon-14", "horizon-28")
 TOP_FILES = (
     "card-latency.json",
     "gates.json",
@@ -59,6 +61,9 @@ def collect(reports: Path) -> dict[str, Path]:
             out[f"ablations/{f.name}"] = f
     for f in sorted((reports / WINDOW_DIR).glob("backtest-*.json")):
         out[f"{WINDOW_DIR}/{f.name}"] = f
+    for folder in HORIZON_DIRS:
+        for f in sorted((reports / folder).glob("backtest-*.json")):
+            out[f"{folder}/{f.name}"] = f
     pc = reports / "positive-control"
     for name in ("gates.json", "reliability-synthetic.json"):
         if (pc / name).is_file():
@@ -109,8 +114,8 @@ def _relative_name(path: Path) -> str:
     parent = path.parent
     if parent.name == "ablations":
         return f"ablations/{path.name}"
-    if parent.name == WINDOW_DIR:
-        return f"{WINDOW_DIR}/{path.name}"
+    if parent.name == WINDOW_DIR or parent.name in HORIZON_DIRS:
+        return f"{parent.name}/{path.name}"
     if parent.name == "positive-control":
         return f"positive-control/{path.name}"
     if parent.parent.name == "rungs":

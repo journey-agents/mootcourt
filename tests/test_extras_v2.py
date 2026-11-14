@@ -628,3 +628,15 @@ def test_exposure_realized_sets_the_run_on_each_rows_own_traffic_against_the_mai
     const = doc["p_sig_constant_within_origin_and_cell"]
     assert const["fixed"]["P1"]["strata_with_one_value"] == 2 and const["realized"]["P1"]["strata_with_one_value"] == 1
     assert ex.exposure_realized(tmp_path, "asos", "S") is None
+
+
+def test_the_runs_at_another_assumed_end_keep_their_folders_in_a_run_folder(tmp_path):
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location("assemble_run_folder", Path(__file__).resolve().parents[1] / "scripts" / "assemble_run_folder.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    rep = tmp_path / "reports"
+    assert mod._relative_name(rep / "horizon-14" / "backtest-upworthy-S.json") == "horizon-14/backtest-upworthy-S.json"
+    assert mod._relative_name(rep / "horizon-28" / "backtest-upworthy-S.json") == "horizon-28/backtest-upworthy-S.json"

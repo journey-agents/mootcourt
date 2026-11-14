@@ -12,6 +12,9 @@ asserts, per source and rung:
    features, which are the only fields a feature may read (the nested ``post_launch`` block is not read);
 6. for Upworthy and ASOS the ``s_star`` stored in the score table equals the pre-launch value recomputed from the
    planned exposures and the cell median rate of the rows visible at the origin, so no realized ``s`` reached it.
+   With ``--exposure cell-median-visible`` (the main Upworthy run since run 9) the planned exposure of a scored row is recomputed here,
+   without the package's view, as the median exposure of the admitted rows of its cell that were usable at its origin; a cell with no such
+   row at a scored origin counts every scored row of it as a mismatch, since its value could only have come from later rows.
 
 The harness also wraps the ``fit`` methods during the backtest and raises if a not-yet-usable row reaches them; this
 script is the independent check on the result. Exit code 0 means zero violations. Usage:
@@ -25,13 +28,33 @@ import argparse
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from mootcourt import scale
 from mootcourt.ledger import visible_rows
 
 
-def audit(ledger: pd.DataFrame, scores: pd.DataFrame, source: str) -> tuple[list[str], int]:
+def _fixed_on_visible(rows: pd.DataFrame, visible: pd.DataFrame) -> tuple[pd.DataFrame, int]:
+    """``rows`` with both arms' exposure set to the median exposure of the visible admitted rows of the row's cell, and the number of rows
+    whose cell has no visible admitted row (their exposure is left as stored)."""
+    out, missing = rows.copy(), 0
+    adm = visible[visible["status"] == "admitted"] if "status" in visible else visible
+    expo = 0.5 * (adm["n_ref"].to_numpy(float) + adm["n_var"].to_numpy(float))
+    cells = adm["cell"].to_numpy()
+    for cell in out["cell"].unique():
+        sel = (out["cell"] == cell).to_numpy()
+        vals = expo[cells == cell]
+        if len(vals) == 0:
+            missing += int(sel.sum())
+            continue
+        med = max(int(round(float(np.median(vals)))), 1)
+        out.loc[sel, "n_ref"] = med
+        out.loc[sel, "n_var"] = med
+    return out, missing
+
+
+def audit(ledger: pd.DataFrame, scores: pd.DataFrame, source: str, exposure: str = "stored") -> tuple[list[str], int]:
     adm = ledger[(ledger["source"] == source) & (ledger["status"] == "admitted")].set_index("row_id")
     origins = sorted(scores["origin"].unique())
     nxt = dict(zip(origins, origins[1:] + [origins[-1] + pd.DateOffset(months=3)]))
@@ -56,7 +79,11 @@ def audit(ledger: pd.DataFrame, scores: pd.DataFrame, source: str) -> tuple[list
                 if scored.empty:
                     continue
                 rows = full.set_index("row_id").loc[scored["row_id"]].reset_index()
-                expect = scale.s_star_rows(rows, visible_rows(full, o))
+                visible = visible_rows(full, o)
+                if exposure == "cell-median-visible" and source == "upworthy":
+                    rows, missing = _fixed_on_visible(rows, visible)
+                    v_scale += missing
+                expect = scale.s_star_rows(rows, visible)
                 v_scale += int((abs(expect - scored["s_star"].to_numpy(float)) > 1e-9 * (1 + abs(expect))).sum())
         violations += v_both + v_late + v_window + v_stamp + v_scale
         lines.append(
@@ -76,11 +103,13 @@ def main() -> int:
     ap.add_argument("--scores", required=True, help="a scores-<source>-<snapshot>.parquet file")
     ap.add_argument("--out", default=None)
     ap.add_argument("--json-out", default=None, help="a small JSON of the same result (source, snapshot, rung, counts, total, pass) for a run folder")
+    ap.add_argument("--exposure", choices=("stored", "cell-median-visible"), default="stored",
+                    help="the exposure setting the scores were made with; cell-median-visible is the main Upworthy run since run 9")
     args = ap.parse_args()
     scores = pd.read_parquet(args.scores)
     ledger = pd.read_parquet(args.ledger)
     source = str(ledger.loc[ledger["row_id"] == scores["row_id"].iloc[0], "source"].iloc[0])
-    lines, violations = audit(ledger, scores, source)
+    lines, violations = audit(ledger, scores, source, args.exposure)
     text = (
         "\n".join(
             [
@@ -114,6 +143,7 @@ def main() -> int:
                     "source": source,
                     "scores": Path(args.scores).name,
                     "ledger": Path(args.ledger).name,
+                    "exposure": args.exposure,
                     "rungs": rungs,
                     "post_launch_fields_in_features": [ln for ln in lines if "post-launch fields" in ln][0].split()[-1] if lines else None,
                     "total_violations": violations,
