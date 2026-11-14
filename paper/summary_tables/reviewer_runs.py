@@ -31,7 +31,7 @@ def calibration_size(r):
         if rung != "P2":
             rows.append(Raw(r"\midrule"))
     return Table("fmt-calibration-size", "lrrrrrr",
-                 ["rung and stratum & within-test & rejection share at & rejection share, & rejection share, & 95th percentile & percentile",
+                 ["rung and stratum & latent & rejection share at & rejection share, & rejection share, & 95th percentile & percentile",
                   r" & correlation & that correlation (95\%) & no correlation & twice the correlation & under calibration & observed"], rows)
 
 
