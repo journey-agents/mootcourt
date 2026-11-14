@@ -54,15 +54,18 @@ SIDEWAYS = ("tab:glance", "tab:main-upworthy")
 
 
 def expand_inputs(paper: Path) -> list[str]:
-    """``main.tex`` as lines, with every ``\\input{sections/NAME}`` replaced by that file's lines."""
-    out: list[str] = []
-    for line in (paper / "main.tex").read_text().split("\n"):
-        m = _INPUT.match(line)
-        if m:
-            out += (paper / "sections" / f"{m.group(1)}.tex").read_text().rstrip("\n").split("\n")
-        else:
-            out.append(line)
-    return out
+    """``main.tex`` as lines, with every ``\\input{sections/NAME}`` replaced by that file's lines, also inside a section file."""
+    def expand(lines: list[str]) -> list[str]:
+        out: list[str] = []
+        for line in lines:
+            m = _INPUT.match(line)
+            if m:
+                out += expand((paper / "sections" / f"{m.group(1)}.tex").read_text().rstrip("\n").split("\n"))
+            else:
+                out.append(line)
+        return out
+
+    return expand((paper / "main.tex").read_text().split("\n"))
 
 
 def replace_region(lines: list[str], name: str, new: list[str]) -> list[str]:

@@ -78,9 +78,31 @@ def p1_cells(r):
 def direction(r):
     main = r(MAIN)
 
+    extras = r(EXTRAS)
+    fixed = "exposure_realized.p_sig_constant_within_origin_and_cell.fixed"
+
+    def one_per_pair(rung):
+        """The keys that say the rung ranks nothing within a pair of origin and cell, or None. The direction AUC ranks the probability that the
+        observed effect is positive, which is set by the rung's probability that the true effect is positive and the row's planned standard
+        error. The first is one value per cell at every origin (the decision table's flag), the second follows the exposure, one value in every
+        pair, and the significance probability built from the same two is one value in every pair. No report key names the ranked column itself."""
+        flag = f"tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung={rung}].constant_within_cell"
+        one, strata, exposure = f"{fixed}.{rung}.strata_with_one_value", f"{fixed}.{rung}.origin_cell_strata", f"{fixed}.exposure_strata_with_one_value"
+        if rung not in extras.get(fixed) or not any(row["rung"] == rung and row["policy"] == "p_win" for row in main.get("tables.decision_value")):
+            return None
+        if main.get(flag) is True and extras.get(one) == extras.get(strata) and extras.get(exposure) == 1.0:
+            return [main.ref(flag), extras.ref(one), extras.ref(strata), extras.ref(exposure)]
+        return None
+
+    def within(rung):
+        """The report's direction AUC within pairs, or the words where the rung gives one forecast in every pair: the report's value is then
+        noise among ties, and its interval reads nothing (as for the event AUC in ``auc_within``)."""
+        keys = one_per_pair(rung)
+        return derived("one forecast per pair", *keys) if keys else ci(main, agg(rung), "auc_direction_within")
+
     def row(label, rung, auc=True):
         a = agg(rung)
-        return [label, v(main, f"{a}.direction_accuracy"), v(main, f"{a}.direction_accuracy_decisive"), ci(main, a, "auc_direction_within") if auc else "none, one forecast"]
+        return [label, v(main, f"{a}.direction_accuracy"), v(main, f"{a}.direction_accuracy_decisive"), within(rung) if auc else "none, one forecast"]
 
     return Table("fmt-direction", "lrrr", [r"rung & accuracy & accuracy, decisive & direction AUC within pairs of origin and cell (90\%)"], [
         row("P1", "P1"),

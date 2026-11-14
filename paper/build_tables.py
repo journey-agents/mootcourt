@@ -519,13 +519,19 @@ def discrimination_within_table(rep, source, out):
         with open(extras_path, encoding="utf-8") as fh:
             constant = ((json.load(fh).get("exposure_realized") or {}).get("p_sig_constant_within_origin_and_cell") or {}).get("fixed") or {}
     one = {rung for rung, c in constant.items() if isinstance(c, dict) and c.get("strata_with_one_value") == c.get("origin_cell_strata")}
+    # the direction AUC ranks the probability that the observed effect is positive, set by the rung's direction probability and the row's
+    # planned standard error: it is one value per pair where the decision table flags the first as one value per cell at every origin and
+    # the exposure, like the significance probability built from the same two, is one value in every pair (as in fmt-direction)
+    flagged = {r["rung"] for r in rep["tables"].get("decision_value", [])
+               if r.get("origin") == "ALL" and r.get("policy") == "p_win" and r.get("constant_within_cell") is True}
+    one_direction = (one & flagged) if constant.get("exposure_strata_with_one_value") == 1.0 else set()
     for r in rows:
         b = by_big.get(r["rung"], {})
         tied = r["rung"] in one
         lines.append(
             f"{esc(r['rung'])} & {'0.500, one forecast per pair' if tied else interval(r, 'auc_event_within')} & "
             f"{f3(r.get('resolution_event_within'), 5)} & "
-            f"{interval(r, 'auc_direction_within')} & {'0.500, one forecast per pair' if tied else interval(b, 'auc_event_within')} \\\\"
+            f"{'one forecast per pair' if r['rung'] in one_direction else interval(r, 'auc_direction_within')} & {'0.500, one forecast per pair' if tied else interval(b, 'auc_event_within')} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(

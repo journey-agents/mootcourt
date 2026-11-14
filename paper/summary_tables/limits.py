@@ -52,6 +52,22 @@ def _adjusted(rep, rung):
     return derived(text, rep.ref(lo_key), rep.ref(hi_key))
 
 
+def _wrong_side_word(estimate, lo, hi):
+    """The verdict word of a claim that a quantity is positive when its estimate is negative: ``failed`` only where the interval lies wholly
+    below zero, ``not supported`` where the interval contains zero. An estimate on the claim's side has another word, chosen in its row."""
+    if estimate >= 0:
+        raise ValueError("the estimate is on the claim's side; neither failed nor not supported is its word")
+    return "failed" if hi < 0 else "not supported"
+
+
+def _wrong_side(rep, row, field):
+    """The verdict of a row whose estimate lies on the wrong side, from the estimate and its interval: the word, and what chose it."""
+    keys = [f"{row}.{field}", f"{row}.{field}_lo", f"{row}.{field}_hi"]
+    word = _wrong_side_word(*(rep.get(k) for k in keys))
+    reason = {"failed": "the interval lies wholly on the wrong side of zero", "not supported": "the estimate is on the wrong side, and its interval contains zero"}[word]
+    return derived(f"{word}: {reason}", *[rep.ref(k) for k in keys])
+
+
 def _h1_part1(main, normal, first):
     """H1 part 1 from the three by-origin reports: the main run (Student-t base rate), the normal base rate the plan's code used, and the
     first specification (that density with each row's own realized traffic). The counts are of origins whose paired interval lies above zero."""
@@ -108,8 +124,6 @@ def _guard_verdict_wording(up, asos, extras, p2_all, p1_all, issued, skill):
 def _h1_part2(up, seeds):
     """The headline-only difference beside what a planted lift returns in a cell of that size under the same backtest, at five ledger seeds."""
     headline = _cell("P2", "headline_only")
-    if up.get(f"{headline}.logscore_vs_p1") >= 0 or up.get(f"{headline}.logscore_vs_p1_hi") <= 0:
-        raise ValueError("the verdict says the estimate is on the wrong side and its interval contains zero")
     if abs(seeds.get("real_interval.hi") - up.get(f"{headline}.logscore_vs_p1_hi")) > 1e-12:
         raise ValueError("the seeds report was not read against this run's interval")
     inside, total = seeds.get("inside_real_interval"), seeds.get("seeds")
@@ -233,7 +247,7 @@ def verdicts(r):
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (see~\ref{sec:ladder-results})} \\"),
         _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in, P0 scored with a normal density, as in the code committed with the plan",
              _h1_part1(*(r(name) for name in BY_ORIGIN)), "held in the first specification; with exposure fixed, not shown against the normal base rate and failed in the main run"),
-        _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, r("positive-control-seeds.json")), "failed: the estimate is on the wrong side, and its interval contains zero"),
+        _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, r("positive-control-seeds.json")), _wrong_side(up, _cell("P2", "headline_only"), "logscore_vs_p1")),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
              join("{} nats, {}: the guard gave no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
                   span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
@@ -279,7 +293,7 @@ def verdicts(r):
              join("{} percent pooled and {} percent after the burn-in origin, January 2014 included", pct(up, "tables.abstention[cell=ALL].rate"), _h4_after_burn_in(up)),
              "held"),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{4}{@{}l}{\textbf{H5, in part} (Sections~\ref{sec:hypotheses} and~\ref{sec:decision-results})} \\"),
+        Raw(r"\multicolumn{4}{@{}l}{\textbf{H5, in part} (see~\ref{sec:decision-results})} \\"),
         _row("H5, text classifier", "more positive lift than random at K = 25 percent of tests",
              join("against the arm-count-matched random order, {}, adjusted interval {}", diff("text_lr"), _adjusted(up, "text_lr")), "held against the matched order"),
         not_shown("GBM", "H5, boosted model"),
@@ -287,7 +301,7 @@ def verdicts(r):
         not_shown("local_eb", "H5, local comparison set"),
         _row("H5, prior", "the same",
              join("at the matched order within noise, {}, {}", w(up, f"{_dv('P1')}.diff_matched"),
-                  span(up, f"{_dv('P1')}.diff_matched_lo", f"{_dv('P1')}.diff_matched_hi")), "failed"),
+                  span(up, f"{_dv('P1')}.diff_matched_lo", f"{_dv('P1')}.diff_matched_hi")), _wrong_side(up, _dv("P1"), "diff_matched")),
         Raw(r"\midrule"),
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H6, held} (see~\ref{sec:asos-results})} \\"),
         _row("H6 part 1", "every gate undecidable on the retailer's archive", "undecidable at every gate",

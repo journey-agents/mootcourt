@@ -199,3 +199,11 @@ def test_a_pair_of_references_says_appendix_for_the_moved_one_only():
     assert out[0] == "Section~\\ref{sec:a} and Appendix~\\ref{sec:b} hold it."
     assert out[1] == "Appendices~\\ref{sec:b} and~\\ref{sec:c} too."
     assert out[2] == "Section~\\ref{sec:a} and Appendix~\\ref{sec:c}."
+
+
+def test_an_input_inside_a_section_file_is_expanded_too(tmp_path):
+    (tmp_path / "sections").mkdir()
+    (tmp_path / "main.tex").write_text("A\n\\input{sections/outer}\nZ\n")
+    (tmp_path / "sections" / "outer.tex").write_text("B\n\\input{sections/inner}\nC\n")
+    (tmp_path / "sections" / "inner.tex").write_text("Section~\\ref{sec:x}\n")
+    assert tb.expand_inputs(tmp_path) == ["A", "B", "Section~\\ref{sec:x}", "C", "Z", ""]

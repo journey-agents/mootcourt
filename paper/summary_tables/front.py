@@ -67,6 +67,10 @@ def glance(r):
     if not lo < 0 < hi:
         raise ValueError("the row is labelled as a difference whose interval spans zero")
 
+    without = "rungs.P1.realized.origin_level_without_zero_base_rate_strata"
+    if len(skills.get("rungs.P1.realized.zero_base_rate_strata")) != 1:
+        raise ValueError("the row says one cell and quarter has a base rate of zero")
+
     return Table("glance", "lrr", [" & headline archive & synthetic ledger (no planted text signal)"], [
         ["scored tests / rows", *[join("{} / {}", n(a, "header.tests_scored"), n(a, "header.scored_rows")) for a in archives]],
         ["P1 minus P0, log score in nats per contrast (90\\%, tests resampled)", *[_gain_over_p0(a) for a in archives]],
@@ -76,6 +80,8 @@ def glance(r):
         ["the same, the seven quarters as units (90\\%)",
          join("{} ({}, {})", v(skills, "rungs.P1.realized.origin_level.skill", 4), v(skills, "rungs.P1.realized.origin_level.lo", 4),
               v(skills, "rungs.P1.realized.origin_level.hi", 4)), "not computed"],
+        ["the same, without the one cell and quarter whose base rate is zero (90\\%)",
+         join("{} ({}, {})", v(skills, f"{without}.skill", 4), v(skills, f"{without}.lo", 4), v(skills, f"{without}.hi", 4)), "not computed"],
         ["P1 Brier skill, significance judged at the planned standard error (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],
         ["P1 coverage of the 80 / 90 percent intervals",
