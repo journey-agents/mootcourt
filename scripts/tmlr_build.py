@@ -37,7 +37,7 @@ from pathlib import Path
 
 OUT_NAME = "tmlr-submission.tex"
 FORBIDDEN = ("yingjie", "journey", "github.com", "zenodo", "5e4fedf", "a7e9f44", "5a68256", "145eaf7", "f4566ca", "e05247e",
-             "3971829", "73d0d70", "3cda1ad", "6f5f3dc", "liyingjie",
+             "3971829", "73d0d70", "3cda1ad", "6f5f3dc", "b2e3713", "85f2bb4", "d58cb89", "liyingjie",
              "moot court", "mootcourt", "independent researcher", "seattle")
 _INPUT = re.compile(r"^\\input\{sections/([A-Za-z0-9_-]+)\}\s*$")
 _BEGIN = re.compile(r"^%% tmlr:move-begin (\S+)\s*$")
@@ -200,7 +200,7 @@ def turn_wide_tables(text: str) -> str:
 def withhold_name(text: str) -> str:
     """The package's name, its import name and its command replaced by neutral ones, since the name leads to the repository."""
     text = text.replace("Moot Court", "AnonTool").replace("mootcourt", "anontool")
-    text = text.replace("run8-randomization-window", "run-final")
+    text = text.replace("run9-visible-exposure", "run-final")
     return re.sub(r"\\texttt\{moot ", lambda m: "\\texttt{anontool ", text)
 
 

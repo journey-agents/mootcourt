@@ -3,7 +3,12 @@ from summary_tables import Raw, Table, derived, fmt, join, month_year, n, narrow
 
 UPWORTHY, ASOS, EXTRAS = "backtest-upworthy-*.json", "backtest-asos-*.json", "paper-extras-upworthy-*.json"
 CURVE, SYNTHETIC = "learning-curve-upworthy-*.json", "paper-extras-synthetic-*.json"
+# the first specification: the main run of run 8, a normal base rate and each row's own realized traffic as its planned exposure
+FIRST = "ablations/backtest-upworthy-*--exposure-planned+base-density-normal.json"
+BY_ORIGIN = ("by-origin-upworthy-*.json", "ablations/by-origin-upworthy-*--base-density-normal.json",
+             "ablations/by-origin-upworthy-*--exposure-planned+base-density-normal.json")
 ASOS_GUARD_OFF = "ablations/backtest-asos-*--p2-guard-off.json"
+NEAR_ZERO = 0.0005        # a bound within a few ten-thousandths of zero is not read as clearing it (Section 5 of the paper)
 NUMBER_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
 
 
@@ -47,19 +52,23 @@ def _adjusted(rep, rung):
     return derived(text, rep.ref(lo_key), rep.ref(hi_key))
 
 
-def _h1_part1(up, extras):
-    origin = narrowest_origin(up)
-    paired = f"p1_minus_p0_by_origin.by_origin[origin={origin}]"
-    clear = extras.get("p1_minus_p0_by_origin.by_origin_clear_of_zero")
-    if clear != len(extras.get("p1_minus_p0_by_origin.by_origin")):
-        raise ValueError("the row says clear of zero at all origins")
-    return join("above at every origin after burn-in; the narrowest margin {}, {} against {}; paired by test the difference there is {}, {},"
-                " and clear of zero at all {} origins",
-                month_year(origin),
-                w(up, f"tables.score_by_origin[origin={origin},rung=P1].logscore"),
-                w(up, f"tables.score_by_origin[origin={origin},rung=P0].logscore"),
-                w(extras, f"{paired}.difference", plus=True), span(extras, f"{paired}.lo", f"{paired}.hi"),
-                derived(NUMBER_WORDS[clear], extras.ref("p1_minus_p0_by_origin.by_origin_clear_of_zero")))
+def _h1_part1(main, normal, first):
+    """H1 part 1 from the three by-origin reports: the main run (Student-t base rate), the normal base rate the plan's code used, and the
+    first specification (that density with each row's own realized traffic). The counts are of origins whose paired interval lies above zero."""
+    total = len(main.get("by_origin"))
+    if first.get("by_origin_above_zero") != total:
+        raise ValueError("the row says above zero at every origin in the first specification")
+    if normal.get("by_origin_above_zero") == total or normal.get("by_origin_below_zero") != 0:
+        raise ValueError("the row says above zero at some origins and below at none with the normal base rate")
+
+    def count(rep, key):
+        return derived(NUMBER_WORDS[rep.get(key)], rep.ref(key))
+
+    return join("in the first specification, which read each row's own realized traffic, the paired difference lies above zero at all {} scored origins;"
+                " with exposure fixed on visible rows and the same normal density, at {} of them and below zero at none;"
+                " in the main run, where the base rate is a Student-t, above zero at {} and below at {}",
+                derived(NUMBER_WORDS[total], first.ref("by_origin_above_zero")), count(normal, "by_origin_above_zero"),
+                count(main, "by_origin_above_zero"), count(main, "by_origin_below_zero"))
 
 
 def _h4_after_burn_in(up):
@@ -78,8 +87,8 @@ def _guard_verdict_wording(up, asos, extras, p2_all, p1_all, issued, skill):
     def fail(words):
         raise ValueError(f"the verdicts table says {words!r} and the report does not")
 
-    if not up.get(f"{p2_all}.brier_skill_lo") < 0 < up.get(f"{p2_all}.brier_skill_hi"):
-        fail("not clear of zero")
+    if up.get(f"{p2_all}.brier_skill_lo") <= 0 or up.get(f"{p2_all}.brier_skill") >= 0.01:
+        fail("clear of zero, and under one percent")
     if 2 * extras.get(f"{issued}.origins_inside_central_90") > extras.get(f"{issued}.origins"):
         fail("not at most of them")
     for name, nominal in (("coverage_80", 0.80), ("coverage_90", 0.90)):
@@ -102,6 +111,8 @@ def _h1_part2(up, syn):
     planted = 'positive_control_rungs.runs[n_tests=11100].by_cell["headline_only"].rungs[rung=P2].diff_logscore_vs_p1'
     if not up.get(f"{headline}.logscore_vs_p1_lo") < syn.get(planted) < up.get(f"{headline}.logscore_vs_p1_hi"):
         raise ValueError("the row says the interval contains the planted gain")
+    if up.get(f"{headline}.logscore_vs_p1") >= 0 or up.get(f"{headline}.logscore_vs_p1_hi") <= 0:
+        raise ValueError("the verdict says the estimate is on the wrong side and its interval contains zero")
     return join("{}, {}; the interval contains the {} that a planted lift returns in a cell of this size under the same backtest",
                 w(up, f"{headline}.logscore_vs_p1", 4, plus=True),
                 span(up, f"{headline}.logscore_vs_p1_lo", f"{headline}.logscore_vs_p1_hi", 4),
@@ -158,9 +169,9 @@ def _h4_part2_verdict(extras):
     stratified = "abstention_composition.P2.stratified_issued_minus_abstained_skill"
     if extras.get(pooled) <= 0:
         raise ValueError("the verdict says the pooled difference is on the claim's side without burn-in")
-    if extras.get(f"{stratified}.estimate") >= 0 or not extras.get(f"{stratified}.lo") < 0 < extras.get(f"{stratified}.hi"):
-        raise ValueError("the verdict says the difference within origin and cell is on the wrong side with an interval spanning zero")
-    return derived("failed on all rows; with burn-in excluded, on the claim's side pooled with no interval and on the wrong side within origin and cell",
+    if extras.get(f"{stratified}.estimate") >= 0 or extras.get(f"{stratified}.hi") >= 0:
+        raise ValueError("the verdict says the difference within origin and cell is on the wrong side with an interval below zero")
+    return derived("failed on all rows; with burn-in excluded, on the claim's side pooled with no interval and on the wrong side within origin and cell, the interval below zero",
                    extras.ref(pooled), extras.ref(f"{stratified}.estimate"), extras.ref(f"{stratified}.lo"), extras.ref(f"{stratified}.hi"))
 
 
@@ -168,13 +179,18 @@ def _not_shown_word(up, rung):
     """The verdict of a rung whose adjusted interval spans zero against the matched order: it holds against the plan's random order only where that adjusted bound clears zero."""
     if up.get(f"{_dv(rung)}.diff_matched_adjusted_lo") > 0:
         raise ValueError(f"{rung} clears zero against the matched order; the word is wrong")
-    if up.get(f"{_dv(rung)}.diff_random_adjusted_lo") > 0:
+    if up.get(f"{_dv(rung)}.diff_random_adjusted_lo") > NEAR_ZERO:
         return "not shown against the matched order; held against the plan's random order"
+    if up.get(f"{_dv(rung)}.diff_random_adjusted_lo") > 0:
+        return "not shown against both orders; against the random order the adjusted lower end is too close to zero to read as clear of it"
     return "not shown against both orders"
 
 
 def verdicts(r):
     up, _asos, extras, curve, syn = r(UPWORTHY), r(ASOS), r(EXTRAS), r(CURVE), r(SYNTHETIC)
+    first = r(FIRST)
+    if not first.get(f"{_cell('P2', 'ALL')}.brier_skill_lo") < 0 < first.get(f"{_cell('P2', 'ALL')}.brier_skill_hi"):
+        raise ValueError("the row says the skill of P2 is not clear of zero in the first specification")
     p1_all, p2_all, image = _cell("P1", "ALL"), _cell("P2", "ALL"), _cell("P2", "image_only")
     issued, skill = "issued_ece_by_origin.issued", "issued_row_brier_skill.rungs.P2"
     deciles = "tables.coverage_by_se_ratio[rung=P1,decile={}].coverage_90"
@@ -185,7 +201,7 @@ def verdicts(r):
         return w(up, f"{_dv(rung)}.diff_matched", plus=True)
 
     def random_bound(rung):
-        return span(up, f"{_dv(rung)}.diff_random_adjusted_lo", f"{_dv(rung)}.diff_random_adjusted_hi")
+        return span(up, f"{_dv(rung)}.diff_random_adjusted_lo", f"{_dv(rung)}.diff_random_adjusted_hi", 4)
 
     def not_shown(rung, label):
         return _row(label, "the same", join(matched, diff(rung), _adjusted(up, rung), random_bound(rung)), _not_shown_word(up, rung))
@@ -202,16 +218,19 @@ def verdicts(r):
         raise ValueError("the row says the guard is what keeps P2 at P1 on the retailer's archive")
     rows = [
         Raw(r"\multicolumn{4}{@{}l}{\textbf{H1, in part} (see~\ref{sec:ladder-results})} \\"),
-        _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in, P0 scored with a normal density, as in the code committed with the plan", _h1_part1(up, extras), "held"),
-        _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, syn), "not shown"),
+        _row("H1 part 1", "P1 beats P0 on log score at every origin after burn-in, P0 scored with a normal density, as in the code committed with the plan",
+             _h1_part1(*(r(name) for name in BY_ORIGIN)), "held in the first specification; with exposure fixed, not shown against the normal base rate and failed in the main run"),
+        _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, syn), "failed: the estimate is on the wrong side, and its interval contains zero"),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
              join("{} nats, {}: the guard admitted no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
                   span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
         Raw(r"\midrule"),
-        _group("H2, in part: the gate claim failed; skill not shown read pooled and undecidable as written; above zero at one earlier origin, where the base rate lags"),
+        _group("H2, in part: the gate claim failed; read pooled, a skill under one percent in the main run and none shown in the first specification"),
         _row("H2, read pooled", "P2's Brier skill positive, its interval clear of zero, pooled over origins",
-             join("{}, {}, not clear of zero", w(up, f"{p2_all}.brier_skill", 4), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
-             "not shown"),
+             join("{}, {}, clear of zero; in the first specification {}, {}, not clear of zero",
+                  w(up, f"{p2_all}.brier_skill", 4), span(up, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4),
+                  w(first, f"{p2_all}.brier_skill", 4), span(first, f"{p2_all}.brier_skill_lo", f"{p2_all}.brier_skill_hi", 4)),
+             "held in the main run at under one percent of the base rate's score; not shown in the first specification"),
         _row("H2, as written", "the same at the final origin", _h2_as_written(up, curve, extras),
              join("above zero at {}, with that caution, not counted as holding; undecidable at {}", month_year(curve.get("final_origin")), month_year(up.get("header.last_origin")))),
         _row("H2, the gate", "the released gate decidable at the final origin", _h2_gate(up, extras), "failed"),

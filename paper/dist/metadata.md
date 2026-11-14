@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: the main findings are kept; the run with traffic fixed, the learning curve, the diagnostic of the prior's shape, the question labels and Tools are left to the PDF; and Problem, Method and Release are shorter.
+Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: the five findings are kept; Tools is left to the PDF; and Problem, Method and Release are shorter.
 
 ## Title
 
@@ -12,12 +12,15 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before a launch, a team wants to know what result to expect. Industrial screening systems are evaluated on private data; public work scores winner predictors. We found no public evaluation that scores forecast distributions from past experiments and says when the record is too small to judge.
-Method. We replay forecasts on two public archives: 2,949 scored headline and image tests from a publisher (Upworthy), leaving out dates flagged for randomization problems, and 68 scored experiments from a retailer (ASOS; no dates). We fit on earlier tests only. Forecasts use actual traffic, unknown to a real forecast. All results are exploratory: we reused the data and changed the method after seeing results.
+Problem. Before a launch, a team wants to know what its experiment will show. Industrial screening systems are evaluated on private data; public work scores winner predictors. We found no public evaluation that scores a forecast distribution and a probability of a significant result against concluded tests under a fixed rule for what a forecast may see.
+Method. We replay one public archive: 2,949 headline and image tests of a publisher (Upworthy), scored over seven quarters, with models fitted on earlier tests only. The archive records realized, not planned, traffic, so each forecast gets the median traffic of earlier tests of its kind. All results are exploratory: we read one split many times and changed the main specification after seeing results; the first specification is reported beside it.
 Findings.
-- For the publisher, a heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior's gain over it is 0.020 nats; its interval is above zero with the seven quarters held fixed and contains zero with quarters as units: the lead is not shown. Against a normal-density base rate, as first specified, the gain is 0.120, mostly the density's shape. Both beat a floor that assumes no effect. The prior's skill on which test will be significant has an interval that spans zero, or just clears it under a second definition, only without the flagged window and not against a base rate with a quarter term. Its probabilities fail a calibration test. The retailer's tests are too few to decide on skill.
-- Weighting similar past tests is not shown to beat the prior on score or skill. With a planted signal it recovers 0.08 to 0.09 of the gain of a model told the signal. A text classifier's top quarter captures 4.6 points more lift than a matched random choice, no more than arm count alone, and fails that control. Abstaining is not shown to help, nor is sizing from the forecast.
-Release. Protocol and Moot Court (MIT).
+- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats on the log score; with the seven quarters as units of resampling the lead is not shown.
+- The prior's skill on which test will be significant is under one percent of the base rate's error, and within a kind of test and quarter every test gets the same probability.
+- The probabilities fail a calibration test; the error is one of level, and on average they sit too high.
+- No model is shown to rank tests better than counting a test's arms.
+- Weighting similar past tests is not shown to help, and it recovers under a tenth of a planted signal, so whether similar tests help cannot be tested here.
+Release. Protocol and Moot Court (MIT), which regenerates every table from its reports. The archive's confirmatory split is unopened.
 
 ## Categories
 
@@ -34,13 +37,13 @@ Release. Protocol and Moot Court (MIT).
 
 ## Comments line
 
-61 pages including the appendix, 6 figures, 94 tables. Code, the data pipeline and the run folders behind every table:
+63 pages including the appendix, 6 figures, 95 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 
 ## License
 
-**CC BY 4.0** (Creative Commons Attribution). Both public archives the paper is built on are released under CC BY 4.0, the code is MIT,
+**CC BY 4.0** (Creative Commons Attribution). The public archives the paper is built on are released under CC BY 4.0, the code is MIT,
 and the protocol is meant to be reused, extended and re-reported by other teams with attribution; the attribution license is the most
 permissive of arXiv's choices that keeps the authors named, and it does not restrict a later journal version.
 

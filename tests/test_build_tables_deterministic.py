@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / "paper" / "data" / "run8-randomization-window"
+RUN = ROOT / "paper" / "data" / "run9-visible-exposure"
 
 
 def _build(out: Path, seed: str) -> dict[str, bytes]:

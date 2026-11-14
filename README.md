@@ -229,11 +229,11 @@ The [limitations page](docs/limitations.md) has the full list.
 A test has several variants, so 2,949 tests give 10,697 scored rows. Brier skill scores the forecast of a significant positive result against the base rate, and zero means no better than the base rate.
 
 <!-- moot-headline:start -->
-- Upworthy, 10697 scored rows: Brier skill against the base rate on all rows is 0.0023 (-0.0012 to 0.0061) for P1 (not distinguishable from the constant base rate) and 0.0032 (-0.0004 to 0.0072) for P2 (not distinguishable from the constant base rate); 1 of 3 cells are undecidable at this n at the release gate.
+- Upworthy, 10697 scored rows: Brier skill against the base rate on all rows is 0.0069 (0.0041 to 0.0100) for P1 (better than the constant base rate) and 0.0081 (0.0051 to 0.0114) for P2 (better than the constant base rate); 1 of 3 cells are undecidable at this n at the release gate.
 - ASOS, 337 scored rows: Brier skill against the base rate on all rows is -0.1073 (-0.2366 to -0.0020) for P1 (worse than the constant base rate) and -0.1073 (-0.2366 to -0.0020) for P2 (worse than the constant base rate); 4 of 4 cells are undecidable at this n at the release gate.
 <!-- moot-headline:end -->
 
-The full tables are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run8-randomization-window` for the published ones.
+The full tables are in [docs/results.md](docs/results.md). They are generated from the report files, and `scripts/verify_readme_numbers.py` re-derives every number independently: run it with `MOOTCOURT_DATA_ROOT` set to a data root that holds the reports, or with `--reports paper/data/run9-visible-exposure` for the published ones.
 
 ## Learn more
 

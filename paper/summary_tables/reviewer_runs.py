@@ -90,4 +90,26 @@ def learning_origins(r):
                  [row(o) for o in origins])
 
 
-TABLES = [calibration_size, control_seeds, learning_origins]
+def horizon(r):
+    """Run 9, Part B: the ladder with each test's end assumed 7 (the main run), 14 and 28 days after its last arm was created. The column
+    without the first origin was added after the 28-day result was seen."""
+    runs = (("7 (main run)", r(MAIN), r("by-origin-upworthy-*.json")),
+            ("14", r("horizon-14/backtest-upworthy-*.json"), r("horizon-14/by-origin-upworthy-*.json")),
+            ("28", r("horizon-28/backtest-upworthy-*.json"), r("horizon-28/by-origin-upworthy-*.json")))
+    p0, p1 = "tables.aggregate[cell=ALL,rung=P0]", "tables.aggregate[cell=ALL,rung=P1]"
+
+    def row(label, back, origins):
+        if abs(origins.get("pooled.difference") + back.get(f"{p0}.logscore_vs_p1")) > 1e-9:
+            raise ValueError(f"{origins.name} does not reproduce the pooled difference of {back.name}")
+        first = min(o["left_out"] for o in origins.get("leave_one_origin_out"))
+        return [label, n(back, f"{p1}.n_tests"), n(back, f"{p1}.n"), sci(back, p0, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True),
+                sci(origins, f"leave_one_origin_out[left_out={first}]", "difference", 4),
+                sci(back, p1, "brier_skill", 4, "brier_skill_lo", "brier_skill_hi")]
+
+    return Table("fmt-horizon", "lrrrrr",
+                 ["assumed end, days after & tests & rows & P1 minus P0, & the same, without & P1 Brier skill",
+                  r"the last arm was created & & & log score (90\%) & the first origin (90\%) & (90\%)"],
+                 [row(*run) for run in runs])
+
+
+TABLES = [calibration_size, control_seeds, learning_origins, horizon]

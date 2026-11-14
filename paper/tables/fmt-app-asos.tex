@@ -12,21 +12,21 @@ pairs at $\lambda = 0$, guard on & 28 of 28 & 17 of 21 \\
 % src: $RUN6/ablations/p2-guard-asos.json unguarded.share_lambda_zero; $RUN6/ablations/p2-guard-asos.json unguarded.cells_origins; $RUN6/ablations/p2-guard-upworthy.json unguarded.share_lambda_zero; $RUN6/ablations/p2-guard-upworthy.json unguarded.cells_origins
 pairs admitted, guard off & 13 of 28 & 11 of 21 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2].logscore_vs_p1; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2].logscore_vs_p1_lo; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2].logscore_vs_p1_hi; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2].logscore_vs_p1; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2].logscore_vs_p1_lo; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--p2-guard-off.json tables.aggregate[cell=ALL,rung=P2].logscore_vs_p1_hi
-P2 minus P1 log score, guard off & 0.00832 (-0.00292, 0.02333) & -0.00386 (-0.00524, -0.00233) \\
+P2 minus P1 log score, guard off & 0.00832 (-0.00292, 0.02333) & -0.00314 (-0.00441, -0.00186) \\
 \midrule
 \multicolumn{3}{l}{\emph{The boosted model and the local comparison set}} \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM].brier_skill; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=GBM].brier_skill
-boosted model, Brier skill, raw & -0.718 & -0.089 \\
+boosted model, Brier skill, raw & -0.718 & -0.068 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb].brier_skill; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=local_eb].brier_skill
-local comparison set, Brier skill, raw & -0.383 & -0.017 \\
+local comparison set, Brier skill, raw & -0.383 & -0.009 \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill_hi; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill_lo; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=GBM+cal].brier_skill_hi
-boosted model, recalibrated & -0.009 (-0.076, 0.045) & -0.004 (-0.009, 0.001) \\
+boosted model, recalibrated & -0.009 (-0.076, 0.045) & -0.001 (-0.005, 0.004) \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill_hi; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill_lo; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=local_eb+cal].brier_skill_hi
 local comparison set, recalibrated & 0.015 (-0.035, 0.069) & 0.000 (-0.003, 0.004) \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random_hi; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random_lo; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=GBM].diff_random_hi
-boosted model, decision value & 0.042 (-0.024, 0.135) & 0.026 (0.010, 0.046) \\
+boosted model, decision value & 0.042 (-0.024, 0.135) & 0.022 (0.005, 0.043) \\
 % src: $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random_lo; $RUN6/backtest-asos-20261103-6bb5a15c5ff0.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random_hi; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random_lo; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=local_eb].diff_random_hi
-local comparison set, decision value & 0.004 (-0.066, 0.093) & 0.029 (0.009, 0.045) \\
+local comparison set, decision value & 0.004 (-0.066, 0.093) & 0.027 (0.011, 0.049) \\
 \midrule
 \multicolumn{3}{l}{\emph{The exposure stand-in, correlation with the absolute standardized effect}} \\
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json impressions_effect_correlation.corr_log_impressions_abs_z; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json impressions_effect_correlation.corr_log_impressions_abs_z
@@ -36,9 +36,9 @@ log of the run length & 0.152 & n/a \\
 \midrule
 \multicolumn{3}{l}{\emph{Abstention and the support trigger}} \\
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json trigger_ablation_released_rows.runs[dropped_trigger=support].issued_in_main.abstention_rate; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json trigger_ablation_released_rows.runs[dropped_trigger=support].issued_in_main.abstention_rate
-abstention rate, main run & 0.457 & 0.318 \\
+abstention rate, main run & 0.490 & 0.290 \\
 % src: $RUN6/paper-extras-asos-20261103-6bb5a15c5ff0.json trigger_ablation_released_rows.runs[dropped_trigger=support].issued_in_ablation.abstention_rate; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json trigger_ablation_released_rows.runs[dropped_trigger=support].issued_in_ablation.abstention_rate
-abstention rate, support off & 0.217 & 0.318 \\
+abstention rate, support off & 0.249 & 0.290 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].n; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].n_tests; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--drop-trigger-support.json tables.released_rows[cell=ALL].n
 rows released, in tests & 81 in 19 & 0 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].brier_skill; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].brier_skill_lo; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--drop-trigger-support.json tables.released_rows[cell=ALL].brier_skill_hi
@@ -64,15 +64,15 @@ joined outcomes behind that coverage & 205 & 8,675 \\
 \midrule
 \multicolumn{3}{l}{\emph{The prior's settings, P1}} \\
 % src: $RUN6/ablations/p2-guard-asos.json guarded.logscore; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1].logscore
-log score, main settings & 4.709 & -0.757 \\
+log score, main settings & 4.709 & -0.769 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1].logscore
-log score, normal prior & 4.332 & -0.832 \\
+log score, normal prior & 4.332 & -0.846 \\
 % src: $RUN6/ablations/p2-guard-asos.json guarded.logscore; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1].logscore
-nats lost by the normal prior & 0.377 & 0.075 \\
+nats lost by the normal prior & 0.377 & 0.077 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--prior-normal.json tables.aggregate[cell=ALL,rung=P1].brier_skill; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1].brier_skill
-Brier skill, normal prior & -0.368 & -0.019 \\
+Brier skill, normal prior & -0.368 & -0.005 \\
 % src: $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-0.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-asos-20261103-6bb5a15c5ff0--kappa-80.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json tables.aggregate[cell=ALL,rung=P1].logscore
-log score at $\kappa = 0$ and $\kappa = 80$ & 4.693, 4.716 & -0.761, -0.755 \\
+log score at $\kappa = 0$ and $\kappa = 80$ & 4.693, 4.716 & -0.773, -0.768 \\
 \midrule
 \multicolumn{3}{l}{\emph{The learning curve at one origin, P1}} \\
 % src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json heldout_rows; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json heldout_rows
@@ -82,8 +82,8 @@ held-out tests & 9 & 318 \\
 % src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json skipped_runs; $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json seeds; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json skipped_runs; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json seeds
 five-percent subsamples not fit & 17 of 20 & 0 of 20 \\
 % src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows[rung=P1,fraction=0.05].skill; $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows[rung=P1,fraction=0.05].skill_lo; $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows[rung=P1,fraction=0.05].skill_hi; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[rung=P1,fraction=0.05].skill; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[rung=P1,fraction=0.05].skill_lo; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[rung=P1,fraction=0.05].skill_hi
-skill at fraction 0.05 & -0.360 (-1.044, -0.133) & 0.018 (0.004, 0.037) \\
+skill at fraction 0.05 & -0.360 (-1.044, -0.133) & 0.006 (-0.002, 0.017) \\
 % src: $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows[rung=P1,fraction=1.0].skill; $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows[rung=P1,fraction=1.0].skill_lo; $RUN6/learning-curve-asos-20261103-6bb5a15c5ff0.json rows[rung=P1,fraction=1.0].skill_hi; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[rung=P1,fraction=1.0].skill; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[rung=P1,fraction=1.0].skill_lo; $RUN6/learning-curve-upworthy-20261106-2dc461f52ea4.json rows[rung=P1,fraction=1.0].skill_hi
-skill at the full ledger & -0.182 (-0.517, -0.047) & 0.024 (0.011, 0.042) \\
+skill at the full ledger & -0.182 (-0.517, -0.047) & 0.013 (0.006, 0.023) \\
 \bottomrule
 \end{tabular}

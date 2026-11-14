@@ -4,36 +4,28 @@
 setting & P1 log score & scored rows \\
 \midrule
 % src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.scored_rows
-every other setting, and the main run & -0.757 & 10,697 \\
+every other setting, and the main run & -0.769 & 10,697 \\
 \midrule
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--prior-normal.json header.scored_rows
-\emph{prior-normal} & -0.832 & 10,697 \\
+\emph{prior-normal} & -0.846 & 10,697 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-0.0.json header.scored_rows
-\emph{kappa-0.0} & -0.761 & 10,697 \\
+\emph{kappa-0.0} & -0.773 & 10,697 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-5.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-5.0.json header.scored_rows
-\emph{kappa-5.0} & -0.759 & 10,697 \\
+\emph{kappa-5.0} & -0.772 & 10,697 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--kappa-80.0.json header.scored_rows
-\emph{kappa-80.0} & -0.755 & 10,697 \\
+\emph{kappa-80.0} & -0.768 & 10,697 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--admission-prelaunch.json header.scored_rows
-\emph{admission-prelaunch} & -0.734 & 11,669 \\
+\emph{admission-prelaunch} & -0.745 & 11,669 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--contrasts-one.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--contrasts-one.json header.scored_rows
-\emph{contrasts-one} & -0.771 & 2,949 \\
+\emph{contrasts-one} & -0.782 & 2,949 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--s-star-realized.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--s-star-realized.json header.scored_rows
 \emph{s-star-realized} & -0.710 & 10,697 \\
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median.json header.scored_rows
-\emph{exposure-cell-median} & -0.768 & 10,697 \\
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median+base-density-t.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median+base-density-t.json header.scored_rows
-\emph{exposure-cell-median+base-density-t} & -0.768 & 10,697 \\
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median+base-recency-quarter.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median+base-recency-quarter.json header.scored_rows
-\emph{exposure-cell-median+base-recency-quarter} & -0.768 & 10,697 \\
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median-visible.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median-visible.json header.scored_rows
-\emph{exposure-cell-median-visible} & -0.769 & 10,697 \\
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median-visible+base-density-t.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median-visible+base-density-t.json header.scored_rows
-\emph{exposure-cell-median-visible+base-density-t} & -0.769 & 10,697 \\
-% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median-visible+base-recency-quarter.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-cell-median-visible+base-recency-quarter.json header.scored_rows
-\emph{exposure-cell-median-visible+base-recency-quarter} & -0.769 & 10,697 \\
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-planned.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-planned.json header.scored_rows
+\emph{exposure-planned} & -0.757 & 10,697 \\
+% src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-planned+base-density-normal.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--exposure-planned+base-density-normal.json header.scored_rows
+\emph{exposure-planned+base-density-normal} & -0.757 & 10,697 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative.json header.scored_rows
-\emph{effect-scale-relative} & -5.388 & 10,697 \\
+\emph{effect-scale-relative} & -5.375 & 10,697 \\
 % src: $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json tables.aggregate[cell=ALL,rung=P1].logscore; $RUN6/ablations/backtest-upworthy-20261106-2dc461f52ea4--effect-scale-relative+s-star-realized.json header.scored_rows
 \emph{effect-scale-relative+s-star-realized} & -4.980 & 10,697 \\
 \bottomrule

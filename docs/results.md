@@ -1,6 +1,6 @@
 # Results
 
-These tables are produced by the commands of [tutorial 3](tutorials/03-reproduce-upworthy.md) and the `make` targets it lists, and rendered from the report files by `scripts/render_readme_results.py`. Nulls are reported as nulls. Every number here comes from the rerun after the round 00 review, which fixed P0, the P2 predictive, the gates and the live join; [Method](method.md) (calls 160 to 179) lists what changed. The current numbers are run 8 (`paper/data/run8-randomization-window`), which leaves out the tests in the archive's discouraged randomization window ([`DATA.md`](https://github.com/journey-agents/mootcourt/blob/main/DATA.md)), and every number is exploratory.
+These tables are produced by the commands of [tutorial 3](tutorials/03-reproduce-upworthy.md) and the `make` targets it lists, and rendered from the report files by `scripts/render_readme_results.py`. Nulls are reported as nulls. Every number here comes from the rerun after the round 00 review, which fixed P0, the P2 predictive, the gates and the live join; [Method](method.md) (calls 160 to 179) lists what changed. The current numbers are run 8 (`paper/data/run9-visible-exposure`), which leaves out the tests in the archive's discouraged randomization window ([`DATA.md`](https://github.com/journey-agents/mootcourt/blob/main/DATA.md)), and every number is exploratory.
 
 The first full run scored Upworthy on a relative lift against a noisy reference arm, with the realized standard error as the forecaster's scale, and every rung had negative skill. That was a design defect, not a finding about the archive. The effect is now the absolute click-through difference in percentage points, and the forecaster's scale and features use only what is known before launch. [Method](method.md) (calls 52 to 55) tells the story with the numbers.
 
@@ -30,119 +30,119 @@ P2 admission guard: 2.0 standard errors.
 
 | cell | rung | n | log score | Brier skill (90% interval) | decidable by tests (0.90 gate, at the cell's base rate) | gate base rate | decidable by tests (0.90 gate, base rate 0.3) | decidable by rows (0.90 gate, overstates) | decidable by tests (0.80 screen) | coverage 80% / 90% | abstention rate |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ALL | P0 | 10697 | -0.8762 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8460 / 0.9331 | 0.3179 |
-| ALL | P1 | 10697 | -0.7566 | 0.0023 (-0.0012 to 0.0061) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8113 / 0.8956 | 0.3179 |
-| ALL | P2 | 10697 | -0.7565 | 0.0032 (-0.0004 to 0.0072) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8094 / 0.8933 | 0.3179 |
-| both | P0 | 370 | -1.2495 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.09 | yes, both skills | undecidable | skill 0.20 only | 0.7919 / 0.9135 | 0.2919 |
-| both | P1 | 370 | -1.0197 | -0.0049 (-0.0259 to 0.0140) | undecidable | 0.09 | yes, both skills | undecidable | skill 0.20 only | 0.7703 / 0.8676 | 0.2919 |
-| both | P2 | 370 | -1.0197 | -0.0049 (-0.0259 to 0.0140) | undecidable | 0.09 | yes, both skills | undecidable | skill 0.20 only | 0.7703 / 0.8676 | 0.2919 |
-| headline_only | P0 | 5966 | -0.8885 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8639 / 0.9418 | 0.2162 |
-| headline_only | P1 | 5966 | -0.7614 | -0.0014 (-0.0054 to 0.0027) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8186 / 0.9071 | 0.2162 |
-| headline_only | P2 | 5966 | -0.7612 | 0.0001 (-0.0041 to 0.0044) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8153 / 0.9031 | 0.2162 |
-| image_only | P0 | 4361 | -0.8278 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8262 / 0.9227 | 0.4593 |
-| image_only | P1 | 4361 | -0.7276 | 0.0099 (0.0034 to 0.0170) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8046 / 0.8821 | 0.4593 |
-| image_only | P2 | 4361 | -0.7276 | 0.0099 (0.0034 to 0.0170) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8046 / 0.8821 | 0.4593 |
+| ALL | P0 | 10697 | -0.7761 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8460 / 0.9331 | 0.2902 |
+| ALL | P1 | 10697 | -0.7692 | 0.0069 (0.0041 to 0.0100) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8116 / 0.8943 | 0.2902 |
+| ALL | P2 | 10697 | -0.7695 | 0.0081 (0.0051 to 0.0114) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8101 / 0.8935 | 0.2902 |
+| both | P0 | 370 | -1.0228 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.09 | yes, both skills | undecidable | skill 0.20 only | 0.7919 / 0.9135 | 0.2973 |
+| both | P1 | 370 | -1.0292 | -0.0026 (-0.0114 to 0.0047) | undecidable | 0.09 | yes, both skills | undecidable | skill 0.20 only | 0.7730 / 0.8730 | 0.2973 |
+| both | P2 | 370 | -1.0292 | -0.0026 (-0.0114 to 0.0047) | undecidable | 0.09 | yes, both skills | undecidable | skill 0.20 only | 0.7730 / 0.8730 | 0.2973 |
+| headline_only | P0 | 5966 | -0.7867 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8639 / 0.9418 | 0.2167 |
+| headline_only | P1 | 5966 | -0.7735 | 0.0055 (0.0026 to 0.0089) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8201 / 0.9041 | 0.2167 |
+| headline_only | P2 | 5966 | -0.7739 | 0.0075 (0.0039 to 0.0112) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8175 / 0.9028 | 0.2167 |
+| image_only | P0 | 4361 | -0.7407 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8262 / 0.9227 | 0.3900 |
+| image_only | P1 | 4361 | -0.7413 | 0.0105 (0.0045 to 0.0167) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8033 / 0.8826 | 0.3900 |
+| image_only | P2 | 4361 | -0.7413 | 0.0105 (0.0045 to 0.0167) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.8033 / 0.8826 | 0.3900 |
 
 P0 is the empirical base-rate forecaster, so its Brier skill is zero by construction and its interval has no width. The gate columns read the number of scored tests against the gate sized at the base rate nearest the cell's own. A column for the earlier convention (base rate 0.3) or for the by-row verdict appears only when it says something the first column does not.
 
-P2 Brier skill against the base rate on all rows: 0.0032 (-0.0004 to 0.0072), which is not distinguishable from the constant base rate. Its calibration error is 0.0135, at percentile 100.0 of the clustered perfect-calibration null. P0 is the base-rate forecaster the skill is measured against, so its skill is zero by construction.
+P2 Brier skill against the base rate on all rows: 0.0081 (0.0051 to 0.0114), which is better than the constant base rate. Its calibration error is 0.0069, at percentile 91.7 of the clustered perfect-calibration null. P0 is the base-rate forecaster the skill is measured against, so its skill is zero by construction.
 
-Reliability bins: P2 rows predicted between 0.10 and 0.20 (4675 rows, mean predicted 0.1291) were followed by a significant positive result 0.1003 of the time.
+Reliability bins: P2 rows predicted between 0.10 and 0.20 (3944 rows, mean predicted 0.1205) were followed by a significant positive result 0.1050 of the time.
 
-Log score on all rows: P0 -0.8762, P1 -0.7566, P2 -0.7565. P2 minus P1 is +0.0001, so the precedent rung adds nothing measurable over the prior.
+Log score on all rows: P0 -0.7761, P1 -0.7692, P2 -0.7695. P2 minus P1 is -0.0002, so the precedent rung adds nothing measurable over the prior.
 
 Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.
 
 | rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |
 |---|---|---|---|---|---|---|
-| P0 | 2949 | 0.0000 (0.0000 to 0.0000) | n/a to n/a | -0.8762 (-0.9037 to -0.8508) | -0.9256 to -0.8269 | 52 |
-| P1 | 2949 | 0.0023 (-0.0012 to 0.0061) | -0.0044 to 0.0090 | -0.7566 (-0.7813 to -0.7348) | -0.8001 to -0.7130 | 52 |
-| P2 | 2949 | 0.0032 (-0.0004 to 0.0072) | -0.0039 to 0.0103 | -0.7565 (-0.7811 to -0.7346) | -0.8003 to -0.7127 | 52 |
+| P0 | 2949 | 0.0000 (0.0000 to 0.0000) | n/a to n/a | -0.7761 (-0.7974 to -0.7571) | -0.8145 to -0.7377 | 52 |
+| P1 | 2949 | 0.0069 (0.0041 to 0.0100) | 0.0013 to 0.0125 | -0.7692 (-0.7934 to -0.7471) | -0.8131 to -0.7254 | 52 |
+| P2 | 2949 | 0.0081 (0.0051 to 0.0114) | 0.0021 to 0.0141 | -0.7695 (-0.7932 to -0.7471) | -0.8135 to -0.7254 | 52 |
 
 Calibration error of `p_sig`, all cells pooled. The percentile is read in a perfect-calibration null that draws the contrasts of one test together (500 draws, so 100 means above every draw); the independent null draws every row alone and is kept for comparison.
 
 | rung | ECE | percentile, clustered null | percentile, independent null | equal-mass ECE | percentile, equal-mass | design effect | within-test correlation |
 |---|---|---|---|---|---|---|---|
 | P0 | 0.0194 | 100.0 | 100.0 | 0.0282 | 100.0 | 1.37 | 0.1193 |
-| P1 | 0.0140 | 100.0 | 100.0 | 0.0179 | 100.0 | 1.44 | 0.1409 |
-| P2 | 0.0135 | 100.0 | 100.0 | 0.0182 | 100.0 | 1.46 | 0.1469 |
+| P1 | 0.0083 | 97.3 | 99.0 | 0.0167 | 100.0 | 1.49 | 0.1582 |
+| P2 | 0.0069 | 91.7 | 97.7 | 0.0174 | 100.0 | 1.51 | 0.1637 |
 
 Discrimination apart from skill, all cells pooled. AUC is the chance that a row with the event gets a higher `p_sig` than a row without it (0.5 is no discrimination); resolution is the Murphy term of the Brier score: how far the observed event frequencies of equal-mass forecast bins lie from the overall event rate (zero when every bin has the overall rate, and not a measure of how much the forecasts vary). The last columns score the same forecast against the event defined on the planned standard error instead of the realized one; the headline skill stays on the realized event.
 
 | rung | AUC of the event (90% interval) | resolution of the event | event rate, realized standard error | event rate, planned standard error | Brier skill on the planned event (90% interval) |
 |---|---|---|---|---|---|
-| GBM | 0.5605 (0.5383 to 0.5790) | 0.00031 | 0.1681 (mean `p_sig`) | 0.0778 | -0.1126 (-0.1280 to -0.0968) |
-| GBM+cal | 0.5476 (0.5261 to 0.5660) | 0.00021 | 0.1116 (mean `p_sig`) | 0.0778 | -0.0075 (-0.0117 to -0.0030) |
-| P0 | 0.5610 (0.5391 to 0.5791) | 0.00062 | 0.1141 (mean `p_sig`) | 0.0778 | 0.0000 (0.0000 to 0.0000) |
-| P1 | 0.5562 (0.5340 to 0.5738) | 0.00027 | 0.0994 (mean `p_sig`) | 0.0778 | 0.0046 (0.0008 to 0.0083) |
-| P2 | 0.5591 (0.5373 to 0.5764) | 0.00032 | 0.0978 (mean `p_sig`) | 0.0778 | 0.0058 (0.0018 to 0.0095) |
-| local_eb | 0.5460 (0.5250 to 0.5653) | 0.00047 | 0.1051 (mean `p_sig`) | 0.0778 | -0.0172 (-0.0245 to -0.0104) |
-| local_eb+cal | 0.5471 (0.5242 to 0.5668) | 0.00033 | 0.1085 (mean `p_sig`) | 0.0778 | 0.0029 (0.0003 to 0.0060) |
-| text_lr | 0.5763 (0.5543 to 0.5958) | 0.00065 | 0.0935 (mean `p_sig`) | 0.0778 | 0.0159 (0.0082 to 0.0238) |
-| text_lr+cal | 0.5811 (0.5608 to 0.5999) | 0.00053 | 0.1079 (mean `p_sig`) | 0.0778 | 0.0078 (0.0034 to 0.0121) |
+| GBM | 0.5595 (0.5363 to 0.5783) | 0.00045 | 0.1605 (mean `p_sig`) | 0.0764 | -0.0866 (-0.1001 to -0.0723) |
+| GBM+cal | 0.5610 (0.5385 to 0.5807) | 0.00044 | 0.1124 (mean `p_sig`) | 0.0764 | -0.0012 (-0.0052 to 0.0033) |
+| P0 | 0.5610 (0.5391 to 0.5791) | 0.00062 | 0.1086 (mean `p_sig`) | 0.0764 | 0.0000 (0.0000 to 0.0000) |
+| P1 | 0.5554 (0.5329 to 0.5743) | 0.00046 | 0.0936 (mean `p_sig`) | 0.0764 | 0.0127 (0.0096 to 0.0155) |
+| P2 | 0.5657 (0.5430 to 0.5836) | 0.00057 | 0.0923 (mean `p_sig`) | 0.0764 | 0.0133 (0.0100 to 0.0163) |
+| local_eb | 0.5408 (0.5171 to 0.5616) | 0.00033 | 0.0958 (mean `p_sig`) | 0.0764 | -0.0033 (-0.0098 to 0.0030) |
+| local_eb+cal | 0.5495 (0.5265 to 0.5683) | 0.00029 | 0.1082 (mean `p_sig`) | 0.0764 | 0.0016 (-0.0015 to 0.0047) |
+| text_lr | 0.5763 (0.5543 to 0.5958) | 0.00065 | 0.0935 (mean `p_sig`) | 0.0764 | 0.0153 (0.0069 to 0.0238) |
+| text_lr+cal | 0.5811 (0.5608 to 0.5999) | 0.00053 | 0.1079 (mean `p_sig`) | 0.0764 | 0.0054 (0.0008 to 0.0099) |
 
 Calibration by precision: rows in deciles of planned exposures per arm (fewer groups when exposures tie). A forecaster calibrated overall but not within these groups is not calibrated; `mean p_sig` should match `event rate` and `coverage 90%` should be near 0.90 in every group.
 
 | rung | decile | planned exposures per arm | n | mean s_star | mean p_sig | event rate | coverage 90% |
 |---|---|---|---|---|---|---|---|
-| P1 | 1 | 1167 to 2228 | 1068 | 0.3739 | 0.0737 | 0.0637 | 0.8624 |
-| P1 | 2 | 2229 to 2684 | 1072 | 0.3434 | 0.0929 | 0.0774 | 0.8694 |
-| P1 | 3 | 2685 to 2900 | 1069 | 0.3139 | 0.0923 | 0.0739 | 0.8746 |
-| P1 | 4 | 2900 to 3060 | 1069 | 0.3035 | 0.0853 | 0.1048 | 0.8849 |
-| P1 | 5 | 3060 to 3204 | 1067 | 0.3007 | 0.0851 | 0.0862 | 0.8885 |
-| P1 | 6 | 3204 to 3556 | 1073 | 0.2981 | 0.1005 | 0.0848 | 0.8928 |
-| P1 | 7 | 3556 to 3893 | 1068 | 0.2804 | 0.1056 | 0.1011 | 0.9054 |
-| P1 | 8 | 3894 to 4385 | 1071 | 0.2646 | 0.1059 | 0.0887 | 0.8936 |
-| P1 | 9 | 4387 to 5268 | 1070 | 0.2499 | 0.1192 | 0.0841 | 0.9355 |
-| P1 | 10 | 5271 to 15082 | 1070 | 0.2172 | 0.1330 | 0.0888 | 0.9486 |
-| P2 | 1 | 1167 to 2228 | 1068 | 0.3739 | 0.0716 | 0.0637 | 0.8577 |
-| P2 | 2 | 2229 to 2684 | 1072 | 0.3434 | 0.0911 | 0.0774 | 0.8685 |
-| P2 | 3 | 2685 to 2900 | 1069 | 0.3139 | 0.0881 | 0.0739 | 0.8653 |
-| P2 | 4 | 2900 to 3060 | 1069 | 0.3035 | 0.0837 | 0.1048 | 0.8821 |
-| P2 | 5 | 3060 to 3204 | 1067 | 0.3007 | 0.0842 | 0.0862 | 0.8875 |
-| P2 | 6 | 3204 to 3556 | 1073 | 0.2981 | 0.0984 | 0.0848 | 0.8928 |
-| P2 | 7 | 3556 to 3893 | 1068 | 0.2804 | 0.1038 | 0.1011 | 0.9026 |
-| P2 | 8 | 3894 to 4385 | 1071 | 0.2646 | 0.1053 | 0.0887 | 0.8926 |
-| P2 | 9 | 4387 to 5268 | 1070 | 0.2499 | 0.1189 | 0.0841 | 0.9355 |
-| P2 | 10 | 5271 to 15082 | 1070 | 0.2172 | 0.1324 | 0.0888 | 0.9486 |
+| P1 | 1 | 2641 to 2803 | 743 | 0.3456 | 0.1245 | 0.1211 | 0.8856 |
+| P1 | 2 | 2866 to 2866 | 1026 | 0.3242 | 0.1213 | 0.1209 | 0.9220 |
+| P1 | 3 | 2873 to 2913 | 800 | 0.3118 | 0.1208 | 0.1212 | 0.8450 |
+| P1 | 4 | 3002 to 3002 | 1550 | 0.3009 | 0.1146 | 0.0761 | 0.9555 |
+| P1 | 5 | 3041 to 3041 | 838 | 0.3466 | 0.0935 | 0.0656 | 0.9093 |
+| P1 | 6 | 3128 to 3266 | 1423 | 0.3230 | 0.0688 | 0.0520 | 0.9325 |
+| P1 | 7 | 3268 to 3309 | 534 | 0.3044 | 0.0954 | 0.0880 | 0.7603 |
+| P1 | 8 | 3314 to 3314 | 604 | 0.2565 | 0.0912 | 0.0695 | 0.8808 |
+| P1 | 9 | 3320 to 3400 | 2093 | 0.2703 | 0.0804 | 0.0793 | 0.8877 |
+| P1 | 10 | 3428 to 3442 | 1086 | 0.2940 | 0.0549 | 0.0921 | 0.8471 |
+| P2 | 1 | 2641 to 2803 | 743 | 0.3456 | 0.1201 | 0.1211 | 0.8869 |
+| P2 | 2 | 2866 to 2866 | 1026 | 0.3242 | 0.1213 | 0.1209 | 0.9220 |
+| P2 | 3 | 2873 to 2913 | 800 | 0.3118 | 0.1208 | 0.1212 | 0.8450 |
+| P2 | 4 | 3002 to 3002 | 1550 | 0.3009 | 0.1146 | 0.0761 | 0.9555 |
+| P2 | 5 | 3041 to 3041 | 838 | 0.3466 | 0.0935 | 0.0656 | 0.9093 |
+| P2 | 6 | 3128 to 3266 | 1423 | 0.3230 | 0.0673 | 0.0520 | 0.9311 |
+| P2 | 7 | 3268 to 3309 | 534 | 0.3044 | 0.0954 | 0.0880 | 0.7603 |
+| P2 | 8 | 3314 to 3314 | 604 | 0.2565 | 0.0820 | 0.0695 | 0.8692 |
+| P2 | 9 | 3320 to 3400 | 2093 | 0.2703 | 0.0789 | 0.0793 | 0.8877 |
+| P2 | 10 | 3428 to 3442 | 1086 | 0.2940 | 0.0549 | 0.0921 | 0.8471 |
 
 Coverage by decile of the realized over the planned standard error. The forecaster fixes the level of the outcome rate at the cell median, so its planned standard error is too small when the realized rate is higher and too large when it is lower: coverage is near 0.90 on average and not within these groups. The realized standard error is used here to group rows and is never an input of a forecast.
 
 | rung | decile | realized over planned standard error | n | mean ratio | mean p_sig | event rate | coverage 80% | coverage 90% |
 |---|---|---|---|---|---|---|---|---|
-| P1 | 1 | 0.32 to 0.61 | 1070 | 0.534 | 0.1093 | 0.0336 | 0.9981 | 1.0000 |
-| P1 | 2 | 0.61 to 0.70 | 1070 | 0.657 | 0.1042 | 0.0579 | 0.9757 | 0.9944 |
-| P1 | 3 | 0.70 to 0.76 | 1069 | 0.731 | 0.0984 | 0.0804 | 0.9336 | 0.9888 |
-| P1 | 4 | 0.76 to 0.83 | 1070 | 0.795 | 0.0970 | 0.0757 | 0.8813 | 0.9692 |
-| P1 | 5 | 0.83 to 0.89 | 1069 | 0.861 | 0.0935 | 0.0842 | 0.8569 | 0.9439 |
-| P1 | 6 | 0.89 to 0.96 | 1070 | 0.926 | 0.0947 | 0.0897 | 0.7981 | 0.9028 |
-| P1 | 7 | 0.96 to 1.04 | 1070 | 0.995 | 0.0951 | 0.0963 | 0.7411 | 0.8626 |
-| P1 | 8 | 1.04 to 1.13 | 1069 | 1.083 | 0.0979 | 0.1123 | 0.6978 | 0.8316 |
-| P1 | 9 | 1.13 to 1.28 | 1070 | 1.200 | 0.0998 | 0.1047 | 0.6654 | 0.7776 |
-| P1 | 10 | 1.28 to 2.75 | 1070 | 1.492 | 0.1036 | 0.1187 | 0.5645 | 0.6850 |
-| P2 | 1 | 0.32 to 0.61 | 1070 | 0.534 | 0.1087 | 0.0336 | 0.9981 | 1.0000 |
-| P2 | 2 | 0.61 to 0.70 | 1070 | 0.657 | 0.1027 | 0.0579 | 0.9757 | 0.9944 |
-| P2 | 3 | 0.70 to 0.76 | 1069 | 0.731 | 0.0968 | 0.0804 | 0.9336 | 0.9878 |
-| P2 | 4 | 0.76 to 0.83 | 1070 | 0.795 | 0.0956 | 0.0757 | 0.8804 | 0.9682 |
-| P2 | 5 | 0.83 to 0.89 | 1069 | 0.861 | 0.0920 | 0.0842 | 0.8569 | 0.9429 |
-| P2 | 6 | 0.89 to 0.96 | 1070 | 0.926 | 0.0930 | 0.0897 | 0.7972 | 0.8963 |
-| P2 | 7 | 0.96 to 1.04 | 1070 | 0.995 | 0.0935 | 0.0963 | 0.7355 | 0.8607 |
-| P2 | 8 | 1.04 to 1.13 | 1069 | 1.083 | 0.0960 | 0.1123 | 0.6913 | 0.8279 |
-| P2 | 9 | 1.13 to 1.28 | 1070 | 1.200 | 0.0977 | 0.1047 | 0.6645 | 0.7738 |
-| P2 | 10 | 1.28 to 2.75 | 1070 | 1.492 | 0.1017 | 0.1187 | 0.5607 | 0.6813 |
+| P1 | 1 | 0.18 to 0.52 | 1070 | 0.424 | 0.0949 | 0.0654 | 0.9935 | 1.0000 |
+| P1 | 2 | 0.52 to 0.63 | 1070 | 0.576 | 0.0961 | 0.0570 | 0.9654 | 0.9879 |
+| P1 | 3 | 0.63 to 0.71 | 1069 | 0.668 | 0.0919 | 0.0674 | 0.9383 | 0.9813 |
+| P1 | 4 | 0.71 to 0.79 | 1070 | 0.753 | 0.0920 | 0.0925 | 0.8916 | 0.9561 |
+| P1 | 5 | 0.79 to 0.88 | 1069 | 0.835 | 0.0908 | 0.0964 | 0.8419 | 0.9457 |
+| P1 | 6 | 0.88 to 0.96 | 1070 | 0.918 | 0.0920 | 0.0794 | 0.8103 | 0.9093 |
+| P1 | 7 | 0.96 to 1.04 | 1070 | 0.999 | 0.0906 | 0.0963 | 0.7579 | 0.8645 |
+| P1 | 8 | 1.04 to 1.16 | 1069 | 1.098 | 0.0945 | 0.0973 | 0.7231 | 0.8419 |
+| P1 | 9 | 1.16 to 1.34 | 1070 | 1.243 | 0.0932 | 0.0897 | 0.6439 | 0.7804 |
+| P1 | 10 | 1.34 to 2.80 | 1070 | 1.615 | 0.1000 | 0.1121 | 0.5505 | 0.6757 |
+| P2 | 1 | 0.18 to 0.52 | 1070 | 0.424 | 0.0947 | 0.0654 | 0.9935 | 1.0000 |
+| P2 | 2 | 0.52 to 0.63 | 1070 | 0.576 | 0.0953 | 0.0570 | 0.9645 | 0.9879 |
+| P2 | 3 | 0.63 to 0.71 | 1069 | 0.668 | 0.0909 | 0.0674 | 0.9373 | 0.9813 |
+| P2 | 4 | 0.71 to 0.79 | 1070 | 0.753 | 0.0910 | 0.0925 | 0.8935 | 0.9561 |
+| P2 | 5 | 0.79 to 0.88 | 1069 | 0.835 | 0.0895 | 0.0964 | 0.8410 | 0.9448 |
+| P2 | 6 | 0.88 to 0.96 | 1070 | 0.918 | 0.0908 | 0.0794 | 0.8047 | 0.9093 |
+| P2 | 7 | 0.96 to 1.04 | 1070 | 0.999 | 0.0891 | 0.0963 | 0.7589 | 0.8636 |
+| P2 | 8 | 1.04 to 1.16 | 1069 | 1.098 | 0.0929 | 0.0973 | 0.7212 | 0.8410 |
+| P2 | 9 | 1.16 to 1.34 | 1070 | 1.243 | 0.0909 | 0.0897 | 0.6383 | 0.7785 |
+| P2 | 10 | 1.34 to 2.80 | 1070 | 1.615 | 0.0979 | 0.1121 | 0.5486 | 0.6729 |
 
 Direction accuracy against its ceiling, every rung and the two direction baselines (always the reference arm, always the variant):
 
 | rung | kind | direction accuracy (90% interval) | ceiling | decisive rows | direction accuracy on decisive rows |
 |---|---|---|---|---|---|
-| GBM | challenger | 0.5688 (0.5575 to 0.5797) | 0.8174 | 2696 | 0.6413 |
+| GBM | challenger | 0.5690 (0.5572 to 0.5802) | 0.8174 | 2696 | 0.6428 |
 | GBM+cal | challenger | n/a (n/a to n/a) | 0.8174 | 0 | n/a |
 | P0 | ladder | 0.5721 (0.5606 to 0.5822) | 0.8174 | 2696 | 0.6447 |
 | P1 | ladder | 0.5683 (0.5565 to 0.5791) | 0.8174 | 2696 | 0.6372 |
-| P2 | ladder | 0.5706 (0.5591 to 0.5811) | 0.8174 | 2696 | 0.6417 |
+| P2 | ladder | 0.5701 (0.5583 to 0.5801) | 0.8174 | 2696 | 0.6432 |
 | always_reference | baseline | 0.5825 (0.5706 to 0.5936) | 0.8174 | 2696 | 0.6614 |
 | always_variant | baseline | 0.4175 (0.4064 to 0.4294) | 0.8174 | 2696 | 0.3386 |
-| local_eb | challenger | 0.5453 (0.5351 to 0.5550) | 0.8174 | 2696 | 0.5987 |
+| local_eb | challenger | 0.5461 (0.5350 to 0.5558) | 0.8174 | 2696 | 0.6031 |
 | local_eb+cal | challenger | n/a (n/a to n/a) | 0.8174 | 0 | n/a |
 | text_lr | challenger | 0.5581 (0.5482 to 0.5676) | 0.8174 | 2696 | 0.5886 |
 | text_lr+cal | challenger | n/a (n/a to n/a) | 0.8174 | 0 | n/a |
@@ -151,10 +151,10 @@ Abstention by trigger (rows that fired each trigger; a row can fire several):
 
 | cell | rows | abstention rate | support | novelty | reliability | instability |
 |---|---|---|---|---|---|---|
-| ALL | 10697 | 0.3179 | 280 | 1549 | 1915 | 0 |
-| both | 370 | 0.2919 | 67 | 20 | 88 | 0 |
-| headline_only | 5966 | 0.2162 | 0 | 226 | 1086 | 0 |
-| image_only | 4361 | 0.4593 | 213 | 1303 | 741 | 0 |
+| ALL | 10697 | 0.2902 | 280 | 1662 | 1915 | 0 |
+| both | 370 | 0.2973 | 67 | 22 | 88 | 0 |
+| headline_only | 5966 | 0.2167 | 0 | 230 | 1086 | 0 |
+| image_only | 4361 | 0.3900 | 213 | 1410 | 741 | 0 |
 
 Never fired in this backtest: instability. After the burn-in origin the reliability trigger fired on 1236 rows.
 
@@ -163,22 +163,22 @@ Decision value at a budget of 25 percent of the tests (budgets of 10 and 50 perc
 | policy | rung | captured fraction (90% interval) | difference from random order (90% interval) | chooses by cell only |
 |---|---|---|---|---|
 | random | all | 0.2505 (0.2505 to 0.2505) | +0.0000 (+0.0000 to +0.0000) | n/a |
-| p_win | GBM | 0.2768 (0.2604 to 0.2969) | +0.0263 (+0.0099 to +0.0464) | no |
+| p_win | GBM | 0.2727 (0.2551 to 0.2934) | +0.0221 (+0.0046 to +0.0428) | no |
 | p_win | P0 | 0.2497 (0.2405 to 0.2586) | -0.0008 (-0.0100 to +0.0080) | yes |
 | p_win | P1 | 0.2490 (0.2384 to 0.2592) | -0.0015 (-0.0121 to +0.0087) | yes |
-| p_win | P2 | 0.2752 (0.2597 to 0.2885) | +0.0247 (+0.0091 to +0.0380) | no |
-| p_win | local_eb | 0.2791 (0.2591 to 0.2954) | +0.0286 (+0.0085 to +0.0449) | no |
+| p_win | P2 | 0.2696 (0.2551 to 0.2845) | +0.0191 (+0.0045 to +0.0340) | no |
+| p_win | local_eb | 0.2777 (0.2614 to 0.2993) | +0.0272 (+0.0109 to +0.0488) | no |
 | p_win | text_lr | 0.3070 (0.2884 to 0.3263) | +0.0565 (+0.0379 to +0.0758) | no |
 | oracle | all | 0.6839 (0.6711 to 0.6955) | +0.4334 (+0.4205 to +0.4450) | n/a |
-| random_matched | GBM | 0.2596 (0.2555 to 0.2640) | +0.0091 (+0.0050 to +0.0135) | n/a |
+| random_matched | GBM | 0.2588 (0.2543 to 0.2633) | +0.0082 (+0.0038 to +0.0128) | n/a |
 | random_matched | P0 | 0.2517 (0.2490 to 0.2546) | +0.0012 (-0.0016 to +0.0041) | n/a |
 | random_matched | P1 | 0.2525 (0.2495 to 0.2556) | +0.0020 (-0.0010 to +0.0051) | n/a |
-| random_matched | P2 | 0.2577 (0.2547 to 0.2621) | +0.0072 (+0.0042 to +0.0116) | n/a |
+| random_matched | P2 | 0.2580 (0.2549 to 0.2625) | +0.0074 (+0.0044 to +0.0120) | n/a |
 | arm_count | all | 0.3093 (0.2940 to 0.3251) | +0.0588 (+0.0435 to +0.0746) | n/a |
-| random_matched | local_eb | 0.2608 (0.2556 to 0.2654) | +0.0103 (+0.0050 to +0.0149) | n/a |
+| random_matched | local_eb | 0.2603 (0.2558 to 0.2655) | +0.0097 (+0.0053 to +0.0149) | n/a |
 | random_matched | text_lr | 0.2613 (0.2574 to 0.2664) | +0.0108 (+0.0069 to +0.0159) | n/a |
 
-Decision value, a quarter of the tests, pooled over origins: random order captures 0.2505 of the total positive observed lift, choosing by P2 p_win captures 0.2752 (a difference from random order of +0.0247, interval +0.0091 to +0.0380), and an oracle that knows the result captures 0.6839.
+Decision value, a quarter of the tests, pooled over origins: random order captures 0.2505 of the total positive observed lift, choosing by P2 p_win captures 0.2696 (a difference from random order of +0.0191, interval +0.0045 to +0.0340), and an oracle that knows the result captures 0.6839.
 
 ### ASOS backtest
 
@@ -190,19 +190,19 @@ P2 admission guard: 2.0 standard errors.
 
 | cell | rung | n | log score | Brier skill (90% interval) | decidable by tests (0.90 gate, at the cell's base rate) | gate base rate | decidable by rows (0.90 gate, overstates) | decidable by tests (0.80 screen) | coverage 80% / 90% | abstention rate |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ALL | P0 | 337 | 4.3405 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7478 / 0.8309 | 0.4570 |
-| ALL | P1 | 337 | 4.7088 | -0.1073 (-0.2366 to -0.0020) | undecidable | 0.14 | undecidable | undecidable | 0.7834 / 0.8605 | 0.4570 |
-| ALL | P2 | 337 | 4.7088 | -0.1073 (-0.2366 to -0.0020) | undecidable | 0.14 | undecidable | undecidable | 0.7834 / 0.8605 | 0.4570 |
-| metric_1 | P0 | 85 | 4.0390 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7294 / 0.8000 | 0.3647 |
-| metric_1 | P1 | 85 | 4.5829 | -0.1882 (-0.3771 to -0.0502) | undecidable | 0.14 | undecidable | undecidable | 0.7647 / 0.8471 | 0.3647 |
-| metric_1 | P2 | 85 | 4.5829 | -0.1882 (-0.3771 to -0.0502) | undecidable | 0.14 | undecidable | undecidable | 0.7647 / 0.8471 | 0.3647 |
-| metric_2 | P0 | 84 | 4.2308 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7738 / 0.8214 | 0.4881 |
+| ALL | P0 | 337 | 4.6562 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7478 / 0.8309 | 0.4896 |
+| ALL | P1 | 337 | 4.7088 | -0.1073 (-0.2366 to -0.0020) | undecidable | 0.14 | undecidable | undecidable | 0.7834 / 0.8605 | 0.4896 |
+| ALL | P2 | 337 | 4.7088 | -0.1073 (-0.2366 to -0.0020) | undecidable | 0.14 | undecidable | undecidable | 0.7834 / 0.8605 | 0.4896 |
+| metric_1 | P0 | 85 | 4.5230 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7294 / 0.8000 | 0.4941 |
+| metric_1 | P1 | 85 | 4.5829 | -0.1882 (-0.3771 to -0.0502) | undecidable | 0.14 | undecidable | undecidable | 0.7647 / 0.8471 | 0.4941 |
+| metric_1 | P2 | 85 | 4.5829 | -0.1882 (-0.3771 to -0.0502) | undecidable | 0.14 | undecidable | undecidable | 0.7647 / 0.8471 | 0.4941 |
+| metric_2 | P0 | 84 | 4.5891 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7738 / 0.8214 | 0.4881 |
 | metric_2 | P1 | 84 | 4.6290 | -0.1629 (-0.3450 to -0.0545) | undecidable | 0.14 | undecidable | undecidable | 0.7738 / 0.8690 | 0.4881 |
 | metric_2 | P2 | 84 | 4.6290 | -0.1629 (-0.3450 to -0.0545) | undecidable | 0.14 | undecidable | undecidable | 0.7738 / 0.8690 | 0.4881 |
-| metric_3 | P0 | 84 | 4.5220 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7262 / 0.8571 | 0.4881 |
+| metric_3 | P0 | 84 | 4.7521 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7262 / 0.8571 | 0.4881 |
 | metric_3 | P1 | 84 | 4.7879 | -0.1200 (-0.3727 to 0.0184) | undecidable | 0.14 | undecidable | undecidable | 0.7738 / 0.8571 | 0.4881 |
 | metric_3 | P2 | 84 | 4.7879 | -0.1200 (-0.3727 to 0.0184) | undecidable | 0.14 | undecidable | undecidable | 0.7738 / 0.8571 | 0.4881 |
-| metric_4 | P0 | 84 | 4.5737 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7619 / 0.8452 | 0.4881 |
+| metric_4 | P0 | 84 | 4.7624 | 0.0000 (0.0000 to 0.0000) | undecidable | 0.14 | undecidable | undecidable | 0.7619 / 0.8452 | 0.4881 |
 | metric_4 | P1 | 84 | 4.8371 | 0.0201 (-0.0611 to 0.1268) | undecidable | 0.14 | undecidable | undecidable | 0.8214 / 0.8690 | 0.4881 |
 | metric_4 | P2 | 84 | 4.8371 | 0.0201 (-0.0611 to 0.1268) | undecidable | 0.14 | undecidable | undecidable | 0.8214 / 0.8690 | 0.4881 |
 
@@ -212,13 +212,13 @@ P2 Brier skill against the base rate on all rows: -0.1073 (-0.2366 to -0.0020), 
 
 Reliability bins: P2 rows predicted between 0.10 and 0.20 (86 rows, mean predicted 0.1426) were followed by a significant positive result 0.1860 of the time.
 
-Log score on all rows: P0 4.3405, P1 4.7088, P2 4.7088. P2 minus P1 is +0.0000, so the precedent rung adds nothing measurable over the prior.
+Log score on all rows: P0 4.6562, P1 4.7088, P2 4.7088. P2 minus P1 is +0.0000, so the precedent rung adds nothing measurable over the prior.
 
 Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.
 
 | rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |
 |---|---|---|---|---|---|---|
-| P0 | 68 | 0.0000 (0.0000 to 0.0000) | n/a to n/a | 4.3405 (3.9665 to 4.6479) | 3.7150 to 4.9660 | 55 |
+| P0 | 68 | 0.0000 (0.0000 to 0.0000) | n/a to n/a | 4.6562 (4.4074 to 4.8957) | 4.1883 to 5.1242 | 55 |
 | P1 | 68 | -0.1073 (-0.2366 to -0.0020) | -0.3258 to 0.1113 | 4.7088 (4.4240 to 4.9724) | 4.1850 to 5.2327 | 55 |
 | P2 | 68 | -0.1073 (-0.2366 to -0.0020) | -0.3258 to 0.1113 | 4.7088 (4.4240 to 4.9724) | 4.1850 to 5.2327 | 55 |
 
@@ -318,16 +318,16 @@ P2 admission guard: 2.0 standard errors.
 
 | cell | rung | n | log score | Brier skill (90% interval) | decidable by tests (0.90 gate, at the cell's base rate) | gate base rate | decidable by tests (0.90 gate, base rate 0.3) | decidable by rows (0.90 gate, overstates) | decidable by tests (0.80 screen) | coverage 80% / 90% | abstention rate |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ALL | P0 | 1814 | -2.4045 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.14 | yes, both skills | yes, both skills | yes, both skills | 0.7822 / 0.8809 | 0.1819 |
+| ALL | P0 | 1814 | -2.4056 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.14 | yes, both skills | yes, both skills | yes, both skills | 0.7822 / 0.8809 | 0.1819 |
 | ALL | P1 | 1814 | -2.3946 | 0.0023 (-0.0128 to 0.0168) | yes, both skills | 0.14 | yes, both skills | yes, both skills | yes, both skills | 0.7834 / 0.8908 | 0.1819 |
 | ALL | P2 | 1814 | -2.3946 | 0.0023 (-0.0128 to 0.0168) | yes, both skills | 0.14 | yes, both skills | yes, both skills | yes, both skills | 0.7834 / 0.8908 | 0.1819 |
-| both | P0 | 650 | -2.3553 | 0.0000 (0.0000 to 0.0000) | skill 0.20 only | 0.14 | yes, both skills | skill 0.20 only | yes, both skills | 0.7569 / 0.8600 | 0.1831 |
+| both | P0 | 650 | -2.3584 | 0.0000 (0.0000 to 0.0000) | skill 0.20 only | 0.14 | yes, both skills | skill 0.20 only | yes, both skills | 0.7569 / 0.8600 | 0.1831 |
 | both | P1 | 650 | -2.3435 | 0.0305 (0.0121 to 0.0458) | skill 0.20 only | 0.14 | yes, both skills | skill 0.20 only | yes, both skills | 0.7738 / 0.8738 | 0.1831 |
 | both | P2 | 650 | -2.3435 | 0.0305 (0.0121 to 0.0458) | skill 0.20 only | 0.14 | yes, both skills | skill 0.20 only | yes, both skills | 0.7738 / 0.8738 | 0.1831 |
 | headline_only | P0 | 592 | -2.6658 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.30 | yes, both skills | yes, both skills | yes, both skills | 0.8057 / 0.9088 | 0.1807 |
 | headline_only | P1 | 592 | -2.6670 | -0.0159 (-0.0360 to 0.0064) | yes, both skills | 0.30 | yes, both skills | yes, both skills | yes, both skills | 0.7821 / 0.8919 | 0.1807 |
 | headline_only | P2 | 592 | -2.6670 | -0.0159 (-0.0360 to 0.0064) | yes, both skills | 0.30 | yes, both skills | yes, both skills | yes, both skills | 0.7821 / 0.8919 | 0.1807 |
-| image_only | P0 | 572 | -2.1901 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.7867 / 0.8759 | 0.1818 |
+| image_only | P0 | 572 | -2.1899 | 0.0000 (0.0000 to 0.0000) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.7867 / 0.8759 | 0.1818 |
 | image_only | P1 | 572 | -2.1709 | 0.0046 (-0.0154 to 0.0176) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.7955 / 0.9091 | 0.1818 |
 | image_only | P2 | 572 | -2.1709 | 0.0046 (-0.0154 to 0.0176) | yes, both skills | 0.09 | yes, both skills | yes, both skills | yes, both skills | 0.7955 / 0.9091 | 0.1818 |
 
@@ -337,13 +337,13 @@ P2 Brier skill against the base rate on all rows: 0.0023 (-0.0128 to 0.0168), wh
 
 Reliability bins: P2 rows predicted between 0.10 and 0.20 (442 rows, mean predicted 0.1480) were followed by a significant positive result 0.1787 of the time.
 
-Log score on all rows: P0 -2.4045, P1 -2.3946, P2 -2.3946. P2 minus P1 is +0.0000, so the precedent rung adds nothing measurable over the prior.
+Log score on all rows: P0 -2.4056, P1 -2.3946, P2 -2.3946. P2 minus P1 is +0.0000, so the precedent rung adds nothing measurable over the prior.
 
 Percentile intervals beside Bonferroni-adjusted bounds, all cells pooled. The adjusted bounds cover every interval of the aggregate table at once (its family size is in the last column); the pooled interval is the primary claim, a rule fixed after the data were seen, and the per-cell intervals are descriptive.
 
 | rung | tests | Brier skill (90% interval) | Brier skill, adjusted bounds | log score (90% interval) | log score, adjusted bounds | intervals in the family |
 |---|---|---|---|---|---|---|
-| P0 | 907 | 0.0000 (0.0000 to 0.0000) | n/a to n/a | -2.4045 (-2.4374 to -2.3698) | -2.4693 to -2.3398 | 52 |
+| P0 | 907 | 0.0000 (0.0000 to 0.0000) | n/a to n/a | -2.4056 (-2.4381 to -2.3713) | -2.4699 to -2.3412 | 52 |
 | P1 | 907 | 0.0023 (-0.0128 to 0.0168) | -0.0258 to 0.0304 | -2.3946 (-2.4262 to -2.3604) | -2.4567 to -2.3326 | 52 |
 | P2 | 907 | 0.0023 (-0.0128 to 0.0168) | -0.0258 to 0.0304 | -2.3946 (-2.4262 to -2.3604) | -2.4567 to -2.3326 | 52 |
 
@@ -457,18 +457,18 @@ Same features, same origins, same rows as the ladder; the rows are rungs of the 
 
 | rung | kind | n | log score | Brier skill (90% interval) | direction accuracy | direction accuracy on decisive rows | abstention rate |
 |---|---|---|---|---|---|---|---|
-| P1 | ladder | 10697 | -0.7566 | 0.0023 (-0.0012 to 0.0061) | 0.5683 | 0.6372 | 0.3179 |
-| P2 | ladder | 10697 | -0.7565 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.6417 | 0.3179 |
-| GBM | challenger | 10697 | -0.8601 | -0.0891 (-0.1052 to -0.0747) | 0.5688 | 0.6413 | 0.3179 |
-| GBM+cal | challenger | 10697 | n/a | -0.0043 (-0.0092 to 0.0012) | n/a | n/a | 0.3179 |
-| local_eb | challenger | 10697 | -0.8775 | -0.0173 (-0.0250 to -0.0104) | 0.5453 | 0.5987 | 0.3179 |
-| local_eb+cal | challenger | 10697 | n/a | 0.0002 (-0.0032 to 0.0040) | n/a | n/a | 0.3179 |
-| text_lr | challenger | 10697 | n/a | 0.0070 (-0.0005 to 0.0140) | 0.5581 | 0.5886 | 0.3179 |
-| text_lr+cal | challenger | 10697 | n/a | 0.0045 (-0.0003 to 0.0100) | n/a | n/a | 0.3179 |
+| P1 | ladder | 10697 | -0.7692 | 0.0069 (0.0041 to 0.0100) | 0.5683 | 0.6372 | 0.2902 |
+| P2 | ladder | 10697 | -0.7695 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.6432 | 0.2902 |
+| GBM | challenger | 10697 | -0.8686 | -0.0684 (-0.0826 to -0.0562) | 0.5690 | 0.6428 | 0.2902 |
+| GBM+cal | challenger | 10697 | n/a | -0.0005 (-0.0047 to 0.0038) | n/a | n/a | 0.2902 |
+| local_eb | challenger | 10697 | -0.8969 | -0.0088 (-0.0153 to -0.0024) | 0.5461 | 0.6031 | 0.2902 |
+| local_eb+cal | challenger | 10697 | n/a | 0.0003 (-0.0032 to 0.0043) | n/a | n/a | 0.2902 |
+| text_lr | challenger | 10697 | n/a | 0.0070 (-0.0005 to 0.0140) | 0.5581 | 0.5886 | 0.2902 |
+| text_lr+cal | challenger | 10697 | n/a | 0.0045 (-0.0003 to 0.0100) | n/a | n/a | 0.2902 |
 
-GBM minus P2 log score is -0.1036, so GBM is worse than P2 on this score.
+GBM minus P2 log score is -0.0992, so GBM is worse than P2 on this score.
 
-local_eb minus P2 log score is -0.1211, so local_eb is worse than P2 on this score.
+local_eb minus P2 log score is -0.1274, so local_eb is worse than P2 on this score.
 
 No challenger row has a Brier skill interval that excludes zero.
 
@@ -478,78 +478,74 @@ Each row is one backtest on the same origins with one setting changed, written t
 
 | setting | guard | n | P1 log score | P2 log score | P2 minus P1 | P2 Brier skill (90% interval) | P2 direction accuracy | P2 coverage 90% |
 |---|---|---|---|---|---|---|---|---|
-| main run (defaults) | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.8933 |
-| admission-prelaunch | 2.0 | 11669 | -0.7336 | -0.7332 | +0.0004 | 0.0038 (0.0001 to 0.0076) | 0.5737 | 0.8966 |
-| bandwidth-mult-0.125 | 2.0 | 10697 | -0.7566 | -0.7567 | -0.0002 | 0.0028 (-0.0008 to 0.0067) | 0.5693 | 0.8957 |
-| bandwidth-mult-0.125+p2-guard-off | off | 10697 | -0.7566 | -0.7600 | -0.0035 | 0.0001 (-0.0037 to 0.0042) | 0.5663 | 0.8963 |
-| bandwidth-mult-0.25 | 2.0 | 10697 | -0.7566 | -0.7566 | -0.0001 | 0.0031 (-0.0005 to 0.0071) | 0.5706 | 0.8938 |
-| bandwidth-mult-0.25+p2-guard-off | off | 10697 | -0.7566 | -0.7587 | -0.0022 | 0.0019 (-0.0020 to 0.0061) | 0.5705 | 0.8933 |
-| bandwidth-mult-0.5 | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0026 (-0.0011 to 0.0063) | 0.5683 | 0.8941 |
-| bandwidth-mult-0.5+p2-guard-off | off | 10697 | -0.7566 | -0.7581 | -0.0015 | 0.0019 (-0.0020 to 0.0060) | 0.5719 | 0.8925 |
-| bandwidth-mult-1.0 | 2.0 | 10697 | -0.7566 | -0.7567 | -0.0001 | 0.0025 (-0.0012 to 0.0061) | 0.5683 | 0.8946 |
-| bandwidth-mult-1.0+p2-guard-off | off | 10697 | -0.7566 | -0.7584 | -0.0018 | 0.0020 (-0.0019 to 0.0060) | 0.5721 | 0.8937 |
-| base-density-t | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.8933 |
-| base-recency-cell-quarter | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0038 (0.0003 to 0.0073) | 0.5706 | 0.8933 |
-| base-recency-quarter | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0017 (-0.0019 to 0.0053) | 0.5706 | 0.8933 |
-| contrasts-one | 2.0 | 2949 | -0.7708 | -0.7707 | +0.0002 | 0.0056 (-0.0003 to 0.0113) | 0.5371 | 0.8956 |
-| effect-scale-relative | 2.0 | 10697 | -5.3882 | -5.3882 | +0.0000 | 0.0046 (0.0002 to 0.0089) | 0.5825 | 0.8428 |
+| main run (defaults) | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
+| admission-prelaunch | 2.0 | 11669 | -0.7449 | -0.7448 | +0.0000 | 0.0076 (0.0046 to 0.0109) | 0.5740 | 0.8947 |
+| bandwidth-mult-0.125 | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0073 (0.0044 to 0.0106) | 0.5699 | 0.8944 |
+| bandwidth-mult-0.125+p2-guard-off | off | 10697 | -0.7692 | -0.7718 | -0.0026 | 0.0060 (0.0029 to 0.0096) | 0.5663 | 0.8947 |
+| bandwidth-mult-0.25 | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0003 | 0.0078 (0.0048 to 0.0112) | 0.5703 | 0.8933 |
+| bandwidth-mult-0.25+p2-guard-off | off | 10697 | -0.7692 | -0.7716 | -0.0023 | 0.0068 (0.0033 to 0.0105) | 0.5705 | 0.8923 |
+| bandwidth-mult-0.5 | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0075 (0.0045 to 0.0108) | 0.5683 | 0.8932 |
+| bandwidth-mult-0.5+p2-guard-off | off | 10697 | -0.7692 | -0.7709 | -0.0017 | 0.0066 (0.0031 to 0.0103) | 0.5722 | 0.8920 |
+| bandwidth-mult-1.0 | 2.0 | 10697 | -0.7692 | -0.7696 | -0.0004 | 0.0073 (0.0044 to 0.0106) | 0.5683 | 0.8933 |
+| bandwidth-mult-1.0+p2-guard-off | off | 10697 | -0.7692 | -0.7712 | -0.0019 | 0.0067 (0.0033 to 0.0104) | 0.5721 | 0.8927 |
+| base-density-normal | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
+| base-recency-cell-quarter | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0087 (0.0065 to 0.0112) | 0.5701 | 0.8935 |
+| base-recency-quarter | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0066 (0.0042 to 0.0092) | 0.5701 | 0.8935 |
+| contrasts-one | 2.0 | 2949 | -0.7820 | -0.7819 | +0.0001 | 0.0101 (0.0056 to 0.0154) | 0.5371 | 0.8915 |
+| effect-scale-relative | 2.0 | 10697 | -5.3746 | -5.3746 | +0.0000 | 0.0071 (0.0035 to 0.0111) | 0.5825 | 0.8460 |
 | effect-scale-relative+s-star-realized | 2.0 | 10697 | -4.9804 | -4.9804 | +0.0000 | -0.1036 (-0.1122 to -0.0961) | 0.5825 | 0.8840 |
-| exposure-cell-median | 2.0 | 10697 | -0.7676 | -0.7678 | -0.0002 | 0.0071 (0.0043 to 0.0105) | 0.5701 | 0.8927 |
-| exposure-cell-median+base-density-t | 2.0 | 10697 | -0.7676 | -0.7678 | -0.0002 | 0.0071 (0.0043 to 0.0105) | 0.5701 | 0.8927 |
-| exposure-cell-median+base-recency-quarter | 2.0 | 10697 | -0.7676 | -0.7678 | -0.0002 | 0.0056 (0.0033 to 0.0084) | 0.5701 | 0.8927 |
-| exposure-cell-median-visible | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
-| exposure-cell-median-visible+base-density-t | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
-| exposure-cell-median-visible+base-recency-quarter | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0066 (0.0042 to 0.0092) | 0.5701 | 0.8935 |
-| features-structured | 2.0 | 10697 | -0.7566 | -0.7558 | +0.0008 | 0.0024 (-0.0016 to 0.0064) | 0.5688 | 0.8940 |
-| features-structured+p2-guard-off | off | 10697 | -0.7566 | -0.7571 | -0.0006 | 0.0027 (-0.0018 to 0.0072) | 0.5691 | 0.8934 |
-| features-text | 2.0 | 10697 | -0.7566 | -0.7578 | -0.0012 | 0.0028 (-0.0010 to 0.0067) | 0.5680 | 0.8945 |
-| features-text+p2-guard-off | off | 10697 | -0.7566 | -0.7621 | -0.0055 | 0.0008 (-0.0036 to 0.0053) | 0.5646 | 0.8940 |
-| kappa-0.0 | 2.0 | 10697 | -0.7607 | -0.7606 | +0.0001 | 0.0011 (-0.0025 to 0.0050) | 0.5706 | 0.8931 |
-| kappa-5.0 | 2.0 | 10697 | -0.7593 | -0.7591 | +0.0001 | 0.0016 (-0.0020 to 0.0057) | 0.5706 | 0.8935 |
-| kappa-80.0 | 2.0 | 10697 | -0.7549 | -0.7548 | +0.0001 | 0.0035 (-0.0004 to 0.0074) | 0.5706 | 0.8937 |
-| lambda-0.0 | 2.0 | 10697 | -0.7566 | -0.7566 | +0.0000 | 0.0023 (-0.0012 to 0.0061) | 0.5683 | 0.8956 |
-| lambda-0.2 | 2.0 | 10697 | -0.7566 | -0.7592 | -0.0027 | 0.0017 (-0.0020 to 0.0058) | 0.5659 | 0.8966 |
-| lambda-0.5 | 2.0 | 10697 | -0.7566 | -0.7654 | -0.0088 | -0.0051 (-0.0095 to 0.0001) | 0.5632 | 0.8950 |
-| lambda-1.0 | 2.0 | 10697 | -0.7566 | -0.7696 | -0.0130 | -0.0027 (-0.0081 to 0.0030) | 0.5716 | 0.8934 |
-| p2-guard-1.0 | 1.0 | 10697 | -0.7566 | -0.7595 | -0.0029 | 0.0002 (-0.0037 to 0.0046) | 0.5682 | 0.8927 |
-| p2-guard-off | off | 10697 | -0.7566 | -0.7604 | -0.0039 | -0.0002 (-0.0043 to 0.0042) | 0.5679 | 0.8930 |
-| p2-selection-loto | 2.0 | 10697 | -0.7566 | -0.7564 | +0.0002 | 0.0027 (-0.0005 to 0.0062) | 0.5684 | 0.8996 |
-| p2-selection-loto+p2-guard-off | off | 10697 | -0.7566 | -0.7564 | +0.0002 | 0.0024 (-0.0011 to 0.0059) | 0.5683 | 0.9007 |
-| p2-selection-loto+recency-select | 2.0 | 10697 | -0.7566 | -0.7564 | +0.0002 | 0.0027 (-0.0005 to 0.0062) | 0.5684 | 0.8996 |
-| p2-selection-loto+recency-select+p2-guard-off | off | 10697 | -0.7566 | -0.7564 | +0.0001 | 0.0024 (-0.0011 to 0.0058) | 0.5684 | 0.9005 |
-| pairwise-off | 2.0 | 10697 | -0.7566 | -0.7567 | -0.0001 | 0.0024 (-0.0012 to 0.0061) | 0.5683 | 0.8945 |
-| pairwise-off+p2-guard-off | off | 10697 | -0.7566 | -0.7586 | -0.0020 | 0.0019 (-0.0020 to 0.0059) | 0.5701 | 0.8933 |
-| prior-normal | 2.0 | 10697 | -0.8316 | -0.8328 | -0.0012 | -0.0168 (-0.0229 to -0.0112) | 0.5713 | 0.9053 |
-| recalibrate-ladder-on | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.8933 |
-| recency-select | 2.0 | 10697 | -0.7566 | -0.7567 | -0.0001 | 0.0032 (-0.0006 to 0.0074) | 0.5706 | 0.8932 |
-| recency-select+p2-guard-off | off | 10697 | -0.7566 | -0.7607 | -0.0041 | -0.0003 (-0.0043 to 0.0043) | 0.5682 | 0.8928 |
-| s-star-realized | 2.0 | 10697 | -0.7100 | -0.7095 | +0.0005 | -0.0378 (-0.0456 to -0.0303) | 0.5706 | 0.9004 |
+| exposure-planned | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.8933 |
+| exposure-planned+base-density-normal | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.8933 |
+| features-structured | 2.0 | 10697 | -0.7692 | -0.7690 | +0.0003 | 0.0072 (0.0040 to 0.0108) | 0.5680 | 0.8929 |
+| features-structured+p2-guard-off | off | 10697 | -0.7692 | -0.7700 | -0.0008 | 0.0071 (0.0034 to 0.0108) | 0.5715 | 0.8936 |
+| features-text | 2.0 | 10697 | -0.7692 | -0.7707 | -0.0015 | 0.0076 (0.0044 to 0.0109) | 0.5680 | 0.8931 |
+| features-text+p2-guard-off | off | 10697 | -0.7692 | -0.7749 | -0.0057 | 0.0057 (0.0022 to 0.0095) | 0.5646 | 0.8926 |
+| kappa-0.0 | 2.0 | 10697 | -0.7733 | -0.7736 | -0.0002 | 0.0060 (0.0031 to 0.0092) | 0.5701 | 0.8925 |
+| kappa-5.0 | 2.0 | 10697 | -0.7719 | -0.7721 | -0.0002 | 0.0065 (0.0035 to 0.0098) | 0.5701 | 0.8929 |
+| kappa-80.0 | 2.0 | 10697 | -0.7675 | -0.7677 | -0.0002 | 0.0084 (0.0053 to 0.0120) | 0.5700 | 0.8940 |
+| lambda-0.0 | 2.0 | 10697 | -0.7692 | -0.7692 | +0.0000 | 0.0069 (0.0041 to 0.0100) | 0.5683 | 0.8943 |
+| lambda-0.2 | 2.0 | 10697 | -0.7692 | -0.7721 | -0.0029 | 0.0063 (0.0032 to 0.0098) | 0.5665 | 0.8944 |
+| lambda-0.5 | 2.0 | 10697 | -0.7692 | -0.7746 | -0.0053 | 0.0050 (0.0015 to 0.0088) | 0.5698 | 0.8937 |
+| lambda-1.0 | 2.0 | 10697 | -0.7692 | -0.7820 | -0.0127 | 0.0026 (-0.0019 to 0.0075) | 0.5714 | 0.8923 |
+| p2-guard-1.0 | 1.0 | 10697 | -0.7692 | -0.7705 | -0.0013 | 0.0078 (0.0046 to 0.0113) | 0.5692 | 0.8936 |
+| p2-guard-off | off | 10697 | -0.7692 | -0.7724 | -0.0031 | 0.0060 (0.0026 to 0.0098) | 0.5674 | 0.8921 |
+| p2-selection-loto | 2.0 | 10697 | -0.7692 | -0.7690 | +0.0003 | 0.0075 (0.0051 to 0.0104) | 0.5684 | 0.8981 |
+| p2-selection-loto+p2-guard-off | off | 10697 | -0.7692 | -0.7690 | +0.0003 | 0.0076 (0.0052 to 0.0104) | 0.5690 | 0.8998 |
+| p2-selection-loto+recency-select | 2.0 | 10697 | -0.7692 | -0.7690 | +0.0003 | 0.0075 (0.0051 to 0.0104) | 0.5684 | 0.8982 |
+| p2-selection-loto+recency-select+p2-guard-off | off | 10697 | -0.7692 | -0.7689 | +0.0003 | 0.0076 (0.0053 to 0.0105) | 0.5686 | 0.9002 |
+| pairwise-off | 2.0 | 10697 | -0.7692 | -0.7696 | -0.0004 | 0.0073 (0.0044 to 0.0106) | 0.5683 | 0.8934 |
+| pairwise-off+p2-guard-off | off | 10697 | -0.7692 | -0.7717 | -0.0025 | 0.0065 (0.0031 to 0.0103) | 0.5698 | 0.8926 |
+| prior-normal | 2.0 | 10697 | -0.8462 | -0.8472 | -0.0010 | -0.0042 (-0.0076 to -0.0011) | 0.5714 | 0.9057 |
+| recalibrate-ladder-on | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
+| recency-select | 2.0 | 10697 | -0.7692 | -0.7701 | -0.0009 | 0.0082 (0.0049 to 0.0118) | 0.5699 | 0.8931 |
+| recency-select+p2-guard-off | off | 10697 | -0.7692 | -0.7718 | -0.0026 | 0.0068 (0.0034 to 0.0106) | 0.5712 | 0.8932 |
+| s-star-realized | 2.0 | 10697 | -0.7100 | -0.7096 | +0.0004 | -0.0378 (-0.0456 to -0.0303) | 0.5701 | 0.9012 |
 
 P2 selection by cell, over origins (lambda is the weight on precedents; `lambda zero` is the share of origins where it was 0):
 
 | setting | cell | selection | origins | mean lambda | lambda zero | mean bandwidth multiplier | median half-life (days) |
 |---|---|---|---|---|---|---|---|
 | main run (defaults) | both | forward | 7 | 0.00 | 1.00 | 0.786 | none |
-| main run (defaults) | headline_only | forward | 7 | 0.36 | 0.43 | 0.429 | none |
-| main run (defaults) | image_only | forward | 7 | 0.00 | 1.00 | 0.571 | none |
+| main run (defaults) | headline_only | forward | 7 | 0.33 | 0.43 | 0.411 | none |
+| main run (defaults) | image_only | forward | 7 | 0.00 | 1.00 | 0.679 | none |
 | p2-selection-loto | both | loto | 7 | 0.00 | 1.00 | 0.750 | none |
-| p2-selection-loto | headline_only | loto | 7 | 0.20 | 0.57 | 0.214 | none |
-| p2-selection-loto | image_only | loto | 7 | 0.01 | 0.86 | 0.875 | none |
+| p2-selection-loto | headline_only | loto | 7 | 0.19 | 0.57 | 0.214 | none |
+| p2-selection-loto | image_only | loto | 7 | 0.01 | 0.86 | 0.750 | none |
 | p2-selection-loto+p2-guard-off | both | loto | 7 | 0.03 | 0.71 | 0.750 | none |
 | p2-selection-loto+p2-guard-off | headline_only | loto | 7 | 0.30 | 0.00 | 0.214 | none |
-| p2-selection-loto+p2-guard-off | image_only | loto | 7 | 0.04 | 0.71 | 0.804 | none |
+| p2-selection-loto+p2-guard-off | image_only | loto | 7 | 0.04 | 0.71 | 0.679 | none |
 | p2-selection-loto+recency-select | both | loto | 7 | 0.00 | 1.00 | 0.518 | 90 |
-| p2-selection-loto+recency-select | headline_only | loto | 7 | 0.21 | 0.57 | 0.214 | 365 |
-| p2-selection-loto+recency-select | image_only | loto | 7 | 0.01 | 0.86 | 0.768 | 90 |
-| p2-selection-loto+recency-select+p2-guard-off | both | loto | 7 | 0.04 | 0.57 | 0.518 | 90 |
+| p2-selection-loto+recency-select | headline_only | loto | 7 | 0.20 | 0.57 | 0.214 | 228 |
+| p2-selection-loto+recency-select | image_only | loto | 7 | 0.01 | 0.86 | 0.643 | 90 |
+| p2-selection-loto+recency-select+p2-guard-off | both | loto | 7 | 0.06 | 0.43 | 0.518 | 90 |
 | p2-selection-loto+recency-select+p2-guard-off | headline_only | loto | 7 | 0.31 | 0.00 | 0.214 | 90 |
-| p2-selection-loto+recency-select+p2-guard-off | image_only | loto | 7 | 0.04 | 0.71 | 0.696 | 90 |
-| recency-select | both | forward | 7 | 0.00 | 1.00 | 0.786 | 180 |
-| recency-select | headline_only | forward | 7 | 0.39 | 0.43 | 0.429 | 228 |
-| recency-select | image_only | forward | 7 | 0.00 | 1.00 | 0.571 | 90 |
-| recency-select+p2-guard-off | both | forward | 7 | 0.26 | 0.43 | 0.786 | 180 |
-| recency-select+p2-guard-off | headline_only | forward | 7 | 0.46 | 0.29 | 0.429 | 180 |
-| recency-select+p2-guard-off | image_only | forward | 7 | 0.06 | 0.71 | 0.571 | 90 |
+| p2-selection-loto+recency-select+p2-guard-off | image_only | loto | 7 | 0.04 | 0.71 | 0.571 | 90 |
+| recency-select | both | forward | 7 | 0.00 | 1.00 | 0.768 | 90 |
+| recency-select | headline_only | forward | 7 | 0.36 | 0.43 | 0.411 | 272 |
+| recency-select | image_only | forward | 7 | 0.00 | 1.00 | 0.696 | 90 |
+| recency-select+p2-guard-off | both | forward | 7 | 0.21 | 0.43 | 0.768 | 90 |
+| recency-select+p2-guard-off | headline_only | forward | 7 | 0.44 | 0.29 | 0.429 | 180 |
+| recency-select+p2-guard-off | image_only | forward | 7 | 0.10 | 0.71 | 0.696 | 90 |
 
 ### P2 admission guard, Upworthy
 
@@ -557,14 +553,14 @@ P2 reduces to P1 at a precedent weight (lambda) of zero. The admission guard dec
 
 | selection | log score | CRPS | Brier skill | cells held at lambda 0 | held by the guard |
 |---|---|---|---|---|---|
-| guarded | -0.7565 (-0.7811 to -0.7346) | 0.2925 (0.2854 to 0.3003) | 0.0032 (-0.0004 to 0.0072) | 0.810 | 0.333 |
-| unguarded | -0.7604 (-0.7855 to -0.7384) | 0.2935 (0.2864 to 0.3012) | -0.0002 (-0.0043 to 0.0042) | 0.476 | 0.000 |
+| guarded | -0.7695 (-0.7932 to -0.7471) | 0.2939 (0.2867 to 0.3017) | 0.0081 (0.0051 to 0.0114) | 0.810 | 0.333 |
+| unguarded | -0.7724 (-0.7968 to -0.7498) | 0.2945 (0.2873 to 0.3022) | 0.0060 (0.0026 to 0.0098) | 0.476 | 0.000 |
 
 Paired difference, guarded minus unguarded, on the same rows (positive log score and Brier skill favour the guard, negative CRPS favours the guard):
 
 | log score | CRPS | Brier skill |
 |---|---|---|
-| +0.0040 (+0.0027 to +0.0053) | -0.0010 (-0.0014 to -0.0006) | +0.0034 (+0.0017 to +0.0051) |
+| +0.0029 (+0.0017 to +0.0040) | -0.0006 (-0.0009 to -0.0003) | +0.0021 (+0.0006 to +0.0036) |
 
 ### Guard pairs, Upworthy
 
@@ -572,12 +568,12 @@ Every pair of cell and origin where the admission guard allowed a weight on prec
 
 | cell | origin | weight | in-selection gain | its standard error | scored rows | scored tests | realized P2 minus P1 |
 |---|---|---|---|---|---|---|---|
-| headline_only | 2013-04-01 | 0.30 | 0.0238 | 0.0114 | 399 | 163 | -0.0054 |
+| headline_only | 2013-04-01 | 0.10 | 0.0231 | 0.0096 | 399 | 163 | -0.0058 |
 | headline_only | 2014-10-01 | 0.50 | 0.0011 | 0.0004 | 1544 | 422 | +0.0012 |
-| headline_only | 2015-01-01 | 0.80 | 0.0072 | 0.0021 | 604 | 182 | +0.0024 |
-| headline_only | 2015-04-01 | 0.90 | 0.0090 | 0.0020 | 156 | 52 | -0.0010 |
+| headline_only | 2015-01-01 | 0.80 | 0.0072 | 0.0021 | 604 | 182 | -0.0015 |
+| headline_only | 2015-04-01 | 0.90 | 0.0088 | 0.0020 | 156 | 52 | -0.0068 |
 
-Pairs admitted: 4 of 21; mean in-selection gain 0.0103; pairs with a negative realized difference: 2. Pooled over the scored rows (2703 rows, 819 tests) the realized difference is +0.0004 (-0.0016 to +0.0022, 90 percent bootstrap interval by test).
+Pairs admitted: 4 of 21; mean in-selection gain 0.0101; pairs with a negative realized difference: 3. Pooled over the scored rows (2703 rows, 819 tests) the realized difference is -0.0009 (-0.0030 to +0.0009, 90 percent bootstrap interval by test).
 
 ### Ablations, Asos
 
@@ -675,7 +671,7 @@ The first full run scored Upworthy on the relative lift against the reference ar
 
 | rung | n | log score | Brier skill (90% interval) | coverage 80% / 90% |
 |---|---|---|---|---|
-| P0 | 10697 | -5.2300 | 0.0000 (0.0000 to 0.0000) | 0.7800 / 0.8852 |
+| P0 | 10697 | -5.1243 | 0.0000 (0.0000 to 0.0000) | 0.7800 / 0.8852 |
 | P1 | 10697 | -4.9804 | -0.1036 (-0.1122 to -0.0961) | 0.7795 / 0.8840 |
 | P2 | 10697 | -4.9804 | -0.1036 (-0.1122 to -0.0961) | 0.7795 / 0.8840 |
 
@@ -683,26 +679,26 @@ Calibration by precision, deciles of the planned exposures per arm. `mean p_sig`
 
 | rung | decile | planned exposures per arm | n | mean s_star | mean p_sig | event rate | coverage 90% |
 |---|---|---|---|---|---|---|---|
-| P1 | 1 | 1167 to 2228 | 1068 | 27.9329 | 0.0539 | 0.0243 | 0.9120 |
-| P1 | 2 | 2229 to 2684 | 1072 | 24.7979 | 0.0680 | 0.0364 | 0.8909 |
-| P1 | 3 | 2685 to 2900 | 1069 | 25.5188 | 0.0650 | 0.0365 | 0.9074 |
-| P1 | 4 | 2900 to 3060 | 1069 | 26.4724 | 0.0570 | 0.0468 | 0.8709 |
-| P1 | 5 | 3060 to 3204 | 1067 | 25.1519 | 0.0563 | 0.0394 | 0.8866 |
-| P1 | 6 | 3204 to 3556 | 1073 | 23.6488 | 0.0705 | 0.0419 | 0.8844 |
-| P1 | 7 | 3556 to 3893 | 1068 | 24.7961 | 0.0652 | 0.0534 | 0.8783 |
-| P1 | 8 | 3894 to 4385 | 1071 | 22.2758 | 0.0701 | 0.0542 | 0.8609 |
-| P1 | 9 | 4387 to 5268 | 1070 | 22.4229 | 0.0713 | 0.0514 | 0.8822 |
-| P1 | 10 | 5271 to 15082 | 1070 | 20.0970 | 0.0784 | 0.0617 | 0.8664 |
-| P2 | 1 | 1167 to 2228 | 1068 | 27.9329 | 0.0539 | 0.0243 | 0.9120 |
-| P2 | 2 | 2229 to 2684 | 1072 | 24.7979 | 0.0680 | 0.0364 | 0.8909 |
-| P2 | 3 | 2685 to 2900 | 1069 | 25.5188 | 0.0650 | 0.0365 | 0.9074 |
-| P2 | 4 | 2900 to 3060 | 1069 | 26.4724 | 0.0570 | 0.0468 | 0.8709 |
-| P2 | 5 | 3060 to 3204 | 1067 | 25.1519 | 0.0563 | 0.0394 | 0.8866 |
-| P2 | 6 | 3204 to 3556 | 1073 | 23.6488 | 0.0705 | 0.0419 | 0.8844 |
-| P2 | 7 | 3556 to 3893 | 1068 | 24.7961 | 0.0652 | 0.0534 | 0.8783 |
-| P2 | 8 | 3894 to 4385 | 1071 | 22.2758 | 0.0701 | 0.0542 | 0.8609 |
-| P2 | 9 | 4387 to 5268 | 1070 | 22.4229 | 0.0713 | 0.0514 | 0.8822 |
-| P2 | 10 | 5271 to 15082 | 1070 | 20.0970 | 0.0784 | 0.0617 | 0.8664 |
+| P1 | 1 | 2641 to 2803 | 743 | 24.4314 | 0.1064 | 0.0700 | 0.8977 |
+| P1 | 2 | 2866 to 2866 | 1026 | 25.1123 | 0.0850 | 0.0692 | 0.8626 |
+| P1 | 3 | 2873 to 2913 | 800 | 23.0403 | 0.0883 | 0.0788 | 0.8850 |
+| P1 | 4 | 3002 to 3002 | 1550 | 25.3209 | 0.0773 | 0.0400 | 0.8974 |
+| P1 | 5 | 3041 to 3041 | 838 | 18.2473 | 0.0743 | 0.0406 | 0.9081 |
+| P1 | 6 | 3128 to 3266 | 1423 | 24.0333 | 0.0435 | 0.0211 | 0.8897 |
+| P1 | 7 | 3268 to 3309 | 534 | 18.7927 | 0.0803 | 0.0487 | 0.8464 |
+| P1 | 8 | 3314 to 3314 | 604 | 30.1796 | 0.0448 | 0.0298 | 0.9172 |
+| P1 | 9 | 3320 to 3400 | 2093 | 26.3311 | 0.0514 | 0.0373 | 0.8810 |
+| P1 | 10 | 3428 to 3442 | 1086 | 23.5543 | 0.0396 | 0.0396 | 0.8545 |
+| P2 | 1 | 2641 to 2803 | 743 | 24.4314 | 0.1064 | 0.0700 | 0.8977 |
+| P2 | 2 | 2866 to 2866 | 1026 | 25.1123 | 0.0850 | 0.0692 | 0.8626 |
+| P2 | 3 | 2873 to 2913 | 800 | 23.0403 | 0.0883 | 0.0788 | 0.8850 |
+| P2 | 4 | 3002 to 3002 | 1550 | 25.3209 | 0.0773 | 0.0400 | 0.8974 |
+| P2 | 5 | 3041 to 3041 | 838 | 18.2473 | 0.0743 | 0.0406 | 0.9081 |
+| P2 | 6 | 3128 to 3266 | 1423 | 24.0333 | 0.0435 | 0.0211 | 0.8897 |
+| P2 | 7 | 3268 to 3309 | 534 | 18.7927 | 0.0803 | 0.0487 | 0.8464 |
+| P2 | 8 | 3314 to 3314 | 604 | 30.1796 | 0.0448 | 0.0298 | 0.9172 |
+| P2 | 9 | 3320 to 3400 | 2093 | 26.3311 | 0.0514 | 0.0373 | 0.8810 |
+| P2 | 10 | 3428 to 3442 | 1086 | 23.5543 | 0.0396 | 0.0396 | 0.8545 |
 
 ### Weekly replay
 
@@ -723,27 +719,27 @@ Final origin 2020-10-01, 56 held-out rows in 9 tests, the same in every run. Eac
 | fraction | history rows | rung | Brier skill (90% interval) | seed sd | log score | direction accuracy |
 |---|---|---|---|---|---|---|
 | 0.05 | 20 | GBM | -0.3899 (-2.1472 to 0.1604) | 0.1178 | 3.5510 | 0.5476 |
-| 0.05 | 20 | P0 | -0.1798 (-0.6386 to -0.0326) | 0.1745 | 0.5878 | 0.5476 |
+| 0.05 | 20 | P0 | -0.1798 (-0.6386 to -0.0326) | 0.1745 | 2.8028 | 0.5476 |
 | 0.05 | 20 | P1 | -0.3600 (-1.0437 to -0.1331) | 0.3652 | 1.9853 | 0.4524 |
 | 0.05 | 20 | P2 | -0.3600 (-1.0437 to -0.1331) | 0.3652 | 1.9853 | 0.4524 |
 | 0.05 | 20 | local_eb | -0.4213 (-1.5925 to -0.0614) | 0.2121 | 1.9994 | 0.5476 |
 | 0.1 | 29 | GBM | -0.3502 (-1.9797 to 0.1624) | 0.0936 | 3.5459 | 0.5116 |
-| 0.1 | 29 | P0 | -0.0694 (-0.0870 to -0.0640) | 0.0595 | 0.4982 | 0.5089 |
+| 0.1 | 29 | P0 | -0.0694 (-0.0870 to -0.0640) | 0.0595 | 1.8256 | 0.5089 |
 | 0.1 | 29 | P1 | -0.1946 (-0.3918 to -0.1033) | 0.0827 | 2.3197 | 0.4857 |
 | 0.1 | 29 | P2 | -0.1947 (-0.3897 to -0.1037) | 0.0826 | 2.3193 | 0.4893 |
 | 0.1 | 29 | local_eb | -0.2738 (-0.8458 to -0.0878) | 0.1907 | 1.1714 | 0.5125 |
 | 0.25 | 74 | GBM | -0.3467 (-1.9905 to 0.1689) | 0.0572 | 3.5503 | 0.5875 |
-| 0.25 | 74 | P0 | -0.0427 (-0.0506 to -0.0220) | 0.0492 | 2.3294 | 0.5607 |
+| 0.25 | 74 | P0 | -0.0427 (-0.0506 to -0.0220) | 0.0492 | 3.6009 | 0.5607 |
 | 0.25 | 74 | P1 | -0.1618 (-0.2577 to -0.0673) | 0.0339 | 3.7543 | 0.4625 |
 | 0.25 | 74 | P2 | -0.1612 (-0.2566 to -0.0648) | 0.0341 | 3.7509 | 0.4643 |
 | 0.25 | 74 | local_eb | -0.2586 (-0.8085 to -0.0702) | 0.1031 | 1.5111 | 0.5518 |
 | 0.5 | 152 | GBM | -0.3635 (-2.0372 to 0.1621) | 0.0605 | 3.5505 | 0.5938 |
-| 0.5 | 152 | P0 | -0.0143 (-0.0382 to -0.0064) | 0.0261 | 3.1393 | 0.5321 |
+| 0.5 | 152 | P0 | -0.0143 (-0.0382 to -0.0064) | 0.0261 | 4.1373 | 0.5321 |
 | 0.5 | 152 | P1 | -0.1576 (-0.2955 to -0.0617) | 0.0253 | 4.0609 | 0.4857 |
 | 0.5 | 152 | P2 | -0.1579 (-0.2949 to -0.0620) | 0.0251 | 4.0583 | 0.4884 |
 | 0.5 | 152 | local_eb | -0.2656 (-0.9866 to -0.0257) | 0.0725 | 2.6761 | 0.5696 |
 | 1.0 | 301 | GBM | -0.3585 (-2.0323 to 0.1662) | n/a | 3.5521 | 0.6429 |
-| 1.0 | 301 | P0 | 0.0000 (0.0000 to 0.0000) | n/a | 3.2430 | 0.6429 |
+| 1.0 | 301 | P0 | 0.0000 (0.0000 to 0.0000) | n/a | 4.1579 | 0.6429 |
 | 1.0 | 301 | P1 | -0.1824 (-0.5172 to -0.0472) | n/a | 4.1464 | 0.6429 |
 | 1.0 | 301 | P2 | -0.1824 (-0.5172 to -0.0472) | n/a | 4.1464 | 0.6429 |
 | 1.0 | 301 | local_eb | -0.1211 (-0.6697 to 0.0539) | n/a | 3.3299 | 0.5357 |
@@ -759,47 +755,47 @@ Final origin 2015-01-01, 1143 held-out rows in 318 tests, the same in every run.
 
 | fraction | history rows | rung | Brier skill (90% interval) | seed sd | log score | direction accuracy |
 |---|---|---|---|---|---|---|
-| 0.01 | 93 | GBM | -0.0579 (-0.0943 to -0.0327) | 0.0703 | -0.8178 | 0.5450 |
-| 0.01 | 93 | P0 | -0.0416 (-0.0533 to -0.0338) | 0.0653 | -0.8841 | 0.5433 |
-| 0.01 | 93 | P1 | 0.0093 (-0.0039 to 0.0274) | 0.0151 | -0.8124 | 0.5493 |
-| 0.01 | 93 | P2 | 0.0088 (-0.0045 to 0.0270) | 0.0150 | -0.8165 | 0.5484 |
-| 0.01 | 93 | local_eb | -0.0109 (-0.0197 to -0.0000) | 0.0344 | -0.8876 | 0.5444 |
+| 0.01 | 93 | GBM | -0.1286 (-0.1872 to -0.0877) | 0.1138 | -0.8144 | 0.5472 |
+| 0.01 | 93 | P0 | -0.0416 (-0.0533 to -0.0338) | 0.0653 | -0.8356 | 0.5433 |
+| 0.01 | 93 | P1 | -0.0064 (-0.0140 to 0.0027) | 0.0240 | -0.8449 | 0.5493 |
+| 0.01 | 93 | P2 | -0.0068 (-0.0145 to 0.0026) | 0.0239 | -0.8505 | 0.5486 |
+| 0.01 | 93 | local_eb | -0.0346 (-0.0418 to -0.0294) | 0.0522 | -0.9457 | 0.5446 |
 | 0.01 | 93 | text_lr | -0.0245 (-0.0280 to -0.0206) | 0.0446 | n/a | 0.5322 |
-| 0.02 | 189 | GBM | -0.0935 (-0.1448 to -0.0577) | 0.1437 | -0.7986 | 0.5538 |
-| 0.02 | 189 | P0 | -0.0268 (-0.0337 to -0.0218) | 0.0451 | -0.8581 | 0.5571 |
-| 0.02 | 189 | P1 | 0.0119 (-0.0019 to 0.0302) | 0.0120 | -0.7665 | 0.5681 |
-| 0.02 | 189 | P2 | 0.0110 (-0.0018 to 0.0280) | 0.0135 | -0.7695 | 0.5677 |
-| 0.02 | 189 | local_eb | -0.0142 (-0.0236 to -0.0033) | 0.0914 | -0.8644 | 0.5546 |
+| 0.02 | 189 | GBM | -0.1638 (-0.2369 to -0.1111) | 0.1893 | -0.7947 | 0.5521 |
+| 0.02 | 189 | P0 | -0.0268 (-0.0337 to -0.0218) | 0.0451 | -0.8103 | 0.5571 |
+| 0.02 | 189 | P1 | -0.0028 (-0.0115 to 0.0071) | 0.0205 | -0.7752 | 0.5681 |
+| 0.02 | 189 | P2 | -0.0047 (-0.0119 to 0.0042) | 0.0221 | -0.7787 | 0.5675 |
+| 0.02 | 189 | local_eb | -0.0311 (-0.0367 to -0.0261) | 0.1091 | -0.9139 | 0.5565 |
 | 0.02 | 189 | text_lr | -0.0135 (-0.0189 to -0.0076) | 0.0408 | n/a | 0.5494 |
-| 0.05 | 470 | GBM | -0.0883 (-0.1435 to -0.0483) | 0.0822 | -0.7957 | 0.5640 |
-| 0.05 | 470 | P0 | -0.0192 (-0.0269 to -0.0135) | 0.0261 | -0.7963 | 0.5620 |
-| 0.05 | 470 | P1 | 0.0177 (0.0039 to 0.0366) | 0.0068 | -0.7551 | 0.5685 |
-| 0.05 | 470 | P2 | 0.0177 (0.0039 to 0.0366) | 0.0068 | -0.7551 | 0.5685 |
-| 0.05 | 470 | local_eb | -0.0052 (-0.0186 to 0.0082) | 0.0481 | -0.8337 | 0.5503 |
+| 0.05 | 470 | GBM | -0.1613 (-0.2421 to -0.1063) | 0.1086 | -0.7878 | 0.5639 |
+| 0.05 | 470 | P0 | -0.0192 (-0.0269 to -0.0135) | 0.0261 | -0.7517 | 0.5620 |
+| 0.05 | 470 | P1 | 0.0056 (-0.0021 to 0.0171) | 0.0116 | -0.7663 | 0.5685 |
+| 0.05 | 470 | P2 | 0.0056 (-0.0021 to 0.0171) | 0.0116 | -0.7663 | 0.5685 |
+| 0.05 | 470 | local_eb | -0.0272 (-0.0416 to -0.0157) | 0.0646 | -0.8738 | 0.5482 |
 | 0.05 | 470 | text_lr | -0.0076 (-0.0132 to -0.0004) | 0.0179 | n/a | 0.5489 |
-| 0.1 | 946 | GBM | -0.0769 (-0.1283 to -0.0385) | 0.0584 | -0.7940 | 0.5592 |
-| 0.1 | 946 | P0 | -0.0084 (-0.0127 to -0.0046) | 0.0134 | -0.7868 | 0.5731 |
-| 0.1 | 946 | P1 | 0.0203 (0.0077 to 0.0373) | 0.0063 | -0.7420 | 0.5731 |
-| 0.1 | 946 | P2 | 0.0199 (0.0068 to 0.0381) | 0.0066 | -0.7458 | 0.5731 |
-| 0.1 | 946 | local_eb | 0.0034 (-0.0068 to 0.0174) | 0.0227 | -0.8241 | 0.5502 |
+| 0.1 | 946 | GBM | -0.1365 (-0.2084 to -0.0868) | 0.0732 | -0.7813 | 0.5708 |
+| 0.1 | 946 | P0 | -0.0084 (-0.0127 to -0.0046) | 0.0134 | -0.7413 | 0.5731 |
+| 0.1 | 946 | P1 | 0.0075 (0.0011 to 0.0170) | 0.0109 | -0.7472 | 0.5731 |
+| 0.1 | 946 | P2 | 0.0076 (0.0001 to 0.0185) | 0.0108 | -0.7520 | 0.5731 |
+| 0.1 | 946 | local_eb | -0.0112 (-0.0181 to -0.0020) | 0.0293 | -0.8622 | 0.5531 |
 | 0.1 | 946 | text_lr | -0.0064 (-0.0145 to 0.0027) | 0.0191 | n/a | 0.5636 |
-| 0.25 | 2369 | GBM | -0.0536 (-0.0963 to -0.0207) | 0.0304 | -0.7833 | 0.5731 |
-| 0.25 | 2369 | P0 | -0.0031 (-0.0045 to -0.0021) | 0.0101 | -0.7703 | 0.5716 |
-| 0.25 | 2369 | P1 | 0.0242 (0.0109 to 0.0427) | 0.0029 | -0.7346 | 0.5731 |
-| 0.25 | 2369 | P2 | 0.0251 (0.0100 to 0.0457) | 0.0029 | -0.7354 | 0.5734 |
-| 0.25 | 2369 | local_eb | 0.0117 (-0.0035 to 0.0297) | 0.0107 | -0.8057 | 0.5461 |
+| 0.25 | 2369 | GBM | -0.1101 (-0.1726 to -0.0651) | 0.0340 | -0.7734 | 0.5758 |
+| 0.25 | 2369 | P0 | -0.0031 (-0.0045 to -0.0021) | 0.0101 | -0.7303 | 0.5716 |
+| 0.25 | 2369 | P1 | 0.0125 (0.0052 to 0.0233) | 0.0049 | -0.7394 | 0.5731 |
+| 0.25 | 2369 | P2 | 0.0145 (0.0053 to 0.0279) | 0.0043 | -0.7416 | 0.5731 |
+| 0.25 | 2369 | local_eb | -0.0031 (-0.0147 to 0.0092) | 0.0151 | -0.8482 | 0.5538 |
 | 0.25 | 2369 | text_lr | 0.0030 (-0.0082 to 0.0138) | 0.0101 | n/a | 0.5722 |
-| 0.5 | 4724 | GBM | -0.0393 (-0.0789 to -0.0102) | 0.0108 | -0.7767 | 0.5750 |
-| 0.5 | 4724 | P0 | -0.0002 (-0.0019 to 0.0016) | 0.0044 | -0.7638 | 0.5723 |
-| 0.5 | 4724 | P1 | 0.0243 (0.0112 to 0.0423) | 0.0016 | -0.7309 | 0.5731 |
-| 0.5 | 4724 | P2 | 0.0269 (0.0116 to 0.0486) | 0.0022 | -0.7314 | 0.5734 |
-| 0.5 | 4724 | local_eb | 0.0192 (0.0037 to 0.0390) | 0.0082 | -0.8073 | 0.5496 |
+| 0.5 | 4724 | GBM | -0.0965 (-0.1534 to -0.0555) | 0.0164 | -0.7693 | 0.5744 |
+| 0.5 | 4724 | P0 | -0.0002 (-0.0019 to 0.0016) | 0.0044 | -0.7297 | 0.5723 |
+| 0.5 | 4724 | P1 | 0.0121 (0.0055 to 0.0218) | 0.0026 | -0.7340 | 0.5731 |
+| 0.5 | 4724 | P2 | 0.0168 (0.0069 to 0.0311) | 0.0031 | -0.7365 | 0.5735 |
+| 0.5 | 4724 | local_eb | 0.0050 (-0.0073 to 0.0201) | 0.0100 | -0.8489 | 0.5562 |
 | 0.5 | 4724 | text_lr | 0.0063 (-0.0096 to 0.0208) | 0.0130 | n/a | 0.5737 |
-| 1.0 | 9447 | GBM | -0.0413 (-0.0786 to -0.0146) | n/a | -0.7765 | 0.5722 |
-| 1.0 | 9447 | P0 | 0.0000 (0.0000 to 0.0000) | n/a | -0.7610 | 0.5731 |
-| 1.0 | 9447 | P1 | 0.0245 (0.0112 to 0.0423) | n/a | -0.7295 | 0.5731 |
-| 1.0 | 9447 | P2 | 0.0293 (0.0143 to 0.0506) | n/a | -0.7283 | 0.5748 |
-| 1.0 | 9447 | local_eb | 0.0126 (-0.0106 to 0.0371) | n/a | -0.8058 | 0.5704 |
+| 1.0 | 9447 | GBM | -0.1003 (-0.1551 to -0.0624) | n/a | -0.7686 | 0.5722 |
+| 1.0 | 9447 | P0 | 0.0000 (0.0000 to 0.0000) | n/a | -0.7284 | 0.5731 |
+| 1.0 | 9447 | P1 | 0.0126 (0.0057 to 0.0225) | n/a | -0.7327 | 0.5731 |
+| 1.0 | 9447 | P2 | 0.0194 (0.0097 to 0.0341) | n/a | -0.7335 | 0.5748 |
+| 1.0 | 9447 | local_eb | 0.0054 (-0.0156 to 0.0294) | n/a | -0.8423 | 0.5687 |
 | 1.0 | 9447 | text_lr | 0.0165 (-0.0072 to 0.0366) | n/a | n/a | 0.5678 |
 
 ![learning curve, upworthy](figures/learning_curve-upworthy.png)
@@ -810,10 +806,10 @@ Upworthy cards, 20000 impressions per arm, model 938be3f002b0. Milliseconds.
 
 | path | p50 | p95 | max |
 |---|---|---|---|
-| in process, bundle preloaded | 17.9 | 20.2 | 39.4 |
-| in process, weight on precedents forced to 0.5 | 33.6 | 41.3 | 45.7 |
-| HTTP service on loopback, bundle preloaded | 20.9 | 24.4 | 33.7 |
-| command line, fresh process | 1427.6 | 1457.6 | 1461.0 |
+| in process, bundle preloaded | 17.6 | 24.2 | 34.6 |
+| in process, weight on precedents forced to 0.5 | 31.8 | 44.7 | 54.4 |
+| HTTP service on loopback, bundle preloaded | 20.4 | 22.2 | 31.1 |
+| command line, fresh process | 1454.5 | 1522.8 | 1530.4 |
 
 Of 30 made-up headlines, 2 abstained at the fitted weight on precedents and 5 with the weight forced to 0.5.
 

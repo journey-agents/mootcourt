@@ -9,7 +9,7 @@ import pytest
 from scipy.stats import binom
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN = ROOT / "paper" / "data" / "run8-randomization-window"
+RUN = ROOT / "paper" / "data" / "run9-visible-exposure"
 CAUTIONARY = ROOT / "paper" / "data" / "run1-relative-lift"
 EXPECTED = (
     [

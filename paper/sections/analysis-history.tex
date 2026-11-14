@@ -1,0 +1,39 @@
+% The one place where the paper says when each analysis was added relative to its result. Sources: the dated plans under docs/superpowers/plans/ (each says what had been seen when it was written), docs/method.md, and the run folders' README files.
+\section{Which Readings Were Fixed Before Their Results}
+\label{sec:analysis-history}
+Every analysis in this paper was run on one split that had already been read. This appendix sorts the analyses by what was fixed before each one's own result existed. None of them is confirmatory. The sorting tells a reader which readings could have been shaped by their own result and which could only have been shaped by earlier ones.
+
+% src: paper/plan.md (the six hypotheses, posted after two runs on the same split); docs/superpowers/plans/2026-11-06-paper-v2-plan.md, Decisions fixed now (D1, the date rule)
+\paragraph{Fixed after earlier runs, before the run that is reported.}
+\begin{itemize}
+\item The six hypotheses of Section~\ref{sec:hypotheses} and the rule for reading each part. They were written after two earlier runs on the same split.
+\item The date rule that leaves out the tests of the randomization window (Section~\ref{sec:setting}). Earlier runs had scored those tests.
+\end{itemize}
+
+% src: docs/superpowers/plans/2026-11-06-paper-v2-plan.md (X1 to X9), 2026-11-06-x10-sizing-design.md (X10; X8b added after X8's result and before its own), 2026-11-10-history-amount-comparison.md, 2026-11-12-heavy-tailed-base-rate.md, 2026-11-12-base-rate-recency-and-origins.md (Parts A to E), 2026-11-13-reviewer-runs.md (Parts A to F), 2026-11-14-run9-visible-exposure-main.md (Parts A and B); each plan has a section on what had been seen when it was written
+\paragraph{Added after results of this work had been seen, with the reading written down before the analysis's own result.}
+Each of these was prompted by an earlier result or by a review, so the choice to run it was not blind. Its design and the rule for reading it were written in a dated plan before it ran, and the plans are in the repository.
+\begin{itemize}
+\item The run with the date rule off, and the two single-change runs behind the cautionary run (Sections~\ref{sec:window-compare} and~\ref{sec:cautionary}).
+\item The diagnostic of the prior's family on the standardized effect (Section~\ref{sec:ablations}).
+\item The paired ranking comparisons, the arm-count rule and the exposure-only rule (Section~\ref{sec:decision-results}).
+\item The comparison of abstained with issued rows without the first scored quarter and within origin and cell (Section~\ref{sec:abstention-results}).
+\item The gates at each stratum's own dependence (Section~\ref{sec:protocol}).
+\item The calibration null that follows drift, and the level-shift diagnostic that was added after that null's result (Section~\ref{sec:calibration-results}).
+\item The sizing simulation (Section~\ref{sec:sizing-results}).
+\item The learning curve read against the full history, and later at every origin (Section~\ref{sec:ablations}).
+\item The Student-t base rate, the base rate with a quarter term, the reading of the prior's lead by origin and with the quarters as units, and the reference that reads no history (Section~\ref{sec:ladder-results}).
+\item The fixing of exposure, first over the whole ledger and then over visible rows only (Section~\ref{sec:setting}).
+\item The check of how often the calibration test rejects a calibrated forecaster, the planted control at five seeds, the ladder passed through the challengers' recalibration map, and the spread of the split-half fits.
+\item The ladder under a longer assumed end of a test (Section~\ref{sec:ablations}).
+\end{itemize}
+
+% src: docs/superpowers/plans/2026-11-14-run9-visible-exposure-main.md, What was seen before this was written (the ladder's numbers under the new main setting were known from three ablations) and Post-run notes (the by-origin reading of the 14-day and 28-day ledgers was not planned); $RUN6/by-origin-upworthy-20261106-2dc461f52ea4.json origin_level_leave_one_out (a key added after the values by origin had been seen); $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json ranking_paired.definition (the direction of the exposure-only policy was not specified by the plan)
+\paragraph{Chosen or changed after the result it concerns had been seen.}
+\begin{itemize}
+\item The main specification. Fixing exposure on visible rows and scoring the base rate with a Student-t density were first run as ablations. They became the main run after their results for the ladder were known and after a review of the paper. The challengers, the decision value, the sizing simulation and the calibration checks under the new main run had not been seen when that was decided.
+\item The base rate's definition, which was revised after a review of the first results, and the gate rule, which replaced an older simulation after backtest results had been seen (Section~\ref{sec:protocol}).
+\item Abstention as a label. It was built as a filter on quality and kept only as a label after issued rows were not shown to score better (Section~\ref{sec:abstention-results}).
+\item The reading of the prior's lead with each quarter left out in turn and the quarters as units, and the reading of the longer assumed ends with the first origin left out. Both were added after the values they explain had been seen.
+\item The exposure-only ranking rule in both directions, because its plan did not say which direction to use.
+\end{itemize}

@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPER = ROOT / "paper"
-RUN = PAPER / "data" / "run8-randomization-window"
+RUN = PAPER / "data" / "run9-visible-exposure"
 sys.path.insert(0, str(PAPER))
 import summary_tables as st  # noqa: E402
 

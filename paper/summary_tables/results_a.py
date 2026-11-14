@@ -1,5 +1,5 @@
 """Summary tables, group results_a: the cautionary run, the ladder, the challengers, the guard, calibration and decisions (the gates of each stratum are in experiments)."""
-from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, month_year, n, narrowest_origin, pct, pctw, v
+from summary_tables import Raw, Table, ci, derived, fmt, join, lohi, month_year, n, pct, pctw, v
 
 MAIN = "backtest-upworthy-*.json"
 EXTRAS = "paper-extras-upworthy-*.json"
@@ -62,16 +62,16 @@ def p1_cells(r):
         return [label, n(main, f"{row}.n_tests"), v(main, f"{row}.logscore"), v(main, f"{agg('P0', name)}.logscore"), gain(name), ci(main, row, "brier_skill", 4),
                 lohi(main, f"{row}.adjusted_lo", f"{row}.adjusted_hi", 4)]
 
-    narrowest = narrowest_origin(main)
-    day = narrowest[:10]
-    by_origin = f"p1_minus_p0_by_origin.by_origin[origin={narrowest}]"
+    origins = r("by-origin-upworthy-*.json")
+    if abs(origins.get("pooled.difference") + main.get(f"{agg('P0')}.logscore_vs_p1")) > 1e-9:
+        raise ValueError("the by-origin report does not reproduce the main report's pooled difference")
     return Table("fmt-p1-cells", "lrrrrrr", [r"row & tests & P1 log score & P0 log score & P1 minus P0 (90\%) & P1 Brier skill (90\%) & adjusted"], [
         cell("pooled", "ALL"),
         cell("headline-only", "headline_only"),
         cell("image-only", "image_only"),
         cell("smallest", "both"),
-        [f"{month_year(day)} (narrowest)", n(main, f"tables.origins[origin={narrowest}].n_tests"), v(main, origin_score(day, "P1")), v(main, origin_score(day, "P0")),
-         ci(extras, by_origin, "difference", 4, lo="lo", hi="hi"), "", ""],
+        ["pooled, the seven quarters as units", "", "", "",
+         join("{} ({}, {})", v(origins, "origin_level.difference", 4), v(origins, "origin_level.lo", 4), v(origins, "origin_level.hi", 4)), "", ""],
     ])
 
 
@@ -181,8 +181,8 @@ def p2_vs_p1(r):
         origin_row(f"{month_year(named[0])} origin", named[0]),
         origin_row(f"{month_year(named[1])} origin", named[1]),
         [f"the other {WORDS[len(others)]} origins", within, ""],
-        ["location part", "", ci(extras, pooled, "location_part", 4)],
-        ["scale part", "", ci(extras, pooled, "scale_part", 4)],
+        *([["location part", "", ci(extras, pooled, "location_part", 4)], ["scale part", "", ci(extras, pooled, "scale_part", 4)]]
+          if extras.get("guard_pairs_rows.decomposition.defined") else []),      # a split the report marks as not defined is not printed
         ["guarded minus unguarded", ci(abl, "difference.logscore", "estimate", 4, lo="lo", hi="hi"), ""],
     ])
 
@@ -204,8 +204,8 @@ def upper_bins(r):
     lowest = "lowest_reliability_bin.rungs.P1"
     if extras.get(f"{lowest}.rows") != main.get("tables.reliability_bins[rung=P1,bin=0].n"):
         raise ValueError("the lowest bin of the extras is not the report's")
-    if any(row["n"] for row in main.get("tables.reliability_bins") if row["rung"] == "P1" and row["bin"] > 2):
-        raise ValueError("a bin above the third holds rows, so 'above 0.2' no longer names one bin")
+    if any(row["n"] for row in main.get("tables.reliability_bins") if row["rung"] == "P1" and row["bin"] > 1):
+        raise ValueError("a bin above the second holds rows, and the table prints two bins")
 
     def row(label, b, gap=None):
         key = f"tables.reliability_bins[rung=P1,bin={b}]"
@@ -215,7 +215,7 @@ def upper_bins(r):
 
     gap = ci(extras, lowest, "gap_observed_minus_forecast", 4, lo="gap_lo", hi="gap_hi")
     return Table("fmt-upper-bins", "lrrrr", [r"bin of $\psig$ & rows & mean & significant & observed minus", r" & & forecast & positive & forecast"],
-                 [row("0 to 0.1", 0, gap), row("0.1 to 0.2", 1), row("above 0.2", 2)])
+                 [row("0 to 0.1", 0, gap), row("0.1 to 0.2", 1)])
 
 
 def deciles(r):

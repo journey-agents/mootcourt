@@ -1,0 +1,35 @@
+% $RUN6 = paper/data/run9-visible-exposure
+\paragraph{What the guard admits.}
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_admitted 4, pairs_in_selection 21; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.p2_selection_by_cell, tables.p2_selection[].selection forward (src/mootcourt/config.py P2_SELECTION_DEFAULT)
+Two quantities describe the precedent rung (P2) on the headline archive. The \emph{in-selection gain} is the gain in log score that P2 has over P1 on the validation rows of Section~\ref{sec:method}, the quantity the guard reads. The \emph{realized gain} is the same difference on the rows scored after the origin, rows the guard never sees. The guard admits a weight above zero in 4 of the 21 cell-origin pairs, and all of them are in the headline-only cell (Table~\ref{tab:selection-upworthy}, Appendix~\ref{app:tables}). Tables~\ref{tab:fmt-guard} and~\ref{tab:fmt-p2-vs-p1} set P2 against P1, and against itself with the guard removed.
+
+\begin{table}[t]\centering\scriptsize
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pairs_in_selection 21; $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.p2_selection_by_cell; $RUN6/ablations/p2-guard-upworthy.json unguarded, guarded; tables/fmt-guard.tex
+\caption{P1 set against P2 with the guard on and with it off, pooled on the headline archive. Rows: the admitted cell-origin pairs, the same count by cell out of the seven origins in each cell, the log score per row, and the Brier skill against the base rate.}
+\label{tab:fmt-guard}
+\resizebox{\columnwidth}{!}{%
+\input{tables/fmt-guard}}
+\end{table}
+
+\begin{table}[t]\centering\scriptsize
+% src: $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json header.scored_rows 10697, tables.aggregate rung=P2 logscore_vs_p1; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pooled_rows 2703, pairs_admitted 4; guard_pairs_rows; tables/guard-pairs-upworthy.tex, tables/guard-pairs-rows.tex; tables/fmt-p2-vs-p1.tex
+\caption{Paired log-score differences in nats on the headline archive. Columns: over all the rows a line covers, 10,697 when pooled, and over the rows of the four admitted pairs, 2,703 when pooled, or over the rows of that origin's admitted pair on an origin line. All four admitted pairs sit in the headline-only cell, and the guard admits none in the image-only cell. The two origins named are the ones with the largest differences; the reports hold no interval for an origin's difference over all rows. A positive difference favours the first named.}
+\label{tab:fmt-p2-vs-p1}
+\resizebox{\columnwidth}{!}{%
+\input{tables/fmt-p2-vs-p1}}
+\end{table}
+
+\paragraph{P2 against P1.}
+On the pooled log score, P2 sits level with the prior: the paired difference spans zero, both pooled and in the headline-only cell that the first hypothesis names, and it is exactly zero in the image-only cell, where the guard admits nothing. On Brier skill, the two estimates are close and their intervals overlap; the reports hold no paired interval for that difference, so we do not call it a tie.
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary pooled_realized_p2_minus_p1 -0.0009 (pooled_lo -0.0030, pooled_hi 0.0009) (tables/fmt-p2-vs-p1.tex); guard_pairs_rows.decomposition.defined false (the location and scale split is not printed)
+On the admitted pairs' own rows, the picture does not change: the two largest origin differences span zero, and the pooled realized gain of minus 0.0009 nats spans zero.
+
+\paragraph{The admitted pairs, one by one.}
+% src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs.summary mean_in_selection_gain 0.0101, pairs_with_negative_realized 3 (tables/guard-pairs-upworthy.tex); guard_pairs_rows.rows origin 2014-10-01 mean_diff 0.0012 (0.0003, 0.0021), the other three intervals span zero (tables/guard-pairs-rows.tex)
+Table~\ref{tab:guard-pairs} (Appendix~\ref{app:tables}) lists the four pairs, and their mean in-selection gain is 0.0101 nats. Out of time, three realized gains are negative and one is positive. Only the positive one, the pair from October 2014, has an interval clear of zero (Table~\ref{tab:guard-pairs-rows}).
+% src: src/mootcourt/config.py Z 1.96; $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json guard_pairs_rows.pooled share_p2_better 0.5738 (0.5522, 0.5937), decisive.rows 697, decisive.mean_diff -0.0163 (-0.0228, -0.0105), non_decisive.mean_diff 0.0044, inputs.decisive (realized |y| above z times its realized standard error); guard_pairs_rows.rows decisive.mean_diff -0.0818 at 2015-01-01 and -0.1004 at 2015-04-01, -0.0002 (-0.0150, 0.0159) at 2013-04-01, and 0.0054 (0.0032, 0.0075) at 2014-10-01 whose rows 1544 are the most of the four (tables/guard-pairs-rows.tex)
+Table~\ref{tab:guard-pairs-rows} splits the pooled difference by row. Pooled, P2 gains on most rows and loses on the decisive ones, the rows whose observed effect lies more than 1.96 standard errors from zero in either direction. The two pairs of 2015 follow that pattern, and at the first pair the difference on the decisive rows spans zero. The pair with the most rows, October 2014, goes the other way: there P2 gains on the decisive rows. Because the split is made on the outcome, it describes the trade and does not show where a forecast matters.
+
+\paragraph{The guard removed, and the planted control.}
+% src: $RUN6/ablations/p2-guard-upworthy.json difference.logscore (guarded minus unguarded) estimate 0.0029 (0.0017, 0.0040) (tables/fmt-p2-vs-p1.tex); $RUN6/positive-control-seeds.json seeds 5, inside_real_interval 4, real_interval lo -0.0013, hi 0.0005 (the headline-only interval of P2 minus P1 on the real archive), by_seed p2_minus_p1_headline_only 0.0004, 0.0000, 0.0003, 0.0002 and, at seed 11, 0.0008; min.recovered_pooled 0.0758, max.recovered_pooled 0.0919
+Taking the guard off costs a measurable amount of log score (Table~\ref{tab:fmt-p2-vs-p1}). The tie on the log score between P2 and the prior does not refute a precedent signal. A planted signal of the size in Section~\ref{sec:synthetic-results} returns a gain in the headline-only cell that lies inside the real archive's interval for that cell at 4 of 5 seeds, and above it at the fifth. Pooled over cells, P2 recovers under a tenth of the planted signal's gain at every seed. A result on the real archive like the one observed is therefore what a real signal of that size would also produce.

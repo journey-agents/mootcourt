@@ -52,36 +52,35 @@ def _best_decision(rep, rung, label):
 
 
 def glance(r):
-    up, asos, syn = r(UPWORTHY), r(ASOS), r(SYNTHETIC)
-    up_extras, asos_extras = r("paper-extras-upworthy-*.json"), r("paper-extras-asos-*.json")
-    archives = (up, asos, syn)
+    """One archive and the synthetic check. The retailer's archive is an appendix check of the mechanics and has no column here."""
+    up, syn = r(UPWORTHY), r(SYNTHETIC)
+    up_extras, origins = r("paper-extras-upworthy-*.json"), r("by-origin-upworthy-*.json")
+    archives = (up, syn)
     p1, p2 = _agg("P1"), _agg("P2")
-    if max(abs(row["diff_matched"]) for row in _decision_rows(asos)) > 1e-9:
-        raise ValueError("the ASOS row says all rungs hold a decision value of zero")
-    held = "{}; guard holds $\\lambda$ at zero"
-    if any(row["lambda"] != 0 for a in (asos, syn) for row in a.get("tables.p2_selection")):
+    if abs(origins.get("pooled.difference") + up.get(f"{_agg('P0')}.logscore_vs_p1")) > 1e-9:
+        raise ValueError("the by-origin report does not reproduce the main report's pooled difference")
+    if any(row["lambda"] != 0 for row in syn.get("tables.p2_selection")):
         raise ValueError("the row says the guard holds the weight at zero")
+    arm = 'ranking_paired.budgets["0.25"].differences.text_lr_minus_arm_count'
+    lo, hi = up_extras.get(f"{arm}.lo"), up_extras.get(f"{arm}.hi")
+    if not lo < 0 < hi:
+        raise ValueError("the row is labelled as a difference whose interval spans zero")
 
-    return Table("glance", "lrrr", [" & Upworthy (headline archive) & ASOS (product experiments) & Synthetic (no planted text signal)"], [
+    return Table("glance", "lrr", [" & headline archive & synthetic ledger (no planted text signal)"], [
         ["scored tests / rows", *[join("{} / {}", n(a, "header.tests_scored"), n(a, "header.scored_rows")) for a in archives]],
-        ["P1 log score gain over P0 scored with a normal density, nats (90\\%)", *[_gain_over_p0(a) for a in archives]],
-        ["P1 log score gain over P0 scored with a Student-t density, nats (90\\%)",
-         _gain_over_p0(r("ablations/backtest-upworthy-*--base-density-t.json")), "not run", "not run"],
+        ["P1 minus P0, log score in nats (90\\%, tests resampled)", *[_gain_over_p0(a) for a in archives]],
+        ["the same, the seven quarters as units (90\\%)",
+         join("{} ({}, {})", v(origins, "origin_level.difference", 3), v(origins, "origin_level.lo", 3), v(origins, "origin_level.hi", 3)), "not computed"],
         ["P1 Brier skill, event at realized precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill", 4) for a in archives]],
         ["P1 Brier skill, event at planned precision (90\\%, unadjusted)", *[ci(a, p1, "brier_skill_planned", 4) for a in archives]],
-        ["tests to read a skill of 0.10, at base rate; verdict at that skill", _gate(up_extras), _gate(asos_extras), _gate_scaled(syn)],
+        ["tests to read a skill of 0.10, at base rate; verdict at that skill", _gate(up_extras), _gate_scaled(syn)],
         ["P1 ECE, percentile of the clustered null", *[_ece_percentile(a) for a in archives]],
         ["P1 coverage of the 80 / 90 percent intervals",
          *[join("{} / {}", v(a, f"{p1}.coverage_80", 2), v(a, f"{p1}.coverage_90", 2)) for a in archives]],
-        ["P1 90 percent coverage, deciles of realized over planned $s$",
-         join("{} to {}", v(up, "tables.coverage_by_se_ratio[rung=P1,decile=1].coverage_90", 2),
-              v(up, "tables.coverage_by_se_ratio[rung=P1,decile=10].coverage_90", 2)), "n/a", "n/a"],
-        ["abstention rate", *[v(a, f"{p1}.abstention_rate") for a in archives]],
         ["P2 minus P1, paired log score (90\\%)", ci(up, p2, "logscore_vs_p1", 4),
-         join(held, v(asos, f"{p2}.logscore_vs_p1", 4)), join(held, v(syn, f"{p2}.logscore_vs_p1", 4))],
-        ["best decision value at a quarter budget, minus matched random (90\\%)", _best_decision(up, "text_lr", "text classifier"),
-         _best_decision(asos, "P1", "all rungs"), _best_decision(syn, "P1", "prior")],
-        ["P1 decision value at a quarter budget, minus matched random (90\\%)", *[ci(a, _dv("P1"), "diff_matched") for a in archives]],
+         join("{}; guard holds $\\lambda$ at zero", v(syn, f"{p2}.logscore_vs_p1", 4))],
+        ["text classifier minus the arm-count rule, captured lift at a quarter budget (90\\%)",
+         join("{} ({}, {})", v(up_extras, f"{arm}.estimate", 3), v(up_extras, f"{arm}.lo", 3), v(up_extras, f"{arm}.hi", 3)), "not computed"],
     ])
 
 

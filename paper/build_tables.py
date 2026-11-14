@@ -1076,11 +1076,14 @@ def guard_pairs_rows_table(reports_dir, out, source="upworthy"):
         return
     # one interval per quantity (round 03, R3): the pooled realized difference is Table guard-pairs' draw, read from the same key
     pooled_iv = (extras.get("guard_pairs") or {}).get("summary") or {}
+    # the location and scale parts come from a refit; when that refit does not reproduce the stored log scores the report marks the
+    # split as not defined, and its two columns are left out
+    split = bool((gpr.get("decomposition") or {}).get("defined"))
     lines = [
-        r"\begin{tabular}{llrrrrrrrrr}",
+        r"\begin{tabular}{llrrrrrrrrr}" if split else r"\begin{tabular}{llrrrrrrr}",
         r"\toprule",
-        r"origin & cell & $\lambda$ & rows & P2 better (90\%) & median (90\%) & mean (90\%) & decisive rows: n / mean & rest: mean & "
-        r"location part (90\%) & scale part (90\%) \\",
+        r"origin & cell & $\lambda$ & rows & P2 better (90\%) & median (90\%) & mean (90\%) & decisive rows: n / mean & rest: mean"
+        + (r" & location part (90\%) & scale part (90\%) \\" if split else r" \\"),
         r"\midrule",
     ]
 
@@ -1092,9 +1095,10 @@ def guard_pairs_rows_table(reports_dir, out, source="upworthy"):
             f"{f3(r['share_p2_better'])} ({f3(r.get('share_p2_better_lo'))}, {f3(r.get('share_p2_better_hi'))}) & "
             f"{f3(r['median_diff'], 4)} ({f3(r.get('median_diff_lo'), 4)}, {f3(r.get('median_diff_hi'), 4)}) & "
             f"{f3(r['mean_diff'], 4)} ({f3(mlo, 4)}, {f3(mhi, 4)}) & "
-            f"{dec.get('rows', '')} / {f3(dec.get('mean_diff'), 4)} & {f3(rest.get('mean_diff'), 4)} & "
-            f"{f3(r.get('location_part'), 4)} ({f3(r.get('location_part_lo'), 4)}, {f3(r.get('location_part_hi'), 4)}) & "
-            f"{f3(r.get('scale_part'), 4)} ({f3(r.get('scale_part_lo'), 4)}, {f3(r.get('scale_part_hi'), 4)}) \\\\"
+            f"{dec.get('rows', '')} / {f3(dec.get('mean_diff'), 4)} & {f3(rest.get('mean_diff'), 4)}"
+            + (f" & {f3(r.get('location_part'), 4)} ({f3(r.get('location_part_lo'), 4)}, {f3(r.get('location_part_hi'), 4)}) & "
+               f"{f3(r.get('scale_part'), 4)} ({f3(r.get('scale_part_lo'), 4)}, {f3(r.get('scale_part_hi'), 4)})" if split else "")
+            + " \\\\"
         )
 
     for r in gpr["rows"]:

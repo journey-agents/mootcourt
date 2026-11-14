@@ -4,7 +4,7 @@
   {
    "derived": [],
    "file": "cautionary-upworthy.pdf",
-   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+   "json": "paper/data/run1-relative-lift/backtest-upworthy-20261103-a237767ce0f2--effect-scale-relative+s-star-realized.json and paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
    "keys": [
     "tables.aggregate.brier_skill",
     "tables.aggregate.brier_skill_hi",
@@ -134,9 +134,9 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.0022784534498774267,
+     "value": 0.006884341757989687,
      "where": {
       "cell": "ALL",
       "rung": "P1"
@@ -144,9 +144,9 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": -0.0011582669098528786,
+     "value": 0.004084877532413283,
      "where": {
       "cell": "ALL",
       "rung": "P1"
@@ -154,9 +154,9 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.006122970751108098,
+     "value": 0.010029708751880854,
      "where": {
       "cell": "ALL",
       "rung": "P1"
@@ -164,9 +164,9 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": -0.0013977986911901663,
+     "value": 0.005496253412891172,
      "where": {
       "cell": "headline_only",
       "rung": "P1"
@@ -174,9 +174,9 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": -0.005421764282661013,
+     "value": 0.00256871531960004,
      "where": {
       "cell": "headline_only",
       "rung": "P1"
@@ -184,9 +184,9 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.002662505943590969,
+     "value": 0.008877471048896484,
      "where": {
       "cell": "headline_only",
       "rung": "P1"
@@ -194,9 +194,9 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.009853433995038463,
+     "value": 0.010530145789310552,
      "where": {
       "cell": "image_only",
       "rung": "P1"
@@ -204,9 +204,9 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.0034466178365475547,
+     "value": 0.004458084744223273,
      "where": {
       "cell": "image_only",
       "rung": "P1"
@@ -214,9 +214,9 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.01703517565236472,
+     "value": 0.016725300908111296,
      "where": {
       "cell": "image_only",
       "rung": "P1"
@@ -224,9 +224,9 @@
     },
     {
      "field": "brier_skill",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": -0.004945711710321099,
+     "value": -0.002581556161546761,
      "where": {
       "cell": "both",
       "rung": "P1"
@@ -234,9 +234,9 @@
     },
     {
      "field": "brier_skill_lo",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": -0.025907754962356835,
+     "value": -0.011433313394249777,
      "where": {
       "cell": "both",
       "rung": "P1"
@@ -244,9 +244,9 @@
     },
     {
      "field": "brier_skill_hi",
-     "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+     "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
      "table": "tables.aggregate",
-     "value": 0.014009923064373965,
+     "value": 0.004737596366423433,
      "where": {
       "cell": "both",
       "rung": "P1"
@@ -257,7 +257,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-asos.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run9-visible-exposure/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -566,7 +566,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-synthetic.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run9-visible-exposure/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -875,7 +875,7 @@
   {
    "derived": [],
    "file": "coverage-exposure-upworthy.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+   "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
    "keys": [
     "tables.aggregate.coverage_90",
     "tables.calibration_by_precision.coverage_90"
@@ -885,7 +885,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8829588014981273,
+     "value": 0.8950201884253028,
      "where": {
       "decile": 1,
       "rung": "P0"
@@ -894,7 +894,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9048507462686567,
+     "value": 0.9473684210526315,
      "where": {
       "decile": 2,
       "rung": "P0"
@@ -903,7 +903,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9055191768007483,
+     "value": 0.88375,
      "where": {
       "decile": 3,
       "rung": "P0"
@@ -912,7 +912,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9270346117867165,
+     "value": 0.9767741935483871,
      "where": {
       "decile": 4,
       "rung": "P0"
@@ -921,7 +921,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9353327085285849,
+     "value": 0.9534606205250596,
      "where": {
       "decile": 5,
       "rung": "P0"
@@ -930,7 +930,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.940354147250699,
+     "value": 0.9578355586788475,
      "where": {
       "decile": 6,
       "rung": "P0"
@@ -939,7 +939,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9382022471910112,
+     "value": 0.8202247191011236,
      "where": {
       "decile": 7,
       "rung": "P0"
@@ -948,7 +948,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9467787114845938,
+     "value": 0.9221854304635762,
      "where": {
       "decile": 8,
       "rung": "P0"
@@ -957,7 +957,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9691588785046729,
+     "value": 0.9426660296225514,
      "where": {
       "decile": 9,
       "rung": "P0"
@@ -966,7 +966,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9803738317757009,
+     "value": 0.914364640883978,
      "where": {
       "decile": 10,
       "rung": "P0"
@@ -984,7 +984,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8623595505617978,
+     "value": 0.8855989232839838,
      "where": {
       "decile": 1,
       "rung": "P1"
@@ -993,7 +993,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8694029850746269,
+     "value": 0.9220272904483431,
      "where": {
       "decile": 2,
       "rung": "P1"
@@ -1002,7 +1002,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8746492048643593,
+     "value": 0.845,
      "where": {
       "decile": 3,
       "rung": "P1"
@@ -1011,7 +1011,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8849391955098223,
+     "value": 0.9554838709677419,
      "where": {
       "decile": 4,
       "rung": "P1"
@@ -1020,7 +1020,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8884723523898782,
+     "value": 0.9093078758949881,
      "where": {
       "decile": 5,
       "rung": "P1"
@@ -1029,7 +1029,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8928238583410997,
+     "value": 0.932536893886156,
      "where": {
       "decile": 6,
       "rung": "P1"
@@ -1038,7 +1038,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9054307116104869,
+     "value": 0.7602996254681648,
      "where": {
       "decile": 7,
       "rung": "P1"
@@ -1047,7 +1047,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8935574229691877,
+     "value": 0.8807947019867549,
      "where": {
       "decile": 8,
       "rung": "P1"
@@ -1056,7 +1056,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9355140186915888,
+     "value": 0.8877209746774964,
      "where": {
       "decile": 9,
       "rung": "P1"
@@ -1065,7 +1065,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9485981308411215,
+     "value": 0.8471454880294659,
      "where": {
       "decile": 10,
       "rung": "P1"
@@ -1074,7 +1074,7 @@
     {
      "field": "coverage_90",
      "table": "tables.aggregate",
-     "value": 0.8955781994951856,
+     "value": 0.8942694213330841,
      "where": {
       "cell": "ALL",
       "rung": "P1"
@@ -1083,7 +1083,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8576779026217228,
+     "value": 0.8869448183041723,
      "where": {
       "decile": 1,
       "rung": "P2"
@@ -1092,7 +1092,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8684701492537313,
+     "value": 0.9220272904483431,
      "where": {
       "decile": 2,
       "rung": "P2"
@@ -1101,7 +1101,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8652946679139383,
+     "value": 0.845,
      "where": {
       "decile": 3,
       "rung": "P2"
@@ -1110,7 +1110,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.882132834424696,
+     "value": 0.9554838709677419,
      "where": {
       "decile": 4,
       "rung": "P2"
@@ -1119,7 +1119,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.887535145267104,
+     "value": 0.9093078758949881,
      "where": {
       "decile": 5,
       "rung": "P2"
@@ -1128,7 +1128,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.8928238583410997,
+     "value": 0.9311314125087843,
      "where": {
       "decile": 6,
       "rung": "P2"
@@ -1137,7 +1137,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9026217228464419,
+     "value": 0.7602996254681648,
      "where": {
       "decile": 7,
       "rung": "P2"
@@ -1146,7 +1146,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.892623716153128,
+     "value": 0.8692052980132451,
      "where": {
       "decile": 8,
       "rung": "P2"
@@ -1155,7 +1155,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9355140186915888,
+     "value": 0.8877209746774964,
      "where": {
       "decile": 9,
       "rung": "P2"
@@ -1164,7 +1164,7 @@
     {
      "field": "coverage_90",
      "table": "tables.calibration_by_precision",
-     "value": 0.9485981308411215,
+     "value": 0.8471454880294659,
      "where": {
       "decile": 10,
       "rung": "P2"
@@ -1173,7 +1173,7 @@
     {
      "field": "coverage_90",
      "table": "tables.aggregate",
-     "value": 0.8933345797887258,
+     "value": 0.8935215480975974,
      "where": {
       "cell": "ALL",
       "rung": "P2"
@@ -1184,7 +1184,7 @@
   {
    "derived": [],
    "file": "coverage-se-asos.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run9-visible-exposure/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1792,7 +1792,7 @@
   {
    "derived": [],
    "file": "coverage-se-synthetic.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run9-visible-exposure/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1914,7 +1914,7 @@
   {
    "derived": [],
    "file": "coverage-se-upworthy.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+   "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
    "keys": [
     "tables.aggregate.coverage_80",
     "tables.aggregate.coverage_90",
@@ -1926,7 +1926,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.991588785046729,
+     "value": 0.9953271028037384,
      "where": {
       "decile": 1,
       "rung": "P0"
@@ -1935,7 +1935,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9841121495327103,
+     "value": 0.9663551401869159,
      "where": {
       "decile": 2,
       "rung": "P0"
@@ -1944,7 +1944,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9588400374181478,
+     "value": 0.950420954162769,
      "where": {
       "decile": 3,
       "rung": "P0"
@@ -1953,7 +1953,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9289719626168225,
+     "value": 0.922429906542056,
      "where": {
       "decile": 4,
       "rung": "P0"
@@ -1962,7 +1962,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9008419083255379,
+     "value": 0.8886810102899907,
      "where": {
       "decile": 5,
       "rung": "P0"
@@ -1971,7 +1971,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8383177570093457,
+     "value": 0.8514018691588785,
      "where": {
       "decile": 6,
       "rung": "P0"
@@ -1980,7 +1980,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8009345794392523,
+     "value": 0.802803738317757,
      "where": {
       "decile": 7,
       "rung": "P0"
@@ -1989,7 +1989,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7474275023386342,
+     "value": 0.7867165575304023,
      "where": {
       "decile": 8,
       "rung": "P0"
@@ -1998,7 +1998,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7018691588785047,
+     "value": 0.6915887850467289,
      "where": {
       "decile": 9,
       "rung": "P0"
@@ -2007,7 +2007,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6074766355140186,
+     "value": 0.6046728971962617,
      "where": {
       "decile": 10,
       "rung": "P0"
@@ -2025,7 +2025,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9981308411214953,
+     "value": 0.9934579439252337,
      "where": {
       "decile": 1,
       "rung": "P1"
@@ -2034,7 +2034,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9757009345794393,
+     "value": 0.9654205607476636,
      "where": {
       "decile": 2,
       "rung": "P1"
@@ -2043,7 +2043,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9335827876520112,
+     "value": 0.9382600561272217,
      "where": {
       "decile": 3,
       "rung": "P1"
@@ -2052,7 +2052,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8813084112149533,
+     "value": 0.891588785046729,
      "where": {
       "decile": 4,
       "rung": "P1"
@@ -2061,7 +2061,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8568755846585594,
+     "value": 0.8419083255378859,
      "where": {
       "decile": 5,
       "rung": "P1"
@@ -2070,7 +2070,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7981308411214953,
+     "value": 0.8102803738317756,
      "where": {
       "decile": 6,
       "rung": "P1"
@@ -2079,7 +2079,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7411214953271028,
+     "value": 0.7579439252336448,
      "where": {
       "decile": 7,
       "rung": "P1"
@@ -2088,7 +2088,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6978484565014031,
+     "value": 0.7231057062675398,
      "where": {
       "decile": 8,
       "rung": "P1"
@@ -2097,7 +2097,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6654205607476635,
+     "value": 0.6439252336448598,
      "where": {
       "decile": 9,
       "rung": "P1"
@@ -2106,7 +2106,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.5644859813084112,
+     "value": 0.5504672897196262,
      "where": {
       "decile": 10,
       "rung": "P1"
@@ -2115,7 +2115,7 @@
     {
      "field": "coverage_80",
      "table": "tables.aggregate",
-     "value": 0.8112554921940731,
+     "value": 0.8116294288118164,
      "where": {
       "cell": "ALL",
       "rung": "P1"
@@ -2124,7 +2124,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9981308411214953,
+     "value": 0.9934579439252337,
      "where": {
       "decile": 1,
       "rung": "P2"
@@ -2133,7 +2133,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9757009345794393,
+     "value": 0.9644859813084112,
      "where": {
       "decile": 2,
       "rung": "P2"
@@ -2142,7 +2142,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9335827876520112,
+     "value": 0.9373246024321796,
      "where": {
       "decile": 3,
       "rung": "P2"
@@ -2151,7 +2151,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8803738317757009,
+     "value": 0.8934579439252337,
      "where": {
       "decile": 4,
       "rung": "P2"
@@ -2160,7 +2160,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8568755846585594,
+     "value": 0.8409728718428437,
      "where": {
       "decile": 5,
       "rung": "P2"
@@ -2169,7 +2169,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.797196261682243,
+     "value": 0.8046728971962617,
      "where": {
       "decile": 6,
       "rung": "P2"
@@ -2178,7 +2178,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7355140186915888,
+     "value": 0.7588785046728972,
      "where": {
       "decile": 7,
       "rung": "P2"
@@ -2187,7 +2187,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6913002806361085,
+     "value": 0.7212347988774556,
      "where": {
       "decile": 8,
       "rung": "P2"
@@ -2196,7 +2196,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6644859813084112,
+     "value": 0.6383177570093458,
      "where": {
       "decile": 9,
       "rung": "P2"
@@ -2205,7 +2205,7 @@
     {
      "field": "coverage_80",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.5607476635514018,
+     "value": 0.5485981308411215,
      "where": {
       "decile": 10,
       "rung": "P2"
@@ -2214,7 +2214,7 @@
     {
      "field": "coverage_80",
      "table": "tables.aggregate",
-     "value": 0.8093858091053566,
+     "value": 0.8101336823408433,
      "where": {
       "cell": "ALL",
       "rung": "P2"
@@ -2223,7 +2223,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9990654205607477,
+     "value": 1.0,
      "where": {
       "decile": 1,
       "rung": "P0"
@@ -2232,7 +2232,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9981308411214953,
+     "value": 0.9962616822429906,
      "where": {
       "decile": 2,
       "rung": "P0"
@@ -2241,7 +2241,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9934518241347053,
+     "value": 0.990645463049579,
      "where": {
       "decile": 3,
       "rung": "P0"
@@ -2250,7 +2250,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9878504672897196,
+     "value": 0.9766355140186916,
      "where": {
       "decile": 4,
       "rung": "P0"
@@ -2259,7 +2259,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9775491113189897,
+     "value": 0.9747427502338635,
      "where": {
       "decile": 5,
       "rung": "P0"
@@ -2277,7 +2277,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9186915887850468,
+     "value": 0.9261682242990654,
      "where": {
       "decile": 7,
       "rung": "P0"
@@ -2286,7 +2286,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9045837231057062,
+     "value": 0.8942937324602432,
      "where": {
       "decile": 8,
       "rung": "P0"
@@ -2295,7 +2295,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8299065420560747,
+     "value": 0.8504672897196262,
      "where": {
       "decile": 9,
       "rung": "P0"
@@ -2331,7 +2331,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.994392523364486,
+     "value": 0.9878504672897196,
      "where": {
       "decile": 2,
       "rung": "P1"
@@ -2340,7 +2340,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9887745556594949,
+     "value": 0.9812909260991581,
      "where": {
       "decile": 3,
       "rung": "P1"
@@ -2349,7 +2349,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9691588785046729,
+     "value": 0.9560747663551402,
      "where": {
       "decile": 4,
       "rung": "P1"
@@ -2358,7 +2358,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9438727782974743,
+     "value": 0.9457436856875585,
      "where": {
       "decile": 5,
       "rung": "P1"
@@ -2367,7 +2367,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.902803738317757,
+     "value": 0.9093457943925234,
      "where": {
       "decile": 6,
       "rung": "P1"
@@ -2376,7 +2376,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8626168224299066,
+     "value": 0.8644859813084113,
      "where": {
       "decile": 7,
       "rung": "P1"
@@ -2385,7 +2385,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8316183348924229,
+     "value": 0.8419083255378859,
      "where": {
       "decile": 8,
       "rung": "P1"
@@ -2394,7 +2394,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7775700934579439,
+     "value": 0.780373831775701,
      "where": {
       "decile": 9,
       "rung": "P1"
@@ -2403,7 +2403,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6850467289719626,
+     "value": 0.6757009345794392,
      "where": {
       "decile": 10,
       "rung": "P1"
@@ -2412,7 +2412,7 @@
     {
      "field": "coverage_90",
      "table": "tables.aggregate",
-     "value": 0.8955781994951856,
+     "value": 0.8942694213330841,
      "where": {
       "cell": "ALL",
       "rung": "P1"
@@ -2430,7 +2430,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.994392523364486,
+     "value": 0.9878504672897196,
      "where": {
       "decile": 2,
       "rung": "P2"
@@ -2439,7 +2439,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9878391019644528,
+     "value": 0.9812909260991581,
      "where": {
       "decile": 3,
       "rung": "P2"
@@ -2448,7 +2448,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9682242990654205,
+     "value": 0.9560747663551402,
      "where": {
       "decile": 4,
       "rung": "P2"
@@ -2457,7 +2457,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.9429373246024322,
+     "value": 0.9448082319925164,
      "where": {
       "decile": 5,
       "rung": "P2"
@@ -2466,7 +2466,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8962616822429906,
+     "value": 0.9093457943925234,
      "where": {
       "decile": 6,
       "rung": "P2"
@@ -2475,7 +2475,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8607476635514019,
+     "value": 0.8635514018691589,
      "where": {
       "decile": 7,
       "rung": "P2"
@@ -2484,7 +2484,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.8278765201122544,
+     "value": 0.8409728718428437,
      "where": {
       "decile": 8,
       "rung": "P2"
@@ -2493,7 +2493,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.7738317757009345,
+     "value": 0.7785046728971963,
      "where": {
       "decile": 9,
       "rung": "P2"
@@ -2502,7 +2502,7 @@
     {
      "field": "coverage_90",
      "table": "tables.coverage_by_se_ratio",
-     "value": 0.6813084112149532,
+     "value": 0.6728971962616822,
      "where": {
       "decile": 10,
       "rung": "P2"
@@ -2511,7 +2511,7 @@
     {
      "field": "coverage_90",
      "table": "tables.aggregate",
-     "value": 0.8933345797887258,
+     "value": 0.8935215480975974,
      "where": {
       "cell": "ALL",
       "rung": "P2"
@@ -2522,7 +2522,7 @@
   {
    "derived": [],
    "file": "decision-value-asos.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run9-visible-exposure/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3096,7 +3096,7 @@
   {
    "derived": [],
    "file": "decision-value-synthetic.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run9-visible-exposure/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3769,7 +3769,7 @@
   {
    "derived": [],
    "file": "decision-value-upworthy.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+   "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
    "keys": [
     "tables.decision_value.captured_fraction",
     "tables.decision_value.captured_fraction_hi",
@@ -3868,7 +3868,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.11916615586386473,
+     "value": 0.11871268645344389,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3879,7 +3879,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.10948843421766709,
+     "value": 0.10912590894369721,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3890,7 +3890,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.12808663597769382,
+     "value": 0.1276038329367257,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3901,7 +3901,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.1118231237218814,
+     "value": 0.110960272502758,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3912,7 +3912,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.09858881675481117,
+     "value": 0.09939549384669831,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3923,7 +3923,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.12384825191292438,
+     "value": 0.12547186832081297,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3934,7 +3934,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.11797610111135222,
+     "value": 0.1191149518827969,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3945,7 +3945,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.106554572510789,
+     "value": 0.10480162490325991,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -3956,7 +3956,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.13183476094012736,
+     "value": 0.13187323081797597,
      "where": {
       "budget": 0.1,
       "origin": "ALL",
@@ -4088,7 +4088,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.2752138309175052,
+     "value": 0.2695989332829499,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4099,7 +4099,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.2596842766998911,
+     "value": 0.2550759766008561,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4110,7 +4110,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.2884875952347021,
+     "value": 0.2845128392440994,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4121,7 +4121,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.27910160608245493,
+     "value": 0.277710920937168,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4132,7 +4132,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.2590515790708663,
+     "value": 0.2613785009312825,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4143,7 +4143,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.2954153768622886,
+     "value": 0.29933913461944506,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4154,7 +4154,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.2768414582785994,
+     "value": 0.2726623678099552,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4165,7 +4165,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.2604220668312814,
+     "value": 0.2551173501866157,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4176,7 +4176,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.29688113485932094,
+     "value": 0.2933565705161334,
      "where": {
       "budget": 0.25,
       "origin": "ALL",
@@ -4308,7 +4308,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.512226035823689,
+     "value": 0.5152056632568573,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4319,7 +4319,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.49549570223732464,
+     "value": 0.4977185218299709,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4330,7 +4330,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.5304524328939477,
+     "value": 0.5333390472193261,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4341,7 +4341,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.5417567955082402,
+     "value": 0.5256534987952667,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4352,7 +4352,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.5139344834732797,
+     "value": 0.5035179474006533,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4363,7 +4363,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.5557321708027041,
+     "value": 0.5429912636354657,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4374,7 +4374,7 @@
     {
      "field": "captured_fraction",
      "table": "tables.decision_value",
-     "value": 0.5354013739226342,
+     "value": 0.5193305489277799,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4385,7 +4385,7 @@
     {
      "field": "captured_fraction_lo",
      "table": "tables.decision_value",
-     "value": 0.5140054605014881,
+     "value": 0.4993700022565501,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4396,7 +4396,7 @@
     {
      "field": "captured_fraction_hi",
      "table": "tables.decision_value",
-     "value": 0.5534280638000287,
+     "value": 0.539989428889367,
      "where": {
       "budget": 0.5,
       "origin": "ALL",
@@ -4442,7 +4442,7 @@
   {
    "derived": [],
    "file": "learning-curve-asos.pdf",
-   "json": "paper/data/run8-randomization-window/learning-curve-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run9-visible-exposure/learning-curve-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "rows.skill",
     "rows.skill_hi",
@@ -4995,7 +4995,7 @@
   {
    "derived": [],
    "file": "learning-curve-upworthy.pdf",
-   "json": "paper/data/run8-randomization-window/learning-curve-upworthy-20261106-2dc461f52ea4.json",
+   "json": "paper/data/run9-visible-exposure/learning-curve-upworthy-20261106-2dc461f52ea4.json",
    "keys": [
     "rows.skill",
     "rows.skill_hi",
@@ -5006,7 +5006,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.009300212053405338,
+     "value": -0.0063708131091137765,
      "where": {
       "fraction": 0.01,
       "rung": "P1"
@@ -5015,7 +5015,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0038648280111624445,
+     "value": -0.013988327242033962,
      "where": {
       "fraction": 0.01,
       "rung": "P1"
@@ -5024,7 +5024,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.027402335338240335,
+     "value": 0.002747675001321705,
      "where": {
       "fraction": 0.01,
       "rung": "P1"
@@ -5033,7 +5033,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.01190076028318171,
+     "value": -0.0028392024265402106,
      "where": {
       "fraction": 0.02,
       "rung": "P1"
@@ -5042,7 +5042,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0018586899429650068,
+     "value": -0.011457566190999273,
      "where": {
       "fraction": 0.02,
       "rung": "P1"
@@ -5051,7 +5051,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.030154145056405873,
+     "value": 0.007147917218537869,
      "where": {
       "fraction": 0.02,
       "rung": "P1"
@@ -5060,7 +5060,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.017745855055690225,
+     "value": 0.005552542181501646,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -5069,7 +5069,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.003887934010688602,
+     "value": -0.0020539573887561166,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -5078,7 +5078,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.036617980045480475,
+     "value": 0.017053715066623402,
      "where": {
       "fraction": 0.05,
       "rung": "P1"
@@ -5087,7 +5087,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.020344346162040783,
+     "value": 0.00754835324410707,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -5096,7 +5096,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.007682329315182169,
+     "value": 0.0010964390286691149,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -5105,7 +5105,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.03732085941364305,
+     "value": 0.017034315211182965,
      "where": {
       "fraction": 0.1,
       "rung": "P1"
@@ -5114,7 +5114,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.02422736248167842,
+     "value": 0.012507795959588435,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -5123,7 +5123,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.010933178408347935,
+     "value": 0.005177048658662263,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -5132,7 +5132,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.0427456804339506,
+     "value": 0.023341620177253736,
      "where": {
       "fraction": 0.25,
       "rung": "P1"
@@ -5141,7 +5141,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.024326632344541733,
+     "value": 0.012143022097687545,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -5150,7 +5150,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.01122946337540314,
+     "value": 0.005522510896654505,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -5159,7 +5159,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.04234591074117174,
+     "value": 0.021844879589114678,
      "where": {
       "fraction": 0.5,
       "rung": "P1"
@@ -5168,7 +5168,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.02446391707595763,
+     "value": 0.01256867027623454,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -5177,7 +5177,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.01121294144296559,
+     "value": 0.005662824728865862,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -5186,7 +5186,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.042270696708859766,
+     "value": 0.02254475649446172,
      "where": {
       "fraction": 1.0,
       "rung": "P1"
@@ -5195,7 +5195,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.008781241346870217,
+     "value": -0.006757776682862699,
      "where": {
       "fraction": 0.01,
       "rung": "P2"
@@ -5204,7 +5204,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.004543915389024141,
+     "value": -0.014501848275041229,
      "where": {
       "fraction": 0.01,
       "rung": "P2"
@@ -5213,7 +5213,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.026966290183851428,
+     "value": 0.0025725100630450827,
      "where": {
       "fraction": 0.01,
       "rung": "P2"
@@ -5222,7 +5222,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.010983087214848409,
+     "value": -0.004666722452117822,
      "where": {
       "fraction": 0.02,
       "rung": "P2"
@@ -5231,7 +5231,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0018050789620631049,
+     "value": -0.01185939440280106,
      "where": {
       "fraction": 0.02,
       "rung": "P2"
@@ -5240,7 +5240,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.02802838655309121,
+     "value": 0.0042034760546097215,
      "where": {
       "fraction": 0.02,
       "rung": "P2"
@@ -5249,7 +5249,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.017745855055690228,
+     "value": 0.0055525421815016355,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -5258,7 +5258,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.0038879340106885915,
+     "value": -0.0020539573887561327,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -5267,7 +5267,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.036617980045480475,
+     "value": 0.017053715066623395,
      "where": {
       "fraction": 0.05,
       "rung": "P2"
@@ -5276,7 +5276,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.019906644391070205,
+     "value": 0.007583993152749435,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -5285,7 +5285,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.006756142538104827,
+     "value": 6.0944714504546354e-05,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -5294,7 +5294,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.03813721028661881,
+     "value": 0.018462879764654584,
      "where": {
       "fraction": 0.1,
       "rung": "P2"
@@ -5303,7 +5303,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.025073163098484126,
+     "value": 0.014542175419132265,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -5312,7 +5312,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.009988735616835782,
+     "value": 0.005347067916091095,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -5321,7 +5321,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.04574337928816216,
+     "value": 0.027918475972216913,
      "where": {
       "fraction": 0.25,
       "rung": "P2"
@@ -5330,7 +5330,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.026918176888986296,
+     "value": 0.01684384269345034,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -5339,7 +5339,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.01164146800058681,
+     "value": 0.0069261664304753005,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -5348,7 +5348,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.048593490935607137,
+     "value": 0.03108399541143975,
      "where": {
       "fraction": 0.5,
       "rung": "P2"
@@ -5357,7 +5357,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.029318166891506126,
+     "value": 0.01938829143032661,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -5366,7 +5366,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.014312816230178844,
+     "value": 0.00970798341287934,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -5375,7 +5375,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.05062826420590989,
+     "value": 0.034064094643625205,
      "where": {
       "fraction": 1.0,
       "rung": "P2"
@@ -5384,7 +5384,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.010912302085507353,
+     "value": -0.03464109813469211,
      "where": {
       "fraction": 0.01,
       "rung": "local_eb"
@@ -5393,7 +5393,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.019695032644383912,
+     "value": -0.041780644261782296,
      "where": {
       "fraction": 0.01,
       "rung": "local_eb"
@@ -5402,7 +5402,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -4.1789088302911345e-05,
+     "value": -0.02939612306443021,
      "where": {
       "fraction": 0.01,
       "rung": "local_eb"
@@ -5411,7 +5411,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.014218862035015717,
+     "value": -0.031075112891027462,
      "where": {
       "fraction": 0.02,
       "rung": "local_eb"
@@ -5420,7 +5420,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.02362527883874896,
+     "value": -0.0366696226404771,
      "where": {
       "fraction": 0.02,
       "rung": "local_eb"
@@ -5429,7 +5429,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.003260391192459364,
+     "value": -0.026055762920211376,
      "where": {
       "fraction": 0.02,
       "rung": "local_eb"
@@ -5438,7 +5438,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.005237817124521987,
+     "value": -0.0272281467338444,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -5447,7 +5447,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.018579897069324013,
+     "value": -0.04156587365491181,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -5456,7 +5456,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.00821494537118239,
+     "value": -0.015655440273009368,
      "where": {
       "fraction": 0.05,
       "rung": "local_eb"
@@ -5465,7 +5465,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.0034362861397152166,
+     "value": -0.011183603458353087,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -5474,7 +5474,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.00675183308238414,
+     "value": -0.018064439537678775,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -5483,7 +5483,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.017443767981111507,
+     "value": -0.0019721167775147166,
      "where": {
       "fraction": 0.1,
       "rung": "local_eb"
@@ -5492,7 +5492,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.01167451481944523,
+     "value": -0.003070217681323939,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -5501,7 +5501,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0034758612327153425,
+     "value": -0.01469563686992402,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -5510,7 +5510,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.029741708541734403,
+     "value": 0.009154093486105679,
      "where": {
       "fraction": 0.25,
       "rung": "local_eb"
@@ -5519,7 +5519,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.019239252313943373,
+     "value": 0.005029853378969213,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -5528,7 +5528,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": 0.0037129929980854316,
+     "value": -0.007301257169792783,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -5537,7 +5537,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.03898976009609346,
+     "value": 0.0201166851022741,
      "where": {
       "fraction": 0.5,
       "rung": "local_eb"
@@ -5546,7 +5546,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": 0.012632667753613935,
+     "value": 0.005434013902359092,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -5555,7 +5555,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.010646272731148664,
+     "value": -0.015644653685064687,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -5564,7 +5564,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": 0.03705259368800464,
+     "value": 0.029367004718530033,
      "where": {
       "fraction": 1.0,
       "rung": "local_eb"
@@ -5573,7 +5573,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.057928285287657325,
+     "value": -0.12863155440783142,
      "where": {
       "fraction": 0.01,
       "rung": "GBM"
@@ -5582,7 +5582,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.09433098695631607,
+     "value": -0.18716322333149252,
      "where": {
       "fraction": 0.01,
       "rung": "GBM"
@@ -5591,7 +5591,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.03273683460146739,
+     "value": -0.08772586720344674,
      "where": {
       "fraction": 0.01,
       "rung": "GBM"
@@ -5600,7 +5600,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.0935395142822341,
+     "value": -0.16379440237152706,
      "where": {
       "fraction": 0.02,
       "rung": "GBM"
@@ -5609,7 +5609,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.1448404713362939,
+     "value": -0.23694786532621653,
      "where": {
       "fraction": 0.02,
       "rung": "GBM"
@@ -5618,7 +5618,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.05769008592267936,
+     "value": -0.1111481705972639,
      "where": {
       "fraction": 0.02,
       "rung": "GBM"
@@ -5627,7 +5627,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.08826232739548803,
+     "value": -0.16127998135080207,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -5636,7 +5636,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.14347321572827368,
+     "value": -0.24206825349014224,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -5645,7 +5645,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.0482517072967469,
+     "value": -0.10633009582028824,
      "where": {
       "fraction": 0.05,
       "rung": "GBM"
@@ -5654,7 +5654,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.07693441022177919,
+     "value": -0.1364842265028831,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -5663,7 +5663,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.128306964103249,
+     "value": -0.20844362782243359,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -5672,7 +5672,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.03854027699827156,
+     "value": -0.08677882148359885,
      "where": {
       "fraction": 0.1,
       "rung": "GBM"
@@ -5681,7 +5681,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.05363121509006837,
+     "value": -0.11008149594262195,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -5690,7 +5690,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.09632348719462855,
+     "value": -0.172563084475677,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -5699,7 +5699,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.020720229263567886,
+     "value": -0.06508867909970574,
      "where": {
       "fraction": 0.25,
       "rung": "GBM"
@@ -5708,7 +5708,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.03929487363118056,
+     "value": -0.09654943744210853,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -5717,7 +5717,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0789313714620184,
+     "value": -0.1533605323072607,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -5726,7 +5726,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.0101991133679212,
+     "value": -0.05551717549362398,
      "where": {
       "fraction": 0.5,
       "rung": "GBM"
@@ -5735,7 +5735,7 @@
     {
      "field": "skill",
      "table": "rows",
-     "value": -0.04133958676670213,
+     "value": -0.10028535359232005,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -5744,7 +5744,7 @@
     {
      "field": "skill_lo",
      "table": "rows",
-     "value": -0.0785759895411398,
+     "value": -0.1550946349961497,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -5753,7 +5753,7 @@
     {
      "field": "skill_hi",
      "table": "rows",
-     "value": -0.014579591058797508,
+     "value": -0.06239955338998879,
      "where": {
       "fraction": 1.0,
       "rung": "GBM"
@@ -6163,7 +6163,7 @@
     }
    ],
    "file": "reliability-asos.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-asos-20261103-6bb5a15c5ff0.json",
+   "json": "paper/data/run9-visible-exposure/backtest-asos-20261103-6bb5a15c5ff0.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -6866,7 +6866,7 @@
     }
    ],
    "file": "reliability-synthetic.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-synthetic-20261103-bf4fd286e2b2.json",
+   "json": "paper/data/run9-visible-exposure/backtest-synthetic-20261103-bf4fd286e2b2.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -7338,8 +7338,8 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.07961622622454133,
-     "lo": 0.06850698535600068,
+     "hi": 0.08276374442793462,
+     "lo": 0.07206537890044576,
      "rung": "P1",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     },
@@ -7349,19 +7349,8 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.1384419983065199,
-     "lo": 0.12235393734123624,
-     "rung": "P1",
-     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
-    },
-    {
-     "bin": 2,
-     "from": [
-      "n",
-      "mean_p"
-     ],
-     "hi": 0.34375,
-     "lo": 0.09375,
+     "hi": 0.12982102344340812,
+     "lo": 0.11267960675573481,
      "rung": "P1",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     },
@@ -7371,8 +7360,8 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.07827102803738317,
-     "lo": 0.06725634178905207,
+     "hi": 0.08114911891011402,
+     "lo": 0.07048719087812824,
      "rung": "P2",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     },
@@ -7382,25 +7371,14 @@
       "n",
       "mean_p"
      ],
-     "hi": 0.13711229946524064,
-     "lo": 0.12106951871657753,
-     "rung": "P2",
-     "what": "central 90 percent interval of Binomial(n, mean_p) over n"
-    },
-    {
-     "bin": 2,
-     "from": [
-      "n",
-      "mean_p"
-     ],
-     "hi": 0.3333333333333333,
-     "lo": 0.1,
+     "hi": 0.12905679513184584,
+     "lo": 0.11206896551724138,
      "rung": "P2",
      "what": "central 90 percent interval of Binomial(n, mean_p) over n"
     }
    ],
    "file": "reliability-upworthy.pdf",
-   "json": "paper/data/run8-randomization-window/backtest-upworthy-20261106-2dc461f52ea4.json",
+   "json": "paper/data/run9-visible-exposure/backtest-upworthy-20261106-2dc461f52ea4.json",
    "keys": [
     "tables.reliability_bins.freq",
     "tables.reliability_bins.mean_p",
@@ -7465,7 +7443,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 5941,
+     "value": 6730,
      "where": {
       "bin": 0,
       "rung": "P1"
@@ -7474,7 +7452,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.07405212396132674,
+     "value": 0.07734238833984272,
      "where": {
       "bin": 0,
       "rung": "P1"
@@ -7483,7 +7461,7 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.07389328395892947,
+     "value": 0.07429420505200594,
      "where": {
       "bin": 0,
       "rung": "P1"
@@ -7492,7 +7470,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 4724,
+     "value": 3967,
      "where": {
       "bin": 1,
       "rung": "P1"
@@ -7501,7 +7479,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.13042091011033244,
+     "value": 0.12119815558109183,
      "where": {
       "bin": 1,
       "rung": "P1"
@@ -7510,7 +7488,7 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.09991532599491956,
+     "value": 0.10410889841189816,
      "where": {
       "bin": 1,
       "rung": "P1"
@@ -7519,34 +7497,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 32,
-     "where": {
-      "bin": 2,
-      "rung": "P1"
-     }
-    },
-    {
-     "field": "mean_p",
-     "table": "tables.reliability_bins",
-     "value": 0.21103232383182285,
-     "where": {
-      "bin": 2,
-      "rung": "P1"
-     }
-    },
-    {
-     "field": "freq",
-     "table": "tables.reliability_bins",
-     "value": 0.0625,
-     "where": {
-      "bin": 2,
-      "rung": "P1"
-     }
-    },
-    {
-     "field": "n",
-     "table": "tables.reliability_bins",
-     "value": 5992,
+     "value": 6753,
      "where": {
       "bin": 0,
       "rung": "P2"
@@ -7555,7 +7506,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.07278092576874957,
+     "value": 0.0758081696403897,
      "where": {
       "bin": 0,
       "rung": "P2"
@@ -7564,7 +7515,7 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.07376502002670227,
+     "value": 0.07389308455501259,
      "where": {
       "bin": 0,
       "rung": "P2"
@@ -7573,7 +7524,7 @@
     {
      "field": "n",
      "table": "tables.reliability_bins",
-     "value": 4675,
+     "value": 3944,
      "where": {
       "bin": 1,
       "rung": "P2"
@@ -7582,7 +7533,7 @@
     {
      "field": "mean_p",
      "table": "tables.reliability_bins",
-     "value": 0.12906581594665845,
+     "value": 0.12053242889076012,
      "where": {
       "bin": 1,
       "rung": "P2"
@@ -7591,36 +7542,9 @@
     {
      "field": "freq",
      "table": "tables.reliability_bins",
-     "value": 0.10032085561497327,
+     "value": 0.10496957403651115,
      "where": {
       "bin": 1,
-      "rung": "P2"
-     }
-    },
-    {
-     "field": "n",
-     "table": "tables.reliability_bins",
-     "value": 30,
-     "where": {
-      "bin": 2,
-      "rung": "P2"
-     }
-    },
-    {
-     "field": "mean_p",
-     "table": "tables.reliability_bins",
-     "value": 0.21066286670953893,
-     "where": {
-      "bin": 2,
-      "rung": "P2"
-     }
-    },
-    {
-     "field": "freq",
-     "table": "tables.reliability_bins",
-     "value": 0.06666666666666667,
-     "where": {
-      "bin": 2,
       "rung": "P2"
      }
     }
@@ -7628,11 +7552,11 @@
   }
  ],
  "generated_by": "scripts/paper_figures.py",
- "run_folder": "paper/data/run8-randomization-window",
+ "run_folder": "paper/data/run9-visible-exposure",
  "skipped": [
   {
    "file": "learning-curve-synthetic.pdf",
-   "reason": "no learning-curve-synthetic-*.json in paper/data/run8-randomization-window"
+   "reason": "no learning-curve-synthetic-*.json in paper/data/run9-visible-exposure"
   }
  ]
 }
