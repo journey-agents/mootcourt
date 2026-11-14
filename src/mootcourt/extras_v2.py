@@ -299,7 +299,7 @@ EXPOSURE_FIXED_DEFINITIONS = {
 
 
 def exposure_fixed(reports_dir, source: str, snapshot_id: str, variant: str = "exposure-cell-median") -> dict | None:
-    """X3. The main run against the run that sets every row's planned exposure to its cell's median.
+    """X3. The main run against the run that sets every row's planned exposure to its cell's median (runs up to run 8).
 
     ``variant`` names the ablation report read: ``exposure-cell-median`` (the median over the whole ledger, a diagnostic that reads later
     rows) or ``exposure-cell-median-visible`` (the median over the rows visible at the row's quarter)."""
@@ -308,19 +308,37 @@ def exposure_fixed(reports_dir, source: str, snapshot_id: str, variant: str = "e
     if source != "upworthy":
         return None
     reports_dir = Path(reports_dir)
-    main_doc = _load(reports_dir / f"backtest-{source}-{snapshot_id}.json")
     jf, sf = _ablation(reports_dir, source, snapshot_id, variant)
-    fixed_doc = _load(jf)
-    if main_doc is None or fixed_doc is None:
+    return _exposure_pair(EXPOSURE_FIXED_DEFINITIONS[variant], jf.name,
+                          ("main", _load(reports_dir / f"backtest-{source}-{snapshot_id}.json"), _scores(reports_dir / f"scores-{source}-{snapshot_id}.parquet")),
+                          ("fixed", _load(jf), _scores(sf)))
+
+
+EXPOSURE_REALIZED_DEFINITION = ("the main run fixes every Upworthy row's exposure at its cell's median over the rows visible at the row's origin; "
+                                "the diagnostic gives each row its own realized traffic, the mean of its arms' impressions, which no forecast "
+                                "issued before launch could have had")
+
+
+def exposure_realized(reports_dir, source: str, snapshot_id: str) -> dict | None:
+    """Run 9. The diagnostic on each row's own realized traffic (``--exposure planned``) against the main run, which fixes exposure."""
+    if source != "upworthy":
+        return None
+    reports_dir = Path(reports_dir)
+    jf, sf = _ablation(reports_dir, source, snapshot_id, "exposure-planned")
+    return _exposure_pair(EXPOSURE_REALIZED_DEFINITION, jf.name, ("realized", _load(jf), _scores(sf)),
+                          ("fixed", _load(reports_dir / f"backtest-{source}-{snapshot_id}.json"),
+                           _scores(reports_dir / f"scores-{source}-{snapshot_id}.parquet")))
+
+
+def _exposure_pair(definition: str, report_name: str, first: tuple, second: tuple) -> dict | None:
+    """Two runs that differ in the exposure setting only, side by side; each of ``first`` and ``second`` is (label, report, score table)."""
+    (name_a, doc_a, sc_a), (name_b, doc_b, sc_b) = first, second
+    if doc_a is None or doc_b is None:
         return None
     rungs = ("P0", "P1", "P2", "text_lr", "GBM", "local_eb")
-    out: dict = {
-        "definition": EXPOSURE_FIXED_DEFINITIONS[variant],
-        "report": jf.name,
-        "by_cell": {},
-    }
+    out: dict = {"definition": definition, "report": report_name, "by_cell": {}}
     for cell in ("ALL", "headline_only", "image_only", "both"):
-        a, b = _agg(main_doc, cell, rungs), _agg(fixed_doc, cell, rungs)
+        a, b = _agg(doc_a, cell, rungs), _agg(doc_b, cell, rungs)
         if not a or not b:
             continue
         delta = {}
@@ -330,10 +348,9 @@ def exposure_fixed(reports_dir, source: str, snapshot_id: str, variant: str = "e
                     k: (None if a[r].get(k) is None or b[r].get(k) is None else b[r][k] - a[r][k])
                     for k in ("brier_skill", "logscore", "auc_event", "auc_event_within", "ece", "ece_percentile")
                 }
-        out["by_cell"][cell] = {"main": a, "fixed": b, "fixed_minus_main": delta}
-    sc_main, sc_fixed = _scores(reports_dir / f"scores-{source}-{snapshot_id}.parquet"), _scores(sf)
+        out["by_cell"][cell] = {name_a: a, name_b: b, f"{name_b}_minus_{name_a}": delta}
     const = {}
-    for name, sc in (("main", sc_main), ("fixed", sc_fixed)):
+    for name, sc in ((name_a, sc_a), (name_b, sc_b)):
         if sc is None:
             const[name] = None
             continue
@@ -348,14 +365,13 @@ def exposure_fixed(reports_dir, source: str, snapshot_id: str, variant: str = "e
                 "strata_with_one_value": int((nun <= 1).sum()),
                 "share_of_strata_with_one_value": float((nun <= 1).mean()),
             }
-        if sc is not None:
-            ex = sc[sc["rung"] == "P1"].groupby(["origin", "cell"])["exposure"].nunique()
-            const[name]["exposure_strata_with_one_value"] = float((ex <= 1).mean())
+        ex = sc[sc["rung"] == "P1"].groupby(["origin", "cell"])["exposure"].nunique()
+        const[name]["exposure_strata_with_one_value"] = float((ex <= 1).mean())
     out["p_sig_constant_within_origin_and_cell"] = const
     # Forecasts equal to a few units in the last place are ties in fact; the report's AUC breaks them by rounding noise. Here the forecasts are rounded to 9
     # decimals first, so a forecast that is constant within a stratum has AUC one half exactly.
     exact: dict = {}
-    for name, sc in (("main", sc_main), ("fixed", sc_fixed)):
+    for name, sc in ((name_a, sc_a), (name_b, sc_b)):
         if sc is None or "event" not in sc.columns:
             continue
         exact[name] = {}

@@ -359,9 +359,24 @@ def _parse_guard(value: str | None):
     return g
 
 
+EXPOSURE_MAIN = "cell-median-visible"      # the main run since run 9: exposure fixed at the cell median over the rows visible at each origin
+
+
+def _resolve_exposure(exposure: str | None, source: str) -> str:
+    """The exposure setting a backtest runs with: the given one, else fixed on visible rows for Upworthy and each row's own elsewhere."""
+    if exposure is not None:
+        return exposure
+    return EXPOSURE_MAIN if source == "upworthy" else "planned"
+
+
+def _named_exposure(exposure: str, source: str) -> str:
+    """The exposure setting as a variant names it: only Upworthy has the setting, so every other source's run carries no exposure name."""
+    return exposure if source == "upworthy" else EXPOSURE_MAIN
+
+
 def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale="absolute", s_star="prelaunch",
-                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all", exposure="planned",
-                      base_density="normal", base_recency="none", recalibrate_ladder="off") -> dict:
+                      p2_guard="default", drop_triggers=(), admission="realized", pairwise="on", contrasts="all", exposure="cell-median-visible",
+                      base_density="t", base_recency="none", recalibrate_ladder="off") -> dict:
     """The ablation settings that differ from the defaults, as a dict; empty for the main run."""
     from mootcourt.config import KAPPA, P2_GUARD_MULT, P2_SELECTION_DEFAULT
 
@@ -394,9 +409,9 @@ def _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection,
         v["pairwise"] = pairwise
     if contrasts != "all":
         v["contrasts"] = contrasts
-    if exposure != "planned":
+    if exposure != EXPOSURE_MAIN:
         v["exposure"] = exposure
-    if base_density != "normal":
+    if base_density != "t":
         v["base_density"] = base_density
     if base_recency != "none":
         v["base_recency"] = base_recency
@@ -454,18 +469,19 @@ def backtest(
         help="all (default) or one: keep one admitted contrast per test (the lowest row id), so a test has one headline against its reference "
         "(ablation of the arm-count structure, round 01 R3 minor 6).",
     ),
-    exposure: str = typer.Option(
-        "planned",
+    exposure: str | None = typer.Option(
+        None,
         "--exposure",
-        help="planned (default): the planned exposure of a row is the mean of its arms' impressions; cell-median: every row gets its cell's median "
-        "over the whole ledger (X3 of the paper v2 plan: what the realized-exposure stand-in does to each score; a diagnostic, it reads rows "
-        "that conclude later); cell-median-visible: the median over the cell's rows visible at the row's quarterly origin. Upworthy only.",
+        help="Upworthy only. cell-median-visible (the default for Upworthy since run 9): every row gets the median exposure of its cell over "
+        "the rows visible at the row's quarterly origin, a value known before launch; planned: the mean of the row's own arms' realized "
+        "impressions, a stand-in that reads the test's traffic (the main run up to run 8, now a diagnostic); cell-median: the cell's median "
+        "over the whole ledger, a diagnostic that reads rows that conclude later.",
     ),
     base_density: str = typer.Option(
-        "normal",
+        "t",
         "--base-density",
-        help="Ablation: the density of P0's log score. normal (default) or t, a Student-t fitted to the visible estimates of the cell, "
-        "a harder base rate for a prior with heavy tails. Probabilities, intervals and the Brier skill of every rung do not change.",
+        help="The density of P0's log score. t (default since run 9): a Student-t fitted to the visible estimates of the cell; normal: the "
+        "first specification, an ablation. Probabilities, intervals and the Brier skill of every rung do not change.",
     ),
     base_recency: str = typer.Option(
         "none",
@@ -542,16 +558,17 @@ def backtest(
     for name, value, allowed in (("--effect-scale", effect_scale, ("absolute", "relative")), ("--s-star", s_star, ("prelaunch", "realized")),
                                  ("--admission", admission, ("realized", "prelaunch")), ("--recalibration", recalibration, ("platt", "isotonic")),
                                  ("--pairwise", pairwise, ("on", "off")), ("--contrasts", contrasts, ("all", "one")),
-                                 ("--exposure", exposure, ("planned", "cell-median", "cell-median-visible")),
+                                 ("--exposure", exposure, (None, "planned", "cell-median", "cell-median-visible")),
                                  ("--base-density", base_density, ("normal", "t")),
                                  ("--base-recency", base_recency, ("none", "quarter", "cell-quarter")),
                                  ("--recalibrate-ladder", recalibrate_ladder, ("off", "on"))):
         if value not in allowed:
-            raise typer.BadParameter(f"{name} must be one of {', '.join(allowed)}")
+            raise typer.BadParameter(f"{name} must be one of {', '.join(a for a in allowed if a is not None)}")
     if effect_scale == "relative" and source != "upworthy":
         raise typer.BadParameter("--effect-scale relative needs the Upworthy source (it reads the relative lift stored with each row)")
-    if exposure != "planned" and source != "upworthy":
+    if exposure is not None and exposure != "planned" and source != "upworthy":
         raise typer.BadParameter("--exposure cell-median needs the Upworthy source (the other sources' exposure is not a count of impressions)")
+    exposure = _resolve_exposure(exposure, source)
     guard_arg = _parse_guard(p2_guard)
     from mootcourt.abstain import TRIGGERS
 
@@ -559,8 +576,8 @@ def backtest(
         if name not in TRIGGERS:
             raise typer.BadParameter(f"--drop-trigger must be one of {', '.join(TRIGGERS)}; got {name!r}")
     variant = _variant_settings(features, bandwidth_mult, lam, kappa, prior, p2_selection, recency, effect_scale, s_star, guard_arg,
-                                tuple(drop_trigger or ()), admission, pairwise, contrasts, exposure, base_density, base_recency,
-                                recalibrate_ladder)
+                                tuple(drop_trigger or ()), admission, pairwise, contrasts, _named_exposure(exposure, source), base_density,
+                                base_recency, recalibrate_ladder)
     t0 = time.perf_counter()
     df = _load_source_ledger(ledger_path, source)
     sid = ensure_snapshot(df, ledger_path.parent)
@@ -599,7 +616,7 @@ def backtest(
         recalibrate=recalibrate,
         recalibration=recalibration,
         **({"pairwise": False} if pairwise == "off" else {}),
-        **({"base_density": base_density} if base_density != "normal" else {}),
+        base_density=base_density,
         **({"base_recency": base_recency} if base_recency != "none" else {}),
         **({"recalibrate_ladder": True} if recalibrate_ladder == "on" else {}),
         **({"kappa": kappa} if kappa is not None else {}),

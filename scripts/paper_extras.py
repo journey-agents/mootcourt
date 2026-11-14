@@ -1624,6 +1624,7 @@ def version2_keys(source: str, ledger: pd.DataFrame, reports_dir, snapshot_id: s
     step("effect_scale_choices", lambda: extras_v2.effect_scale_choices(reports_dir, source, snapshot_id))
     step("exposure_fixed", lambda: extras_v2.exposure_fixed(reports_dir, source, snapshot_id))
     step("exposure_fixed_visible", lambda: extras_v2.exposure_fixed(reports_dir, source, snapshot_id, variant="exposure-cell-median-visible"))
+    step("exposure_realized", lambda: extras_v2.exposure_realized(reports_dir, source, snapshot_id))
     step("prior_family_scale", lambda: extras_v2.prior_family_scale(ledger, source))
     step("ranking_paired", lambda: None if scores is None else extras_v2.ranking_paired(scores))
     step("abstention_composition", lambda: None if scores is None else extras_v2.abstention_composition(scores))

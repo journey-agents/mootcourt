@@ -97,12 +97,24 @@ def test_exposure_flag_is_validated_and_upworthy_only(imp, tmp_path):
     assert res.exit_code != 0
 
 
+def test_the_default_exposure_is_fixed_on_visible_rows_for_upworthy_and_the_stated_one_elsewhere(imp):
+    cli = imp("mootcourt.cli")
+    assert cli._resolve_exposure(None, "upworthy") == "cell-median-visible"
+    assert cli._resolve_exposure(None, "synthetic") == "planned" and cli._resolve_exposure(None, "asos") == "planned"
+    assert cli._resolve_exposure("planned", "upworthy") == "planned"
+    assert cli._named_exposure("planned", "synthetic") == "cell-median-visible"      # another source's main run carries no exposure name
+    assert cli._named_exposure("planned", "upworthy") == "planned"
+
+
 def test_variant_names_of_the_new_runs(imp):
     cli = imp("mootcourt.cli")
     v = cli._variant_settings("both", None, None, None, "t", None, None, exposure="cell-median")
     assert v == {"exposure": "cell-median"} and cli._variant_name(v) == "exposure-cell-median"
-    v = cli._variant_settings("both", None, None, None, "t", None, None, exposure="cell-median-visible", base_density="t")
-    assert cli._variant_name(v) == "exposure-cell-median-visible+base-density-t"
+    # run 9: exposure fixed on visible rows and the Student-t base rate are the main run, so they carry no name
+    assert cli._variant_settings("both", None, None, None, "t", None, None, exposure="cell-median-visible", base_density="t") == {}
+    v = cli._variant_settings("both", None, None, None, "t", None, None, exposure="planned", base_density="normal")
+    assert cli._variant_name(v) == "exposure-planned+base-density-normal"
+    assert cli._variant_flags(v) == " --exposure planned --base-density normal"
     v = cli._variant_settings("both", None, None, None, "t", None, None, effect_scale="relative")
     assert cli._variant_name(v) == "effect-scale-relative" and cli._variant_flags(v) == " --effect-scale relative"
     v = cli._variant_settings("both", None, None, None, "t", None, None, s_star="realized")

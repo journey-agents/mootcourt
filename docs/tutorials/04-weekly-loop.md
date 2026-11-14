@@ -43,23 +43,22 @@ moot backtest --source sample | tail -n 4
 
 ```text output
 the quick gates simulation (synthetic data): still running, 10 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.20: n = 125 (10 s elapsed)
+progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (20 s elapsed)
 the quick gates simulation (synthetic data): still running, 20 s elapsed
-progress: base rate 0.09, power 0.80, skill 0.10: n = 200 (21 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (22 s elapsed)
-progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (27 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.20: n = 175 (21 s elapsed)
+progress: base rate 0.09, power 0.90, skill 0.10: n = 250 (25 s elapsed)
 300 rows from 100 experiments
   admitted: 300
 admitted by cell: checkout_conversion 100, pages_per_session 100, revenue_per_user 100
 final reads from 2023-01-23 to 2025-07-02
-snapshot 20261105-c14e001659bc for sample
+snapshot 20261114-c14e001659bc for sample
 ledger ~/moot-weekly/mootcourt-data/data/ledger/ledger.parquet: 300 rows
-fitted model dbecf0d65cbf at snapshot 20261105-c14e001659bc on 300 rows usable at 2026-11-05T15:45:44.308731+00:00 in 1.2 s; it is the champion for sample
+fitted model b8cca73317bb at snapshot 20261114-c14e001659bc on 300 rows usable at 2026-11-14T09:33:41.770041+00:00 in 1.3 s; it is the champion for sample
 no backtest exists for this snapshot, so the backtest summary slot is empty; run `moot backtest` then `moot fit`
-scored 270 rows over 9 origins in 3.1 s (report writing 12.3 s; the whole run 15.3 s)
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-c14e001659bc.md
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-c14e001659bc.json
-wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261105-c14e001659bc.parquet
+scored 270 rows over 9 origins in 3.2 s (report writing 12.1 s; the whole run 15.3 s)
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261114-c14e001659bc.md
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261114-c14e001659bc.json
+wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261114-c14e001659bc.parquet
 ```
 
 The backtest also **seeds the reliability report**: it records how the cards would have done on past experiments, so that the first live cards have a record to stand on.
@@ -77,18 +76,18 @@ done
 ```
 
 ```text output
-7b5db4126832ff0e issue p_sig 0.041 sample:exp-103:treatment::checkout_conversion
-2d1fd20f8284ef21 issue p_sig 0.041 sample:exp-104:treatment::checkout_conversion
-a6f47ecf121acf34 issue p_sig 0.041 sample:exp-105:treatment::checkout_conversion
-f675081c13407169 issue p_sig 0.041 sample:exp-106:treatment::checkout_conversion
-fd7fcd8e8fa0f4be issue p_sig 0.041 sample:exp-107:treatment::checkout_conversion
-dd91cce272238f50 issue p_sig 0.041 sample:exp-108:treatment::checkout_conversion
-9a93d41a26447060 issue p_sig 0.041 sample:exp-109:treatment::checkout_conversion
-05689c8d90d012f6 issue p_sig 0.041 sample:exp-110:treatment::checkout_conversion
-098b92000cc04f8a issue p_sig 0.041 sample:exp-111:treatment::checkout_conversion
-2c9eaedd3a9df2c8 issue p_sig 0.041 sample:exp-112:treatment::checkout_conversion
-2af878e7002088f5 issue p_sig 0.041 sample:exp-113:treatment::checkout_conversion
-615e2b9794f91414 issue p_sig 0.041 sample:exp-114:treatment::checkout_conversion
+c80559473a0d3beb issue p_sig 0.041 sample:exp-103:treatment::checkout_conversion
+c23286d6b9d63a74 issue p_sig 0.041 sample:exp-104:treatment::checkout_conversion
+e9633d43395fff52 issue p_sig 0.041 sample:exp-105:treatment::checkout_conversion
+b9b0e2e9ca915582 issue p_sig 0.041 sample:exp-106:treatment::checkout_conversion
+18095a3ddaae9687 issue p_sig 0.041 sample:exp-107:treatment::checkout_conversion
+51fea11a6ad7b1c3 issue p_sig 0.041 sample:exp-108:treatment::checkout_conversion
+002cd103196c00f2 issue p_sig 0.041 sample:exp-109:treatment::checkout_conversion
+b0c35a3cf67a5987 issue p_sig 0.041 sample:exp-110:treatment::checkout_conversion
+7c391e7012037982 issue p_sig 0.041 sample:exp-111:treatment::checkout_conversion
+6e44036d8d47f4a7 issue p_sig 0.041 sample:exp-112:treatment::checkout_conversion
+363c6248c317036b issue p_sig 0.041 sample:exp-113:treatment::checkout_conversion
+286ba8fba376258e issue p_sig 0.041 sample:exp-114:treatment::checkout_conversion
 ```
 
 Each card is frozen under `cards/` with its row id inside. A card is also refused if its origin is after its issue time (`--origin` later than `--now`), because it would stand on rows that were not yet usable. `--now` is the issue time: just after the history ends. To adapt the loop to your own archive, change the source name, the cell, `--impressions` (the planned units per arm), the issue time and the experiment and variant ids, and issue one card for each experiment you are about to launch. A card without a row id is frozen and valid, but `moot join` cannot attach an outcome to it. A card requested through the MCP tool is never frozen, so freeze through `moot card` or `POST /card`.
@@ -109,7 +108,7 @@ moot ingest --format generic --input future.csv --source-name sample --ledger in
   admitted: 60
 admitted by cell: checkout_conversion 20, pages_per_session 20, revenue_per_user 20
 final reads from 2025-07-11 to 2025-12-29
-snapshot 20261105-f10730f0adba for sample
+snapshot 20261114-f10730f0adba for sample
 ledger incoming/ledger.parquet: 60 rows
 ```
 
@@ -123,7 +122,7 @@ done
 ```
 
 ```text output
-appended 60 rows, snapshot 20261105-b04b5b1dd18c; attached 1 outcomes {"confident_but_wrong": 1}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
+appended 60 rows, snapshot 20261114-b04b5b1dd18c; attached 1 outcomes {"confident_but_wrong": 1}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 3 outcomes {"hit": 3}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 4 outcomes {"hit": 4}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
 appended 0 rows; attached 3 outcomes {"hit": 3}; reliability in ~/moot-weekly/mootcourt-data/reports/reliability-sample.json
@@ -155,7 +154,7 @@ moot reliability --source sample
 report as of 2025-12-30T00:00:00+00:00
 cell                   as of         rows tests  brier skill           interval  log score  P0 log score  below drifted
 checkout_conversion    2025-12-30       4     4       -0.894   -0.894 to -0.894      1.747         1.768      0 False
-pages_per_session      2025-07-02       7     7       -0.011    -0.025 to 0.612      2.166         2.268      0 False
+pages_per_session      2025-07-02       7     7       -0.011    -0.025 to 0.612      2.166         2.249      0 False
 revenue_per_user       2025-07-02       7     7        0.497     0.384 to 0.618      1.922         1.910      0 False
 ```
 
@@ -178,7 +177,7 @@ tail -n 4 doctor.txt
 
 ```text output
 exit code: 1
-WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 491 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
+WARN  reliability sample: 3 of 3 entries are stale (limit 14 days, oldest 500 days old): checkout_conversion, pages_per_session, revenue_per_user; those cells abstain until new outcomes for the cell are joined
 OK    cells: 3 configured cells, each with 20 or more admitted rows
 OK    cards sample: 12 scored outcomes, 0 post-hoc cards (issued after their test started: recorded, never scored), 0 reissues (a later card for a row another card scores)
 status: warn
@@ -195,11 +194,11 @@ moot promote --source sample
 ```
 
 ```text output
-fitted model 6b43ae900d91 at snapshot 20261105-b04b5b1dd18c on 360 rows usable at 2026-11-05T15:46:27.013801+00:00 in 1.2 s; it is the challenger for sample
+fitted model c0ab1704acdd at snapshot 20261114-b04b5b1dd18c on 360 rows usable at 2026-11-14T09:34:25.873275+00:00 in 1.2 s; it is the challenger for sample
 a refresh of the champion is pending: same method, newer data; `moot backtest` decides it (no further `moot fit`)
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.md
-wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261105-b04b5b1dd18c.json
-wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261105-b04b5b1dd18c.parquet
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261114-b04b5b1dd18c.md
+wrote ~/moot-weekly/mootcourt-data/reports/backtest-sample-20261114-b04b5b1dd18c.json
+wrote ~/moot-weekly/mootcourt-data/reports/scores-sample-20261114-b04b5b1dd18c.parquet
 not promoted: no challenger is registered, nothing to promote
 ```
 

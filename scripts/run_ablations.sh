@@ -3,8 +3,9 @@
 # Usage: scripts/run_ablations.sh SOURCE [JOBS]      (or: scripts/run_ablations.sh SOURCE JOBS --list, which prints the settings and runs nothing)
 #   upworthy  P2 selection rule (leave-one-test-out, the counterfactual of the forward-chaining default), recency, feature sets, bandwidth, lambda, kappa, prior, the base rate's density (--base-density t), P2 admission guard (off, 1.0), the single-headline
 #             feature space (--pairwise off), admission on exposure only (--admission prelaunch), one contrast per test (--contrasts one); the two single changes of the
-#             cautionary run (--effect-scale relative, at planned precision; --s-star realized, on the absolute effect) and the exposure fixed at the cell median
-#             (--exposure cell-median), paper v2 plan X2 and X3; the feature, bandwidth, selection, recency and
+#             cautionary run (--effect-scale relative, at planned precision; --s-star realized, on the absolute effect); since run 9 the main run fixes
+#             exposure on visible rows and scores the base rate with a Student-t, so the diagnostics are --exposure planned (each row's own realized
+#             traffic), alone and with --base-density normal (the main setting up to run 8); the feature, bandwidth, selection, recency and
 #             pairwise ablations are run twice, with the guard on and with --p2-guard off, because behind the guard the ablated setting rarely
 #             reaches a forecast (round 00, R3); the off runs are named like `features-text+p2-guard-off`
 #   asos      kappa, prior and the P2 admission guard (the other switches change only P2, which equals P1 on a cell-only space)
@@ -32,15 +33,13 @@ case "$SOURCE" in
     SETTINGS+=(
       "--lambda 0" "--lambda 0.2" "--lambda 0.5" "--lambda 1"
       "--kappa 0" "--kappa 5" "--kappa 80"
-      "--prior normal" "--base-density t"
+      "--prior normal" "--base-density normal"
       "--p2-guard off" "--p2-guard 1.0"
       "--admission prelaunch"
       "--contrasts one"
-      "--effect-scale relative" "--s-star realized" "--exposure cell-median"
-      "--base-density t --exposure cell-median"
-      "--base-recency quarter" "--base-recency quarter --exposure cell-median" "--base-recency cell-quarter"
-      "--exposure cell-median-visible" "--base-density t --exposure cell-median-visible"
-      "--base-recency quarter --exposure cell-median-visible"
+      "--effect-scale relative" "--s-star realized"
+      "--exposure planned" "--exposure planned --base-density normal"
+      "--base-recency quarter" "--base-recency cell-quarter"
       "--recalibrate-ladder on"
       "--drop-trigger support" "--drop-trigger novelty" "--drop-trigger reliability" "--drop-trigger instability"
     ) ;;

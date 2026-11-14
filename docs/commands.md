@@ -362,7 +362,7 @@ moot reliability --source sample
 report as of 2025-12-30T00:00:00+00:00
 cell                   as of         rows tests  brier skill           interval  log score  P0 log score  below drifted
 checkout_conversion    2025-12-29       7     7        0.100    -5.280 to 0.123      1.987         2.027      0 False
-pages_per_session      2025-12-29       7     7        0.078    -0.501 to 0.097      2.364         2.368      0 False
+pages_per_session      2025-12-29       7     7        0.078    -0.501 to 0.097      2.364         2.374      0 False
 revenue_per_user       2025-12-29       7     7        0.044    -0.284 to 0.158      1.796         1.849      0 False
 ```
 

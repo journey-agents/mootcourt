@@ -134,3 +134,14 @@ def test_replace_source_swaps_only_the_upworthy_rows(csv_path):
     assert content_digest(run8) != content_digest(run7)  # a different content, so a different snapshot id
     with pytest.raises(LedgerSchemaError):
         replace_source(run8, other, "upworthy")
+
+
+def test_the_assumed_end_of_a_test_can_be_moved_and_moves_nothing_else(csv_path):
+    seven, later = up.load_upworthy(csv_path), up.load_upworthy(csv_path, horizon_days=28)
+    assert (pd.to_datetime(later["usable_after"]) - pd.to_datetime(seven["usable_after"]) == pd.Timedelta(days=21)).all()
+    assert (pd.to_datetime(later["final_read_at"]) - pd.to_datetime(seven["final_read_at"]) == pd.Timedelta(days=21)).all()
+    for col in ("y", "s", "status", "started_at", "test_id"):
+        assert later[col].equals(seven[col]), col
+    assert up.load_upworthy(csv_path, horizon_days=7)["usable_after"].equals(seven["usable_after"])
+    with pytest.raises(ValueError):
+        up.load_upworthy(csv_path, horizon_days=0)

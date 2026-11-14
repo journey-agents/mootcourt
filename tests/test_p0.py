@@ -101,7 +101,8 @@ def test_the_base_density_setting_reaches_the_rung_and_names_the_ablation(imp, t
     assert default.density == "normal" and heavy.density == "t"
     args = ("both", None, None, None, "t", None, None)
     assert cli._variant_settings(*args) == {}                                                        # the main run keeps its name
-    assert cli._variant_settings(*args, base_density="t") == {"base_density": "t"}
+    assert cli._variant_settings(*args, base_density="t") == {}                                      # run 9: the Student-t base rate is the main run
+    assert cli._variant_settings(*args, base_density="normal") == {"base_density": "normal"}
 
 
 def test_recent_share_mirrors_the_period_rule_of_the_prior(imp):

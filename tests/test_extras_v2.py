@@ -417,6 +417,7 @@ def test_version2_keys_fill_from_a_score_table_and_name_what_is_missing(backtest
         "effect_scale_choices",
         "exposure_fixed",
         "exposure_fixed_visible",
+        "exposure_realized",
         "prior_family_scale",
         "gates_by_stratum",
         "positive_control_decision_value",
@@ -608,3 +609,22 @@ def test_the_curves_by_origin_and_the_control_seeds_keep_their_folders_in_a_run_
     seed = rep / "positive-control" / "seeds" / "seed-8" / "backtest-synthetic-T.json"
     assert mod._relative_name(curve) == "learning-curve-origins/learning-curve-upworthy-S--origin-2014-01-01.json"
     assert mod._relative_name(seed) == "positive-control/seeds/seed-8/backtest-synthetic-T.json"
+
+
+def test_exposure_realized_sets_the_run_on_each_rows_own_traffic_against_the_main_run_of_run_9(tmp_path):
+    ab = tmp_path / "ablations"
+    ab.mkdir()
+    rows = lambda p: pd.DataFrame({"origin": ["o"] * 4, "cell": ["a", "a", "b", "b"], "rung": ["P1"] * 4, "p_sig": p, "exposure": [1, 2, 3, 3]})  # noqa: E731
+    (tmp_path / "backtest-upworthy-S.json").write_text(json.dumps(_report({"P1": {"auc_event_within": 0.50, "brier_skill": 0.006}})))
+    rows([0.1, 0.1, 0.3, 0.3]).to_parquet(tmp_path / "scores-upworthy-S.parquet")                       # the main run: exposure fixed
+    assert ex.exposure_realized(tmp_path, "upworthy", "S") is None                                      # no diagnostic report yet
+    (ab / "backtest-upworthy-S--exposure-planned.json").write_text(json.dumps(_report({"P1": {"auc_event_within": 0.53, "brier_skill": 0.002}})))
+    rows([0.1, 0.2, 0.3, 0.3]).to_parquet(ab / "scores-upworthy-S--exposure-planned.parquet")
+    doc = ex.exposure_realized(tmp_path, "upworthy", "S")
+    assert doc["report"].endswith("--exposure-planned.json") and "own realized" in doc["definition"]
+    cell = doc["by_cell"]["ALL"]
+    assert set(cell) == {"fixed", "realized", "fixed_minus_realized"}
+    assert cell["fixed"]["P1"]["brier_skill"] == pytest.approx(0.006) and cell["fixed_minus_realized"]["P1"]["brier_skill"] == pytest.approx(0.004)
+    const = doc["p_sig_constant_within_origin_and_cell"]
+    assert const["fixed"]["P1"]["strata_with_one_value"] == 2 and const["realized"]["P1"]["strata_with_one_value"] == 1
+    assert ex.exposure_realized(tmp_path, "asos", "S") is None

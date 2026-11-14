@@ -140,17 +140,22 @@ def _window_bounds() -> tuple[pd.Timestamp, pd.Timestamp]:
     return pd.Timestamp(first, tz="UTC"), pd.Timestamp(last, tz="UTC") + pd.Timedelta(days=1)
 
 
-def load_upworthy(path, exclude_randomization_window: bool = True) -> pd.DataFrame:
+def load_upworthy(path, exclude_randomization_window: bool = True, horizon_days: int | None = None) -> pd.DataFrame:
     """Build the contrast ledger from the exploratory packages file at ``path``; see the module docstring.
 
     ``exclude_randomization_window`` (default True) gives the status ``imbalance_flag`` to every contrast of a test that started inside
     ``RANDOMIZATION_WINDOW`` (the start of a test is the earliest ``created_at`` of its packages). False is run 7's configuration,
     the ablation ``include-randomization-window``; it changes statuses only, never a row, an effect or a time.
+
+    ``horizon_days`` (default ``HORIZON_DAYS_UPWORTHY``, seven) is the assumed number of days from the creation of a test's last arm to
+    its end; another value moves ``final_read_at`` and ``usable_after`` and nothing else (a sensitivity run, run 9 plan, Part B).
     """
     df, id_col = _read(path)
     win_lo, win_hi = _window_bounds()
     has_id = id_col is not None
-    horizon = pd.Timedelta(days=HORIZON_DAYS_UPWORTHY)
+    if horizon_days is not None and int(horizon_days) < 1:
+        raise ValueError("horizon_days must be at least 1")
+    horizon = pd.Timedelta(days=HORIZON_DAYS_UPWORTHY if horizon_days is None else int(horizon_days))
     rows: list[dict] = []
     for test_id, g in df.groupby("clickability_test_id", sort=False):
         sort_cols = ["created_at"] + (["_pkg_sort", "_pkg"] if has_id else []) + ["_order"]

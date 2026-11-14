@@ -37,13 +37,15 @@ def main() -> int:
         help="exit 1 unless the Upworthy snapshot of the result ends with these 12 hex characters of the content digest "
         "(run 7's is 4bfb354b87e3: --window off must regenerate it)",
     )
+    ap.add_argument("--horizon-days", type=int, default=None,
+                    help="the assumed days from a test's last arm to its end (default: the configured seven); a sensitivity run")
     a = ap.parse_args()
     files = visible_glob(Path(a.raw_dir) / "upworthy", "*exploratory*packages*.csv")
     if not files:
         print(f"no exploratory Upworthy file under {a.raw_dir}/upworthy", file=sys.stderr)
         return 2
     ledger = read_ledger(a.ledger)
-    new = upworthy.load_upworthy(files[0], exclude_randomization_window=(a.window == "on"))
+    new = upworthy.load_upworthy(files[0], exclude_randomization_window=(a.window == "on"), horizon_days=a.horizon_days)
     out = replace_source(ledger, new, "upworthy")
     dest = Path(a.out) if a.out else Path(a.ledger)
     write_ledger(out, dest)
