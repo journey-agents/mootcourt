@@ -499,6 +499,7 @@ Each row is one backtest on the same origins with one setting changed, written t
 | exposure-cell-median+base-recency-quarter | 2.0 | 10697 | -0.7676 | -0.7678 | -0.0002 | 0.0056 (0.0033 to 0.0084) | 0.5701 | 0.8927 |
 | exposure-cell-median-visible | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
 | exposure-cell-median-visible+base-density-t | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0081 (0.0051 to 0.0114) | 0.5701 | 0.8935 |
+| exposure-cell-median-visible+base-recency-quarter | 2.0 | 10697 | -0.7692 | -0.7695 | -0.0002 | 0.0066 (0.0042 to 0.0092) | 0.5701 | 0.8935 |
 | features-structured | 2.0 | 10697 | -0.7566 | -0.7558 | +0.0008 | 0.0024 (-0.0016 to 0.0064) | 0.5688 | 0.8940 |
 | features-structured+p2-guard-off | off | 10697 | -0.7566 | -0.7571 | -0.0006 | 0.0027 (-0.0018 to 0.0072) | 0.5691 | 0.8934 |
 | features-text | 2.0 | 10697 | -0.7566 | -0.7578 | -0.0012 | 0.0028 (-0.0010 to 0.0067) | 0.5680 | 0.8945 |
@@ -519,6 +520,7 @@ Each row is one backtest on the same origins with one setting changed, written t
 | pairwise-off | 2.0 | 10697 | -0.7566 | -0.7567 | -0.0001 | 0.0024 (-0.0012 to 0.0061) | 0.5683 | 0.8945 |
 | pairwise-off+p2-guard-off | off | 10697 | -0.7566 | -0.7586 | -0.0020 | 0.0019 (-0.0020 to 0.0059) | 0.5701 | 0.8933 |
 | prior-normal | 2.0 | 10697 | -0.8316 | -0.8328 | -0.0012 | -0.0168 (-0.0229 to -0.0112) | 0.5713 | 0.9053 |
+| recalibrate-ladder-on | 2.0 | 10697 | -0.7566 | -0.7565 | +0.0001 | 0.0032 (-0.0004 to 0.0072) | 0.5706 | 0.8933 |
 | recency-select | 2.0 | 10697 | -0.7566 | -0.7567 | -0.0001 | 0.0032 (-0.0006 to 0.0074) | 0.5706 | 0.8932 |
 | recency-select+p2-guard-off | off | 10697 | -0.7566 | -0.7607 | -0.0041 | -0.0003 (-0.0043 to 0.0043) | 0.5682 | 0.8928 |
 | s-star-realized | 2.0 | 10697 | -0.7100 | -0.7095 | +0.0005 | -0.0378 (-0.0456 to -0.0303) | 0.5706 | 0.9004 |
