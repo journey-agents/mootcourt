@@ -1,0 +1,115 @@
+{
+ "card_latency_ms": {
+  "max_ms": 278.985,
+  "mean_ms": 39.271,
+  "n": 1000,
+  "p50_ms": 37.419,
+  "p95_ms": 46.178
+ },
+ "created_at": "2026-11-04T04:34:48.370043+00:00",
+ "disk_after": {
+  "/": {
+   "free_gb": 12.91,
+   "total_gb": 228.27,
+   "used_gb": 215.36
+  },
+  "/Volumes/Crucial X10/mootcourt-data/experiments/chunk-n2-scale/root/experiments/scale": {
+   "free_gb": 1342.69,
+   "total_gb": 1862.76,
+   "used_gb": 520.07
+  }
+ },
+ "disk_before": {
+  "/": {
+   "free_gb": 11.28,
+   "total_gb": 228.27,
+   "used_gb": 217.0
+  },
+  "/Volumes/Crucial X10/mootcourt-data/experiments/chunk-n2-scale/root/experiments/scale": {
+   "free_gb": 1342.75,
+   "total_gb": 1862.76,
+   "used_gb": 520.01
+  }
+ },
+ "fit_under_one_hour": true,
+ "kind": "scale",
+ "machine": {
+  "cpus": 8,
+  "numpy": "2.4.6",
+  "pandas": "3.1.0",
+  "platform": "macOS-26.2-arm64-arm-64bit",
+  "python": "3.11.14"
+ },
+ "n_contrasts": 1000000,
+ "peak_rss_bytes": 5352996864,
+ "peak_rss_gb": 4.99,
+ "schema_version": 1,
+ "seed": 20261103,
+ "stages": {
+  "backtest": {
+   "n_scored_rows": 4000,
+   "origins": [
+    "2014-10-01T00:00:00+00:00",
+    "2015-01-01T00:00:00+00:00"
+   ],
+   "peak_rss_bytes": 5352996864,
+   "rungs": {
+    "P0": {
+     "brier_event": 0.1399,
+     "logscore": -2.4228,
+     "n": 4000
+    },
+    "P1": {
+     "brier_event": 0.1378,
+     "logscore": -2.4111,
+     "n": 4000
+    },
+    "P2": {
+     "brier_event": 0.1371,
+     "logscore": -2.405,
+     "n": 4000
+    }
+   },
+   "scored_per_origin": 2000,
+   "seconds": 1772.11
+  },
+  "cards": {
+   "max_ms": 278.985,
+   "mean_ms": 39.271,
+   "n": 1000,
+   "p50_ms": 37.419,
+   "p95_ms": 46.178,
+   "peak_rss_bytes": 5352996864,
+   "seconds": 39.43,
+   "statuses": {
+    "abstain": 755,
+    "issue": 245
+   }
+  },
+  "fit": {
+   "lambda_by_cell": {
+    "both": 0.8,
+    "headline_only": 0.8,
+    "image_only": 0.9
+   },
+   "n_rows": 1000000,
+   "peak_rss_bytes": 5335138304,
+   "seconds": 1343.69,
+   "top_m": 1000
+  },
+  "generate": {
+   "peak_rss_bytes": 1502445568,
+   "rows": 1000000,
+   "seconds": 9.39
+  },
+  "write_ledger": {
+   "file_bytes": 59572924,
+   "path": "/Volumes/Crucial X10/mootcourt-data/experiments/chunk-n2-scale/root/experiments/scale/ledger-1000000.parquet",
+   "peak_rss_bytes": 1502445568,
+   "seconds": 3.59
+  }
+ },
+ "synthetic": true,
+ "under_one_second_per_card": true,
+ "wall_seconds": 3168.31
+}

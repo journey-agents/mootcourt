@@ -1,0 +1,25 @@
+pc-seed-8 0 965
+pc-seed-9 0 1044
+pc-seed-11 0 1078
+pc-seed-10 0 1085
+lc-origin-2013-04-01 0 562
+lc-origin-2014-01-01 0 1885
+lc-origin-2015-04-01 0 1372
+lc-origin-2014-04-01 0 3920
+split-half 0 5
+null-size 0 2241
+lc-origin-2014-07-01 0 5991
+lc-origin-2014-10-01 0 5784
+no-history 0 2
+by-origin 0 3
+by-origin-base-density-normal 0 3
+no-history-base-density-normal 0 3
+no-history-exposure-planned 0 3
+by-origin-exposure-planned 0 3
+no-history-exposure-planned+base-density-normal 0 3
+by-origin-exposure-planned+base-density-normal 0 3
+horizon-28 0 201
+horizon-14 0 210
+pc-seeds 0 448
+lc-origins 0 0
+run9-extras-done

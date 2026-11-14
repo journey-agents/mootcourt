@@ -73,4 +73,37 @@ Every report of run 8, including the ablations that already hold the new main se
 
 ## Post-run notes
 
-(To be written after the run and before the paper text changes.)
+Written 14 November 2026 after run 9 finished and before any paper text that depends on its results. Run 9 ran at commit b2e3713 (the same `src/` and `scripts/` as 85f2bb4), started 11:30 UTC, was suspended from 11:35 to 12:31 UTC at the request of another session on the machine, and ended about 17:40 UTC. Numbers below are read from the reports in `paper/data/run9-visible-exposure`.
+
+### What happened in the run
+
+- One stage failed: the leakage audit of the Upworthy scores reported every `s_star` as a mismatch. The cause is the audit, which recomputed `s_star` from each row's own exposure, the default before run 9. The audit now takes `--exposure cell-median-visible` and recomputes the fixed exposure itself from the rows visible at each origin, without the package's view. It was rerun after the run, at a later commit, on the unchanged scores: zero violations. The scores and every other report are from the run's commit.
+- Defect check of Part A: the main report's ladder rows equal run 8's ablation with the same setting to 1e-9 (P1 minus P0 0.006875). No defect.
+- The planted ledgers and the ledger with the date rule off were rebuilt on 14 November, so their snapshot ids carry that date; their content hashes are those of run 8.
+
+### Each rule of Part A and its branch
+
+- Headline. P1 minus P0 on the log score, pooled: 0.0069 nats, interval by test 0.0030 to 0.0106. With quarters as units: 0.0036, interval minus 0.012 to 0.019. The rule's branch is "not shown". Leaving one origin out, the interval by test stays above zero for 6 of 7 origins (not without July 2014: 0.0008, minus 0.0044 to 0.0060), and the interval with quarters as units lies above zero for 1 of 7 (only without January 2014).
+- Brier skill, realized event. P1 0.0069 (0.0041 to 0.0100), family-adjusted 0.0013 to 0.0125; P2 0.0081, adjusted 0.0021 to 0.0141. By the rule both are shown, pooled, and they are under one percent of the base rate's Brier score. By cell the adjusted intervals of P1 span zero in all three cells. Part D of this plan listed "no skill shown on which test is significant" as a finding; that phrase was written from the realized-traffic run and is wrong for the new main run by this plan's own rule. The paper will say: a skill under one percent, pooled, not shown in any single cell, and none within a cell and quarter, where P0 and P1 give every test the same probability (exact-tie AUC 0.5 by construction).
+- Brier skill, planned event: P1 0.0127 (0.0096 to 0.0155). Printed beside the realized one, as the rule says.
+- Challengers (realized event). Raw GBM minus 0.068 and raw local_eb minus 0.009, both intervals below zero: worse than the base rate. Recalibrated GBM, recalibrated local_eb, the text classifier raw (0.0070, minus 0.0005 to 0.0140) and recalibrated (0.0045, minus 0.0003 to 0.0100) all span zero: not shown.
+- Decision value. The text classifier minus the arm-count rule at a quarter budget: minus 0.002 (minus 0.027 to 0.022). Branch: "no model is shown to rank tests better than counting arms". P0, P1, P2, GBM and local_eb are below the arm-count rule at that budget with intervals below zero.
+- Realized-traffic diagnostic (`--exposure planned`): P1 minus P0 0.0196 (0.0155 to 0.0232); with quarters as units 0.012 (minus 0.006 to 0.030); P1 Brier skill 0.0023, adjusted interval spans zero. One table, as planned.
+- Run 8's main setting (`--exposure planned --base-density normal`): P1 minus P0 0.120, as in run 8. Kept as the first specification in the cautionary account only.
+
+### Part B: the assumed end of a test
+
+- 14 days: P1 minus P0 0.0077 (0.0039 to 0.0115), P1 Brier skill 0.0065 (0.0035 to 0.0097). 28 days: P1 minus P0 0.119 (0.096 to 0.143), P1 Brier skill 0.0071 (0.0044 to 0.0102). Scored rows and tests are the same at all three values (10,697 and 2,949).
+- By the rule fixed before the run (sign, and whether the interval excludes zero) the assumption "does not move the reading" at either value, for both metrics.
+- The rule is too coarse for what the 28-day run shows, and the paper will say so. The gap at 28 days is 17 times the main run's and comes from one cell of the first origin: at April 2013 the image-only cell has two visible rows under a 28-day end (ten under seven days), the base rate fitted on two rows scores minus 6.7 nats per row on that cell's 213 rows, and P1 does not degrade there. This was found after the result. To put it on record with report keys, the by-origin script was run on the two horizon ledgers after the result (not planned): at 28 days, leaving the first origin out gives 0.0029 (minus 0.0012 to 0.0066), an interval that spans zero; at 14 days every leave-one-out interval but July 2014's stays above zero, as in the main run. So the paper's reading: the Brier reading does not depend on the assumed end; the log-score lead of P1 at 28 days is a failure of the base rate on a cell with two rows of history, not evidence for the prior, and without that origin the lead is not shown.
+
+### The reviewer runs, repeated at the run's commit
+
+- Calibration size: the rejection share of calibrated forecasts at the observed correlation is 0.037 to 0.077 over the 12 rung and stratum pairs with equal-width bins (image-only P0 highest). Verdicts are read against the simulated critical value as before.
+- Planted control, five seeds: the share of the oracle's gain that P2 recovers, pooled, is 0.076 to 0.092. P2 minus P1 in the headline-only cell falls inside the real archive's interval at 4 of 5 seeds (run 8: 5 of 5, against run 8's interval); seed 11 lies above it. The paper's sentence stays that the control recovers under a tenth of a planted signal, and the count is reported as 4 of 5.
+- Learning curve by origin: a quarter of the history is worse at 7 of 7 origins, a half at 5 of 7, as in run 8.
+
+### Changes to Part D that follow
+
+- Finding 2 of the abstract is reworded as above (a small pooled skill, none within a cell and quarter).
+- The horizon table reports 7, 14 and 28 days with the leave-first-origin-out reading at 28 days, labelled as added after the result.

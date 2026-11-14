@@ -1,0 +1,53 @@
+{
+ "split_half": {
+  "both": {
+   "mu_odd": 0.43146832734127516,
+   "mu_even": 0.46293925540505226,
+   "tau_odd": 1.7366005923226708,
+   "tau_even": 1.8125227316364814,
+   "mu_gap": 0.031470928063777104,
+   "tau_gap": 0.07592213931381053,
+   "n_odd": 292,
+   "n_even": 312,
+   "nu_odd": 30.0,
+   "nu_even": "inf",
+   "sd_odd": 1.7975523886431113,
+   "sd_even": 1.8125227316364814
+  },
+  "headline_only": {
+   "mu_odd": 2.0219800844815956,
+   "mu_even": 1.8570763229438727,
+   "tau_odd": 2.9692277512311422,
+   "tau_even": 3.0978779929026157,
+   "mu_gap": 0.1649037615377229,
+   "tau_gap": 0.12865024167147343,
+   "n_odd": 302,
+   "n_even": 278,
+   "nu_odd": 30.0,
+   "nu_even": "inf",
+   "sd_odd": 3.073442713452238,
+   "sd_even": 3.0978779929026157
+  },
+  "image_only": {
+   "mu_odd": -0.8567756096798681,
+   "mu_even": -0.9721855821592742,
+   "tau_odd": 1.2520982765093829,
+   "tau_even": 1.344677746316571,
+   "mu_gap": 0.1154099724794061,
+   "tau_gap": 0.09257946980718823,
+   "n_odd": 280,
+   "n_even": 284,
+   "nu_odd": 10.0,
+   "nu_even": "inf",
+   "sd_odd": 1.3998884303926542,
+   "sd_even": 1.344677746316571
+  }
+ },
+ "matches_report": true,
+ "definition": "P1's unpooled fit on odd and on even tests at the report's last origin; nu is the fitted degrees of freedom (the word inf for a normal fit) and sd the standard deviation tau sqrt(nu / (nu - 2))",
+ "inputs": {
+  "origin": "2015-01-01T00:00:00+00:00",
+  "report": "backtest-synthetic-20261103-bf4fd286e2b2.json",
+  "source": "synthetic"
+ }
+}

@@ -1,0 +1,106 @@
+{
+ "all_exit_codes_zero": true,
+ "compute_seconds": 2020.4,
+ "data_stage_kind": "checksum verification",
+ "download_seconds": 3.8,
+ "downloaded_bytes": 0,
+ "downloaded_files": 0,
+ "main_pipeline_seconds": 1263.9,
+ "meta": {
+  "archives": "archives copied from /Volumes/Crucial X10/mootcourt-data, not downloaded; copy time 0.2 s (in place of a fetch time)",
+  "commit": "82ba862 plus uncommitted changes (the digest above identifies the files that ran)",
+  "data": "verified checksums of existing archives; nothing was downloaded in this run",
+  "files": "748",
+  "load_end": "91.96 58.16 38.12",
+  "load_start": "7.21 11.26 12.20",
+  "machine": "Apple M1, 8 cores",
+  "python": "Python 3.13.9",
+  "run": "clean copy of the files git would commit, data root /Volumes/Crucial X10/mootcourt-data/timed-run-7; the data line below says whether anything was downloaded; the Python environment came from the uv cache, so the setup stage is not a cold install",
+  "seed": "0 for fit and backtest; 20261102 for the power run",
+  "tree_sha256_16": "00b348180c492b75",
+  "uv": "uv 0.10.5 (5fa874f03 2026-02-24)"
+ },
+ "stages": [
+  {
+   "exit_code": 0,
+   "seconds": 1.4,
+   "stage": "setup"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 41.9,
+   "stage": "data"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 836.7,
+   "stage": "power"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 34.6,
+   "stage": "fit-upworthy"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 279.2,
+   "stage": "backtest-upworthy"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 3.5,
+   "stage": "fit-asos"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 26.1,
+   "stage": "backtest-asos"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 4.4,
+   "stage": "fit-synthetic"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 36.1,
+   "stage": "backtest-synthetic"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 706.1,
+   "stage": "challenger-gbm"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 11.9,
+   "stage": "audit-upworthy"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 1.1,
+   "stage": "audit-asos"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 1.3,
+   "stage": "audit-synthetic"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 8.4,
+   "stage": "inventory"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 13.3,
+   "stage": "data-verify"
+  },
+  {
+   "exit_code": 0,
+   "seconds": 18.2,
+   "stage": "latency"
+  }
+ ],
+ "total_seconds": 2024.2
+}
