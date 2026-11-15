@@ -105,3 +105,29 @@ def test_the_direction_auc_of_a_rung_with_one_forecast_per_pair_prints_no_interv
     assert any("constant_within_cell" in k for k in p1[-1].keys) and any("exposure_strata_with_one_value" in k for k in p1[-1].keys)
     assert re.fullmatch(r"\d\.\d{3} \(\d\.\d{3}, \d\.\d{3}\)", str(_row(table, "precedent rung (P2)")[-1]))
     assert re.fullmatch(r"\d\.\d{3} \(\d\.\d{3}, \d\.\d{3}\)", str(_row(table, "text classifier")[-1]))
+
+
+def test_the_skill_table_ends_with_the_three_readings_against_the_smoothed_base_rate():
+    from summary_tables import reviewer_runs
+
+    reports = st.Reports(RUN)
+    rows = reviewer_runs.skill_by_origin(reports).rows
+    labels = [str(row[0]) if not isinstance(row, st.Raw) else "" for row in rows]
+    at = labels.index("against the smoothed base rate: pooled, tests resampled")
+    assert isinstance(rows[at - 1], st.Raw)          # a rule sets the smoothed opponent apart from the rows above
+    assert labels[at + 1:] == ["the same, interval adjusted for three readings", "the same, the seven origins as units (Student-t interval)"]
+    smoothed = reports(reviewer_runs.SMOOTHED)
+    assert smoothed.get("pseudo_rows") == 30
+    leaves = (("pooled.skill", "pooled.lo", "pooled.hi"), ("pooled.adjusted_lo", "pooled.adjusted_hi"),
+              ("origin_level.skill", "origin_level.lo", "origin_level.hi"))
+    shapes = (r"-?\d\.\d{4} \(-?\d\.\d{4}, -?\d\.\d{4}\)", r"\(-?\d\.\d{4}, -?\d\.\d{4}\)", r"-?\d\.\d{4,5} \(-?\d\.\d{4,5}, -?\d\.\d{4,5}\)")
+    for row, keys, shape in zip(rows[at:], leaves, shapes):
+        for column, rung in ((1, "P1"), (3, "P2")):
+            assert [k.split(" ", 1)[1] for k in row[column].keys] == [f"rungs.{rung}.{leaf}" for leaf in keys], (row[0], rung)
+            assert all(k.split(" ", 1)[0].startswith("$RUN6/smoothed-base-skill-upworthy-") for k in row[column].keys)
+            assert re.fullmatch(shape, str(row[column])), row[column]
+        assert str(row[2]) == "not computed"          # the script scores the realized event only
+    # the printed interval keeps the sign of an end that lies below zero
+    for column, rung in ((1, "P1"), (3, "P2")):
+        lo = smoothed.get(f"rungs.{rung}.origin_level.lo")
+        assert ("(-" in str(rows[at + 2][column])) == (lo < 0), rung

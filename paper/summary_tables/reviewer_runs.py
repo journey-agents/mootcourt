@@ -2,12 +2,13 @@
 
 Every cell comes from a report key of the reports those runs added to the run folder. A report that is missing stops the build.
 """
-from summary_tables import Raw, Table, derived, month_year, n, v
+from summary_tables import Raw, Table, derived, lohi, month_year, n, v
 from summary_tables.experiments import MAIN, sci
 
 SIZE = "calibration-null-size-upworthy-*.json"
 SEEDS = "positive-control-seeds.json"
 ORIGINS = "learning-curve-origins/learning-curve-origins-upworthy-*.json"
+SMOOTHED = "smoothed-base-skill-upworthy-*.json"
 STRATA = (("all cells", "ALL"), ("headline-only", "headline_only"), ("image-only", "image_only"), ("smallest", "both"))
 
 
@@ -114,7 +115,9 @@ def horizon(r):
 
 def skill_by_origin(r):
     """The Brier skill of P1 and P2 at each origin, pooled with tests resampled, with the quarters as units, and without the stratum whose
-    base rate is zero (the addendum of 14 November 2026 to the run 9 plan; asked for by a reviewer of the rewritten paper)."""
+    base rate is zero (the addendum of 14 November 2026 to the run 9 plan; asked for by a reviewer of the rewritten paper). The last
+    three rows give the skill against the smoothed base rate of the plan's section "Registration of the confirmatory reading": a post hoc
+    exploratory reading on the realized event, whose definition was fixed before its result existed."""
     rep, main = r("by-origin-skill-upworthy-*.json"), r(MAIN)
     cols = (("P1", "realized"), ("P1", "planned"), ("P2", "realized"))
     for rung, field in (("P1", "brier_skill"), ("P2", "brier_skill")):          # the script must reproduce the report's pooled skill
@@ -135,10 +138,34 @@ def skill_by_origin(r):
                cell("P2", "realized", "without_zero_base_rate_strata")]
     units = ["the same pair left out, the seven origins as units", cell("P1", "realized", "origin_level_without_zero_base_rate_strata"), "none such",
              cell("P2", "realized", "origin_level_without_zero_base_rate_strata")]
+    smooth = r(SMOOTHED)
+    if smooth.get("pseudo_rows") != 30 or any(smooth.get(f"rungs.{rung}.pooled.family_size") != 3 for rung in ("P1", "P2")):
+        raise ValueError("the smoothed base rate is the registered one: 30 pseudo-rows and a family of three readings")
+    for rung in ("P1", "P2"):          # the smoothing script must reproduce the report's skill against the unsmoothed base rate
+        if abs(smooth.get(f"rungs.{rung}.unsmoothed.pooled.skill") - main.get(f"tables.aggregate[cell=ALL,rung={rung}].brier_skill")) > 1e-9:
+            raise ValueError(f"the smoothed-base script does not reproduce the report's pooled skill of {rung}")
+
+    def smoothed_cell(rung, at):
+        """Four places, or five where an end of the interval would print as zero at four and so hide its sign."""
+        try:
+            return sci(smooth, f"rungs.{rung}.{at}", "skill", 4)
+        except ValueError:
+            return sci(smooth, f"rungs.{rung}.{at}", "skill", 5)
+
+    def smoothed_row(label, cell_of):
+        return [label, cell_of("P1"), "not computed", cell_of("P2")]
+
+    smoothed = [smoothed_row("against the smoothed base rate: pooled, tests resampled", lambda rung: smoothed_cell(rung, "pooled")),
+                smoothed_row("the same, interval adjusted for three readings",
+                             lambda rung: lohi(smooth, f"rungs.{rung}.pooled.adjusted_lo", f"rungs.{rung}.pooled.adjusted_hi", 4)),
+                smoothed_row("the same, the seven origins as units (Student-t interval)", lambda rung: smoothed_cell(rung, "origin_level"))]
+    if any(smooth.get(f"rungs.{rung}.origin_level.origins") != 7 for rung in ("P1", "P2")):
+        raise ValueError("the row labels say seven origins")
     return Table("fmt-skill-by-origin", "lrrr",
                  ["origin & P1, event at & P1, event at & P2, event at", r" & realized precision (90\%) & planned precision (90\%) & realized precision (90\%)"],
                  [*(row(month_year(o), f"by_origin[origin={o}]") for o in origins), Raw(r"\midrule"),
-                  row("all origins, pooled, tests resampled", "pooled"), row("all origins as seven units (Student-t interval)", "origin_level"), without, units])
+                  row("all origins, pooled, tests resampled", "pooled"), row("all origins as seven units (Student-t interval)", "origin_level"), without, units,
+                  Raw(r"\midrule"), *smoothed])
 
 
 TABLES = [calibration_size, control_seeds, learning_origins, horizon, skill_by_origin]
