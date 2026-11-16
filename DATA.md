@@ -5,7 +5,7 @@ this repository. `make data` downloads the files, and every later run checks the
 
 ## Sources and licenses
 
-### Upworthy Research Archive (exploratory split only)
+### Upworthy Research Archive (the exploratory split, and the confirmatory split once)
 
 - Where: Open Science Framework node `jd64p`, https://osf.io/jd64p/
 - License: CC BY 4.0, held by Cornell University.
@@ -14,10 +14,18 @@ this repository. `make data` downloads the files, and every later run checks the
   doi 10.1038/s41597-021-00934-7.
 - File used: `upworthy-archive-exploratory-packages-03.12.2020.csv`, 14,260,949 bytes, 22,666 packages in
   4,873 tests, created from 26 Jan 2013 to 29 Apr 2015. Both counts were confirmed on the real file.
-- **Files deliberately not used.** The same OSF folder holds a holdout file, a confirmatory file and an
+- **The confirmatory file, fetched once.** The same OSF folder holds a holdout file, a confirmatory file and an
   undeployed-packages file. The archive asks researchers to pre-register an analysis before touching the
-  holdout and confirmatory data. This project did not pre-register and did not download, open or score any of the
-  three. The download script refuses any file whose name contains `holdout`, `confirmatory` or `undeployed`.
+  holdout and confirmatory data. The confirmatory file `upworthy-archive-confirmatory-packages-03.12.2020.csv`
+  (66,517,697 bytes, SHA-256 `b2a88288c88f2b67d40413c9bdbebe79a1c0b5d9a9354180549f59f3bfff685f`) was fetched once, on
+  15 November 2026, under a decision recorded on 14 November 2026 and after the readings had been registered in a
+  commit pushed before the fetch (afad501; `docs/superpowers/plans/2026-11-14-run9-visible-exposure-main.md`, section
+  "Registration of the confirmatory reading"). The registration is a dated commit of this repository; no outside
+  registry holds it and no journal reviewed it. The file was analysed once, and `paper/data/run10-confirmatory/README.md`
+  holds the fetch record, the ledger record, the stages and the deviations. No other use of the file is authorized.
+- **Files deliberately not used.** The holdout file and the undeployed-packages file were not downloaded, opened or
+  scored. The download script refuses any file whose name contains `holdout`, `confirmatory` or `undeployed`;
+  `scripts/fetch_confirmatory.py` is the one guarded door for the confirmatory file and refuses a second fetch.
 - Former-staff columns (`square`, `significance`, `first_place`, `winner`, `updated_at`) are never read, as
   inputs or as labels. The loader reads an explicit list of twelve columns and the inventory lists those five by
   name only.

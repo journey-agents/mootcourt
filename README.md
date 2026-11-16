@@ -205,7 +205,7 @@ In one sentence: P1 adds a fitted prior, and P2 adds kernel-weighted precedents 
 
 ## What the results show, and what the project does not show
 
-The paper asks three questions of two public archives: 2,949 scored headline and image tests from a publisher (Upworthy) and 68 scored experiments from a fashion retailer (ASOS). Every result is exploratory, meaning the same data was analysed more than once and the method changed along the way, so the results need testing on fresh data.
+The paper asks three questions of two public archives: 2,949 scored headline and image tests from a publisher (Upworthy) and 68 scored experiments from a fashion retailer (ASOS). Every result is exploratory, meaning the same data was analysed more than once and the method changed along the way, with one exception: three readings were registered beforehand and then tested once on the publisher's confirmatory split (13,822 further tests of the same quarters), and each agrees with its exploratory reading (`paper/data/run10-confirmatory/README.md`).
 
 | Question | Short answer | What the backtest shows |
 |---|---|---|

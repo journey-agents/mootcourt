@@ -1,0 +1,48 @@
+{
+ "as_of": "2015-05-07T00:14:57.641000+00:00",
+ "cells": {
+  "both": {
+   "as_of": "2015-05-07T00:14:57.641000+00:00",
+   "brier_skill": -0.011530639456236447,
+   "brier_skill_hi": 0.007121666364531672,
+   "brier_skill_lo": -0.022118127817864864,
+   "consecutive_below": 0,
+   "drifted": false,
+   "n": 158,
+   "n_tests": 65,
+   "p0_rolling_logscore": -1.0131582272530104,
+   "rolling_logscore": -1.051472659802406,
+   "window_weeks": 8
+  },
+  "headline_only": {
+   "as_of": "2015-05-07T00:14:57.641000+00:00",
+   "brier_skill": 0.015784816569393456,
+   "brier_skill_hi": 0.034353116382999795,
+   "brier_skill_lo": 0.00393516557574039,
+   "consecutive_below": 0,
+   "drifted": false,
+   "n": 1175,
+   "n_tests": 405,
+   "p0_rolling_logscore": -0.732213575006559,
+   "rolling_logscore": -0.7447155317645853,
+   "window_weeks": 8
+  },
+  "image_only": {
+   "as_of": "2015-05-07T00:14:57.641000+00:00",
+   "brier_skill": 0.0056591317843084354,
+   "brier_skill_hi": 0.014827569204983503,
+   "brier_skill_lo": -0.00036964283847036307,
+   "consecutive_below": 0,
+   "drifted": false,
+   "n": 943,
+   "n_tests": 282,
+   "p0_rolling_logscore": -0.7121925883094992,
+   "rolling_logscore": -0.7216622145490691,
+   "window_weeks": 8
+  }
+ },
+ "seed": {
+  "last_result": "2015-05-07T00:14:57.641000+00:00"
+ },
+ "source": "upworthy"
+}

@@ -131,3 +131,56 @@ def test_the_skill_table_ends_with_the_three_readings_against_the_smoothed_base_
     for column, rung in ((1, "P1"), (3, "P2")):
         lo = smoothed.get(f"rungs.{rung}.origin_level.lo")
         assert ("(-" in str(rows[at + 2][column])) == (lo < 0), rung
+
+
+def test_the_confirmatory_table_reads_run_10_from_its_own_folder_and_gives_each_primary_reading_its_registered_words():
+    from summary_tables import confirmatory
+
+    assert confirmatory.RUN10 == PAPER / "data" / "run10-confirmatory"          # an explicit folder, whatever --reports names
+    # the registered rules, each on its own numbers
+    assert confirmatory.lead_word(0.001, 0.02) == "confirmed"
+    assert confirmatory.lead_word(-0.02, -0.001) == "base rate ahead"
+    assert confirmatory.lead_word(-0.008, 0.014) == "not shown"
+    assert confirmatory.skill_word(0.0034, 0.0020) == "shown"
+    assert confirmatory.skill_word(0.0034, 0.0010) == "not shown"          # an end at 0.0010 or closer to zero is not clear
+    assert confirmatory.skill_word(0.0005, 0.0020) == "not shown"          # both intervals are needed
+    assert confirmatory.skill_word(0.0034, -0.00001) == "not shown"
+    assert confirmatory.rank_word(0.001) == "ranks better than counting arms"
+    assert confirmatory.rank_word(-0.0186) == "not shown to rank better than counting arms"
+
+    table = confirmatory.confirmatory(st.Reports(RUN))
+    assert table.name == "fmt-confirmatory"
+    rows = [row for row in table.rows if not isinstance(row, st.Raw)]
+    assert all(len(row) == 4 for row in rows)
+    for row in rows:          # the exploratory column reads the run folder of the build, the confirmatory column reads run 10
+        assert all(k.startswith("$RUN6/") for k in row[1].keys), row[0]
+        assert row[2].keys and all(k.startswith("paper/data/run10-confirmatory/") for k in row[2].keys), row[0]
+        assert all(k.startswith("paper/data/run10-confirmatory/") for k in getattr(row[3], "keys", ())), row[0]
+    text = table.render()
+    assert "% src: $RUN6/" in text and "20261115-b5929079f639" in text
+
+    def key_leaves(cell):
+        return [k.split(" ", 1)[1] for k in cell.keys]
+
+    lead = _row(table, "the same, the seven quarters as units (Student-t interval, 90\\%)")
+    assert key_leaves(lead[2]) == ["origin_level.difference", "origin_level.lo", "origin_level.hi"]
+    assert str(lead[3]) in ("confirmed", "not shown", "base rate ahead") and key_leaves(lead[3]) == ["origin_level.lo", "origin_level.hi"]
+    skill = _row(table, "the same, the seven quarters as units (Student-t interval, 90\\%; the verdict reads this row and the one above)")
+    assert key_leaves(skill[2]) == ["rungs.P1.origin_level.skill", "rungs.P1.origin_level.lo", "rungs.P1.origin_level.hi"]
+    assert str(skill[3]) in ("shown", "not shown") and key_leaves(skill[3]) == ["rungs.P1.pooled.adjusted_lo", "rungs.P1.origin_level.lo"]
+    rank = _row(table, "text classifier minus the arm-count rule, captured lift at a quarter budget, all contrasts (90\\%)")
+    arm = 'ranking_paired.budgets["0.25"].differences.text_lr_minus_arm_count'
+    assert key_leaves(rank[2]) == [f"{arm}.estimate", f"{arm}.lo", f"{arm}.hi"] and key_leaves(rank[3]) == [f"{arm}.lo"]
+    assert str(rank[3]) in ("ranks better than counting arms", "not shown to rank better than counting arms")
+    # three verdicts and no more: the unsmoothed skill and every secondary reading carry none
+    assert sum(1 for row in rows if str(row[3])) == 3
+    # a bound keeps its sign: an end below zero never prints as an unsigned zero
+    run10 = confirmatory.run10()
+    lo = run10(confirmatory.SMOOTHED).get("rungs.P1.origin_level.lo")
+    assert ("(-" in str(skill[2])) == (lo < 0)
+    # the exploratory split ran one contrast per test without the challengers, so those two cells say so and name the key that shows it
+    for label in ("text classifier minus the random order, captured lift at a quarter budget (90\\%)",
+                  "text classifier, AUC within pairs of origin and cell (90\\%)"):
+        row = _row(table, label)
+        assert str(row[1]) == "not run" and key_leaves(row[1]) == ["header.rungs"]
+        assert "--contrasts-one.json" in row[2].keys[0]

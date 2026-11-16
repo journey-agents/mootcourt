@@ -1,0 +1,11 @@
+{
+ "decision": "2026-11-14",
+ "file": "upworthy-archive-confirmatory-packages-03.12.2020.csv",
+ "bytes": 66517697,
+ "sha256": "b2a88288c88f2b67d40413c9bdbebe79a1c0b5d9a9354180549f59f3bfff685f",
+ "rows": 82810,
+ "admitted": 51151,
+ "tests": 22743,
+ "snapshot": "20261115-b5929079f639",
+ "read_at": "2026-11-15T20:38:25+00:00"
+}
