@@ -149,38 +149,58 @@ def test_the_confirmatory_table_reads_run_10_from_its_own_folder_and_gives_each_
     assert confirmatory.rank_word(-0.0186) == "not shown to rank better than counting arms"
 
     table = confirmatory.confirmatory(st.Reports(RUN))
-    assert table.name == "fmt-confirmatory"
+    second = confirmatory.confirmatory_secondary(st.Reports(RUN))
+    assert (table.name, second.name) == ("fmt-confirmatory", "fmt-confirmatory-secondary")
     rows = [row for row in table.rows if not isinstance(row, st.Raw)]
-    assert all(len(row) == 4 for row in rows)
-    for row in rows:          # the exploratory column reads the run folder of the build, the confirmatory column reads run 10
-        assert all(k.startswith("$RUN6/") for k in row[1].keys), row[0]
+    more = [row for row in second.rows if not isinstance(row, st.Raw)]
+    assert all(len(row) == 4 for row in rows) and all(len(row) == 3 for row in more)          # only the primary table has a verdict column
+    for row in rows + more:          # the exploratory column reads the run folder of the build, the confirmatory column reads run 10
+        assert row[1].keys and all(k.startswith("$RUN6/") for k in row[1].keys), row[0]
         assert row[2].keys and all(k.startswith("paper/data/run10-confirmatory/") for k in row[2].keys), row[0]
+    for row in rows:
         assert all(k.startswith("paper/data/run10-confirmatory/") for k in getattr(row[3], "keys", ())), row[0]
-    text = table.render()
-    assert "% src: $RUN6/" in text and "20261115-b5929079f639" in text
+    for built in (table, second):
+        text = built.render()
+        assert "% src: $RUN6/" in text and "20261115-b5929079f639" in text
 
     def key_leaves(cell):
         return [k.split(" ", 1)[1] for k in cell.keys]
 
-    lead = _row(table, "the same, the seven quarters as units (Student-t interval, 90\\%)")
+    lead = _row(table, "the lead with the seven quarters as units")
     assert key_leaves(lead[2]) == ["origin_level.difference", "origin_level.lo", "origin_level.hi"]
     assert str(lead[3]) in ("confirmed", "not shown", "base rate ahead") and key_leaves(lead[3]) == ["origin_level.lo", "origin_level.hi"]
-    skill = _row(table, "the same, the seven quarters as units (Student-t interval, 90\\%; the verdict reads this row and the one above)")
+    skill = _row(table, "the skill with the seven quarters as units")
     assert key_leaves(skill[2]) == ["rungs.P1.origin_level.skill", "rungs.P1.origin_level.lo", "rungs.P1.origin_level.hi"]
     assert str(skill[3]) in ("shown", "not shown") and key_leaves(skill[3]) == ["rungs.P1.pooled.adjusted_lo", "rungs.P1.origin_level.lo"]
-    rank = _row(table, "text classifier minus the arm-count rule, captured lift at a quarter budget, all contrasts (90\\%)")
+    rank = _row(table, "3. text classifier minus the arm-count rule, captured lift at a quarter budget, all contrasts")
     arm = 'ranking_paired.budgets["0.25"].differences.text_lr_minus_arm_count'
     assert key_leaves(rank[2]) == [f"{arm}.estimate", f"{arm}.lo", f"{arm}.hi"] and key_leaves(rank[3]) == [f"{arm}.lo"]
     assert str(rank[3]) in ("ranks better than counting arms", "not shown to rank better than counting arms")
-    # three verdicts and no more: the unsmoothed skill and every secondary reading carry none
+    # three verdicts and no more: the unsmoothed skill carries none, and the secondary table has no verdict column
     assert sum(1 for row in rows if str(row[3])) == 3
     # a bound keeps its sign: an end below zero never prints as an unsigned zero
     run10 = confirmatory.run10()
     lo = run10(confirmatory.SMOOTHED).get("rungs.P1.origin_level.lo")
     assert ("(-" in str(skill[2])) == (lo < 0)
     # the exploratory split ran one contrast per test without the challengers, so those two cells say so and name the key that shows it
-    for label in ("text classifier minus the random order, captured lift at a quarter budget (90\\%)",
-                  "text classifier, AUC within pairs of origin and cell (90\\%)"):
-        row = _row(table, label)
+    for label in ("text classifier minus the random order, captured lift at a quarter budget",
+                  "text classifier, AUC within pairs of origin and cell"):
+        row = _row(second, label)
         assert str(row[1]) == "not run" and key_leaves(row[1]) == ["header.rungs"]
         assert "--contrasts-one.json" in row[2].keys[0]
+    # P2 against P1 by cell: the two larger cells, each with its interval by test and its bounds adjusted for 52
+    main10 = run10(confirmatory.MAIN)
+    for cell, label in (("headline_only", "headline-only"), ("image_only", "image-only")):
+        at = f"tables.aggregate[cell={cell},rung=P2]"
+        plain = _row(second, f"P2 minus P1 in the {label} cell, tests resampled")
+        adjusted = _row(second, f"the {label} cell, interval adjusted for 52")
+        assert key_leaves(plain[2]) == [f"{at}.logscore_vs_p1", f"{at}.logscore_vs_p1_lo", f"{at}.logscore_vs_p1_hi"]
+        assert key_leaves(adjusted[2]) == [f"{at}.logscore_vs_p1_adjusted_lo", f"{at}.logscore_vs_p1_adjusted_hi"]
+        assert re.fullmatch(r"-?\d\.\d{4} \(-?\d\.\d{4}, -?\d\.\d{4}\)", str(plain[2]))
+        assert re.fullmatch(r"\(-?\d\.\d{4}, -?\d\.\d{4}\)", str(adjusted[2]))
+        assert str(plain[2]).startswith("-") == (main10.get(f"{at}.logscore_vs_p1") < 0)
+    # a cell in which the guard never gave the precedents a weight prints no interval of zeros
+    never = {"cell": "c", "rung": "P2", "family_size": 52, "logscore_vs_p1": 0.0, "logscore_vs_p1_lo": 0.0, "logscore_vs_p1_hi": 0.0,
+             "logscore_vs_p1_adjusted_lo": None, "logscore_vs_p1_adjusted_hi": None}
+    rep = st.Report("x.json", {"tables": {"aggregate": [never]}})
+    assert [str(c) for c in confirmatory._p2_cell(rep, "c")] == ["equal to P1", "equal to P1"]

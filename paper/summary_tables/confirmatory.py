@@ -1,4 +1,4 @@
-"""The table of the registered confirmatory analysis (docs/superpowers/plans/2026-11-14-run9-visible-exposure-main.md, sections "Part C" and
+"""The two tables of the registered confirmatory analysis (docs/superpowers/plans/2026-11-14-run9-visible-exposure-main.md, sections "Part C" and
 "Registration of the confirmatory reading"): each reading on the exploratory split and on the confirmatory split, side by side.
 
 The exploratory column reads the run folder the build is given, as every other table does. The confirmatory column reads ``RUN10``, an
@@ -97,77 +97,112 @@ def _check(exp, conf):
         raise ValueError("the secondary run is the one with one contrast per test")
 
 
+def _both(r, conf):
+    def both(fn):
+        return [fn(split) for split in (r, conf)]
+
+    return both
+
+
 def confirmatory(r):
-    """The three primary readings with the registered verdict of the confirmatory split, then the secondary readings without verdict words."""
+    """The three primary readings on both splits, with the registered verdict of the confirmatory split."""
     conf = run10()
     _check(r, conf)
-    splits = (r, conf)
-
-    def both(fn):
-        return [fn(split) for split in splits]
-
-    def percentile(binning):
-        at = f"rows[rung=P1,stratum=ALL,binning={binning},truth=observed]"
-        return both(lambda s: join("{} against {}", v(s(SIZE), f"{at}.observed_percentile", 1), v(s(SIZE), f"{at}.critical_95", 1)))
-
+    both = _both(r, conf)
     c_origins, c_smooth, c_extras = conf(BY_ORIGIN), conf(SMOOTHED), conf(EXTRAS)
     lead = derived(lead_word(c_origins.get("origin_level.lo"), c_origins.get("origin_level.hi")), c_origins.ref("origin_level.lo"),
                    c_origins.ref("origin_level.hi"))
     skill = derived(skill_word(c_smooth.get("rungs.P1.pooled.adjusted_lo"), c_smooth.get("rungs.P1.origin_level.lo")),
                     c_smooth.ref("rungs.P1.pooled.adjusted_lo"), c_smooth.ref("rungs.P1.origin_level.lo"))
     rank = derived(rank_word(c_extras.get(f"{ARM}.lo")), c_extras.ref(f"{ARM}.lo"))
-
-    def adjusted_cells(rung):
-        return both(lambda s: lohi(s(SMOOTHED), f"rungs.{rung}.pooled.adjusted_lo", f"rungs.{rung}.pooled.adjusted_hi", 4))
-
-    one_row = "tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=text_lr]"
-    not_run = derived("not run", r(ONE).ref("header.rungs"))
     rows = [
         ["tests scored", *both(lambda s: n(s(MAIN), "header.tests_scored")), ""],
         ["rows scored", *both(lambda s: n(s(MAIN), "header.scored_rows")), ""],
         Raw(r"\midrule"),
-        _heading("Primary readings, each with its registered verdict", 4),
-        [r"1. P1 minus P0, log score in nats, pooled, tests resampled (90\%)",
+        [r"1. P1 minus P0, log score in nats, pooled, tests resampled",
          *both(lambda s: sci(s(MAIN), _agg("P0"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi", neg=True)), ""],
-        [r"\quad the same, the seven quarters as units (Student-t interval, 90\%)", *both(lambda s: _four_or_five(s(BY_ORIGIN), "origin_level", "difference")),
-         lead],
-        [r"2. P1 Brier skill against the smoothed base rate, pooled, tests resampled (90\%)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.pooled", "skill")), ""],
-        [r"\quad the same, interval adjusted for three readings", *adjusted_cells("P1"), ""],
-        [r"\quad the same, the seven quarters as units (Student-t interval, 90\%; the verdict reads this row and the one above)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.origin_level", "skill")), skill],
-        [r"\quad P1 Brier skill against the unsmoothed base rate, pooled, tests resampled (90\%; no verdict)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.unsmoothed.pooled", "skill")), ""],
-        [r"\quad the unsmoothed skill, the seven quarters as units (Student-t interval, 90\%; no verdict)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.unsmoothed.origin_level", "skill")), ""],
-        [r"3. text classifier minus the arm-count rule, captured lift at a quarter budget, all contrasts (90\%)",
-         *both(lambda s: sci(s(EXTRAS), ARM, "estimate", 4)), rank],
+        [r"\quad the lead with the seven quarters as units", *both(lambda s: _four_or_five(s(BY_ORIGIN), "origin_level", "difference")), lead],
         Raw(r"\midrule"),
-        _heading("Secondary readings, without verdict words", 4),
-        ["P1 calibration percentile against its simulated critical value, equal-width bins", *percentile("equal_width"), ""],
-        [r"\quad the same, equal-mass bins", *percentile("equal_mass"), ""],
-        [r"P1 coverage of the 80 percent interval (90\%)", *both(lambda s: ci(s(MAIN), _agg("P1"), "coverage_80", 3)), ""],
-        [r"P1 coverage of the 90 percent interval (90\%)", *both(lambda s: ci(s(MAIN), _agg("P1"), "coverage_90", 3)), ""],
-        [r"P2 minus P1, log score in nats, pooled, tests resampled (90\%)",
-         *both(lambda s: sci(s(MAIN), _agg("P2"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi")), ""],
-        [r"\quad the same, interval adjusted for the 52 intervals of the report's aggregate table",
-         *both(lambda s: lohi(s(MAIN), f"{_agg('P2')}.logscore_vs_p1_adjusted_lo", f"{_agg('P2')}.logscore_vs_p1_adjusted_hi", 4)), ""],
-        [r"P2 Brier skill against the unsmoothed base rate, pooled, tests resampled (90\%)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.unsmoothed.pooled", "skill")), ""],
-        [r"\quad the same, P2 with the seven quarters as units (Student-t interval, 90\%)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.unsmoothed.origin_level", "skill")), ""],
-        [r"P2 Brier skill against the smoothed base rate, pooled, tests resampled (90\%)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.pooled", "skill")), ""],
-        [r"\quad the same, P2 against the smoothed rate with the seven quarters as units (Student-t interval, 90\%)",
-         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.origin_level", "skill")), ""],
-        _heading("One contrast per test, where the arm-count rule cannot order tests", 4),
-        [r"text classifier minus the random order, captured lift at a quarter budget (90\%)", not_run,
-         sci(conf(ONE), one_row, "diff_random", 4, "diff_random_lo", "diff_random_hi"), ""],
-        [r"text classifier, AUC within pairs of origin and cell (90\%)", not_run,
-         sci(conf(ONE), _agg("text_lr"), "auc_event_within", 3, "auc_event_within_lo", "auc_event_within_hi"), ""],
+        [r"2. P1 Brier skill against the smoothed base rate, pooled, tests resampled",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.pooled", "skill")), ""],
+        [r"\quad the same, interval adjusted for three readings",
+         *both(lambda s: lohi(s(SMOOTHED), "rungs.P1.pooled.adjusted_lo", "rungs.P1.pooled.adjusted_hi", 4)), ""],
+        [r"\quad the skill with the seven quarters as units", *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.origin_level", "skill")), skill],
+        [r"\quad against the unsmoothed base rate, pooled, tests resampled (no verdict)",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.unsmoothed.pooled", "skill")), ""],
+        [r"\quad against the unsmoothed base rate, the seven quarters as units (no verdict)",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P1.unsmoothed.origin_level", "skill")), ""],
+        Raw(r"\midrule"),
+        [r"3. text classifier minus the arm-count rule, captured lift at a quarter budget, all contrasts",
+         *both(lambda s: sci(s(EXTRAS), ARM, "estimate", 4)), rank],
     ]
-    return Table("fmt-confirmatory", "lrrl", ["reading & exploratory split & confirmatory split & registered verdict,", " & & & confirmatory split"], rows,
+    return Table("fmt-confirmatory", r"p{5.6cm}rrp{2.4cm}", ["reading & exploratory split & confirmatory split & registered verdict,",
+                                                             " & & & confirmatory split"], rows,
                  source="the report keys named above each row (confirmatory); the confirmatory column reads paper/data/run10-confirmatory")
 
 
-TABLES = [confirmatory]
+def _p2_cell(rep, cell):
+    """P2 minus P1 in one cell: the estimate with its interval by test, and the bounds adjusted for 52. Where the guard gave the precedents
+    no weight at any origin, P2 is P1, every key is zero or null, and the two cells say so."""
+    at = f"tables.aggregate[cell={cell},rung=P2]"
+    keys = [f"{at}.logscore_vs_p1", f"{at}.logscore_vs_p1_lo", f"{at}.logscore_vs_p1_hi", f"{at}.logscore_vs_p1_adjusted_lo",
+            f"{at}.logscore_vs_p1_adjusted_hi"]
+    values = [rep.get(k) for k in keys]
+    if rep.get(f"{at}.family_size") != 52:
+        raise ValueError(f"{rep.name}: a row label says 52 intervals")
+    if all(x == 0 for x in values[:3]) and values[3] is None and values[4] is None:
+        same = derived("equal to P1", *[rep.ref(k) for k in keys[:3]])
+        return same, derived("equal to P1", *[rep.ref(k) for k in keys[3:]])
+    return sci(rep, at, "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi"), lohi(rep, keys[3], keys[4], 4)
+
+
+def confirmatory_secondary(r):
+    """The registered secondary readings on both splits; none carries a verdict word. The two rows by cell were added after a review of the
+    confirmatory section (the pooled row averages two cells of opposite sign)."""
+    conf = run10()
+    _check(r, conf)
+    both = _both(r, conf)
+
+    def percentile(binning):
+        at = f"rows[rung=P1,stratum=ALL,binning={binning},truth=observed]"
+        return both(lambda s: join("{} against {}", v(s(SIZE), f"{at}.observed_percentile", 1), v(s(SIZE), f"{at}.critical_95", 1)))
+
+    def by_cell(cell, label):
+        cells = both(lambda s: _p2_cell(s(MAIN), cell))
+        return [[f"P2 minus P1 in the {label} cell, tests resampled", cells[0][0], cells[1][0]],
+                [rf"\quad the {label} cell, interval adjusted for 52", cells[0][1], cells[1][1]]]
+
+    one_row = "tables.decision_value[origin=ALL,budget=0.25,policy=p_win,rung=text_lr]"
+    not_run = derived("not run", r(ONE).ref("header.rungs"))
+    rows = [
+        ["P1 calibration percentile against its simulated critical value, equal-width bins", *percentile("equal_width")],
+        [r"\quad the same, equal-mass bins", *percentile("equal_mass")],
+        ["P1 coverage of the 80 percent interval", *both(lambda s: ci(s(MAIN), _agg("P1"), "coverage_80", 3))],
+        ["P1 coverage of the 90 percent interval", *both(lambda s: ci(s(MAIN), _agg("P1"), "coverage_90", 3))],
+        Raw(r"\midrule"),
+        ["P2 minus P1, log score in nats, pooled, tests resampled",
+         *both(lambda s: sci(s(MAIN), _agg("P2"), "logscore_vs_p1", 4, "logscore_vs_p1_lo", "logscore_vs_p1_hi"))],
+        [r"\quad pooled, interval adjusted for the 52 intervals of the report's aggregate table",
+         *both(lambda s: lohi(s(MAIN), f"{_agg('P2')}.logscore_vs_p1_adjusted_lo", f"{_agg('P2')}.logscore_vs_p1_adjusted_hi", 4))],
+        *by_cell("headline_only", "headline-only"),
+        *by_cell("image_only", "image-only"),
+        ["P2 Brier skill against the unsmoothed base rate, pooled, tests resampled",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.unsmoothed.pooled", "skill"))],
+        [r"\quad against the unsmoothed base rate, P2 with the seven quarters as units",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.unsmoothed.origin_level", "skill"))],
+        ["P2 Brier skill against the smoothed base rate, pooled, tests resampled",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.pooled", "skill"))],
+        [r"\quad against the smoothed base rate, P2 with the seven quarters as units",
+         *both(lambda s: _four_or_five(s(SMOOTHED), "rungs.P2.origin_level", "skill"))],
+        Raw(r"\midrule"),
+        _heading("One contrast per test, where the arm-count rule cannot order tests", 3),
+        ["text classifier minus the random order, captured lift at a quarter budget", not_run,
+         sci(conf(ONE), one_row, "diff_random", 4, "diff_random_lo", "diff_random_hi")],
+        ["text classifier, AUC within pairs of origin and cell", not_run,
+         sci(conf(ONE), _agg("text_lr"), "auc_event_within", 3, "auc_event_within_lo", "auc_event_within_hi")],
+    ]
+    return Table("fmt-confirmatory-secondary", r"p{7.4cm}rr", ["reading & exploratory split & confirmatory split"], rows,
+                 source="the report keys named above each row (confirmatory); the confirmatory column reads paper/data/run10-confirmatory")
+
+
+TABLES = [confirmatory, confirmatory_secondary]
