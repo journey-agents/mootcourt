@@ -286,7 +286,7 @@ Four limits apply to that verdict.
 The critical values come from a check of how often the test rejects a forecaster that is calibrated by construction, which is set out once, under its own heading (\iftmlr Appendix~\ref{sec:upper-bins}\else below\fi).
 %% tmlr:move-begin upperbins
 %% tmlr:note upperbins P1's reliability bins are in Appendix~\ref{sec:upper-bins}: its forecasts fall in two bins, and pooled over origins those in the lower bin match the observed share, while those in the upper bin run ahead of the outcomes, on a point estimate.
-%% tmlr:title upperbins P1's reliability bins
+%% tmlr:title upperbins P1's reliability bins and the size of the calibration test
 \label{sec:upper-bins}
 % src: $RUN6/paper-extras-upworthy-20261106-2dc461f52ea4.json lowest_reliability_bin.rungs.P1 (bin 0 to 0.1) gap_observed_minus_forecast -0.0030 (-0.0091, 0.0037), by_origin (2013-04-01 mean_forecast 0.0784 against observed_frequency 0.1127; 2014-07-01 0.0664 against 0.0526); $RUN6/backtest-upworthy-20261106-2dc461f52ea4.json tables.reliability_bins[rung=P1,bin=1] n 3967, mean_p 0.1212, freq 0.1041, and n 0 in bins 2 to 9 (tables/fmt-upper-bins.tex, gap -0.0171)
 In the main run P1's probabilities, one per pair of origin and cell, all fall in two of the ten equal-width bins, below 0.1 and from 0.1 to 0.2 (Table~\ref{tab:fmt-upper-bins}). When the origins are pooled, the forecasts below 0.1 line up with the observed share, with a gap whose interval spans zero, although origin by origin they miss in both directions. From 0.1 to 0.2 they sit ahead of the outcomes by 0.017. No interval was computed for the upper bin, so that excess remains a point estimate.
