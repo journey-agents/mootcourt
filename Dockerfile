@@ -2,7 +2,7 @@
 #   docker build -t mootcourt .
 #   docker run --rm -v "$PWD/mootcourt-data:/data" mootcourt            # runs `moot doctor`
 #   docker run --rm -v "$PWD/mootcourt-data:/data" mootcourt moot card --help
-FROM python:3.12-slim AS build
+FROM python:3.15-slim AS build
 # The image installs exactly what uv.lock pins (uv sync --locked), with the same uv version as the project's own tooling.
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 UV_PROJECT_ENVIRONMENT=/opt/venv UV_LINK_MODE=copy
 WORKDIR /src
@@ -11,7 +11,7 @@ COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
 RUN uv sync --locked --no-dev --no-editable
 
-FROM python:3.12-slim
+FROM python:3.15-slim
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     MOOTCOURT_DATA_ROOT=/data
