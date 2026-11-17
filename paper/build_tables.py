@@ -531,7 +531,8 @@ def discrimination_within_table(rep, source, out):
         lines.append(
             f"{esc(r['rung'])} & {'0.500, one forecast per pair' if tied else interval(r, 'auc_event_within')} & "
             f"{f3(r.get('resolution_event_within'), 5)} & "
-            f"{'one forecast per pair' if r['rung'] in one_direction else interval(r, 'auc_direction_within')} & {'0.500, one forecast per pair' if tied else interval(b, 'auc_event_within')} \\\\"
+            f"{'one forecast per pair' if r['rung'] in one_direction else interval(r, 'auc_direction_within')} & "
+            f"{'0.500, one forecast per pair' if tied else interval(b, 'auc_event_within')} \\\\"
         )
     lines += [r"\bottomrule", r"\end{tabular}"]
     write(
