@@ -20,7 +20,7 @@ Findings.
 - In the main run the probabilities fail a calibration test: the level is off in both directions.
 - No model we ran, all simple stand-ins, ranks tests detectably better than counting arms, on a target that grows with arm count.
 - On the exploratory split, weighting similar past tests does not beat the prior; it recovers under a tenth of a planted signal, so the tie cannot rule one out.
-- Confirmatory split, opened once under rules fixed beforehand in our own dated record (no registry): on 13,822 tests of the same quarters the verdicts recur. By quarter the prior's lead and skill are not shown, though clear by test; ranking above arm count is not shown. Weighting past tests leads slightly there, signs differing by kind of test (no verdict).
+- Confirmatory split, opened once under rules fixed beforehand in our own dated record (no registry then): on 13,822 tests of the same quarters the verdicts recur. By quarter the prior's lead and skill are not shown, though clear by test; ranking above arm count is not shown. Weighting past tests leads slightly there, signs differing by kind of test (no verdict).
 Release. Protocol and Moot Court (MIT), which rebuilds every table.
 
 ## Categories
