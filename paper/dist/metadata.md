@@ -12,16 +12,17 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before a launch, a team wants to know what its experiment will show. Industrial screeners are evaluated privately; public work scores winner predictors. We found no public evaluation that scores a forecast distribution and a probability of a significant result against concluded tests under a fixed rule for what a forecast may see.
-Method. We replay one public archive: 2,949 headline and image tests of a publisher, scored over seven quarters by models fitted on earlier tests. The archive records realized, not planned, traffic, so each forecast gets the median traffic of earlier tests of its kind. All findings but the last are exploratory: one split, read many times.
+Problem. A team wants to know, before launch, what its test will show. Industry screeners are scored privately; public work scores winner predictors. We found no public evaluation that scores a forecast distribution and a probability of a significant result against concluded tests under a fixed rule for what a forecast may see.
+Method. We replay one public archive: 2,949 headline and image tests, scored over seven quarters by models fitted on earlier tests. The archive records realized, not planned, traffic, so each forecast gets the median traffic of earlier tests of its kind. All findings but the last are exploratory: one split, read many times.
 Findings.
-- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats on the log score; with the seven quarters as units the lead cannot be told apart from zero.
+- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats; with the seven quarters as units the lead cannot be told apart from zero.
 - The prior's skill on which test will be significant is small and fragile; within a kind of test and quarter every test gets the same probability: a better level, not a ranking.
 - In the main run the probabilities fail a calibration test: the level is off in both directions.
 - No model we ran, all simple stand-ins, ranks tests detectably better than counting arms, on a target that grows with arm count.
 - On the exploratory split, weighting similar past tests does not beat the prior; it recovers under a tenth of a planted signal, so the tie cannot rule one out.
-- Confirmatory split, opened once under rules fixed beforehand in our own dated record (no registry then): on 13,822 tests of the same quarters the verdicts recur. By quarter the prior's lead and skill are not shown, though clear by test; ranking above arm count is not shown. Weighting past tests leads slightly there, signs differing by kind of test (no verdict).
-Release. Protocol and Moot Court (MIT), which rebuilds every table.
+- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests of the same quarters the verdicts recur. By quarter the prior's lead and skill are not shown, though clear by test; ranking above arm count is not shown. Weighting past tests leads slightly, signs differing by kind of test (no verdict).
+Use: past tests say what to expect, not which to run.
+Release. Protocol and Moot Court (MIT); it rebuilds every table.
 
 ## Categories
 
