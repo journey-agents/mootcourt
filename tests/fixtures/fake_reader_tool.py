@@ -1,8 +1,9 @@
 """A stand-in for the command line tool that plays a reader. No model is involved.
 
-Run as a program it reads the prompt on standard input and the reply schema from ``--json-schema``, and prints one
-JSON envelope. Its behaviour is set by ``FAKE_READER_*`` environment variables, which ``make_fake`` writes into a small
-launcher script, because the wrapper under test removes most of the caller's environment.
+Run as a program it reads the prompt on standard input, works out what is asked from the prompt's last line, and prints
+the event stream of the real tool: a start record, the reply, and a result record. Its behaviour is set by
+``FAKE_READER_*`` environment variables, which ``make_fake`` writes into a small launcher script, because the wrapper
+under test passes on only a short list of the caller's environment.
 """
 from __future__ import annotations
 
@@ -49,6 +50,14 @@ def _number(text: str) -> float:
     return float(zlib.crc32(text.encode("utf-8")) % 101)
 
 
+def _schema_from(prompt: str) -> dict:
+    """What the prompt asks for, read from its last line: the tool is given no schema, so the stand-in reads the request."""
+    found = re.search(r'Reply as \{"(\w+)": .*?\}(?: with exactly (\d+))?', prompt)
+    if not found:
+        return {}
+    return {"properties": {found.group(1): {"minItems": int(found.group(2) or 0)}}}
+
+
 def _reply(prompt: str, schema: dict, env: dict) -> str:
     key = next(iter(schema.get("properties", {"clicks": {}})))
     n = schema.get("properties", {}).get(key, {}).get("minItems", 0)
@@ -84,7 +93,7 @@ def main(argv: list[str]) -> int:
         return 1
     if env.get("FAKE_READER_SLEEP_PAST_CAP"):
         time.sleep(30)
-    schema = json.loads(_option(argv, "--json-schema", "{}"))
+    schema = _schema_from(prompt)
     if env.get("FAKE_READER_USAGE_LIMIT_TEXT_EXIT_ZERO"):
         text = "You have reached your usage limit. Try again later."
     elif env.get("FAKE_READER_SAY"):
@@ -99,14 +108,14 @@ def main(argv: list[str]) -> int:
         text = json.dumps({"clicks": [1]})                          # the wrong count of numbers
     else:
         text = _reply(prompt, schema, env)
-    if _option(argv, "--output-format") == "stream-json":
-        print(json.dumps({"type": "system", "subtype": "init", "model": _option(argv, "--model"), "mcp_servers": [],
-                          "tools": json.loads(env.get("FAKE_READER_START_TOOLS", "[]"))}))
-    envelope = {"type": "result", "is_error": False, "result": text, "model": env.get("FAKE_READER_REPORT_MODEL") or _option(argv, "--model"),
-                "version": "fake-1"}
+    model = env.get("FAKE_READER_REPORT_MODEL") or _option(argv, "--model")
+    start = {"type": "system", "subtype": "init", "model": model, "mcp_servers": [], "claude_code_version": "fake-1",
+             "tools": json.loads(env.get("FAKE_READER_START_TOOLS", "[]")), "session_id": "not-kept", "cwd": os.getcwd()}
     if env.get("FAKE_READER_NO_VERSION"):
-        del envelope["version"]
-    print(json.dumps(envelope))
+        del start["claude_code_version"]
+    print(json.dumps(start))
+    print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": text}]}}))
+    print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "result": text, "modelUsage": {model: {"outputTokens": 1}}}))
     return 0
 
 

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from mootcourt.simulators.readers.command import TransportError, build_command, call
-from mootcourt.simulators.readers.prompts import ReplyError, clicks_schema, parse_clicks
+from mootcourt.simulators.readers.command import START_FIELDS, TransportError, build_command, call, start_record
+from mootcourt.simulators.readers.prompts import ReplyError, clicks_schema, parse_clicks, reader_prompt
 from mootcourt.simulators.readers.transcripts import ModelCallsNotAllowed, Transcripts, ask, request_hash
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,7 +33,8 @@ def test_command_turns_tools_servers_settings_and_sessions_off():
     assert c[c.index("--setting-sources") + 1] == "" and c[c.index("--system-prompt") + 1] == "S"
     assert "--bare" not in c and "--append-system-prompt" not in c
     assert json.loads(c[c.index("--mcp-config") + 1]) == {"mcpServers": {}} and "--disable-slash-commands" in c
-    assert c[c.index("--output-format") + 1] == "json" and json.loads(c[c.index("--json-schema") + 1]) == {"type": "object"}
+    assert c[c.index("--output-format") + 1] == "stream-json" and "--verbose" in c
+    assert "--json-schema" not in c          # the tool answers a schema through a tool of its own, and no tool may be loaded
 
 
 def test_child_runs_in_an_empty_directory_outside_the_repository(fake):
@@ -169,3 +170,17 @@ def test_the_child_environment_is_an_allow_list(fake, monkeypatch):
     seen = set(json.loads(call("m", "S", "P", clicks_schema(2), program=fake(echo_env=True)).text)["env"])
     seen -= {"FAKE_READER_COUNT_FILE", "FAKE_READER_ECHO_ENV", "PWD", "OLDPWD", "SHLVL", "_", "__CF_USER_TEXT_ENCODING"}
     assert {"PATH", "HOME", "LC_ALL"} <= seen <= {"PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TERM", "SHELL"}
+
+
+def test_a_call_whose_start_record_lists_a_tool_is_a_transport_failure(fake, tmp_path):
+    t = Transcripts(tmp_path / "t")
+    with pytest.raises(TransportError, match="Bash"):
+        ask(t, "m", "plain", "S", reader_prompt("R", ["a b", "c d"]), clicks_schema(2), two, program=fake(mode="planted", start_tools=["Bash"]),
+            allow_model_calls=True)
+    assert t.count("m", "plain") == {}
+
+
+def test_the_start_record_that_is_kept_holds_no_path_and_no_session(fake):
+    record = start_record("m", "S", reader_prompt("R", ["a b", "c d"]), clicks_schema(2), program=fake(mode="planted"))
+    assert set(record["start_record"]) <= set(START_FIELDS) and "cwd" not in record["start_record"]
+    assert record["tool_version"] == "fake-1" and record["reported_model"] == "m" and record["tools"] == []

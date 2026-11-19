@@ -55,7 +55,9 @@ one call on five invented headlines and stores the tool's own start record; it e
 any tool or any server, if the reply cannot be read, or if the tool does not report its model and version.
 
 The model is reached through the `claude` command line tool, started in an empty directory with no tools, no servers,
-no settings and no stored session, and with an environment that holds a short list of allowed names. Each reply is checked whole against a schema: the right count of numbers, each from
+no settings and no stored session, and with an environment that holds a short list of allowed names. The tool adds some context of its own that cannot be switched off under a subscription login: an environment
+block with the working directory, the platform, the model's name and today's date, and a reminder about the account.
+None of it concerns the archive. Each reply is checked whole against a schema: the right count of numbers, each from
 0 to 100. A reply that fails is asked for twice more and then recorded as missing. Nothing is clipped or filled in.
 
 ## What the result may be called

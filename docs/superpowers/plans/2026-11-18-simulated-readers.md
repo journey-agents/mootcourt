@@ -846,3 +846,11 @@ A fresh reviewer read the branch before any call was made. No panel answer and n
 6. The child's environment is an allow list (`PATH`, `HOME`, `USER`, `LOGNAME`, `LANG`, `LC_*`, `TMPDIR`, `TERM`, `SHELL`, and the names Task 13 finds the login needs), and the canary file stores the names.
 7. The canary fails unless its reply satisfies the schema and the tool reports its model and its version.
 8. Bootstrap groups are taken in sorted order, so an interval does not depend on the order of rows. The note call has a time cap of 600 seconds; every other call keeps 180. Only the first brace of a reply is tried as its JSON object. `plan` stops if two planned requests are the same request. Each fit records whether its optimiser converged.
+9. Settled on invented headlines on 19 November 2026 (Task 13, step 1). With `--json-schema` the tool's start record lists one tool, `StructuredOutput`, through which it answers the schema. The spec requires an empty tool list, so the flag is dropped: the prompt states the form of the reply, as it always did, and the wrapper checks the reply. Every call now uses `--output-format stream-json --verbose`, because only the start record carries the tool's version, and a call whose start record lists any tool or server is a transport failure. The login works with the allow list alone. The final flags are:
+
+```
+claude -p --model <id> --system-prompt <text> --tools "" --strict-mcp-config --mcp-config {"mcpServers":{}}
+       --setting-sources "" --no-session-persistence --disable-slash-commands --output-format stream-json --verbose
+```
+
+10. What the tool adds and the wrapper cannot remove under a subscription login, found by asking the model on a neutral prompt: one sentence before the system prompt that names the agent kit; an environment block with the working directory (the empty temporary one), the platform, the model's name and knowledge cutoff, and today's date; a reminder about the account's address; and a token budget tag. None of it holds anything about the archive. The reader is therefore told the present date beside the instruction to play a person of 2013 to 2015. The paper states this as a limit of the transport.
