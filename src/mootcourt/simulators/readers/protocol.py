@@ -134,3 +134,7 @@ ARCHIVE_COUNTS = {
     "2015-04-01": (52, 156, 2, 11, 5785, 1708),
 }
 ARCHIVE_TOTALS = {"units": 1771, "tests": 1770, "contrasts": 5966, "blocks": 63, "feeds": 308}
+
+# Seconds allowed for one call. The note call reads 200 earlier tests, so it gets longer.
+TIME_CAP_S = {"brief_note": 600.0}
+DEFAULT_TIME_CAP_S = 180.0

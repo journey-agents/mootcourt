@@ -8,10 +8,11 @@ A panel of ten model-played readers scores headline cards in matched feeds. The 
 * ``plan --ledger L --scores S --out DIR`` fixes the units, the feeds and the probe set, counts every call, and writes them with
   their SHA-256. No model is called. ``--expect-archive-counts`` stops with exit code 2 unless the counts are the archive's.
 * ``run --model NAME --plan DIR --transcripts DIR --allow-model-calls`` makes the calls that are not stored yet. Without the flag
-  it exits with code 2 before anything else. After five transport failures in a row it exits with code 3; start it again later
-  and it resumes.
+  it exits with code 2 before anything else. After five calls in a row without a usable reply it exits with code 3 and stores
+  nothing from that streak; start it again later and it resumes.
 * ``canary --model NAME --transcripts DIR --allow-model-calls`` makes one call on five invented headlines with the tool's event
-  stream on and stores the tool's own start record. Exit code 4 means the record lists a tool or a server.
+  stream on and stores the tool's own start record. Exit code 4 means the record lists a tool or a server, the reply cannot
+  be read, or the tool does not report its model and version.
 * ``score --plan DIR --transcripts DIR --ledger L --out DIR --commit HASH`` writes one report per model and the agreement
   report. It never calls a model, and it exits with code 5 while any planned call of any model is not stored.
 
@@ -27,8 +28,8 @@ from pathlib import Path
 import pandas as pd
 
 from mootcourt.simulators.readers import pipeline
-from mootcourt.simulators.readers.command import TransportError, start_record
-from mootcourt.simulators.readers.prompts import clicks_schema, reader_prompt
+from mootcourt.simulators.readers.command import TransportError, same_model, start_record
+from mootcourt.simulators.readers.prompts import ReplyError, clicks_schema, parse_clicks, reader_prompt
 from mootcourt.simulators.readers.protocol import KINDS, MODELS, PROFILES, SYSTEM_PROMPT
 from mootcourt.simulators.readers.transcripts import Transcripts
 
@@ -82,6 +83,8 @@ def cmd_run(args) -> int:
     if not _model_allowed(args):
         return 1
     plan = pipeline.Plan.load(args.plan)
+    if args.record_missing:
+        pipeline.record_missing(plan, args.model, Transcripts(args.transcripts), args.record_missing, log=log)
     return pipeline.run_model(plan, args.model, Transcripts(args.transcripts), program=args.program, workers=args.workers,
                               kinds=tuple(args.kinds or KINDS), allow_model_calls=True, log=log)
 
@@ -99,13 +102,25 @@ def cmd_canary(args) -> int:
         log(f"the canary call failed: {exc}")
         return pipeline.EXIT_TRANSPORT
     record.update(model=args.model, headlines=list(CANARY_HEADLINES))
+    problems = []
+    try:
+        parse_clicks(record["reply_text"], len(CANARY_HEADLINES))
+    except ReplyError as exc:
+        problems.append(f"the reply cannot be read: {exc}")
+    if not record["reported_model"] or not same_model(args.model, record["reported_model"]):
+        problems.append(f"the tool reports the model as {record['reported_model']!r}")
+    if not record["tool_version"]:
+        problems.append("the tool reports no version")
+    if record["tools"] or record["servers"]:
+        problems.append(f"the tool's start record lists tools {record['tools']} and servers {record['servers']}; both must be empty")
+    record["problems"] = problems
     out = Path(args.transcripts)
     out.mkdir(parents=True, exist_ok=True)
     (out / f"canary-{args.model}.json").write_text(json.dumps(record, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-    if record["tools"] or record["servers"]:
-        log(f"the tool's start record lists tools {record['tools']} and servers {record['servers']}; both must be empty")
+    if problems:
+        log(f"canary of {args.model} failed: " + "; ".join(problems))
         return pipeline.EXIT_CANARY
-    log(f"canary of {args.model}: no tool and no server listed")
+    log(f"canary of {args.model}: no tool and no server listed, the reply reads, model and version reported")
     return 0
 
 
@@ -134,6 +149,8 @@ def main(argv=None) -> int:
             p.add_argument("--plan", required=True)
             p.add_argument("--kinds", nargs="*", choices=KINDS)
             p.add_argument("--workers", type=int, default=4)
+            p.add_argument("--record-missing", nargs="*", metavar="REQUEST_HASH",
+                           help="record these outstanding requests as missing, for a request the tool can never answer")
         p.set_defaults(run=command)
     p = sub.add_parser("score", help="write the reports from stored transcripts; no model")
     p.add_argument("--plan", required=True)

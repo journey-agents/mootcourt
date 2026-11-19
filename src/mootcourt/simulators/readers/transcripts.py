@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from mootcourt.simulators.cache import SimulationCache
-from mootcourt.simulators.readers.command import call
+from mootcourt.simulators.readers.command import TransportError, call, same_model
 from mootcourt.simulators.readers.prompts import ReplyError, is_refusal
 
 ATTEMPTS = 3          # the first call and two retries with the same input
@@ -66,12 +66,15 @@ def _read(path: Path) -> dict | None:
 
 
 def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: str, schema: dict, parse: Callable[[str], object],
-        *, program: str = "claude", allow_model_calls: bool = False, time_cap_s: float = 180.0, meta: dict | None = None) -> dict:
+        *, program: str = "claude", allow_model_calls: bool = False, time_cap_s: float = 180.0, meta: dict | None = None,
+        hold_bad: bool = False) -> dict:
     """The stored record of this request, made by up to three calls when none is stored and calls are allowed.
 
     ``parse`` reads a reply's text and raises ``ReplyError`` when the reply is not what was asked for. The status is
     ``"ok"``, or after three bad replies ``"refusal"`` when the last one holds no JSON object and ``"invalid"``
-    otherwise. A ``TransportError`` passes through and nothing is stored.
+    otherwise. A ``TransportError`` passes through and nothing is stored; a reply that reports another model than the one
+    asked for is such an error. With ``hold_bad`` a record that is not ``"ok"`` is returned and not stored, so the caller can
+    decide whether it was a real reply or the sign of a failing transport.
     """
     h = request_hash(model, kind, system, prompt, schema)
     stored = transcripts.get(model, kind, h)
@@ -84,14 +87,17 @@ def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: st
         attempts += 1
         reply = call(model, system, prompt, schema, program=program, time_cap_s=time_cap_s)
         seconds += reply.seconds
+        if not same_model(model, reply.reported_model):
+            raise TransportError(f"asked {model} and the tool reports another model, {reply.reported_model}")
         try:
             parsed, status = parse(reply.text), "ok"
             break
         except ReplyError:
             status = "refusal" if is_refusal(reply.text) else "invalid"
-    record = {"status": status, "request": {"model": model, "kind": kind, "system": system, "prompt": prompt, "schema": schema},
+    record = {"status": status, "request_hash": h, "request": {"model": model, "kind": kind, "system": system, "prompt": prompt, "schema": schema},
               "meta": meta or {}, "reply_text": reply.text, "parsed": parsed, "attempts": attempts,
               "reported_model": reply.reported_model, "tool_version": reply.tool_version, "seconds": round(seconds, 3),
               "stored_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-    transcripts.put(model, kind, h, record)
+    if status == "ok" or not hold_bad:
+        transcripts.put(model, kind, h, record)
     return record

@@ -29,7 +29,7 @@ METHODS = ("direction_map", "reader_weights", "audience_matching", "error_correc
 
 def _resampled_means(d: np.ndarray, groups: np.ndarray, key: int, B: int) -> np.ndarray:
     """Means of ``d`` over ``B`` resamples of whole groups, drawn with the bootstrap stream and ``key``."""
-    codes, _ = pd.factorize(groups)
+    codes, _ = pd.factorize(groups, sort=True)          # sorted, so the draws do not depend on the order of the rows
     sums, counts = np.bincount(codes, weights=d), np.bincount(codes)
     draw = rng("bootstrap", key).integers(0, len(sums), size=(B, len(sums)))
     return sums[draw].sum(axis=1) / counts[draw].sum(axis=1)
@@ -128,6 +128,7 @@ class ModelRun:
     feeds: pd.DataFrame
     answers: dict[str, pd.DataFrame]                      # "plain", and "examples" and "brief" for the origins after the first
     notes: dict[int, str] = field(default_factory=dict)   # the audience note of each origin index
+    notes_missing: list[int] = field(default_factory=list)   # origin indexes whose note was not a usable reply
     counts: dict = field(default_factory=dict)            # calls_planned, calls_ok, calls_invalid, calls_refusal
     tool_versions: dict = field(default_factory=dict)
     reported_models: dict = field(default_factory=dict)
@@ -198,6 +199,7 @@ def model_report(run: ModelRun, model: str) -> dict:
     methods["audience_brief"]["notes"] = {
         names[i]: {"words": len(note.split()), "sha256": hashlib.sha256(note.encode("utf-8")).hexdigest()}
         for i, note in sorted(run.notes.items())}
+    methods["audience_brief"]["notes_missing"] = [names[i] for i in sorted(run.notes_missing)]
 
     by_origin = {}
     for index, name in names.items():

@@ -87,6 +87,10 @@ def main(argv: list[str]) -> int:
     schema = json.loads(_option(argv, "--json-schema", "{}"))
     if env.get("FAKE_READER_USAGE_LIMIT_TEXT_EXIT_ZERO"):
         text = "You have reached your usage limit. Try again later."
+    elif env.get("FAKE_READER_SAY"):
+        text = env["FAKE_READER_SAY"]
+    elif env.get("FAKE_READER_REFUSE_SOME_NOTES") and "note" in schema.get("properties", {}) and zlib.crc32(prompt.encode()) % 2 == 0:
+        text = "I would rather not write that note."
     elif env.get("FAKE_READER_REFUSE"):
         text = "I cannot play this role."
     elif env.get("FAKE_READER_ECHO_CWD") or env.get("FAKE_READER_ECHO_ENV"):
@@ -98,8 +102,11 @@ def main(argv: list[str]) -> int:
     if _option(argv, "--output-format") == "stream-json":
         print(json.dumps({"type": "system", "subtype": "init", "model": _option(argv, "--model"), "mcp_servers": [],
                           "tools": json.loads(env.get("FAKE_READER_START_TOOLS", "[]"))}))
-    print(json.dumps({"type": "result", "is_error": False, "result": text, "model": _option(argv, "--model"),
-                      "version": "fake-1"}))
+    envelope = {"type": "result", "is_error": False, "result": text, "model": env.get("FAKE_READER_REPORT_MODEL") or _option(argv, "--model"),
+                "version": "fake-1"}
+    if env.get("FAKE_READER_NO_VERSION"):
+        del envelope["version"]
+    print(json.dumps(envelope))
     return 0
 
 

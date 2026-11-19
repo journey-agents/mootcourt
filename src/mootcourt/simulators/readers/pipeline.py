@@ -31,6 +31,7 @@ from mootcourt.simulators.readers.protocol import (
     ARCHIVE_TOTALS,
     BRIEF_SYSTEM,
     COMPLETION_SYSTEM,
+    DEFAULT_TIME_CAP_S,
     FAMILIARITY_SYSTEM,
     KINDS,
     MAX_TRANSPORT_FAILURES,
@@ -41,11 +42,12 @@ from mootcourt.simulators.readers.protocol import (
     PROFILES,
     SEED,
     SYSTEM_PROMPT,
+    TIME_CAP_S,
 )
 from mootcourt.simulators.readers.transcripts import Transcripts, ask, request_hash
 
 PLAN_FILES = ("arms.parquet", "contrasts.parquet", "feeds.parquet", "probes.json")
-EXIT_NOT_ALLOWED, EXIT_TRANSPORT, EXIT_CANARY, EXIT_OUTSTANDING, EXIT_NOTE = 2, 3, 4, 5, 6
+EXIT_NOT_ALLOWED, EXIT_TRANSPORT, EXIT_CANARY, EXIT_OUTSTANDING = 2, 3, 4, 5
 
 
 @dataclass(frozen=True)
@@ -142,6 +144,7 @@ def write_plan(plan: Plan, out) -> dict:
         "familiarity_arms": int(len(probes.familiarity_items(plan.arms, plan.probe_units))),
         "pairs": int(len(probes.pair_items(plan.contrasts, plan.arms, plan.probe_units)))}, indent=1, sort_keys=True) + "\n",
         encoding="utf-8")
+    assert_unique_requests(plan)
     by_kind = planned_counts(plan)
     info = {"snapshot": plan.snapshot, "seed": SEED, "models": list(MODELS), "counts": plan_counts(plan),
             "calls": {"by_kind": by_kind, "per_model": sum(by_kind.values()), "all_models": len(MODELS) * sum(by_kind.values())},
@@ -180,10 +183,9 @@ def note_calls(plan: Plan) -> list[Call]:
 def _probe_calls(plan: Plan, kind: str) -> list[Call]:
     size = PROBE_BATCH[kind]
     if kind == "probe_completion":
-        items = probes.completion_items(plan.arms, plan.probe_units)
         return [Call(kind, COMPLETION_SYSTEM, probes.completion_prompt(list(part["stem"])), probes.completions_schema(len(part)),
                      partial(probes.parse_completions, n=len(part)), {"arm_ids": list(part["arm_id"])})
-                for part in probes.batches(items[~items["skipped"]], size)]
+                for part in probes.batches(completion_order(plan), size)]
     if kind == "probe_familiarity":
         items = probes.familiarity_items(plan.arms, plan.probe_units)
         return [Call(kind, FAMILIARITY_SYSTEM, probes.familiarity_prompt(list(part["headline"])), probes.seen_schema(len(part)),
@@ -193,6 +195,26 @@ def _probe_calls(plan: Plan, kind: str) -> list[Call]:
     return [Call(kind, PAIR_SYSTEM, probes.pair_prompt(list(zip(part["a_headline"], part["b_headline"]))),
                  probes.winners_schema(len(part)), partial(probes.parse_winners, n=len(part)),
                  {"row_ids": list(part["row_id"])}) for part in probes.batches(items, size)]
+
+
+def completion_order(plan: Plan) -> pd.DataFrame:
+    return probes.completion_order(probes.completion_items(plan.arms, plan.probe_units))
+
+
+def time_cap(kind: str) -> float:
+    return TIME_CAP_S.get(kind, DEFAULT_TIME_CAP_S)
+
+
+def assert_unique_requests(plan: Plan) -> None:
+    """Stop when two planned requests that need no note would be the same request: their replies could not be told apart."""
+    empty = Transcripts(Path("/nonexistent-transcripts"))
+    for kind in KINDS:
+        if kind == "brief":          # the same feeds as the examples kind, behind another preface
+            continue
+        calls, _ = calls_of(plan, MODELS[0], kind, empty)
+        hashes = [request_hash(MODELS[0], c.kind, c.system, c.prompt, c.schema) for c in calls]
+        if len(hashes) != len(set(hashes)):
+            raise ValueError(f"{len(hashes) - len(set(hashes))} planned requests of kind {kind} repeat another request")
 
 
 def stored(transcripts: Transcripts, model: str, call: Call) -> dict | None:
@@ -219,9 +241,14 @@ def calls_of(plan: Plan, model: str, kind: str, transcripts: Transcripts) -> tup
         prefaces = {i: incontext.examples_preface(plan.arms, incontext.example_units(plan.arms, i)) for i in _later_origins(plan)}
         return _reader_calls(plan, kind, prefaces), 0
     if kind == "brief":
-        notes = {i: r for i, r in notes_of(plan, model, transcripts).items() if r["status"] == "ok"}
+        # An origin whose note was asked for and is not a usable reply gets no brief reader at all: its contrasts are
+        # then counted as having no reader under method 7. An origin whose note is not stored yet blocks its reader calls.
+        every = notes_of(plan, model, transcripts)
+        notes = {i: r for i, r in every.items() if r["status"] == "ok"}
         calls = _reader_calls(plan, kind, {i: incontext.brief_preface(r["parsed"]) for i, r in notes.items()})
-        return calls, planned_counts(plan)["brief"] - len(calls)
+        waiting = [i for i in _later_origins(plan) if i not in every]
+        per_feed = plan.feeds[plan.feeds["origin_index"].isin(waiting)].groupby("block_id")["feed_index"].nunique().sum()
+        return calls, int(N_READERS * per_feed)
     return _probe_calls(plan, kind), 0
 
 
@@ -245,6 +272,31 @@ def outstanding(plan: Plan, model: str, transcripts: Transcripts, kinds=KINDS) -
 
 
 # ------------------------------------------------------------------------------------------------------------------ run
+def record_missing(plan: Plan, model: str, transcripts: Transcripts, hashes: list[str], log: Callable[[str], None] = print) -> int:
+    """Record named planned requests as missing, by the operator's explicit word. For a request the tool can never answer.
+
+    Each name is a request hash or its first 16 or more characters. A name that matches no planned request that is still
+    outstanding is an error. The record says who made it, and the run folder lists every one.
+    """
+    planned = {}
+    for kind in KINDS:
+        for call in calls_of(plan, model, kind, transcripts)[0]:
+            planned[request_hash(model, call.kind, call.system, call.prompt, call.schema)] = call
+    done = 0
+    for name in hashes:
+        found = [h for h in planned if h.startswith(name)] if len(name) >= 16 else []
+        if len(found) != 1 or stored(transcripts, model, planned[found[0]]) is not None:
+            raise ValueError(f"{name} does not name exactly one outstanding planned request of {model}")
+        call = planned[found[0]]
+        transcripts.put(model, call.kind, found[0], {
+            "status": "invalid", "request_hash": found[0], "recorded_by_operator": True, "meta": call.meta, "reply_text": "",
+            "parsed": None, "attempts": 0, "reported_model": None, "tool_version": None, "seconds": 0.0,
+            "request": {"model": model, "kind": call.kind, "system": call.system, "prompt": call.prompt, "schema": call.schema}})
+        log(f"{model} {call.kind}: request {name} recorded as missing by the operator")
+        done += 1
+    return done
+
+
 def run_model(plan: Plan, model: str, transcripts: Transcripts, *, program: str = "claude", workers: int = 4, kinds=KINDS,
               allow_model_calls: bool = False, log: Callable[[str], None] = print) -> int:
     """Make the calls of one model that are not stored, kind by kind. Returns an exit code; 0 means nothing is outstanding."""
@@ -253,18 +305,16 @@ def run_model(plan: Plan, model: str, transcripts: Transcripts, *, program: str 
         return EXIT_NOT_ALLOWED
     for kind in [k for k in KINDS if k in kinds]:
         if kind == "brief":
-            bad = {i: r["status"] for i, r in notes_of(plan, model, transcripts).items() if r["status"] != "ok"}
+            bad = sorted(i for i, r in notes_of(plan, model, transcripts).items() if r["status"] != "ok")
             if bad:
-                log(f"the audience note of origin index {sorted(bad)} is recorded as {sorted(set(bad.values()))}; every reader call of "
-                    "that origin depends on it, so the run stops here")
-                return EXIT_NOTE
+                log(f"{model}: no audience note for origin index {bad}; those origins get no brief reader and count as no reader")
         calls, blocked = calls_of(plan, model, kind, transcripts)
         todo = [call for call in calls if stored(transcripts, model, call) is None]
         log(f"{model} {kind}: {len(calls) - len(todo)} stored, {len(todo)} to make")
-        failures = _make(todo, model, transcripts, program, workers)
-        if failures is not None or blocked:
+        failure = _make(todo, model, transcripts, program, workers)
+        if failure is not None or blocked:
             left = outstanding(plan, model, transcripts, kinds)
-            why = (f"stopped after {MAX_TRANSPORT_FAILURES} transport failures in a row ({failures})" if failures is not None
+            why = (f"stopped after {MAX_TRANSPORT_FAILURES} calls in a row without a usable reply ({failure})" if failure is not None
                    else f"{blocked} reader calls wait for an audience note that is not stored")
             log(f"{model}: {why}; {sum(left.values())} calls outstanding: {left}")
             return EXIT_TRANSPORT
@@ -274,9 +324,15 @@ def run_model(plan: Plan, model: str, transcripts: Transcripts, *, program: str 
 
 
 def _make(todo: list[Call], model: str, transcripts: Transcripts, program: str, workers: int) -> str | None:
-    """Make the calls with a few threads. Returns the last transport failure once five have come in a row, else None."""
+    """Make the calls with a few threads. Returns a description once five calls in a row gave no usable reply, else None.
+
+    A transport failure stores nothing. A reply that is still bad after its retries is held back and stored as missing
+    only once a later call succeeds: a run of five such replies is far more likely a limit or an error in words the
+    wrapper does not know than five refusals, so the run stops and the held replies are dropped. A failure of any other
+    kind inside a worker stops the run and is raised.
+    """
     pending, lock, stop = iter(todo), threading.Lock(), threading.Event()
-    state = {"streak": 0, "last": None}
+    state = {"streak": 0, "last": None, "held": [], "error": None}
 
     def work():
         while not stop.is_set():
@@ -285,24 +341,44 @@ def _make(todo: list[Call], model: str, transcripts: Transcripts, program: str, 
             if call is None:
                 return
             try:
-                ask(transcripts, model, call.kind, call.system, call.prompt, call.schema, call.parse, program=program,
-                    allow_model_calls=True, meta=call.meta)
+                record = ask(transcripts, model, call.kind, call.system, call.prompt, call.schema, call.parse, program=program,
+                             allow_model_calls=True, meta=call.meta, hold_bad=True, time_cap_s=time_cap(call.kind))
+                with lock:
+                    if record["status"] == "ok":
+                        if stop.is_set():          # the run has already stopped: the held replies stay dropped
+                            return
+                        state["streak"] = 0
+                        for held in state["held"]:
+                            transcripts.put(model, held["request"]["kind"], held["request_hash"], held)
+                        state["held"] = []
+                        continue
+                    state["held"].append(record)
+                    failure = f"a reply recorded as {record['status']}: {record['reply_text'].strip()[:120]}"
             except TransportError as exc:
+                failure = str(exc)
+            except BaseException as exc:          # a worker must not end silently: stop the others and raise in the caller
                 with lock:
-                    state["streak"] += 1
-                    state["last"] = str(exc)
-                    if state["streak"] >= MAX_TRANSPORT_FAILURES:
-                        stop.set()
-            else:
-                with lock:
-                    state["streak"] = 0
+                    state["error"] = exc
+                stop.set()
+                return
+            with lock:
+                state["streak"] += 1
+                state["last"] = failure
+                if state["streak"] >= MAX_TRANSPORT_FAILURES:
+                    stop.set()
 
     threads = [threading.Thread(target=work, daemon=True) for _ in range(max(1, min(workers, len(todo))))]
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
-    return state["last"] if stop.is_set() else None
+    if state["error"] is not None:
+        raise state["error"]
+    if stop.is_set():
+        return state["last"]
+    for held in state["held"]:          # fewer than five bad replies at the end of a kind: stored as missing
+        transcripts.put(model, held["request"]["kind"], held["request_hash"], held)
+    return None
 
 
 # ---------------------------------------------------------------------------------------------------------------- score
@@ -328,9 +404,13 @@ def _model_run(plan: Plan, model: str, transcripts: Transcripts, ledger: pd.Data
     measured["units"] = len(plan.probe_units)
     return ModelRun(
         arms=plan.arms, contrasts=plan.contrasts, feeds=plan.feeds, answers=answers,
-        notes={call.meta["origin_index"]: incontext.clip_note(record["parsed"]) for call, record in records["brief_note"]},
+        notes={call.meta["origin_index"]: incontext.clip_note(record["parsed"]) for call, record in records["brief_note"]
+               if record["status"] == "ok"},
+        notes_missing=[call.meta["origin_index"] for call, record in records["brief_note"] if record["status"] != "ok"],
         counts={"calls_planned": len(every), "calls_ok": status["ok"], "calls_invalid": status["invalid"],
-                "calls_refusal": status["refusal"], "calls_by_kind": {kind: len(pairs) for kind, pairs in records.items()}},
+                "calls_refusal": status["refusal"],
+                "calls_recorded_by_operator": sum(1 for record in every if record.get("recorded_by_operator")),
+                "calls_by_kind": {kind: len(pairs) for kind, pairs in records.items()}},
         tool_versions=dict(Counter(str(record["tool_version"]) for record in every if record["status"] == "ok")),
         reported_models=dict(Counter(str(record["reported_model"]) for record in every if record["status"] == "ok")),
         commit=commit, ledger=ledger, probes=measured)

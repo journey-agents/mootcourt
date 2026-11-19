@@ -116,7 +116,7 @@ def _fit_reader_weights(x: np.ndarray, clicks: np.ndarray, impressions: np.ndarr
     start = np.concatenate([np.zeros(N_READERS), [np.log(rate / (1 - rate)), np.log(0.1)]])
     best = minimize(objective, start, jac=True, method="L-BFGS-B")
     return {"weights": [float(v) for v in softmax(best.x[:N_READERS])], "intercept": float(best.x[N_READERS]),
-            "slope": float(np.exp(best.x[N_READERS + 1])), "n_arms": int(n_arms)}
+            "slope": float(np.exp(best.x[N_READERS + 1])), "n_arms": int(n_arms), "converged": bool(best.success)}
 
 
 def _fit_audience_matching(levels: np.ndarray, target: float, n_arms: int) -> dict:
@@ -128,7 +128,8 @@ def _fit_audience_matching(levels: np.ndarray, target: float, n_arms: int) -> di
 
     best = minimize(objective, np.zeros(N_READERS), jac=True, method="L-BFGS-B")
     w = softmax(best.x)
-    return {"weights": [float(v) for v in w], "panel_level": float(w @ levels), "click_rate": float(target), "n_arms": int(n_arms)}
+    return {"weights": [float(v) for v in w], "panel_level": float(w @ levels), "click_rate": float(target), "n_arms": int(n_arms),
+            "converged": bool(best.success)}
 
 
 def _weighted(arms, contrasts, reader_scores, fit_at_origin) -> tuple[pd.DataFrame, dict]:
@@ -201,7 +202,8 @@ def error_correction(arms: pd.DataFrame, contrasts: pd.DataFrame, reader_scores:
         root = np.sqrt(impressions)
         beta, *_ = np.linalg.lstsq(design.loc[train.index].to_numpy() * root[:, None], error * root, rcond=None)
         fits[index] = {"curve_intercept": float(curve.intercept_[0]), "curve_slope": float(curve.coef_[0, 0]),
-                       "correction": [float(v) for v in beta], "n_arms": int(len(train))}
+                       "correction": [float(v) for v in beta], "n_arms": int(len(train)),
+                       "converged": bool(curve.n_iter_[0] < curve.max_iter)}
 
         scored = contrasts[contrasts["origin_index"] == index]
         wanted = score.reindex(pd.unique(scored[["arm_id", "ref_arm_id"]].to_numpy().ravel())).dropna()

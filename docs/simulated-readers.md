@@ -47,14 +47,15 @@ uv run python scripts/simulated_readers.py run --model claude-opus-5-5 --plan PL
 uv run python scripts/simulated_readers.py score --plan PLAN_DIR --transcripts T_DIR --ledger LEDGER.parquet --out OUT_DIR --commit HASH
 ```
 
-`run` exits with code 2 unless `--allow-model-calls` is given. It exits with code 3 after five transport failures in a
-row, for example when a usage limit is reached; start it again later and it continues. `score` exits with code 5 while
+`run` exits with code 2 unless `--allow-model-calls` is given. It exits with code 3 after five calls in a row end
+without a usable reply, for example when a usage limit is reached; start it again later and it continues. Nothing from
+such a streak is stored, so a limit message is never recorded as a refusal. `score` exits with code 5 while
 any planned call of any of the three models is not stored, so no partial result can be read. The stage `canary` makes
 one call on five invented headlines and stores the tool's own start record; it exits with code 4 if that record lists
-any tool or any server.
+any tool or any server, if the reply cannot be read, or if the tool does not report its model and version.
 
 The model is reached through the `claude` command line tool, started in an empty directory with no tools, no servers,
-no settings and no stored session. Each reply is checked whole against a schema: the right count of numbers, each from
+no settings and no stored session, and with an environment that holds a short list of allowed names. Each reply is checked whole against a schema: the right count of numbers, each from
 0 to 100. A reply that fails is asked for twice more and then recorded as missing. Nothing is clipped or filled in.
 
 ## What the result may be called

@@ -24,7 +24,7 @@ from mootcourt.simulators.readers.protocol import (
     rng,
 )
 
-_OTHER_DRAW, _FAMILIARITY_SHUFFLE, _PAIR_SHUFFLE, _PAIR_ORDER = 0, 1, 2, 3          # keys of the probe_items stream
+_OTHER_DRAW, _FAMILIARITY_SHUFFLE, _PAIR_SHUFFLE, _PAIR_ORDER, _COMPLETION_SHUFFLE = 0, 1, 2, 3, 4          # keys of the probe_items stream
 
 
 def _arm_number(arm_id: str) -> int:
@@ -57,6 +57,12 @@ def completion_items(arms: pd.DataFrame, unit_ids: list[str]) -> pd.DataFrame:
             rows.append({"arm_id": arm["arm_id"], "role": role, "stem": "" if skipped else " ".join(words[:STEM_WORDS]),
                          "rest": "" if skipped else " ".join(words[STEM_WORDS:]), "skipped": skipped})
     return pd.DataFrame(rows, columns=["arm_id", "role", "stem", "rest", "skipped"])
+
+
+def completion_order(items: pd.DataFrame) -> pd.DataFrame:
+    """The completion items that are asked, shuffled, so that neither position nor a neighbour marks the winning arm."""
+    asked = items[~items["skipped"]].reset_index(drop=True)
+    return asked.iloc[rng("probe_items", _COMPLETION_SHUFFLE).permutation(len(asked))].reset_index(drop=True)
 
 
 def familiarity_items(arms: pd.DataFrame, unit_ids: list[str]) -> pd.DataFrame:

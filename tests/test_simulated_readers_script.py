@@ -85,9 +85,10 @@ def planted_run(tmp_path_factory, planned, archive):
     return folder, program, full_run(folder, planned, archive, program)
 
 
-def test_run_refuses_without_the_flag(tmp_path, planned):
-    r = run_script("run", "--model", "claude-opus-5-5", "--plan", planned, "--transcripts", tmp_path)
-    assert r.returncode == 2 and not any(tmp_path.iterdir())
+def test_run_refuses_without_the_flag(tmp_path, planned, tmp_path_factory):
+    program = _fake(tmp_path_factory, mode="planted")
+    r = run_script("run", "--model", "claude-opus-5-5", "--plan", planned, "--transcripts", tmp_path, "--program", program)
+    assert r.returncode == 2 and "model calls are not allowed" in r.stderr and not any(tmp_path.iterdir()) and program.calls() == 0
 
 
 def test_run_refuses_a_model_outside_the_three(tmp_path, planned):
@@ -188,3 +189,20 @@ def test_the_canary_stores_the_start_record_and_fails_on_a_listed_tool(tmp_path,
     r = run_script("canary", "--model", "claude-sonnet-5-5", "--transcripts", tmp_path, "--allow-model-calls", "--program", loaded)
     assert r.returncode == 4 and "Bash" in r.stderr
     assert run_script("canary", "--model", "claude-opus-5-5", "--transcripts", tmp_path / "x").returncode == 2
+    assert {"PATH", "HOME"} <= set(record["env_names"]) and record["tool_version"] == "fake-1"
+
+
+def test_the_canary_fails_when_the_reply_cannot_be_read_or_the_tool_does_not_say_what_it_is(tmp_path, tmp_path_factory):
+    for options, word in (({"refuse": True}, "reply"), ({"mode": "planted", "no_version": True}, "version")):
+        r = run_script("canary", "--model", "claude-opus-5-5", "--transcripts", tmp_path, "--allow-model-calls", "--program",
+                       _fake(tmp_path_factory, **options))
+        assert r.returncode == 4 and word in r.stderr, r.stderr
+
+
+def test_a_refused_note_is_reported_and_does_not_block_the_score(tmp_path, planned, archive, tmp_path_factory):
+    reports = full_run(tmp_path, planned, archive, _fake(tmp_path_factory, mode="planted", refuse_some_notes=True))
+    brief = reports["claude-opus-5-5"]["methods"]["audience_brief"]
+    assert brief["notes_missing"] and set(brief["notes_missing"]).isdisjoint(brief["notes"])
+    origins = set(reports["claude-opus-5-5"]["by_origin"])
+    assert set(brief["notes_missing"]) | set(brief["notes"]) == origins - {min(origins)}
+    assert brief["no_reader"] > 0 and reports["claude-opus-5-5"]["counts"]["calls_refusal"] == len(brief["notes_missing"])

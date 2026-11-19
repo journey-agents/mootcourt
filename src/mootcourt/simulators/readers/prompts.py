@@ -35,18 +35,15 @@ def clicks_schema(n: int) -> dict:
 
 
 def first_json_object(text: str) -> dict | None:
-    """The first JSON object found in the text, or None when it holds none."""
-    decoder = json.JSONDecoder()
-    for start, char in enumerate(text):
-        if char != "{":
-            continue
-        try:
-            value, _ = decoder.raw_decode(text, start)
-        except ValueError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
+    """The JSON object that starts at the first brace of the text, or None. A later brace is never tried."""
+    start = text.find("{")
+    if start < 0:
+        return None
+    try:
+        value, _ = json.JSONDecoder().raw_decode(text, start)
+    except ValueError:
+        return None
+    return value if isinstance(value, dict) else None
 
 
 def is_refusal(text: str) -> bool:

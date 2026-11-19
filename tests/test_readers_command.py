@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from mootcourt.simulators.readers.command import TransportError, build_command, call
-from mootcourt.simulators.readers.prompts import clicks_schema, parse_clicks
+from mootcourt.simulators.readers.prompts import ReplyError, clicks_schema, parse_clicks
 from mootcourt.simulators.readers.transcripts import ModelCallsNotAllowed, Transcripts, ask, request_hash
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -125,3 +125,47 @@ def test_a_dot_file_the_drive_leaves_beside_a_transcript_is_not_counted(tmp_path
     p = t.put("m", "plain", "abc", {"status": "ok"})
     (p.parent / "._abc.json").write_text('{"status": "ok"}', encoding="utf-8")
     assert t.count("m", "plain") == {"ok": 1}
+
+
+UNKNOWN_TO_THE_AUTHOR = ["You've hit your limit - resets 3pm", "You've hit your session limit - resets 2am", "API Error: 529 overloaded",
+                         "API Error: Connection error.", "Credit balance is too low", "Invalid API key - Please run /login",
+                         "Prompt is too long"]
+
+
+@pytest.mark.parametrize("wording", UNKNOWN_TO_THE_AUTHOR)
+def test_a_limit_or_error_message_in_other_words_is_a_transport_failure(fake, tmp_path, wording):
+    t = Transcripts(tmp_path / "t")
+    with pytest.raises(TransportError):
+        ask(t, "m", "plain", "S", "P", clicks_schema(2), two, program=fake(say=wording), allow_model_calls=True)
+    assert t.count("m", "plain") == {}
+
+
+def test_a_reply_from_another_model_is_a_transport_failure(fake, tmp_path):
+    t = Transcripts(tmp_path / "t")
+    with pytest.raises(TransportError, match="another model"):
+        ask(t, "claude-opus-5-5", "plain", "S", "P", clicks_schema(2), two, program=fake(clicks=[1, 2], report_model="claude-sonnet-5-5"),
+            allow_model_calls=True)
+    assert t.count("claude-opus-5-5", "plain") == {}
+    dated = ask(t, "claude-opus-5-5", "plain", "S", "P", clicks_schema(2), two, allow_model_calls=True,
+                program=fake(clicks=[1, 2], report_model="claude-opus-5-5-20260801"))
+    assert dated["status"] == "ok"
+
+
+def test_a_bad_reply_can_be_held_back_by_the_caller(fake, tmp_path):
+    t = Transcripts(tmp_path / "t")
+    r = ask(t, "m", "plain", "S", "P", clicks_schema(2), two, program=fake(refuse=True), allow_model_calls=True, hold_bad=True)
+    assert r["status"] == "refusal" and t.count("m", "plain") == {} and r["request_hash"] == request_hash("m", "plain", "S", "P", clicks_schema(2))
+
+
+def test_only_the_first_brace_of_a_reply_is_tried():
+    with pytest.raises(ReplyError):
+        parse_clicks('{"clicks": [10, 140], "x": {"clicks": [10, 20]}', 2)
+
+
+def test_the_child_environment_is_an_allow_list(fake, monkeypatch):
+    for name in ("ANTHROPIC_MODEL", "ANTHROPIC_BASE_URL", "CLAUDE_CODE_ENTRYPOINT", "CLAUDECODE", "MOOTCOURT_DATA_ROOT", "SOMETHING_ELSE"):
+        monkeypatch.setenv(name, "x")
+    monkeypatch.setenv("LC_ALL", "C")
+    seen = set(json.loads(call("m", "S", "P", clicks_schema(2), program=fake(echo_env=True)).text)["env"])
+    seen -= {"FAKE_READER_COUNT_FILE", "FAKE_READER_ECHO_ENV", "PWD", "OLDPWD", "SHLVL", "_", "__CF_USER_TEXT_ENCODING"}
+    assert {"PATH", "HOME", "LC_ALL"} <= seen <= {"PATH", "HOME", "USER", "LOGNAME", "LANG", "LC_ALL", "LC_CTYPE", "TMPDIR", "TERM", "SHELL"}

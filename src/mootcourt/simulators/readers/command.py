@@ -1,8 +1,8 @@
 """One call of the command line tool that plays a reader.
 
 The tool is started without a shell, in a new empty directory outside the repository and the data root, with no
-tools, no servers, no settings and no stored session, and with an environment from which credential-looking variables
-are removed. The prompt goes in on standard input. The child leads its own process group, and a time cap ends the
+tools, no servers, no settings and no stored session, and with an environment that holds a short allow list of names
+and nothing else. The prompt goes in on standard input. The child leads its own process group, and a time cap ends the
 whole group. A failure of the transport (a nonzero exit, a timeout, an envelope that cannot be read, a usage-limit
 message in place of a reply) raises ``TransportError``: it is not a reply and is never stored as one.
 """
@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from mootcourt.simulators.readers.prompts import first_json_object
-from mootcourt.simulators.stdio import kill_group, refuse_data_root_command, scrub_env
+from mootcourt.simulators.stdio import kill_group, refuse_data_root_command
 
 # Variables the tool's login needs although their names look like credentials. Empty until the flags are settled.
 LOGIN_ENV: tuple[str, ...] = ()
@@ -31,7 +31,13 @@ ENVELOPE = {"text": "result", "error": "is_error", "model": "model", "version": 
 START_RECORD = {"type": "system", "subtype": "init", "tools": "tools", "servers": "mcp_servers"}
 
 # Applied only to a reply that holds no JSON object.
-USAGE_LIMIT_PATTERN = re.compile(r"usage limit|rate limit|limit reached|try again (later|at)", re.I)
+USAGE_LIMIT_PATTERN = re.compile(
+    r"usage limit|rate limit|limit reached|try again (later|at)|hit your( \w+)? limit|\bresets\b|api error|overloaded|"
+    r"connection error|credit balance|invalid api key|/login|prompt is too long|not logged in|authentication", re.I)
+
+# The child's environment holds these names and no others, so a run started from a terminal and one started from an agent
+# session send the same thing. ``LOGIN_ENV`` adds what the tool's login needs.
+ENV_ALLOWED = ("PATH", "HOME", "USER", "LOGNAME", "LANG", "TMPDIR", "TERM", "SHELL")
 
 MAX_OUTPUT_BYTES = 4_000_000
 
@@ -84,6 +90,19 @@ def _empty_directory() -> Path:
     return path
 
 
+def child_env() -> dict[str, str]:
+    """The environment of the child: the allowed names, the locale names and the names the login needs."""
+    keep = set(ENV_ALLOWED) | set(LOGIN_ENV)
+    return {k: v for k, v in os.environ.items() if k in keep or k.startswith("LC_")}
+
+
+def same_model(requested: str, reported: str | None) -> bool:
+    """Whether the model the tool reports is the one asked for. A dated or bracketed form of the same identifier counts."""
+    if not reported:
+        return True
+    return reported == requested or reported.startswith((requested + "-", requested + "["))
+
+
 def read_envelope(stdout: str) -> dict:
     """The tool's JSON envelope: the whole output, or its last line that is a JSON object."""
     candidates = [stdout.strip(), *reversed([line for line in stdout.splitlines() if line.strip()])]
@@ -104,7 +123,7 @@ def _run(command: list[str], prompt: str, time_cap_s: float) -> tuple[str, float
     try:
         refuse_data_root_command(command, str(cwd))
         try:
-            proc = subprocess.Popen(command, cwd=cwd, env=scrub_env(os.environ, declared=LOGIN_ENV), stdin=subprocess.PIPE,
+            proc = subprocess.Popen(command, cwd=cwd, env=child_env(), stdin=subprocess.PIPE,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
                                     errors="replace", start_new_session=True)
         except OSError as exc:
@@ -164,4 +183,5 @@ def start_record(model: str, system: str, prompt: str, schema: dict, *, program:
     return {"start_record": start, "tools": list(start.get(START_RECORD["tools"]) or []),
             "servers": list(start.get(START_RECORD["servers"]) or []), "reply_text": reply.text,
             "reported_model": reply.reported_model or start.get("model"), "tool_version": reply.tool_version,
-            "command": build_command(model, "<system prompt>", {}, program, output_format="stream-json")}
+            "command": build_command(model, "<system prompt>", {}, program, output_format="stream-json"),
+            "env_names": sorted(child_env())}

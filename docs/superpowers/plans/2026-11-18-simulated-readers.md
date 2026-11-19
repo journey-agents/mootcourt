@@ -833,3 +833,16 @@ Contribution item: "A time-ordered test of simulated readers, plain and aligned 
 
 - Spec coverage: reader and feed (Tasks 2, 3); card (3); rows and arms (1); blocks (2); panel, ties, missing (5); seven methods (6, 7, 8); baselines and measures (1, 10); wording (16); probes (9); the call (4, 13); code layout and flag (4, 11); run order (12 to 14); paper (16); prior work (15); "Fixed before the first call" (this plan plus the record of Task 13).
 - Two items of "Fixed before the first call" cannot be exact until code exists: the checksums and the tool's exact flags. Task 13 fixes both in a commit that precedes the first call on an archive headline.
+
+## Amendments after the review of the branch, before any model call (19 November 2026)
+
+A fresh reviewer read the branch before any call was made. No panel answer and no reply of any model existed. These rules were added or changed because of that review, and each is in the code and its tests:
+
+1. A call that ends without a usable reply counts toward the stop rule whether the transport failed or the reply was bad three times. A bad reply is held back and stored as missing only once a later call succeeds. After five calls in a row without a usable reply the run stops with exit code 3 and the held replies are dropped. The reason: a limit or error message in words the wrapper does not know would otherwise be stored as five refusals. Fewer than five bad replies at the end of a kind are stored as missing.
+2. A reply that reports another model than the one asked for is a transport failure and is not stored.
+3. An origin whose audience note is not a usable reply after its three attempts gets no brief reader. Its contrasts count as having no reader under method 7, the report lists the origin under `methods.audience_brief.notes_missing`, and nothing else waits for it. This replaces the stop of Task 11, step 3.
+4. A request that the tool can never answer may be recorded as missing only by the flag `run --record-missing REQUEST_HASH`. The record says the operator made it, the report counts such records, and the README of the run folder lists each with its reason.
+5. The completion probe's items are shuffled with key 4 of the `probe_items` stream before they are cut into calls, so neither position nor a neighbour marks the winning arm.
+6. The child's environment is an allow list (`PATH`, `HOME`, `USER`, `LOGNAME`, `LANG`, `LC_*`, `TMPDIR`, `TERM`, `SHELL`, and the names Task 13 finds the login needs), and the canary file stores the names.
+7. The canary fails unless its reply satisfies the schema and the tool reports its model and its version.
+8. Bootstrap groups are taken in sorted order, so an interval does not depend on the order of rows. The note call has a time cap of 600 seconds; every other call keeps 180. Only the first brace of a reply is tried as its JSON object. `plan` stops if two planned requests are the same request. Each fit records whether its optimiser converged.
