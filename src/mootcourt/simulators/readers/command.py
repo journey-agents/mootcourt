@@ -1,0 +1,132 @@
+"""One call of the command line tool that plays a reader.
+
+The tool is started without a shell, in a new empty directory outside the repository and the data root, with no
+tools, no servers, no settings and no stored session, and with an environment from which credential-looking variables
+are removed. The prompt goes in on standard input. The child leads its own process group, and a time cap ends the
+whole group. A failure of the transport (a nonzero exit, a timeout, an envelope that cannot be read, a usage-limit
+message in place of a reply) raises ``TransportError``: it is not a reply and is never stored as one.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+from mootcourt.simulators.readers.prompts import first_json_object
+from mootcourt.simulators.stdio import kill_group, refuse_data_root_command, scrub_env
+
+# Variables the tool's login needs although their names look like credentials. Empty until the flags are settled.
+LOGIN_ENV: tuple[str, ...] = ()
+
+# Where the tool's JSON envelope carries each part of a reply.
+ENVELOPE = {"text": "result", "error": "is_error", "model": "model", "version": "version"}
+
+# Applied only to a reply that holds no JSON object.
+USAGE_LIMIT_PATTERN = re.compile(r"usage limit|rate limit|limit reached|try again (later|at)", re.I)
+
+MAX_OUTPUT_BYTES = 4_000_000
+
+
+class TransportError(RuntimeError):
+    """The tool did not deliver a reply: a nonzero exit, a timeout, an unreadable envelope or a usage-limit message."""
+
+
+@dataclass(frozen=True)
+class ToolReply:
+    text: str
+    reported_model: str | None
+    tool_version: str | None
+    seconds: float
+
+
+def build_command(model: str, system: str, schema: dict, program: str = "claude") -> list[str]:
+    """The exact command of one call. The prompt is not part of it; it is sent on standard input."""
+    return [program, "-p", "--model", model, "--system-prompt", system, "--tools", "", "--strict-mcp-config",
+            "--mcp-config", json.dumps({"mcpServers": {}}), "--setting-sources", "", "--no-session-persistence",
+            "--disable-slash-commands", "--output-format", "json", "--json-schema", json.dumps(schema, sort_keys=True)]
+
+
+def _repository_roots() -> list[Path]:
+    """Every folder with a ``.git`` entry above the working directory or above this file."""
+    roots = []
+    for start in (Path.cwd().resolve(), Path(__file__).resolve().parent):
+        for folder in (start, *start.parents):
+            if (folder / ".git").exists():
+                roots.append(folder)
+    return roots
+
+
+def _inside(path: Path, root: Path) -> bool:
+    return path == root or root in path.parents
+
+
+def _empty_directory() -> Path:
+    """A new empty directory that lies outside the repository and outside the data root."""
+    from mootcourt.storage import storage_paths
+
+    path = Path(tempfile.mkdtemp(prefix="reader-call-")).resolve()
+    data_root = storage_paths().root
+    forbidden = _repository_roots() + ([Path(data_root).resolve()] if data_root is not None else [])
+    for root in forbidden:
+        if _inside(path, root):
+            shutil.rmtree(path, ignore_errors=True)
+            raise TransportError(f"the temporary directory {path} lies inside {root}; set TMPDIR to a place outside it")
+    return path
+
+
+def read_envelope(stdout: str) -> dict:
+    """The tool's JSON envelope: the whole output, or its last line that is a JSON object."""
+    candidates = [stdout.strip(), *reversed([line for line in stdout.splitlines() if line.strip()])]
+    for text in candidates:
+        try:
+            value = json.loads(text)
+        except ValueError:
+            continue
+        if isinstance(value, dict) and ENVELOPE["text"] in value:
+            return value
+    raise TransportError("the tool's output holds no envelope with a reply")
+
+
+def call(model: str, system: str, prompt: str, schema: dict, *, program: str = "claude", time_cap_s: float = 180.0) -> ToolReply:
+    """Run the tool once and return its reply text with what the tool reports about itself."""
+    command = build_command(model, system, schema, program)
+    cwd = _empty_directory()
+    started = time.monotonic()
+    try:
+        refuse_data_root_command(command, str(cwd))
+        try:
+            proc = subprocess.Popen(command, cwd=cwd, env=scrub_env(os.environ, declared=LOGIN_ENV), stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+                                    errors="replace", start_new_session=True)
+        except OSError as exc:
+            raise TransportError(f"the tool could not be started: {exc}") from exc
+        try:
+            stdout, stderr = proc.communicate(prompt, timeout=time_cap_s)
+        except subprocess.TimeoutExpired as exc:
+            raise TransportError(f"the tool gave no reply within {time_cap_s:g} seconds") from exc
+        finally:
+            kill_group(proc)
+            proc.wait()
+    finally:
+        shutil.rmtree(cwd, ignore_errors=True)
+    seconds = time.monotonic() - started
+    if proc.returncode != 0:
+        raise TransportError(f"the tool exited with code {proc.returncode}: {(stderr or stdout).strip()[:300]}")
+    if len(stdout) > MAX_OUTPUT_BYTES:
+        raise TransportError("the tool's output is larger than the cap")
+    envelope = read_envelope(stdout)
+    text = envelope[ENVELOPE["text"]]
+    text = text if isinstance(text, str) else json.dumps(text)
+    if envelope.get(ENVELOPE["error"]):
+        raise TransportError(f"the tool reported an error: {text.strip()[:300]}")
+    if first_json_object(text) is None and USAGE_LIMIT_PATTERN.search(text):
+        raise TransportError(f"the tool answered with a usage-limit message: {text.strip()[:300]}")
+    model_id, version = envelope.get(ENVELOPE["model"]), envelope.get(ENVELOPE["version"])
+    return ToolReply(text=text, reported_model=model_id if isinstance(model_id, str) else None,
+                     tool_version=version if isinstance(version, str) else None, seconds=seconds)
