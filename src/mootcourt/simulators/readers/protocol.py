@@ -63,3 +63,24 @@ PROFILES = (
     "You are between 25 and 34 and work for a charity. You care about the environment, equal rights and documentaries. You "
     "are curious and willing to read something serious. You are on your phone, and you are on the site's front page.",
 )
+
+# Method 6: earlier results shown before the feed.
+EXAMPLES_HEADER = ("Results of earlier tests on this site. Each line is a headline and the share of visitors who clicked it. "
+                   "Headlines under one number were shown for the same story.")
+
+# Method 7: the model writes a note on the audience from earlier results, and every reader of the origin receives it.
+BRIEF_SYSTEM = ("You study the audience of a news and entertainment site from the results of its headline tests. Reply with "
+                "one JSON object and nothing else.")
+BRIEF_TEMPLATE = (
+    "Below are results of earlier headline tests on this site. Headlines under one number were shown for the same story, and "
+    "each has the share of visitors who clicked it.\n"
+    "\n"
+    "{units}\n"
+    "\n"
+    "Write a note of at most 150 words on what this audience clicked and what it passed over. Describe patterns only. Do not "
+    'quote a headline. Reply as {"note": "..."}.'
+)
+BRIEF_PREFACE = "What is known about this site's audience from earlier tests: {note}"
+N_EXAMPLES = 10
+N_BRIEF_UNITS = 200
+NOTE_WORDS = 150
