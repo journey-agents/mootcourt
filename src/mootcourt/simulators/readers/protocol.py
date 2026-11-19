@@ -84,3 +84,36 @@ BRIEF_PREFACE = "What is known about this site's audience from earlier tests: {n
 N_EXAMPLES = 10
 N_BRIEF_UNITS = 200
 NOTE_WORDS = 150
+
+# The three probes of what the model may recall. Only the pair prompt names the publisher: it asks the direct question.
+COMPLETION_SYSTEM = "Reply with one JSON object and nothing else."
+COMPLETION_TEMPLATE = (
+    "Below are the first four words of headlines published on a news and entertainment site between 2013 and 2015. For each, "
+    "write the rest of the headline as you believe it was published.\n"
+    "\n"
+    "{items}\n"
+    "\n"
+    'Reply as {"completions": [...]} with exactly {n} strings, one for each line in order.'
+)
+FAMILIARITY_SYSTEM = COMPLETION_SYSTEM
+FAMILIARITY_TEMPLATE = (
+    "Below are headlines. For each, give a number from 0 to 100 for how sure you are that you have seen this exact headline "
+    "before.\n"
+    "\n"
+    "{items}\n"
+    "\n"
+    'Reply as {"seen": [...]} with exactly {n} numbers, one for each headline in order.'
+)
+PAIR_SYSTEM = COMPLETION_SYSTEM
+PAIR_TEMPLATE = (
+    "Upworthy tested pairs of headlines for the same story between 2013 and 2015. For each pair below, say which headline had "
+    "the higher click rate.\n"
+    "\n"
+    "{items}\n"
+    "\n"
+    'Reply as {"winners": [...]} with exactly {n} entries, each "A" or "B".'
+)
+N_PROBE_UNITS = 300
+STEM_WORDS = 4
+MIN_COMPLETION_WORDS = 8
+PROBE_BATCH = {"probe_completion": 10, "probe_familiarity": 30, "probe_pairs": 10}
