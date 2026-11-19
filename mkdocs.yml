@@ -58,6 +58,7 @@ nav:
   - How to:
       - Bring a ledger: howto/bring-a-ledger.md
       - Attach a simulation agent: simulators.md
+      - Run simulated readers: simulated-readers.md
       - Run the benchmark: benchmark.md
       - Operate the weekly loop: operations.md
       - Serve the card and use the MCP tool: howto/serve-and-mcp.md

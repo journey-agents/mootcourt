@@ -27,6 +27,9 @@ LOGIN_ENV: tuple[str, ...] = ()
 # Where the tool's JSON envelope carries each part of a reply.
 ENVELOPE = {"text": "result", "error": "is_error", "model": "model", "version": "version"}
 
+# The tool's start record in its event stream, and where it lists what it loaded.
+START_RECORD = {"type": "system", "subtype": "init", "tools": "tools", "servers": "mcp_servers"}
+
 # Applied only to a reply that holds no JSON object.
 USAGE_LIMIT_PATTERN = re.compile(r"usage limit|rate limit|limit reached|try again (later|at)", re.I)
 
@@ -45,11 +48,12 @@ class ToolReply:
     seconds: float
 
 
-def build_command(model: str, system: str, schema: dict, program: str = "claude") -> list[str]:
+def build_command(model: str, system: str, schema: dict, program: str = "claude", output_format: str = "json") -> list[str]:
     """The exact command of one call. The prompt is not part of it; it is sent on standard input."""
-    return [program, "-p", "--model", model, "--system-prompt", system, "--tools", "", "--strict-mcp-config",
-            "--mcp-config", json.dumps({"mcpServers": {}}), "--setting-sources", "", "--no-session-persistence",
-            "--disable-slash-commands", "--output-format", "json", "--json-schema", json.dumps(schema, sort_keys=True)]
+    command = [program, "-p", "--model", model, "--system-prompt", system, "--tools", "", "--strict-mcp-config",
+               "--mcp-config", json.dumps({"mcpServers": {}}), "--setting-sources", "", "--no-session-persistence",
+               "--disable-slash-commands", "--output-format", output_format, "--json-schema", json.dumps(schema, sort_keys=True)]
+    return command + ["--verbose"] if output_format == "stream-json" else command
 
 
 def _repository_roots() -> list[Path]:
@@ -93,9 +97,8 @@ def read_envelope(stdout: str) -> dict:
     raise TransportError("the tool's output holds no envelope with a reply")
 
 
-def call(model: str, system: str, prompt: str, schema: dict, *, program: str = "claude", time_cap_s: float = 180.0) -> ToolReply:
-    """Run the tool once and return its reply text with what the tool reports about itself."""
-    command = build_command(model, system, schema, program)
+def _run(command: list[str], prompt: str, time_cap_s: float) -> tuple[str, float]:
+    """Run the command in a new empty directory and return its standard output and the seconds it took."""
     cwd = _empty_directory()
     started = time.monotonic()
     try:
@@ -115,12 +118,14 @@ def call(model: str, system: str, prompt: str, schema: dict, *, program: str = "
             proc.wait()
     finally:
         shutil.rmtree(cwd, ignore_errors=True)
-    seconds = time.monotonic() - started
     if proc.returncode != 0:
         raise TransportError(f"the tool exited with code {proc.returncode}: {(stderr or stdout).strip()[:300]}")
     if len(stdout) > MAX_OUTPUT_BYTES:
         raise TransportError("the tool's output is larger than the cap")
-    envelope = read_envelope(stdout)
+    return stdout, time.monotonic() - started
+
+
+def _reply(envelope: dict, seconds: float) -> ToolReply:
     text = envelope[ENVELOPE["text"]]
     text = text if isinstance(text, str) else json.dumps(text)
     if envelope.get(ENVELOPE["error"]):
@@ -130,3 +135,33 @@ def call(model: str, system: str, prompt: str, schema: dict, *, program: str = "
     model_id, version = envelope.get(ENVELOPE["model"]), envelope.get(ENVELOPE["version"])
     return ToolReply(text=text, reported_model=model_id if isinstance(model_id, str) else None,
                      tool_version=version if isinstance(version, str) else None, seconds=seconds)
+
+
+def call(model: str, system: str, prompt: str, schema: dict, *, program: str = "claude", time_cap_s: float = 180.0) -> ToolReply:
+    """Run the tool once and return its reply text with what the tool reports about itself."""
+    stdout, seconds = _run(build_command(model, system, schema, program), prompt, time_cap_s)
+    return _reply(read_envelope(stdout), seconds)
+
+
+def start_record(model: str, system: str, prompt: str, schema: dict, *, program: str = "claude", time_cap_s: float = 180.0) -> dict:
+    """One call with the tool's event stream on: its own start record, the tools and servers that record lists, and the reply.
+
+    This is the canary. Tests can inspect the command, and only the tool can say what it loaded.
+    """
+    stdout, seconds = _run(build_command(model, system, schema, program, output_format="stream-json"), prompt, time_cap_s)
+    events = []
+    for line in stdout.splitlines():
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict):
+            events.append(event)
+    start = next((e for e in events if e.get("type") == START_RECORD["type"] and e.get("subtype") == START_RECORD["subtype"]), None)
+    if start is None:
+        raise TransportError("the tool's event stream holds no start record")
+    reply = _reply(read_envelope(stdout), seconds)
+    return {"start_record": start, "tools": list(start.get(START_RECORD["tools"]) or []),
+            "servers": list(start.get(START_RECORD["servers"]) or []), "reply_text": reply.text,
+            "reported_model": reply.reported_model or start.get("model"), "tool_version": reply.tool_version,
+            "command": build_command(model, "<system prompt>", {}, program, output_format="stream-json")}

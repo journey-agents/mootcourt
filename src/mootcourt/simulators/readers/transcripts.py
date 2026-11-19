@@ -47,7 +47,7 @@ class Transcripts:
 
     def records(self, model: str, kind: str) -> list[dict]:
         folder = self.path(model, kind, "x").parent
-        found = (_read(p) for p in sorted(folder.glob("*.json"))) if folder.is_dir() else ()
+        found = (_read(p) for p in sorted(folder.glob("*.json")) if not p.name.startswith(".")) if folder.is_dir() else ()
         return [r for r in found if r is not None]
 
     def count(self, model: str, kind: str) -> dict[str, int]:

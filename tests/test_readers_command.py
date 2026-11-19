@@ -118,3 +118,10 @@ def test_a_damaged_transcript_is_a_miss(tmp_path):
     p = t.put("m", "plain", "abc", {"status": "ok"})
     p.write_text("{not json", encoding="utf-8")
     assert t.get("m", "plain", "abc") is None and t.count("m", "plain") == {}
+
+
+def test_a_dot_file_the_drive_leaves_beside_a_transcript_is_not_counted(tmp_path):
+    t = Transcripts(tmp_path / "t")
+    p = t.put("m", "plain", "abc", {"status": "ok"})
+    (p.parent / "._abc.json").write_text('{"status": "ok"}', encoding="utf-8")
+    assert t.count("m", "plain") == {"ok": 1}

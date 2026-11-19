@@ -16,7 +16,13 @@ import time
 import zlib
 from pathlib import Path
 
-PLANTED_WORD = "amazing"          # the planted mode clicks on a headline that holds this word
+PLANTED_WORD = "amazing"          # the planted mode clicks most on a headline that holds this word
+MIDDLE_WORD = "plain"             # and more on one that holds this word than on one that holds neither
+
+
+def planted_score(line: str) -> float:
+    lowered = line.lower()
+    return 60.0 if PLANTED_WORD in lowered else 40.0 if MIDDLE_WORD in lowered else 20.0
 
 
 def _option(argv: list[str], name: str, default: str = "") -> str:
@@ -56,14 +62,14 @@ def _reply(prompt: str, schema: dict, env: dict) -> str:
         return json.dumps({"seen": [_number(line) for line in lines[:n]] + [0.0] * max(0, n - len(lines))})
     if key == "winners":
         pairs = re.findall(r"^\s*\d+\. A: (.*)\n\s+B: (.*)$", prompt, re.M)
-        picks = [("A" if PLANTED_WORD in a.lower() or PLANTED_WORD not in b.lower() else "B") for a, b in pairs]
+        picks = [("A" if planted_score(a) >= planted_score(b) else "B") for a, b in pairs]
         return json.dumps({"winners": (picks + ["A"] * n)[:n]})
     if "FAKE_READER_CLICKS" in env:
         return json.dumps({"clicks": json.loads(env["FAKE_READER_CLICKS"])})
     feed = prompt.split("The feed:", 1)[-1]
     lines = _numbered(feed)
     if mode == "planted":
-        return json.dumps({"clicks": [60.0 if PLANTED_WORD in line.lower() else 20.0 for line in lines]})
+        return json.dumps({"clicks": [planted_score(line) for line in lines]})
     if mode == "random":
         return json.dumps({"clicks": [_number(prompt[:80] + line) for line in lines]})
     return json.dumps({"clicks": [50.0] * n})
@@ -89,6 +95,9 @@ def main(argv: list[str]) -> int:
         text = json.dumps({"clicks": [1]})                          # the wrong count of numbers
     else:
         text = _reply(prompt, schema, env)
+    if _option(argv, "--output-format") == "stream-json":
+        print(json.dumps({"type": "system", "subtype": "init", "model": _option(argv, "--model"), "mcp_servers": [],
+                          "tools": json.loads(env.get("FAKE_READER_START_TOOLS", "[]"))}))
     print(json.dumps({"type": "result", "is_error": False, "result": text, "model": _option(argv, "--model"),
                       "version": "fake-1"}))
     return 0

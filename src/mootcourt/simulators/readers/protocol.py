@@ -117,3 +117,20 @@ N_PROBE_UNITS = 300
 STEM_WORDS = 4
 MIN_COMPLETION_WORDS = 8
 PROBE_BATCH = {"probe_completion": 10, "probe_familiarity": 30, "probe_pairs": 10}
+
+# The order in which a run makes its calls. A brief reader call needs the note of its origin, so the notes come first.
+KINDS = ("plain", "brief_note", "examples", "brief", "probe_completion", "probe_familiarity", "probe_pairs")
+MAX_TRANSPORT_FAILURES = 5          # a run stops after this many transport failures in a row
+
+# Counts of the exploratory archive's headline-only cell in run 9, located before any call. ``plan --expect-archive-counts``
+# stops unless it finds exactly these. Per origin: units, contrasts, blocks, feeds, earlier contrasts visible, earlier units visible.
+ARCHIVE_COUNTS = {
+    "2013-04-01": (163, 399, 6, 22, 0, 0),
+    "2014-01-01": (214, 687, 8, 43, 399, 163),
+    "2014-04-01": (299, 1026, 10, 48, 1025, 357),
+    "2014-07-01": (439, 1550, 15, 73, 2011, 645),
+    "2014-10-01": (422, 1544, 15, 77, 3506, 1073),
+    "2015-01-01": (182, 604, 7, 34, 5176, 1526),
+    "2015-04-01": (52, 156, 2, 11, 5785, 1708),
+}
+ARCHIVE_TOTALS = {"units": 1771, "tests": 1770, "contrasts": 5966, "blocks": 63, "feeds": 308}
