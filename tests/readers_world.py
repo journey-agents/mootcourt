@@ -89,3 +89,15 @@ def make_world(seed: int = 11, units=(120, 120, 120), question_effect: float = 0
                                           "dir_ceiling_row": 0.8, "s_star": s})
     contrasts = pd.DataFrame(contrast_rows).sort_values(["origin_index", "row_id"]).reset_index(drop=True)
     return World(arms=pd.DataFrame(arm_rows), contrasts=contrasts, rs=pd.DataFrame(score_rows))
+
+
+def make_answers(world: World, feeds: pd.DataFrame, seed: int = 21, informative: bool = True, gain: float = 900.0) -> pd.DataFrame:
+    """Answers of ten readers over the feeds. Every reader leans on the arm's click rate when ``informative``; noise is added."""
+    r = np.random.default_rng(seed)
+    rate = (world.arms.set_index("arm_id")["clicks"] / world.arms.set_index("arm_id")["impressions"])
+    lean = feeds["arm_id"].map(rate).to_numpy() - 0.03
+    frames = []
+    for reader in range(1, 11):
+        prob = 30 + reader + (gain * lean if informative else 0.0) + r.normal(0, 4, len(feeds))
+        frames.append(feeds[["block_id", "feed_index", "position"]].assign(reader=reader, prob=np.clip(prob, 0, 100)))
+    return pd.concat(frames, ignore_index=True)[["block_id", "feed_index", "reader", "position", "prob"]]
