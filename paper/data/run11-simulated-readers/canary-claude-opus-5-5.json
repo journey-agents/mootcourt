@@ -1,0 +1,89 @@
+{
+ "command": [
+  "claude",
+  "-p",
+  "--model",
+  "claude-opus-5-5",
+  "--system-prompt",
+  "<system prompt>",
+  "--tools",
+  "",
+  "--strict-mcp-config",
+  "--mcp-config",
+  "{\"mcpServers\": {}}",
+  "--setting-sources",
+  "",
+  "--no-session-persistence",
+  "--disable-slash-commands",
+  "--output-format",
+  "stream-json",
+  "--verbose"
+ ],
+ "env_names": [
+  "HOME",
+  "LANG",
+  "LOGNAME",
+  "PATH",
+  "SHELL",
+  "TERM",
+  "TMPDIR",
+  "USER"
+ ],
+ "headlines": [
+  "A town of nine hundred people voted on what to do with its only traffic light",
+  "What a retired bus driver keeps in the glove box, and why her neighbours ask to see it",
+  "Three students built a boat from milk cartons and it crossed the lake",
+  "The reason this bakery closes at noon on Tuesdays is not what you would guess",
+  "He counted every bird in his garden for a year and wrote down what changed"
+ ],
+ "model": "claude-opus-5-5",
+ "problems": [],
+ "reply_text": "{\"clicks\": [14, 9, 24, 13, 5]}",
+ "reported_model": "claude-opus-5-5",
+ "servers": [],
+ "start_record": {
+  "agents": [
+   "claude",
+   "Explore",
+   "general-purpose",
+   "Plan",
+   "statusline-setup",
+   "web-fetch"
+  ],
+  "apiKeySource": "none",
+  "claude_code_version": "2.1.327",
+  "mcp_servers": [],
+  "model": "claude-opus-5-5",
+  "output_style": "default",
+  "permissionMode": "default",
+  "plugins": [
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-telemetry",
+    "path": "builtin",
+    "source": "cc-plugin-telemetry@builtin"
+   },
+   {
+    "name": "cc-plugin-privacy",
+    "path": "builtin",
+    "source": "cc-plugin-privacy@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "skills": [],
+  "slash_commands": [],
+  "subtype": "init",
+  "tools": [],
+  "type": "system"
+ },
+ "tool_version": "2.1.327",
+ "tools": []
+}
