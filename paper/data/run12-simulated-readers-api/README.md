@@ -4,7 +4,7 @@ Why it exists. Run 11 (`paper/data/run11-simulated-readers/`) reached the models
 
 The code. Every reply was requested and every report was written with `src/` and `scripts/` as they are at commit 87163a63ec24ae5e7699ddb4697aea8eb1a0e52a (`run-commit.txt`). That commit adds the second transport, the `--label` option and the `compare` stage to the code state of run 11, which had been scored before any of it was written. No file under `src/` or `scripts/` changed between the first call and the last report.
 
-The inputs. The plan folder of run 11, file for file (`plan.json` here is a copy of run 11's). The requests are therefore the requests of run 11: the same model names, system prompts, prompts and request hashes, 9,007 per model. No file named holdout, confirmatory or undeployed was read.
+The inputs. The plan folder of run 11, file for file (`plan.json` here is a copy of run 11's). The planned calls are therefore those of run 11, 9,007 per model, with the same model names, system prompts and prompts. One kind differs in text: a reader call of the audience brief (method 7) carries the note the model wrote in the same run, so those 2,860 prompts and their request hashes are this run's own. Every other request is identical to run 11's. No file named holdout, confirmatory or undeployed was read.
 
 The models. `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-5-5`, one after another in that order. Verdict words in the paper come from run 11 and only for `claude-opus-5-5`. The reports of this run hold verdict keys for that model too, because the same code wrote them; the paper prints this run's intervals beside run 11's and takes no verdict word from them.
 

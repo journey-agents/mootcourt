@@ -40,6 +40,9 @@ def test_each_summary_table_is_input_by_the_sources_and_its_number_rows_name_the
         assert f"tables/{name}" in tex, name
         text = (tmp_path / f"{name}.tex").read_text(encoding="utf-8")
         assert text == (PAPER / "tables" / f"{name}.tex").read_text(encoding="utf-8"), f"{name}: the committed table is stale"
+        if name.startswith("fmt-readers-"):          # the simulated readers are side runs, read from their own two folders
+            assert "% src: paper/data/run1" in text and "$RUN6/" not in text, name
+            continue
         assert "% src: $RUN6/" in text or name == "fmt-app-syn-truth", name
 
 

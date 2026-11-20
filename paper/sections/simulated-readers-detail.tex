@@ -1,0 +1,63 @@
+% The appendix of the simulated readers: the texts sent to the models, the probes and the measures the body does not print. The texts are copied from src/mootcourt/simulators/readers/protocol.py, which was fixed before the first call; the tables come from paper/summary_tables/readers.py.
+\section{Simulated Readers in Detail}
+\label{sec:readers-detail}
+This appendix gives what Section~\ref{sec:readers} leaves out: the texts sent to the models, how the calls were made, the three probes for earlier exposure to the archive, the seven methods in the second run, and the measures that carry no verdict.
+
+% src: src/mootcourt/simulators/readers/protocol.py SYSTEM_PROMPT, READER_TEMPLATE (copied word for word; the numbers 2013, 2015, 0 and 100 are part of the copy); no measured number
+\paragraph{The instructions and the prompt.} Every reader call carries the same instructions:
+\begin{quote}\small
+You are playing one person who is browsing the web at some time between 2013 and 2015. You will be given a short description of that person and then a feed of story headlines from a news and entertainment site, numbered, one per line. For each headline, give the probability from 0 to 100 that this person would click on it at this moment. Judge each headline as this person would on a quick scroll. Most people click on few of the stories they scroll past. Reply with one JSON object and nothing else.
+\end{quote}
+The prompt then gives the reader's profile, the numbered headlines of the feed, and one line that asks for a list of as many numbers as there are headlines. A reply that does not hold exactly that list is asked for again, up to three attempts in all, and is then recorded as missing. A reader with a missing feed in a block is dropped from that block, so that every arm of a test is averaged over the same readers.
+
+% src: src/mootcourt/simulators/readers/protocol.py PROFILES (the ten profiles, copied word for word; the ages 18, 19, 24, 25, 34, 35, 44, 45, 54, 55 and 64 and the five minutes are part of the copy); no measured number
+\paragraph{The ten profiles.} The profiles were written once, before any call, with the paper's other results known.
+\begin{enumerate}\small
+\item You are between 19 and 24 and a college student. You like music, campus politics and funny videos. You are putting off an assignment and are a little bored. You are on your phone, and a friend shared this in your social feed.
+\item You are between 25 and 34 and work in an office. You follow national news, technology and personal finance. You are on a short lunch break and want something quick. You are at your desktop, and the story came up in your social feed.
+\item You are between 25 and 34 and have two small children. You care about parenting, health and stories that end well. It is late in the evening and you are tired. You are on your phone, and a relative shared this in your social feed.
+\item You are between 35 and 44 and teach at a public school. You care about education, science and your local community. You are relaxed after dinner. You are at your desktop, and the story arrived in an email newsletter from the site.
+\item You are between 35 and 44 and work as a nurse. You like stories about health, animals and ordinary people. You have five minutes of a break and are in a hurry. You are on your phone, and the story came up in your social feed.
+\item You are between 45 and 54 and manage a small business. You follow the economy, politics and sports. You are sceptical of anything that sounds exaggerated. You are at your desktop, and someone you follow posted the link.
+\item You are between 45 and 54 and at home with two teenagers. You care about family, faith and cooking. You are unhurried and in a good mood. You are at your desktop, and a neighbour shared this in your social feed.
+\item You are between 55 and 64 and recently retired. You like gardening, history and news about your grandchildren's generation. You have plenty of time. You are at your desktop, and a friend forwarded the story by email.
+\item You are between 18 and 24 and work shifts in a shop. You like celebrities, video games and comedy. You are restless and scrolling fast. You are on your phone, and the story came up in your social feed.
+\item You are between 25 and 34 and work for a charity. You care about the environment, equal rights and documentaries. You are curious and willing to read something serious. You are on your phone, and you are on the site's front page.
+\end{enumerate}
+
+% src: src/mootcourt/simulators/readers/protocol.py EXAMPLES_HEADER, BRIEF_TEMPLATE, BRIEF_PREFACE, N_EXAMPLES 10, N_BRIEF_UNITS 200, NOTE_WORDS 150; tables/fmt-readers-more.tex and tables/fmt-readers-more-api.tex (calls planned 9,007); paper/data/run11-simulated-readers/simulated-readers-claude-opus-5-5-20261106-2dc461f52ea4.json counts.calls_by_kind.plain 3080, counts.calls_by_kind.examples 2860, counts.calls_by_kind.brief 2860, counts.calls_by_kind.brief_note 6, counts.calls_by_kind.probe_completion 60, counts.calls_by_kind.probe_familiarity 42, counts.calls_by_kind.probe_pairs 99 (201 probe calls: 60 + 42 + 99), counts.calls_planned 9007
+\paragraph{The two methods that change the prompt.} For method 6 the prompt opens with ten earlier tests, drawn with a fixed seed from the tests visible at the origin, each as its headlines with the share of visitors who clicked. For method 7 the model first receives 200 visible earlier tests in the same form and is asked for a note of at most 150 words on what this audience clicked and passed over, without quoting a headline. Each reader's prompt at that origin then opens with the note. Both methods reuse the blocks and feeds of the plain panel. One model's calls number 9,007. The plain panel takes 3,080 of them and each of the two methods 2,860. The notes take 6 and the probes 201.
+
+% src: paper/data/run11-simulated-readers/README.md (the tool at one version; its flags; an empty directory; no tool and no server; no record of tokens); paper/data/run12-simulated-readers-api/README.md (four request fields; the defaults left in place; the token counts and the cost of 132.13 dollars at list prices; four invalid replies of the smallest model, all of method 7); tables/fmt-readers-more-api.tex rows usable replies and invalid after three attempts; run 11 and run 12 are the names of the two run folders
+\paragraph{How the calls were made.} In run 11 each call started the vendor's command line tool in an empty directory with its tools switched off, no settings read and our instructions in place of its own. The tool still adds a short context of its own, described in Section~\ref{sec:readers}, and reports no token counts. In run 12 each call is one request to the vendor's programming interface that holds the model's name, our instructions, the prompt and a limit on the length of the reply. No thinking or effort setting was sent in either run, so each route used its own default, and we did not check that the two defaults are the same. Every request and reply is stored, and the scoring reads the stored replies and calls no model. In run 11 every planned call returned a usable reply. In run 12 four calls of the smallest model, all of method 7, did not, and the rule above dropped those readers from their blocks (Table~\ref{tab:fmt-readers-more-api}). The second run cost about 132 dollars at the vendor's list prices.
+
+\begin{table*}[t]\centering\footnotesize
+% src: tables/fmt-readers-probes.tex; src/mootcourt/simulators/readers/protocol.py N_PROBE_UNITS 300, STEM_WORDS 4, MIN_COMPLETION_WORDS 8
+\caption{Three probes for earlier exposure to the archive, on 300 headline-only tests drawn with a fixed seed before any call. Completion: the model is given the first four words of a headline and asked for the rest; the measure is the token F1 of its completion, for the headline with the highest click rate of a test and for one other headline of that test, and the mean paired difference. A headline of fewer than eight words is skipped. Familiarity: the model rates how sure it is that it has seen each headline, and the rule that picks the higher rating is scored for direction. Named publisher: the model is told the publisher and the period, shown the two headlines of a contrast in random order, and asked which had the higher click rate. This third probe is a direct question and not a reader.}
+\label{tab:fmt-readers-probes}
+\input{tables/fmt-readers-probes}
+\end{table*}
+
+\begin{table*}[t]\centering\footnotesize
+% src: tables/fmt-readers-methods-api.tex; paper/data/run12-simulated-readers-api/simulated-readers-claude-opus-5-5-run12-api-20261106-2dc461f52ea4.json methods.audience_brief.minus_always_reference.resamples 500, counts.blocks 63; run 11 and run 12 are the names of the two run folders
+\caption{The plain panel and the seven alignment methods in run 12, the same requests sent through the vendor's programming interface. Columns and intervals are those of Table~\ref{tab:fmt-readers-methods}, and no interval is adjusted for the number of comparisons.}
+\label{tab:fmt-readers-methods-api}
+\input{tables/fmt-readers-methods-api}
+\end{table*}
+
+\begin{table*}[t]\centering\footnotesize
+% src: tables/fmt-readers-more.tex; paper/data/run11-simulated-readers/simulated-readers-claude-opus-5-5-20261106-2dc461f52ea4.json ranking.frac 0.25, ranking.resamples 500, plain.decisive.n 1634; run 11 and run 12 are the names of the two run folders
+\caption{Measures of run 11 that carry no verdict. Decisive contrasts are those whose observed effect exceeds 1.96 standard errors in size. The two halves of the panel are readers 1 to 5 and readers 6 to 10. The Brier skill of the direction map is against the share of earlier contrasts won by the variant. A unit is a test at one origin, and one test is scored at two origins. The arm-count rule and the random order matched on arm count are those of Section~\ref{sec:protocol}. For ranking, a unit's score is the largest panel difference among its contrasts, and captured lift is the share of the total positive lift held by the one fourth of the units ranked first within each origin. Intervals are at 90 percent from 500 resamples of blocks and are not adjusted.}
+\label{tab:fmt-readers-more}
+\input{tables/fmt-readers-more}
+\end{table*}
+
+\begin{table*}[t]\centering\footnotesize
+% src: tables/fmt-readers-more-api.tex; paper/data/run12-simulated-readers-api/simulated-readers-claude-haiku-5-5-run12-api-20261106-2dc461f52ea4.json counts.calls_invalid 4, counts.calls_ok 9003; run 11 and run 12 are the names of the two run folders
+\caption{The measures of Table~\ref{tab:fmt-readers-more} for run 12.}
+\label{tab:fmt-readers-more-api}
+\input{tables/fmt-readers-more-api}
+\end{table*}
+
+% src: tables/fmt-readers-more.tex rows plain panel minus one half: Opus 0.0742 (0.0616, 0.0878); plain panel minus the arm-count rule: Opus 0.0163 (-0.0168, 0.0472), Sonnet -0.0282 (-0.0647, 0.0042), Haiku -0.0104 (-0.0475, 0.0134); text classifier minus the earliest-arm rule -0.0216 (-0.0365, -0.0070); with Opus 0.712 and 0.649; tables/fmt-readers-more-api.tex plain panel minus the arm-count rule: Opus 0.0227 (-0.0065, 0.0543), Sonnet -0.0014 (-0.0378, 0.0272), Haiku 0.0040 (-0.0328, 0.0365); run 11 and run 12 are the names of the two run folders
+\paragraph{Reading the remaining measures.} Four points of Tables~\ref{tab:fmt-readers-more} and~\ref{tab:fmt-readers-more-api} bear on the body's readings. First, every plain panel is above one half, by 0.074 for the primary model, and that is a low bar: the earliest-arm rule clears it without reading a headline. Second, on these rows the text classifier is itself below the earliest-arm rule, by 0.022, with an interval that lies below zero. Third, as a ranking of tests the plain panel is not shown to capture more lift than counting a test's arms: for each model and in each run the interval of that difference contains zero. Fourth, the panels of two models give the same direction on 0.649 to 0.712 of the contrasts in run 11, which is less than the two halves of one panel of the primary model.

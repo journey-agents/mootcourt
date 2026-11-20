@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: the five exploratory findings and the registered confirmatory one are kept; Tools is left to the PDF; and Problem, Method and Release are shorter.
+Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: the six exploratory findings and the registered confirmatory one are kept, each shortened, and the secondary reading of the confirmatory split is left to the PDF; Tools is left to the PDF; and Problem, Method and Release are shorter.
 
 ## Title
 
@@ -12,15 +12,16 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. A team wants to know, before launch, what its test will show. Industry screeners are scored privately; public work scores winner predictors. We found no public evaluation that scores a forecast distribution and a probability of a significant result against concluded tests under a fixed rule for what a forecast may see.
-Method. We replay one public archive: 2,949 headline and image tests, scored over seven quarters by models fitted on earlier tests. The archive records realized, not planned, traffic, so each forecast gets the median traffic of earlier tests of its kind. All findings but the last are exploratory: one split, read many times.
+Problem. Before launch, a team wants to know what a test will show. Industry screeners are scored privately; public work scores winner predictors. We found no public evaluation scoring a forecast distribution and a probability of significance against concluded tests under a fixed rule for what a forecast may see.
+Method. We replay one public archive: 2,949 headline and image tests, scored over seven quarters by models fitted on earlier tests. The archive records realized, not planned, traffic, so a forecast gets the median traffic of earlier tests of its kind. All findings but the last are exploratory: one split, read many times.
 Findings.
-- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats; with the seven quarters as units the lead cannot be told apart from zero.
-- The prior's skill on which test will be significant is small and fragile; within a kind of test and quarter every test gets the same probability: a better level, not a ranking.
-- In the main run the probabilities fail a calibration test: the level is off in both directions.
-- No model we ran, all simple stand-ins, ranks tests detectably better than counting arms, on a target that grows with arm count.
-- On the exploratory split, weighting similar past tests does not beat the prior; it recovers under a tenth of a planted signal, so the tie cannot rule one out.
-- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests of the same quarters the verdicts recur. By quarter the prior's lead and skill are not shown, though clear by test; ranking above arm count is not shown. Weighting past tests leads slightly, signs differing by kind of test (no verdict).
+- A heavy-tailed base rate forecasts the next result's distribution nearly as well as a fitted prior. The prior leads by 0.007 nats, not told apart from zero with the seven quarters as units.
+- The prior's skill on which test will be significant is small and fragile: a better level per kind and quarter, not a ranking.
+- In the main run the probabilities fail a calibration test, off in both directions.
+- None of our simple stand-in models ranks tests detectably better than counting arms, on a target that grows with arm count.
+- On the exploratory split, weighting similar past tests does not beat the prior; it recovers under a tenth of a planted signal, so a signal may remain.
+- LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; weighting them on past tests helped clearly in one of two runs.
+- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests of the same quarters the verdicts recur. By quarter the prior's lead and skill are not shown, though clear by test; nor is ranking above arm count.
 Use: past tests say what to expect, not which to run.
 Release. Protocol and Moot Court (MIT); it rebuilds every table.
 
@@ -39,7 +40,7 @@ Release. Protocol and Moot Court (MIT); it rebuilds every table.
 
 ## Comments line
 
-71 pages including the appendix, 6 figures, 99 tables. Code, the data pipeline and the run folders behind every table:
+77 pages including the appendix, 6 figures, 106 tables. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
 https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
 
