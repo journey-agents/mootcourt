@@ -1,0 +1,35 @@
+{
+ "headlines": [
+  "A town of nine hundred people voted on what to do with its only traffic light",
+  "What a retired bus driver keeps in the glove box, and why her neighbours ask to see it",
+  "Three students built a boat from milk cartons and it crossed the lake",
+  "The reason this bakery closes at noon on Tuesdays is not what you would guess",
+  "He counted every bird in his garden for a year and wrote down what changed"
+ ],
+ "model": "claude-haiku-5-5",
+ "problems": [],
+ "reply_text": "{\"clicks\": [35, 30, 55, 25, 20]}",
+ "reported_model": "claude-haiku-5-5",
+ "request": {
+  "max_tokens": 16000,
+  "messages": [
+   {
+    "content": "The reader: You are between 19 and 24 and a college student. You like music, campus politics and funny videos. You are putting off an assignment and are a little bored. You are on your phone, and a friend shared this in your social feed.\n\nThe feed:\n1. A town of nine hundred people voted on what to do with its only traffic light\n2. What a retired bus driver keeps in the glove box, and why her neighbours ask to see it\n3. Three students built a boat from milk cartons and it crossed the lake\n4. The reason this bakery closes at noon on Tuesdays is not what you would guess\n5. He counted every bird in his garden for a year and wrote down what changed\n\nReply as {\"clicks\": [...]} with exactly 5 numbers, one for each headline in order, each from 0 to 100.",
+    "role": "user"
+   }
+  ],
+  "model": "claude-haiku-5-5",
+  "system": "You are playing one person who is browsing the web at some time between 2013 and 2015. You will be given a short description of that person and then a feed of story headlines from a news and entertainment site, numbered, one per line. For each headline, give the probability from 0 to 100 that this person would click on it at this moment. Judge each headline as this person would on a quick scroll. Most people click on few of the stories they scroll past. Reply with one JSON object and nothing else."
+ },
+ "servers": [],
+ "stop_reason": "end_turn",
+ "tool_version": "anthropic-python 2.11.0",
+ "tools": [],
+ "transport": "api",
+ "usage": {
+  "cache_creation_input_tokens": 0,
+  "cache_read_input_tokens": 0,
+  "input_tokens": 402,
+  "output_tokens": 24
+ }
+}

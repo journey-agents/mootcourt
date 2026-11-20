@@ -1,0 +1,28 @@
+{
+ "commit": "87163a63ec24ae5e7699ddb4697aea8eb1a0e52a",
+ "models": [
+  "claude-opus-5-5",
+  "claude-sonnet-5-5",
+  "claude-haiku-5-5"
+ ],
+ "pairs": {
+  "claude-opus-5-5__claude-haiku-5-5": {
+   "agree_share": 0.5978534294818044,
+   "left_out": 3,
+   "n": 5963
+  },
+  "claude-opus-5-5__claude-sonnet-5-5": {
+   "agree_share": 0.7171361502347418,
+   "left_out": 2,
+   "n": 5964
+  },
+  "claude-sonnet-5-5__claude-haiku-5-5": {
+   "agree_share": 0.6261948683548549,
+   "left_out": 3,
+   "n": 5963
+  }
+ },
+ "run_label": "run12-api",
+ "seed": 20261118,
+ "snapshot": "20261106-2dc461f52ea4"
+}

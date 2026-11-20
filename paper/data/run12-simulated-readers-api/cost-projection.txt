@@ -1,0 +1,9 @@
+Projection made on 20 November 2026 (UTC) after the 201 probe calls of each model and before any other call of run 12.
+Probe calls, per model: 152,997 input tokens for 422,063 characters of request, so about 2.76 characters per token.
+Output tokens of the probe calls: 45,047 (claude-opus-5-5), 26,577 (claude-sonnet-5-5), 117,812 (claude-haiku-5-5).
+All requests of one model hold about 45.7 million characters, so about 16.6 million input tokens.
+Reader calls return a short list; the canary reply used 24 output tokens. Allowing up to 250 output tokens per call:
+  claude-opus-5-5:   66 dollars input, 10 to 44 dollars output
+  claude-sonnet-5-5: 33 dollars input, 5 to 22 dollars output
+  claude-haiku-5-5:  about 4 dollars in all
+Projected total: 120 to 170 dollars at list prices, below the ceiling of 300 dollars in the plan. The run goes on.
