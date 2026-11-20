@@ -84,11 +84,18 @@ def test_no_llm_or_network_client_imports_in_src():
     network_stdlib = {"socket", "ssl", "http", "urllib", "ftplib", "smtplib", "xmlrpc", "asyncio", "telnetlib"}
     allowed = {"service.py", "mcp_server.py", "http.py", "onboarding.py"}
     # http.py is the loopback-only HTTP simulator adapter (T-029); onboarding.py has the doctor's configured-URL health check (T-035)
+    # The one LLM client in src: the second transport of the simulated readers, an opt-in module behind the optional extra
+    # readers-api. Only this file may name the package, and only inside a function, so that importing the module calls nothing.
+    lazy_only = {"simulators/readers/api.py": {"anthropic"}}
     offenders = []
     for path in SRC.rglob("*.py"):
         if path.name in allowed:
             continue
-        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        in_function = {id(inner) for fn in ast.walk(tree) if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
+                       for inner in ast.walk(fn)}
+        lazy = lazy_only.get(path.relative_to(SRC).as_posix(), set())
+        for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 names = [a.name for a in node.names]
             elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
@@ -98,6 +105,7 @@ def test_no_llm_or_network_client_imports_in_src():
             for name in names:
                 top = name.split(".")[0]
                 ok = top in runtime or (top in sys.stdlib_module_names and top not in network_stdlib)
+                ok = ok or (top in lazy and id(node) in in_function)
                 if not ok:
                     offenders.append(f"{path.relative_to(SRC)}: {name}")
     assert SRC.exists(), "src/mootcourt must exist"
