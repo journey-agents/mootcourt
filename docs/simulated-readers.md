@@ -60,6 +60,31 @@ block with the working directory, the platform, the model's name and today's dat
 None of it concerns the archive. Each reply is checked whole against a schema: the right count of numbers, each from
 0 to 100. A reply that fails is asked for twice more and then recorded as missing. Nothing is clipped or filled in.
 
+## A second transport: the vendor's API
+
+Under a subscription login the command line tool puts its own context around the system prompt, with the present date in
+it, and the wrapper cannot remove that. The same requests can go through the vendor's API, where the model receives the
+system prompt and the reader's prompt and nothing else:
+
+```bash
+uv sync --extra readers-api                      # the vendor's package; no default path imports it
+export ANTHROPIC_API_KEY="$(cat /path/outside/the/repository/key.txt)"
+uv run python scripts/simulated_readers.py canary --model claude-opus-5-5 --transcripts "$API" --transport api --allow-model-calls
+uv run python scripts/simulated_readers.py run --model claude-opus-5-5 --plan "$PLAN" --transcripts "$API" --transport api --allow-model-calls
+uv run python scripts/simulated_readers.py score --plan "$PLAN" --transcripts "$API" --ledger "$LEDGER" --out "$REPORTS" --commit "$COMMIT" --label run12-api
+uv run python scripts/simulated_readers.py compare --plan "$PLAN" --tool "$TOOL" --api "$API" --reports "$REPORTS" --label run12-api --out "$REPORTS" --commit "$COMMIT"
+```
+
+A request holds the model, the system prompt, one user message and a token limit. No tool, no sampling setting, no
+thinking or effort setting and no fallback model is sent, so each model runs at the vendor's defaults. The key is read
+from the environment by the vendor's package and is never printed or stored. Each stored record also holds the token
+counts the API reports. Use a separate transcripts folder for each transport: the request hash is the same for both, so
+one folder would treat the other transport's reply as already stored.
+
+`compare` writes one report per model with the share of contrasts on which the two plain panels agree in direction, the
+difference in plain accuracy with its interval over resampled blocks, and the three readings of both runs side by side.
+Agreement shows that the tool's added context does not drive the result. It does not show that either run is right.
+
 ## What the result may be called
 
 The tests are public and older than the models, so a model may have seen them during training. Three probes describe

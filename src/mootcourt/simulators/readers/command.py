@@ -55,6 +55,7 @@ class ToolReply:
     reported_model: str | None
     tool_version: str | None
     seconds: float
+    usage: dict | None = None          # token counts, when the transport reports them
 
 
 def build_command(model: str, system: str, schema: dict | None = None, program: str = "claude") -> list[str]:

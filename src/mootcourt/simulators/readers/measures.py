@@ -257,3 +257,22 @@ def agreement_report(per_model: dict[str, pd.DataFrame]) -> dict:
             pairs[f"{one}__{two}"] = {"agree_share": float(agree.mean()) if both.any() else None, "n": int(both.sum()),
                                       "left_out": int((~both).sum())}
     return {"models": models, "pairs": pairs}
+
+
+def transport_report(contrasts: pd.DataFrame, feeds: pd.DataFrame, tool_plain: pd.DataFrame, api_plain: pd.DataFrame) -> dict:
+    """The plain panels of one model in two runs that differ only in transport: agreement in direction and the paired difference in accuracy.
+
+    Both frames come from ``directions`` on the same contrasts. Agreement leaves out a contrast where either panel is
+    tied or has no reader. The difference is the second run minus the first and belongs to no family, so it has no
+    adjusted bounds and no verdict.
+    """
+    contrasts = contrasts.reset_index(drop=True)
+    block_of_row = pd.Series(contrasts["unit_id"].map(feeds.drop_duplicates("unit_id").set_index("unit_id")["block_id"]).to_numpy(),
+                             index=contrasts["row_id"])
+    a, b = tool_plain["diff"].to_numpy(dtype=float), api_plain["diff"].to_numpy(dtype=float)
+    both = ~np.isnan(a) & ~np.isnan(b) & (a != 0) & (b != 0)
+    agree = np.sign(a[both]) == np.sign(b[both])
+    tool_correct, api_correct = tool_plain["correct"].to_numpy(dtype=float), api_plain["correct"].to_numpy(dtype=float)
+    return {"plain": {"agree_share": float(agree.mean()) if both.any() else None, "n": int(both.sum()), "left_out": int((~both).sum()),
+                      "accuracy_tool": float(tool_correct.mean()), "accuracy_api": float(api_correct.mean()),
+                      "accuracy_api_minus_tool": paired_difference(contrasts, api_correct, tool_correct, block_of_row, family=None)}}

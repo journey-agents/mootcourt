@@ -13,9 +13,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from mootcourt.simulators.cache import SimulationCache
+from mootcourt.simulators.readers import api
 from mootcourt.simulators.readers.command import TransportError, call, same_model
 from mootcourt.simulators.readers.prompts import ReplyError, is_refusal
 
+TRANSPORTS = ("tool", "api")
 ATTEMPTS = 3          # the first call and two retries with the same input
 
 
@@ -67,26 +69,32 @@ def _read(path: Path) -> dict | None:
 
 def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: str, schema: dict, parse: Callable[[str], object],
         *, program: str = "claude", allow_model_calls: bool = False, time_cap_s: float = 180.0, meta: dict | None = None,
-        hold_bad: bool = False) -> dict:
+        hold_bad: bool = False, transport: str = "tool") -> dict:
     """The stored record of this request, made by up to three calls when none is stored and calls are allowed.
 
     ``parse`` reads a reply's text and raises ``ReplyError`` when the reply is not what was asked for. The status is
     ``"ok"``, or after three bad replies ``"refusal"`` when the last one holds no JSON object and ``"invalid"``
     otherwise. A ``TransportError`` passes through and nothing is stored; a reply that reports another model than the one
     asked for is such an error. With ``hold_bad`` a record that is not ``"ok"`` is returned and not stored, so the caller can
-    decide whether it was a real reply or the sign of a failing transport.
+    decide whether it was a real reply or the sign of a failing transport. ``transport`` is ``"tool"`` for the command line
+    tool or ``"api"`` for the vendor's API; the request and its hash are the same for both.
     """
+    if transport not in TRANSPORTS:
+        raise ValueError(f"unknown transport {transport!r}")
     h = request_hash(model, kind, system, prompt, schema)
     stored = transcripts.get(model, kind, h)
     if stored is not None:
         return stored
     if not allow_model_calls:
         raise ModelCallsNotAllowed(f"no stored reply for request {h[:12]} of {model}, and model calls are not allowed")
-    parsed, status, reply, seconds, attempts = None, "invalid", None, 0.0, 0
+    parsed, status, reply, seconds, attempts, usage = None, "invalid", None, 0.0, 0, None
     while attempts < ATTEMPTS:
         attempts += 1
-        reply = call(model, system, prompt, schema, program=program, time_cap_s=time_cap_s)
+        reply = (api.call(model, system, prompt, schema, time_cap_s=time_cap_s) if transport == "api"
+                 else call(model, system, prompt, schema, program=program, time_cap_s=time_cap_s))
         seconds += reply.seconds
+        if reply.usage is not None:          # every attempt is paid for, so the counts add up over attempts
+            usage = {name: (usage or {}).get(name, 0) + value for name, value in reply.usage.items()}
         if not same_model(model, reply.reported_model):
             raise TransportError(f"asked {model} and the tool reports another model, {reply.reported_model}")
         try:
@@ -98,6 +106,8 @@ def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: st
               "meta": meta or {}, "reply_text": reply.text, "parsed": parsed, "attempts": attempts,
               "reported_model": reply.reported_model, "tool_version": reply.tool_version, "seconds": round(seconds, 3),
               "stored_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if usage is not None:
+        record["usage"] = usage
     if status == "ok" or not hold_bad:
         transcripts.put(model, kind, h, record)
     return record

@@ -15,6 +15,11 @@ A panel of ten model-played readers scores headline cards in matched feeds. The 
   be read, or the tool does not report its model and version.
 * ``score --plan DIR --transcripts DIR --ledger L --out DIR --commit HASH`` writes one report per model and the agreement
   report. It never calls a model, and it exits with code 5 while any planned call of any model is not stored.
+  ``--label NAME`` names the run in each report and in its file name.
+* ``run`` and ``canary`` take ``--transport api`` to reach the model through the vendor's API in place of the command line
+  tool. The request is the same; the key is read from the environment variable ``ANTHROPIC_API_KEY`` and never stored.
+* ``compare --plan DIR --tool DIR --api DIR --reports DIR --label NAME --out DIR --commit HASH`` writes, for each model, how
+  the plain panels of the two transports compare. It never calls a model.
 
 A ledger or scores file whose name holds holdout, confirmatory or undeployed is refused.
 """
@@ -27,11 +32,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from mootcourt.simulators.readers import pipeline
+from mootcourt.simulators.readers import api, pipeline
 from mootcourt.simulators.readers.command import TransportError, same_model, start_record
 from mootcourt.simulators.readers.prompts import ReplyError, clicks_schema, parse_clicks, reader_prompt
 from mootcourt.simulators.readers.protocol import KINDS, MODELS, PROFILES, SYSTEM_PROMPT
-from mootcourt.simulators.readers.transcripts import Transcripts
+from mootcourt.simulators.readers.transcripts import TRANSPORTS, Transcripts
 
 REFUSED_NAMES = ("holdout", "confirmatory", "undeployed")
 
@@ -86,7 +91,7 @@ def cmd_run(args) -> int:
     if args.record_missing:
         pipeline.record_missing(plan, args.model, Transcripts(args.transcripts), args.record_missing, log=log)
     return pipeline.run_model(plan, args.model, Transcripts(args.transcripts), program=args.program, workers=args.workers,
-                              kinds=tuple(args.kinds or KINDS), allow_model_calls=True, log=log)
+                              kinds=tuple(args.kinds or KINDS), allow_model_calls=True, log=log, transport=args.transport)
 
 
 def cmd_canary(args) -> int:
@@ -95,9 +100,10 @@ def cmd_canary(args) -> int:
         return pipeline.EXIT_NOT_ALLOWED
     if not _model_allowed(args):
         return 1
+    prompt = reader_prompt(PROFILES[0], list(CANARY_HEADLINES))
     try:
-        record = start_record(args.model, SYSTEM_PROMPT, reader_prompt(PROFILES[0], list(CANARY_HEADLINES)),
-                              clicks_schema(len(CANARY_HEADLINES)), program=args.program)
+        record = (api.canary(args.model, SYSTEM_PROMPT, prompt) if args.transport == "api"
+                  else start_record(args.model, SYSTEM_PROMPT, prompt, clicks_schema(len(CANARY_HEADLINES)), program=args.program))
     except TransportError as exc:
         log(f"the canary call failed: {exc}")
         return pipeline.EXIT_TRANSPORT
@@ -127,7 +133,14 @@ def cmd_canary(args) -> int:
 def cmd_score(args) -> int:
     refuse_names(args.ledger)
     plan = pipeline.Plan.load(args.plan)
-    return pipeline.score(plan, Transcripts(args.transcripts), pd.read_parquet(args.ledger), args.out, args.commit, log=log)
+    return pipeline.score(plan, Transcripts(args.transcripts), pd.read_parquet(args.ledger), args.out, args.commit, log=log,
+                          label=args.label)
+
+
+def cmd_compare(args) -> int:
+    plan = pipeline.Plan.load(args.plan)
+    return pipeline.compare(plan, Transcripts(args.tool), Transcripts(args.api), args.reports, args.label, args.out, args.commit,
+                            log=log)
 
 
 def main(argv=None) -> int:
@@ -145,6 +158,8 @@ def main(argv=None) -> int:
         p.add_argument("--transcripts", required=True)
         p.add_argument("--allow-model-calls", action="store_true")
         p.add_argument("--program", default="claude")
+        p.add_argument("--transport", choices=TRANSPORTS, default="tool",
+                       help="tool: the command line tool; api: the vendor's API, with the key in ANTHROPIC_API_KEY")
         if name == "run":
             p.add_argument("--plan", required=True)
             p.add_argument("--kinds", nargs="*", choices=KINDS)
@@ -158,7 +173,17 @@ def main(argv=None) -> int:
     p.add_argument("--ledger", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--commit", required=True)
+    p.add_argument("--label", help="a name for this run, written into each report and its file name")
     p.set_defaults(run=cmd_score)
+    p = sub.add_parser("compare", help="compare the run through the tool with the run through the API; no model")
+    p.add_argument("--plan", required=True)
+    p.add_argument("--tool", required=True, help="the transcripts of the run through the command line tool")
+    p.add_argument("--api", required=True, help="the transcripts of the run through the API")
+    p.add_argument("--reports", required=True, help="the folder with the model reports of both runs")
+    p.add_argument("--label", required=True, help="the label of the API run's reports")
+    p.add_argument("--out", required=True)
+    p.add_argument("--commit", required=True)
+    p.set_defaults(run=cmd_compare)
     args = parser.parse_args(argv)
     return args.run(args)
 

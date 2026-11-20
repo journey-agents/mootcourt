@@ -41,8 +41,8 @@ Run 12 sends the same requests through the vendor's Messages API with a key. The
 
 - Create `src/mootcourt/simulators/readers/api.py`: `call(model, system, prompt, schema=None, *, time_cap_s=180.0) -> ToolReply` and `canary(model, system, prompt) -> dict`. `ToolReply` gains an optional `usage: dict | None = None`.
 - Modify `src/mootcourt/simulators/readers/transcripts.py`: `ask(..., transport="tool")` chooses the call; a record stores `usage` when the reply has one.
-- Modify `src/mootcourt/simulators/readers/pipeline.py` and `scripts/simulated_readers.py`: the option `--transport {tool,api}` on `run` and `canary`, default `tool`; `score --run-label LABEL` (default `run11`) is written into each report as `run_label` and `transport`, and into the report's file name when it is not the default.
-- Modify `src/mootcourt/simulators/readers/measures.py`: `transport_report(first, second) -> dict`, described below.
+- Modify `src/mootcourt/simulators/readers/pipeline.py` and `scripts/simulated_readers.py`: the option `--transport {tool,api}` on `run` and `canary`, default `tool`; `score --label LABEL` writes `run_label` into each report and puts the label into the report's file name; without it nothing changes. A new stage `compare --plan DIR --tool DIR --api DIR --reports DIR --label LABEL --out DIR --commit HASH` writes the comparison and calls no model.
+- Modify `src/mootcourt/simulators/readers/measures.py`: `transport_report(contrasts, feeds, tool_plain, api_plain) -> dict`, described below.
 - Tests: `tests/test_readers_api.py` with a stand-in client (no network), and additions to the pipeline and script tests.
 - Docs: a section in `docs/simulated-readers.md`; one numbered decision in `docs/method.md`.
 
@@ -51,7 +51,7 @@ Run 12 sends the same requests through the vendor's Messages API with a key. The
 For each model, `score` with both transcript folders writes `simulated-readers-transport-<model>-<snapshot>.json` with these keys:
 
 - `plain.agree_share`, `plain.n`, `plain.left_out`: the share of contrasts on which the plain panels of the two runs give the same direction, among contrasts where neither panel is tied or missing.
-- `plain.accuracy_api_minus_tool` with `estimate`, `lo`, `hi`, `se`: the difference in plain accuracy, run 12 minus run 11, on the same contrasts, with the block bootstrap of the parent plan (63 blocks, B = 500) and a plain 95 percent interval. This is one comparison per model and belongs to no family.
+- `plain.accuracy_api_minus_tool` with `estimate`, `lo`, `hi`, `se`: the difference in plain accuracy, run 12 minus run 11, on the same contrasts, with the block bootstrap of the parent plan (63 blocks, B = 500). `lo` and `hi` are the 5th and 95th percentiles over resampled blocks, as for every difference outside a family in the parent plan. This is one comparison per model and belongs to no family. (Corrected on 19 November 2026 before any code or call of this run: the first wording named a 95 percent interval, which is not what the existing function gives.)
 - `readings.<name>.api` and `readings.<name>.tool`: the three readings of each run side by side, copied from the two model reports.
 
 How the paper reads it, decided now:

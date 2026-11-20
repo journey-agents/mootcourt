@@ -23,7 +23,7 @@ from mootcourt.simulators.readers.align import visible_before
 from mootcourt.simulators.readers.command import TransportError
 from mootcourt.simulators.readers.feeds import build_feeds, feeds_checksum
 from mootcourt.simulators.readers.inputs import load_units
-from mootcourt.simulators.readers.measures import ModelRun, agreement_report, model_report
+from mootcourt.simulators.readers.measures import ModelRun, agreement_report, model_report, transport_report
 from mootcourt.simulators.readers.panel import answers_frame, directions, panel_scores, reader_scores
 from mootcourt.simulators.readers.prompts import clicks_schema, parse_clicks, reader_prompt
 from mootcourt.simulators.readers.protocol import (
@@ -298,7 +298,7 @@ def record_missing(plan: Plan, model: str, transcripts: Transcripts, hashes: lis
 
 
 def run_model(plan: Plan, model: str, transcripts: Transcripts, *, program: str = "claude", workers: int = 4, kinds=KINDS,
-              allow_model_calls: bool = False, log: Callable[[str], None] = print) -> int:
+              allow_model_calls: bool = False, log: Callable[[str], None] = print, transport: str = "tool") -> int:
     """Make the calls of one model that are not stored, kind by kind. Returns an exit code; 0 means nothing is outstanding."""
     if not allow_model_calls:
         log("model calls are not allowed: pass --allow-model-calls to make them")
@@ -311,7 +311,7 @@ def run_model(plan: Plan, model: str, transcripts: Transcripts, *, program: str 
         calls, blocked = calls_of(plan, model, kind, transcripts)
         todo = [call for call in calls if stored(transcripts, model, call) is None]
         log(f"{model} {kind}: {len(calls) - len(todo)} stored, {len(todo)} to make")
-        failure = _make(todo, model, transcripts, program, workers)
+        failure = _make(todo, model, transcripts, program, workers, transport)
         if failure is not None or blocked:
             left = outstanding(plan, model, transcripts, kinds)
             why = (f"stopped after {MAX_TRANSPORT_FAILURES} calls in a row without a usable reply ({failure})" if failure is not None
@@ -323,7 +323,7 @@ def run_model(plan: Plan, model: str, transcripts: Transcripts, *, program: str 
     return 0 if not any(left.values()) else EXIT_TRANSPORT
 
 
-def _make(todo: list[Call], model: str, transcripts: Transcripts, program: str, workers: int) -> str | None:
+def _make(todo: list[Call], model: str, transcripts: Transcripts, program: str, workers: int, transport: str = "tool") -> str | None:
     """Make the calls with a few threads. Returns a description once five calls in a row gave no usable reply, else None.
 
     A transport failure stores nothing. A reply that is still bad after its retries is held back and stored as missing
@@ -342,7 +342,8 @@ def _make(todo: list[Call], model: str, transcripts: Transcripts, program: str, 
                 return
             try:
                 record = ask(transcripts, model, call.kind, call.system, call.prompt, call.schema, call.parse, program=program,
-                             allow_model_calls=True, meta=call.meta, hold_bad=True, time_cap_s=time_cap(call.kind))
+                             allow_model_calls=True, meta=call.meta, hold_bad=True, time_cap_s=time_cap(call.kind),
+                             transport=transport)
                 with lock:
                     if record["status"] == "ok":
                         if stop.is_set():          # the run has already stopped: the held replies stay dropped
@@ -416,9 +417,17 @@ def _model_run(plan: Plan, model: str, transcripts: Transcripts, ledger: pd.Data
         commit=commit, ledger=ledger, probes=measured)
 
 
+def report_name(what: str, snapshot: str, label: str | None = None) -> str:
+    """The file name of a report. A run with a label carries it in the name, so two runs can share a folder."""
+    return f"simulated-readers-{what}-{label + '-' if label else ''}{snapshot}.json"
+
+
 def score(plan: Plan, transcripts: Transcripts, ledger: pd.DataFrame, out, commit: str, models=MODELS,
-          log: Callable[[str], None] = print) -> int:
-    """Write one report per model and the agreement report, or refuse while any planned call of any model is not stored."""
+          log: Callable[[str], None] = print, label: str | None = None) -> int:
+    """Write one report per model and the agreement report, or refuse while any planned call of any model is not stored.
+
+    With a ``label`` each report holds it as ``run_label`` and carries it in its file name; without one nothing differs.
+    """
     left = {model: outstanding(plan, model, transcripts) for model in models}
     if any(sum(kinds.values()) for kinds in left.values()):
         for model, kinds in left.items():
@@ -433,12 +442,51 @@ def score(plan: Plan, transcripts: Transcripts, ledger: pd.DataFrame, out, commi
         run = _model_run(plan, model, transcripts, ledger, commit)
         report = model_report(run, model)
         report["snapshot"] = plan.snapshot
-        path = out / f"simulated-readers-{model}-{plan.snapshot}.json"
+        if label:
+            report["run_label"] = label
+        path = out / report_name(model, plan.snapshot, label)
         path.write_text(json.dumps(report, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
         plain_of[model] = directions(plan.contrasts, panel_scores(reader_scores(plan.feeds, run.answers["plain"])))
         log(f"wrote {path}")
     agreement = {**agreement_report(plain_of), "snapshot": plan.snapshot, "commit": commit, "seed": SEED}
-    path = out / f"simulated-readers-agreement-{plan.snapshot}.json"
+    if label:
+        agreement["run_label"] = label
+    path = out / report_name("agreement", plan.snapshot, label)
     path.write_text(json.dumps(agreement, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
     log(f"wrote {path}")
+    return 0
+
+
+READINGS = ("plain_minus_always_reference", "weights_minus_plain", "text_with_panel_minus_text")
+
+
+def compare(plan: Plan, tool: Transcripts, api: Transcripts, reports, label: str, out, commit: str, models=MODELS,
+            log: Callable[[str], None] = print) -> int:
+    """Write, for each model, the comparison of the run through the tool with the run through the API. No model is called.
+
+    ``reports`` is the folder that holds the model reports of both runs; those of the API run carry ``label`` in their names.
+    The three readings of each run are copied from those reports, so the comparison adds only what needs both runs.
+    """
+    for name, store in (("tool", tool), ("api", api)):
+        left = {model: sum(outstanding(plan, model, store).values()) for model in models}
+        if any(left.values()):
+            log(f"the {name} run has calls outstanding: {left}")
+            return EXIT_OUTSTANDING
+    reports, out = Path(reports), Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    for model in models:
+        plain = {}
+        for name, store in (("tool", tool), ("api", api)):
+            calls, _ = calls_of(plan, model, "plain", store)
+            answers = answers_frame(stored(store, model, call) for call in calls)
+            plain[name] = directions(plan.contrasts, panel_scores(reader_scores(plan.feeds, answers)))
+        report = transport_report(plan.contrasts, plan.feeds, plain["tool"], plain["api"])
+        saved = {"tool": json.loads((reports / report_name(model, plan.snapshot)).read_text(encoding="utf-8")),
+                 "api": json.loads((reports / report_name(model, plan.snapshot, label)).read_text(encoding="utf-8"))}
+        report["readings"] = {reading: {name: saved[name]["readings"][reading] for name in ("tool", "api")} for reading in READINGS}
+        report.update(model=model, snapshot=plan.snapshot, commit=commit, seed=SEED, run_label=label,
+                      commits={name: saved[name]["commit"] for name in ("tool", "api")})
+        path = out / report_name(f"transport-{model}", plan.snapshot)
+        path.write_text(json.dumps(report, indent=1, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+        log(f"wrote {path}")
     return 0

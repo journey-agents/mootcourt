@@ -55,6 +55,9 @@ dev = [
 simulators = [
   "httpx>=0.27",            # a client for agents served over HTTP; the adapters themselves need nothing beyond the standard library
 ]
+readers-api = [
+  "anthropic>=1.0",         # the second transport of the simulated readers; no default path imports it
+]
 docs = [
   "mkdocs-material>=9.5",
   "mkdocstrings[python]>=0.25",

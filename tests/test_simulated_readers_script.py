@@ -206,3 +206,35 @@ def test_a_refused_note_is_reported_and_does_not_block_the_score(tmp_path, plann
     origins = set(reports["claude-opus-5-5"]["by_origin"])
     assert set(brief["notes_missing"]) | set(brief["notes"]) == origins - {min(origins)}
     assert brief["no_reader"] > 0 and reports["claude-opus-5-5"]["counts"]["calls_refusal"] == len(brief["notes_missing"])
+
+
+def test_a_labelled_score_and_the_comparison_of_two_transports(planted_run, planned, archive, tmp_path):
+    folder, program, reports = planted_run
+    n, out, stamp = program.calls(), tmp_path / "o", "20260101-0123456789ab"
+    score = ("score", "--plan", planned, "--transcripts", folder / "t", "--ledger", archive[0], "--out", out)
+    assert run_script(*score, "--commit", "x").returncode == 0
+    assert run_script(*score, "--commit", "y", "--label", "run12-api").returncode == 0
+    labelled = json.loads((out / f"simulated-readers-claude-opus-5-5-run12-api-{stamp}.json").read_text())
+    assert labelled["run_label"] == "run12-api" and labelled["plain"] == reports["claude-opus-5-5"]["plain"]
+    assert "run_label" not in json.loads((out / f"simulated-readers-claude-opus-5-5-{stamp}.json").read_text())
+    r = run_script("compare", "--plan", planned, "--tool", folder / "t", "--api", folder / "t", "--reports", out, "--label", "run12-api",
+                   "--out", out, "--commit", "z")
+    assert r.returncode == 0, r.stderr
+    rep = json.loads((out / f"simulated-readers-transport-claude-opus-5-5-{stamp}.json").read_text())
+    assert rep["plain"]["agree_share"] == 1.0 and rep["plain"]["accuracy_api_minus_tool"]["estimate"] == 0.0
+    assert rep["readings"]["weights_minus_plain"]["api"] == labelled["readings"]["weights_minus_plain"]
+    assert rep["commits"] == {"tool": "x", "api": "y"} and rep["commit"] == "z" and rep["run_label"] == "run12-api"
+    assert program.calls() == n                                   # neither stage called a model
+
+
+def test_compare_refuses_while_a_run_has_calls_outstanding(planted_run, planned, tmp_path):
+    folder, _, _ = planted_run
+    r = run_script("compare", "--plan", planned, "--tool", folder / "t", "--api", tmp_path / "empty", "--reports", folder / "o",
+                   "--label", "run12-api", "--out", tmp_path / "o", "--commit", "z")
+    assert r.returncode == 5 and "the api run has calls outstanding" in r.stderr and not (tmp_path / "o").exists()
+
+
+def test_the_api_transport_also_refuses_without_the_flag(tmp_path):
+    for stage in (("canary",), ("run", "--plan", tmp_path)):
+        r = run_script(*stage, "--model", "claude-opus-5-5", "--transcripts", tmp_path / "t", "--transport", "api")
+        assert r.returncode == 2 and "model calls are not allowed" in r.stderr and not (tmp_path / "t").exists()
