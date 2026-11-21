@@ -29,6 +29,19 @@ for f in tmlr.sty tmlr.bst; do curl -sSL -o paper/tmlr/$f https://raw.githubuser
 With the files present `make tmlr` uses them and the first page reads "Under review as submission to TMLR". Without them the build
 falls back to a plain single-column layout of the same text width, which is enough to check the text, the order and the page count.
 
+## The supplementary material
+
+`make supplement` writes `paper/dist/supplement-anonymous-<date>.zip` (not committed) with `scripts/anonymous_supplement.py`. It
+packs the package, the scripts, the tests, the manual with its plans and the registration, the run folders and the code that
+writes the tables. The package's name is replaced in text and in file names, so the code still imports and its tests run. Links to
+the repository, to the archive of releases and to the project's registry page, electronic addresses, the names in the project
+metadata and every commit of this repository are replaced by a phrase that says they are withheld. The registry pages of the
+public archives are kept, since a reader needs them to fetch the data. Top-level notes, the license, the citation file, the
+release page of the manual and the paper's own sources are left out. The script then reads every packed file and writes nothing if
+a forbidden string remains.
+
+Paths on the data drive remain in some notes and logs. They name a drive and no person.
+
 ## Decisions recorded here
 
 - The package's name leads to the repository, so the build replaces the name, the import name and the command with neutral ones

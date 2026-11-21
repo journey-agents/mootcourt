@@ -147,3 +147,8 @@ arxiv-check: arxiv
 # paper/tmlr-submission.tex and paper/tmlr-submission.pdf, which git ignores.
 tmlr: paper-figures tables
 	$(PY) scripts/tmlr_build.py --paper paper --compile
+
+# The anonymized supplementary material the anonymous version points to: code, reports, plans and the registration in one
+# zip under paper/dist, which git ignores. The build stops if a packed file still names the project.
+supplement:
+	$(PY) scripts/anonymous_supplement.py --out paper/dist
