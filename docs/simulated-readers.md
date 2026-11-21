@@ -47,6 +47,10 @@ uv run python scripts/simulated_readers.py run --model claude-opus-5-5 --plan PL
 uv run python scripts/simulated_readers.py score --plan PLAN_DIR --transcripts T_DIR --ledger LEDGER.parquet --out OUT_DIR --commit HASH
 ```
 
+`--commit` takes the hash of the commit the code was at, 7 to 40 hexadecimal digits, and any other value is refused. A ledger or scores file is refused when its name, a folder of its path or the target of a link holds holdout, confirmatory or undeployed. A unit whose rows disagree on the reference arm's clicks or impressions stops the plan.
+
+A reply that is not in the form asked for is requested again, up to three attempts in all. The stored record keeps the text of each bad reply before the last under `earlier_replies`. When a transport failure comes between attempts, a note beside the record's place keeps the bad replies so far, and the next start resumes with what is left of the three attempts.
+
 `run` exits with code 2 unless `--allow-model-calls` is given. It exits with code 3 after five calls in a row end
 without a usable reply, for example when a usage limit is reached; start it again later and it continues. Nothing from
 such a streak is stored, so a limit message is never recorded as a refusal. `score` exits with code 5 while

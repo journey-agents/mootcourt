@@ -39,7 +39,8 @@ def archive(tmp_path_factory):
             "headline": f"{words} story about people and places today {row.variant_id}{planted}",
             "reference_headline": f"a plain story about people and places today {row.test_id}",
             "post_launch": {"clicks_ref": 150, "clicks_var": 150 + (40 if row.y > 0 else -40)}}))
-    ledger = ledger.assign(features_json=features)
+    # one reference arm serves every variant of a test, so its count is the same on each row of the test
+    ledger = ledger.assign(features_json=features, n_ref=ledger.groupby("test_id")["n_ref"].transform("first"))
     rungs = harness.default_rungs("synthetic", ledger, "text_lr", baselines=True)
     scores = harness.rolling_origin(ledger, rungs, harness.quarterly_origins(ledger), source="synthetic")
     ledger_path, scores_path = folder / "ledger.parquet", folder / "scores-synthetic-20260101-0123456789ab.parquet"
@@ -73,7 +74,7 @@ def full_run(folder, planned, archive, program, models=MODELS):
         r = run_script("run", "--model", m, "--plan", planned, "--transcripts", folder / "t", "--allow-model-calls", "--program", program,
                        "--workers", "8")
         assert r.returncode == 0, r.stderr
-    r = run_script("score", "--plan", planned, "--transcripts", folder / "t", "--ledger", archive[0], "--out", folder / "o", "--commit", "x")
+    r = run_script("score", "--plan", planned, "--transcripts", folder / "t", "--ledger", archive[0], "--out", folder / "o", "--commit", "aaaaaaa")
     assert r.returncode == 0, r.stderr
     return {m: json.loads(next((folder / "o").glob(f"simulated-readers-{m}-*.json")).read_text()) for m in models}
 
@@ -101,7 +102,8 @@ def test_score_refuses_while_calls_are_outstanding(tmp_path, planned, archive, t
     one_model_done = tmp_path / "t"
     assert run_script("run", "--model", MODELS[0], "--plan", planned, "--transcripts", one_model_done, "--allow-model-calls",
                       "--program", program, "--workers", "8").returncode == 0
-    r = run_script("score", "--plan", planned, "--transcripts", one_model_done, "--ledger", archive[0], "--out", tmp_path / "o", "--commit", "x")
+    r = run_script("score", "--plan", planned, "--transcripts", one_model_done, "--ledger", archive[0], "--out", tmp_path / "o",
+                   "--commit", "aaaaaaa")
     assert r.returncode == 5 and "outstanding" in r.stderr and not list((tmp_path / "o").glob("*.json"))
     assert MODELS[1] in r.stderr and MODELS[0] + ":" not in r.stderr
 
@@ -110,7 +112,7 @@ def test_planted_effect_is_recovered_end_to_end(planted_run, planned):
     folder, _, reports = planted_run
     rep = reports["claude-opus-5-5"]
     assert rep["plain"]["accuracy"] > 0.8 and rep["readings"]["plain_minus_always_reference"]["verdict"] == "above"
-    assert rep["counts"]["calls_ok"] == rep["counts"]["calls_planned"] > 0 and rep["commit"] == "x"
+    assert rep["counts"]["calls_ok"] == rep["counts"]["calls_planned"] > 0 and rep["commit"] == "aaaaaaa"
     plan = json.loads((planned / "plan.json").read_text())
     assert rep["counts"]["calls_planned"] == plan["calls"]["per_model"]
     assert rep["methods"]["text_with_panel"]["without_equals_saved_share"] == 1.0
@@ -139,10 +141,10 @@ def test_a_second_run_makes_no_call(planted_run, planned, archive):
 def test_score_never_calls_a_model(planted_run, planned, archive, tmp_path):
     folder, program, reports = planted_run
     n = program.calls()
-    r = run_script("score", "--plan", planned, "--transcripts", folder / "t", "--ledger", archive[0], "--out", tmp_path, "--commit", "y")
+    r = run_script("score", "--plan", planned, "--transcripts", folder / "t", "--ledger", archive[0], "--out", tmp_path, "--commit", "bbbbbbb")
     assert r.returncode == 0 and program.calls() == n
     again = json.loads(next(tmp_path.glob("simulated-readers-claude-opus-5-5-*.json")).read_text())
-    assert again["plain"] == reports["claude-opus-5-5"]["plain"] and again["commit"] == "y"
+    assert again["plain"] == reports["claude-opus-5-5"]["plain"] and again["commit"] == "bbbbbbb"
 
 
 def test_a_reader_that_answers_at_random_is_not_shown_to_beat_the_baseline(tmp_path, planned, archive, tmp_path_factory):
@@ -173,7 +175,9 @@ def test_plan_stops_when_the_archive_counts_are_expected_and_not_found(tmp_path,
 
 
 def test_forbidden_file_names_are_refused(tmp_path):
-    for name in ("upworthy-confirmatory.parquet", "upworthy-holdout.parquet", "undeployed.parquet"):
+    # the word may sit in the file's name or in any folder of its path
+    for name in ("upworthy-confirmatory.parquet", "upworthy-holdout.parquet", "undeployed.parquet", "Holdout/ledger.parquet",
+                 "data/upworthy-confirmatory/ledger.parquet"):
         r = run_script("plan", "--ledger", tmp_path / name, "--scores", "s", "--out", tmp_path / "out")
         assert r.returncode != 0 and "refused" in r.stderr and not (tmp_path / "out").exists()
 
@@ -212,25 +216,25 @@ def test_a_labelled_score_and_the_comparison_of_two_transports(planted_run, plan
     folder, program, reports = planted_run
     n, out, stamp = program.calls(), tmp_path / "o", "20260101-0123456789ab"
     score = ("score", "--plan", planned, "--transcripts", folder / "t", "--ledger", archive[0], "--out", out)
-    assert run_script(*score, "--commit", "x").returncode == 0
-    assert run_script(*score, "--commit", "y", "--label", "run12-api").returncode == 0
+    assert run_script(*score, "--commit", "aaaaaaa").returncode == 0
+    assert run_script(*score, "--commit", "bbbbbbb", "--label", "run12-api").returncode == 0
     labelled = json.loads((out / f"simulated-readers-claude-opus-5-5-run12-api-{stamp}.json").read_text())
     assert labelled["run_label"] == "run12-api" and labelled["plain"] == reports["claude-opus-5-5"]["plain"]
     assert "run_label" not in json.loads((out / f"simulated-readers-claude-opus-5-5-{stamp}.json").read_text())
     r = run_script("compare", "--plan", planned, "--tool", folder / "t", "--api", folder / "t", "--reports", out, "--label", "run12-api",
-                   "--out", out, "--commit", "z")
+                   "--out", out, "--commit", "ccccccc")
     assert r.returncode == 0, r.stderr
     rep = json.loads((out / f"simulated-readers-transport-claude-opus-5-5-{stamp}.json").read_text())
     assert rep["plain"]["agree_share"] == 1.0 and rep["plain"]["accuracy_api_minus_tool"]["estimate"] == 0.0
     assert rep["readings"]["weights_minus_plain"]["api"] == labelled["readings"]["weights_minus_plain"]
-    assert rep["commits"] == {"tool": "x", "api": "y"} and rep["commit"] == "z" and rep["run_label"] == "run12-api"
+    assert rep["commits"] == {"tool": "aaaaaaa", "api": "bbbbbbb"} and rep["commit"] == "ccccccc" and rep["run_label"] == "run12-api"
     assert program.calls() == n                                   # neither stage called a model
 
 
 def test_compare_refuses_while_a_run_has_calls_outstanding(planted_run, planned, tmp_path):
     folder, _, _ = planted_run
     r = run_script("compare", "--plan", planned, "--tool", folder / "t", "--api", tmp_path / "empty", "--reports", folder / "o",
-                   "--label", "run12-api", "--out", tmp_path / "o", "--commit", "z")
+                   "--label", "run12-api", "--out", tmp_path / "o", "--commit", "ccccccc")
     assert r.returncode == 5 and "the api run has calls outstanding" in r.stderr and not (tmp_path / "o").exists()
 
 
@@ -238,3 +242,20 @@ def test_the_api_transport_also_refuses_without_the_flag(tmp_path):
     for stage in (("canary",), ("run", "--plan", tmp_path)):
         r = run_script(*stage, "--model", "claude-opus-5-5", "--transcripts", tmp_path / "t", "--transport", "api")
         assert r.returncode == 2 and "model calls are not allowed" in r.stderr and not (tmp_path / "t").exists()
+
+
+def test_a_link_with_a_plain_name_to_a_forbidden_file_is_refused(tmp_path):
+    target = tmp_path / "upworthy-holdout.parquet"
+    target.write_bytes(b"")
+    (tmp_path / "ledger.parquet").symlink_to(target)
+    r = run_script("plan", "--ledger", tmp_path / "ledger.parquet", "--scores", "s", "--out", tmp_path / "out")
+    assert r.returncode != 0 and "refused" in r.stderr and not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("value", ["x", "HEAD", "abc12", "g123456", "a" * 41])
+def test_a_commit_that_is_not_a_hash_is_refused(tmp_path, planned, value):
+    for stage in (("score", "--plan", planned, "--transcripts", tmp_path, "--ledger", tmp_path / "l", "--out", tmp_path / "o"),
+                  ("compare", "--plan", planned, "--tool", tmp_path, "--api", tmp_path, "--reports", tmp_path, "--label", "n",
+                   "--out", tmp_path / "o")):
+        r = run_script(*stage, "--commit", value)
+        assert r.returncode == 2 and "commit" in r.stderr and not (tmp_path / "o").exists()

@@ -184,3 +184,46 @@ def test_the_start_record_that_is_kept_holds_no_path_and_no_session(fake):
     record = start_record("m", "S", reader_prompt("R", ["a b", "c d"]), clicks_schema(2), program=fake(mode="planted"))
     assert set(record["start_record"]) <= set(START_FIELDS) and "cwd" not in record["start_record"]
     assert record["tool_version"] == "fake-1" and record["reported_model"] == "m" and record["tools"] == []
+
+
+def _scripted(monkeypatch, steps):
+    """Replace the call of the tool by a script: a string is a reply's text and an exception is raised."""
+    from mootcourt.simulators.readers import transcripts
+    from mootcourt.simulators.readers.command import ToolReply
+
+    left = list(steps)
+
+    def scripted_call(model, system, prompt, schema, **_):
+        step = left.pop(0)
+        if isinstance(step, Exception):
+            raise step
+        return ToolReply(text=step, reported_model=model, tool_version="fake", seconds=1.0, usage={"input_tokens": 10, "output_tokens": 2})
+
+    monkeypatch.setattr(transcripts, "call", scripted_call)
+    return left
+
+
+GOOD, BAD = json.dumps({"clicks": [1, 2]}), json.dumps({"clicks": [1]})          # the bad reply is one number short
+
+
+def test_a_record_keeps_the_text_of_every_bad_reply_before_the_last(monkeypatch, tmp_path):
+    _scripted(monkeypatch, ["first bad", "second bad", GOOD])
+    r = ask(Transcripts(tmp_path / "t"), "m", "plain", "S", "P", clicks_schema(2), two, allow_model_calls=True)
+    assert (r["status"], r["attempts"], r["earlier_replies"]) == ("ok", 3, ["first bad", "second bad"])
+    _scripted(monkeypatch, [GOOD])
+    first_try = ask(Transcripts(tmp_path / "u"), "m", "plain", "S", "P", clicks_schema(2), two, allow_model_calls=True)
+    assert "earlier_replies" not in first_try          # a record made by one call keeps the shape it always had
+
+
+def test_a_transport_failure_between_attempts_does_not_give_the_request_a_fresh_budget(monkeypatch, tmp_path):
+    t = Transcripts(tmp_path / "t")
+    args = (t, "m", "plain", "S", "P", clicks_schema(2), two)
+    _scripted(monkeypatch, [BAD, BAD, TransportError("limit")])
+    with pytest.raises(TransportError):
+        ask(*args, allow_model_calls=True)
+    assert t.count("m", "plain") == {} and t.records("m", "plain") == []          # nothing that scoring reads is stored
+    left = _scripted(monkeypatch, [BAD, GOOD])
+    r = ask(*args, allow_model_calls=True)
+    assert (r["status"], r["attempts"]) == ("invalid", 3) and left == [GOOD]          # one attempt was left, not three
+    assert r["earlier_replies"] == [BAD, BAD] and r["usage"] == {"input_tokens": 30, "output_tokens": 6} and r["seconds"] == 3.0
+    assert [p.name for p in t.path("m", "plain", "x").parent.iterdir()] == [f"{r['request_hash']}.json"]          # the note is gone

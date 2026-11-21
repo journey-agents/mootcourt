@@ -107,6 +107,21 @@ def test_two_reference_headlines_in_a_unit_are_an_error(frames):
         load_units(ledger, scores)
 
 
+@pytest.mark.parametrize("change", ["clicks_ref", "n_ref"])
+def test_reference_counts_that_differ_between_the_rows_of_a_unit_are_an_error(frames, change):
+    ledger, scores = frames
+    ledger = ledger.copy()
+    at = ledger.row_id == "d3"
+    if change == "n_ref":
+        ledger.loc[at, "n_ref"] = ledger.loc[at, "n_ref"] + 1
+    else:
+        feats = json.loads(ledger.loc[at, "features_json"].iloc[0])
+        feats["post_launch"]["clicks_ref"] += 1
+        ledger.loc[at, "features_json"] = json.dumps(feats)
+    with pytest.raises(ValueError, match="reference counts"):
+        load_units(ledger, scores)
+
+
 def test_a_variant_equal_to_its_reference_is_an_error(frames):
     ledger, scores = frames
     ledger = ledger.copy()

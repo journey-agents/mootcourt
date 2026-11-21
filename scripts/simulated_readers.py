@@ -21,12 +21,14 @@ A panel of ten model-played readers scores headline cards in matched feeds. The 
 * ``compare --plan DIR --tool DIR --api DIR --reports DIR --label NAME --out DIR --commit HASH`` writes, for each model, how
   the plain panels of the two transports compare. It never calls a model.
 
-A ledger or scores file whose name holds holdout, confirmatory or undeployed is refused.
+A ledger or scores file is refused when its name, a folder of its path or the target of a link holds holdout,
+confirmatory or undeployed.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -54,11 +56,20 @@ def log(text: str) -> None:
     print(text, file=sys.stderr, flush=True)
 
 
+def commit_hash(text: str) -> str:
+    """The commit a report is recorded under: 7 to 40 hexadecimal digits, as git prints it."""
+    if not re.fullmatch(r"[0-9a-f]{7,40}", text):
+        raise argparse.ArgumentTypeError(f"--commit takes the hash of a commit, 7 to 40 hexadecimal digits, and got {text!r}")
+    return text
+
+
 def refuse_names(*paths) -> None:
+    """Stop when a word of ``REFUSED_NAMES`` is in the file's name, in a folder of its path, or in the path a link leads to."""
     for path in paths:
-        name = Path(path).name.lower()
-        if any(word in name for word in REFUSED_NAMES):
-            raise SystemExit(f"refused: {Path(path).name} is named as a file this script does not open")
+        given = Path(path)
+        parts = {part.lower() for part in (*given.parts, *given.resolve().parts)}
+        if any(word in part for part in parts for word in REFUSED_NAMES):
+            raise SystemExit(f"refused: {given} is named as a file this script does not open")
 
 
 def cmd_plan(args) -> int:
@@ -172,7 +183,7 @@ def main(argv=None) -> int:
     p.add_argument("--transcripts", required=True)
     p.add_argument("--ledger", required=True)
     p.add_argument("--out", required=True)
-    p.add_argument("--commit", required=True)
+    p.add_argument("--commit", required=True, type=commit_hash)
     p.add_argument("--label", help="a name for this run, written into each report and its file name")
     p.set_defaults(run=cmd_score)
     p = sub.add_parser("compare", help="compare the run through the tool with the run through the API; no model")
@@ -182,7 +193,7 @@ def main(argv=None) -> int:
     p.add_argument("--reports", required=True, help="the folder with the model reports of both runs")
     p.add_argument("--label", required=True, help="the label of the API run's reports")
     p.add_argument("--out", required=True)
-    p.add_argument("--commit", required=True)
+    p.add_argument("--commit", required=True, type=commit_hash)
     p.set_defaults(run=cmd_compare)
     args = parser.parse_args(argv)
     return args.run(args)

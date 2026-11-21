@@ -1,7 +1,8 @@
 """The transcript store: every request and its reply, one file per request, keyed by a hash of the request.
 
 A stored reply is never asked for again, so a rerun and every scoring step read the store and call no model. A call
-is made only when the caller passes ``allow_model_calls=True``. A transport failure stores nothing.
+is made only when the caller passes ``allow_model_calls=True``. A transport failure stores no record; when bad replies
+came before it, a note beside the record's place keeps them, so the request resumes with what is left of its attempts.
 """
 from __future__ import annotations
 
@@ -67,6 +68,17 @@ def _read(path: Path) -> dict | None:
     return record if isinstance(record, dict) and record.get("status") in {"ok", "invalid", "refusal"} else None
 
 
+def _pending(note: Path) -> dict:
+    """The bad replies a request already drew before a transport failure, or none."""
+    empty = {"replies": [], "seconds": 0.0, "usage": None, "status": "invalid"}
+    try:
+        held = json.loads(note.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return empty
+    ok = isinstance(held, dict) and isinstance(held.get("replies"), list) and all(isinstance(r, str) for r in held["replies"])
+    return {**empty, **held} if ok else empty
+
+
 def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: str, schema: dict, parse: Callable[[str], object],
         *, program: str = "claude", allow_model_calls: bool = False, time_cap_s: float = 180.0, meta: dict | None = None,
         hold_bad: bool = False, transport: str = "tool") -> dict:
@@ -74,7 +86,8 @@ def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: st
 
     ``parse`` reads a reply's text and raises ``ReplyError`` when the reply is not what was asked for. The status is
     ``"ok"``, or after three bad replies ``"refusal"`` when the last one holds no JSON object and ``"invalid"``
-    otherwise. A ``TransportError`` passes through and nothing is stored; a reply that reports another model than the one
+    otherwise. The text of each bad reply before the last is kept under ``earlier_replies``. A ``TransportError`` passes
+    through and no record is stored; a reply that reports another model than the one
     asked for is such an error. With ``hold_bad`` a record that is not ``"ok"`` is returned and not stored, so the caller can
     decide whether it was a real reply or the sign of a failing transport. ``transport`` is ``"tool"`` for the command line
     tool or ``"api"`` for the vendor's API; the request and its hash are the same for both.
@@ -87,27 +100,43 @@ def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: st
         return stored
     if not allow_model_calls:
         raise ModelCallsNotAllowed(f"no stored reply for request {h[:12]} of {model}, and model calls are not allowed")
-    parsed, status, reply, seconds, attempts, usage = None, "invalid", None, 0.0, 0, None
+    note = transcripts.path(model, kind, h).with_suffix(".pending")
+    held = _pending(note)
+    parsed, status, reply = None, held["status"], None
+    seconds, attempts, usage, bad = held["seconds"], len(held["replies"]), held["usage"], list(held["replies"])
     while attempts < ATTEMPTS:
+        try:
+            reply = (api.call(model, system, prompt, schema, time_cap_s=time_cap_s) if transport == "api"
+                     else call(model, system, prompt, schema, program=program, time_cap_s=time_cap_s))
+            if not same_model(model, reply.reported_model):
+                raise TransportError(f"asked {model} and the tool reports another model, {reply.reported_model}")
+        except TransportError:
+            if bad:          # the bad replies so far are kept, so the request does not start again with a full budget
+                note.parent.mkdir(parents=True, exist_ok=True)
+                note.write_text(json.dumps({"replies": bad, "seconds": seconds, "usage": usage, "status": status}), encoding="utf-8")
+            raise
         attempts += 1
-        reply = (api.call(model, system, prompt, schema, time_cap_s=time_cap_s) if transport == "api"
-                 else call(model, system, prompt, schema, program=program, time_cap_s=time_cap_s))
         seconds += reply.seconds
         if reply.usage is not None:          # every attempt is paid for, so the counts add up over attempts
             usage = {name: (usage or {}).get(name, 0) + value for name, value in reply.usage.items()}
-        if not same_model(model, reply.reported_model):
-            raise TransportError(f"asked {model} and the tool reports another model, {reply.reported_model}")
         try:
             parsed, status = parse(reply.text), "ok"
             break
         except ReplyError:
             status = "refusal" if is_refusal(reply.text) else "invalid"
+            bad.append(reply.text)
+    last = reply.text if reply is not None else bad[-1]          # no call is made when the budget was spent before a failure
+    earlier = bad if status == "ok" else bad[:-1]
     record = {"status": status, "request_hash": h, "request": {"model": model, "kind": kind, "system": system, "prompt": prompt, "schema": schema},
-              "meta": meta or {}, "reply_text": reply.text, "parsed": parsed, "attempts": attempts,
-              "reported_model": reply.reported_model, "tool_version": reply.tool_version, "seconds": round(seconds, 3),
+              "meta": meta or {}, "reply_text": last, "parsed": parsed, "attempts": attempts,
+              "reported_model": reply.reported_model if reply is not None else model,
+              "tool_version": reply.tool_version if reply is not None else None, "seconds": round(seconds, 3),
               "stored_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if earlier:
+        record["earlier_replies"] = earlier
     if usage is not None:
         record["usage"] = usage
+    note.unlink(missing_ok=True)
     if status == "ok" or not hold_bad:
         transcripts.put(model, kind, h, record)
     return record

@@ -62,6 +62,8 @@ def load_units(ledger: pd.DataFrame, scores: pd.DataFrame) -> tuple[pd.DataFrame
     for unit_id, g in rows.sort_values("row_id").groupby("unit_id", sort=True):
         if g["reference_headline"].nunique() != 1:
             raise ValueError(f"unit {unit_id} has {g['reference_headline'].nunique()} reference headlines")
+        if g["clicks_ref"].nunique() != 1 or g["n_ref"].nunique() != 1:
+            raise ValueError(f"unit {unit_id} has reference counts that differ between its rows")
         first = g.iloc[0]
         common = {"unit_id": unit_id, "test_id": first["test_id"], "origin": first["origin"],
                   "origin_index": int(first["origin_index"]), "usable_after": g["usable_after"].max()}
