@@ -5,6 +5,11 @@ Both runs are side runs, so every table here reads two explicit folders, ``RUN11
 (the same requests through the vendor's API), and ``make tables RUN=...`` can never point them at another run. The words of the three
 readings are chosen by code from the adjusted interval of the primary model in run 11, as the plan fixed before the first call, and the
 report's own verdict key must agree with them.
+
+One row reads a third explicit folder, ``RUN9`` (the main run whose scored rows the readers were given): the earliest-arm rule's share
+matched on the decisive contrasts, which no report of the readers holds. It was added after the results were seen, at a reviewer's
+request, so that the plain panel's share on those contrasts stands beside its reference. The build stops unless that report is on the
+same contrasts as the readers' reports.
 """
 from pathlib import Path
 
@@ -14,6 +19,9 @@ from summary_tables.experiments import _heading, sci
 DATA = Path(__file__).resolve().parents[1] / "data"
 RUN11, RUN11_NAME = DATA / "run11-simulated-readers", "paper/data/run11-simulated-readers"
 RUN12, RUN12_NAME = DATA / "run12-simulated-readers-api", "paper/data/run12-simulated-readers-api"
+RUN9, RUN9_NAME = DATA / "run9-visible-exposure", "paper/data/run9-visible-exposure"
+RUN9_BACKTEST = "backtest-upworthy-*.json"
+RUN9_RULE = "tables.aggregate[cell=headline_only,rung=always_reference]"          # the earliest-arm rule on the rows the readers were given
 COMMITS = {RUN11_NAME: "942b8e85f565f5ac2387b9e32ff88d217bcdcc7f", RUN12_NAME: "87163a63ec24ae5e7699ddb4697aea8eb1a0e52a"}
 MODELS = (("claude-opus-5-5", "Opus"), ("claude-sonnet-5-5", "Sonnet"), ("claude-haiku-5-5", "Haiku"))
 PRIMARY = "claude-opus-5-5"
@@ -29,7 +37,7 @@ KEY_OF_WORD = {"above": 0, "contains_zero": 1, "below": 2}
 METHODS = (("direction_map", "1. direction map"), ("reader_weights", "2. reader weights"), ("audience_matching", "3. audience matching"),
            ("error_correction", "4. error correction"), ("text_with_panel", "5. text classifier with the panel"),
            ("examples_in_prompt", "6. earlier results in the prompt"), ("audience_brief", "7. audience brief"))
-RUN_HEADINGS = ((RUN11_NAME, "Run 11, through the command line tool"), (RUN12_NAME, "Run 12, through the vendor's API"))
+RUN_HEADINGS = ((RUN11_NAME, "Run 11, through the command line tool"), (RUN12_NAME, "Run 12, through the vendor's programming interface"))
 
 
 class FolderReport(Report):
@@ -59,6 +67,20 @@ def run11():
 
 def run12():
     return _folder(RUN12, RUN12_NAME)
+
+
+def run9():
+    return _folder(RUN9, RUN9_NAME)
+
+
+def reference_on_decisive(rep):
+    """The main run's row of the earliest-arm rule in the headline-only cell, after a check that it is on the contrasts of ``rep``."""
+    main = run9()(RUN9_BACKTEST)
+    same = (main.get(f"{RUN9_RULE}.n") == rep.get("counts.contrasts") and main.get(f"{RUN9_RULE}.n_decisive") == rep.get("plain.decisive.n")
+            and abs(main.get(f"{RUN9_RULE}.direction_accuracy") - rep.get("baselines.always_reference.accuracy")) <= 1e-12)
+    if not same:
+        raise ValueError(f"{main.name}: the earliest-arm rule of the main run is not on the contrasts of {rep.name}")
+    return v(main, f"{RUN9_RULE}.direction_accuracy_decisive", 4)
 
 
 def _runs():
@@ -232,6 +254,7 @@ def _more(name, get, table_name):
         ["plain panel minus one half", *each(lambda rep: _interval(rep, "plain.accuracy_minus_half"))],
         ["decisive contrasts", *each(lambda rep: n(rep, "plain.decisive.n"))],
         ["plain panel, share matched on decisive contrasts", *each(lambda rep: v(rep, "plain.decisive.accuracy", 4))],
+        ["the earliest-arm rule, share matched on decisive contrasts", *each(reference_on_decisive)],
         ["the two halves of the panel give the same direction, share", *each(lambda rep: v(rep, "plain.split_half.agree_share", 3))],
         ["contrasts on which the plain panel is tied", *each(lambda rep: n(rep, "plain.ties"))],
         ["contrasts left with no reader", *each(lambda rep: n(rep, "plain.no_reader"))],
@@ -257,7 +280,7 @@ def _more(name, get, table_name):
         ["declined", *each(lambda rep: n(rep, "counts.calls_refusal"))],
     ]
     return Table(table_name, r"p{6.6cm}rrr", ["measure & " + " & ".join(short for _, short in MODELS)], rows,
-                 source=f"the report keys named above each row (readers); it reads {name}")
+                 source=f"the report keys named above each row (readers); it reads {name} and, for one row, {RUN9_NAME}")
 
 
 def more(r):

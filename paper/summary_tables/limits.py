@@ -164,8 +164,8 @@ def _h4_part2(extras, skill):
     composition = "abstention_composition.P2"
     if extras.get(f"{composition}.abstained.lo") > extras.get(f"{composition}.issued.skill") or extras.get(f"{composition}.abstained.hi") < extras.get(f"{composition}.issued.skill"):
         raise ValueError("the row says the two groups do not differ measurably without burn-in")
-    return join("abstained rows, scored on the withheld forecast: with the burn-in origin, above the full set at {}, {}; without it, {}, {}, against {}, {} for issued rows,"
-                " no measurable difference; within a pair of origin and cell the prior gives both groups the same probability, so a difference there reads"
+    return join("abstained rows, scored on the withheld forecast: with the burn-in origin, above the full set at {}, {}; without it, {}, {}, against {}, {} for issued rows;"
+                " no interval was computed for the difference; within a pair of origin and cell the prior gives both groups the same probability, so a difference there reads"
                 " event rates and not forecasts",
                 w(extras, f"{skill}.abstained.brier_skill"), span(extras, f"{skill}.abstained.brier_skill_lo", f"{skill}.abstained.brier_skill_hi"),
                 w(extras, f"{composition}.abstained.skill", 4), span(extras, f"{composition}.abstained.lo", f"{composition}.abstained.hi", 4),
@@ -250,7 +250,7 @@ def verdicts(r):
         _row("H1 part 2", "P2 beats P1 on headline\\_only", _h1_part2(up, r("positive-control-seeds.json")), _wrong_side(up, _cell("P2", "headline_only"), "logscore_vs_p1")),
         _row("H1 part 3", "P2 does not beat P1 on image\\_only",
              join("{} nats, {}: the guard gave no weight in this cell at any origin", w(up, f"{image}.logscore_vs_p1", 4, plus=True),
-                  span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "held"),
+                  span(up, f"{image}.logscore_vs_p1_lo", f"{image}.logscore_vs_p1_hi", 4)), "by construction"),
         Raw(r"\midrule"),
         _group("H2, in part: the gate claim failed; read pooled, a skill of about one percent in the main run and none shown in the first specification"),
         _row("H2, read pooled", "P2's Brier skill positive, its interval clear of zero, pooled over origins",
@@ -303,10 +303,10 @@ def verdicts(r):
              join("at the matched order within noise, {}, {}", w(up, f"{_dv('P1')}.diff_matched"),
                   span(up, f"{_dv('P1')}.diff_matched_lo", f"{_dv('P1')}.diff_matched_hi")), _wrong_side(up, _dv("P1"), "diff_matched")),
         Raw(r"\midrule"),
-        Raw(r"\multicolumn{4}{@{}l}{\textbf{H6, held} (see~\ref{sec:asos-results})} \\"),
+        Raw(r"\multicolumn{4}{@{}l}{\textbf{H6, by construction} (see~\ref{sec:asos-results})} \\"),
         _row("H6 part 1", "every gate undecidable on the retailer's archive", "undecidable at every gate",
-             join("held, a result {} tests could not have avoided", n(_asos, f"{_cell('P2', 'ALL')}.n_tests"))),
-        _row("H6 part 2", "P2 equals P1", "P2 equals P1 on this archive, because the guard holds the weight at zero", "held"),
+             join("by construction: a result {} tests could not have avoided", n(_asos, f"{_cell('P2', 'ALL')}.n_tests"))),
+        _row("H6 part 2", "P2 equals P1", "P2 equals P1 on this archive, because the guard holds the weight at zero", "by construction"),
     ]
     header = " & ".join(f"\\raggedright {h}" for h in ("hypothesis", "what was planned", "what was measured", "verdict"))
     return Table("verdicts", r"@{}p{0.10\textwidth}p{0.21\textwidth}p{0.45\textwidth}p{0.17\textwidth}@{}", [header], rows, end=r" \tabularnewline")

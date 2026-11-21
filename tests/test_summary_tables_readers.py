@@ -1,5 +1,6 @@
 """The tables of the simulated readers: each reads run 11 and run 12 from their own folders, each number names its key,
-and the words of the three readings are chosen by code from the adjusted interval of the primary model in run 11."""
+and the words of the three readings are chosen by code from the adjusted interval of the primary model in run 11.
+One row of the two tables of remaining measures reads the main run, run 9, also from its own folder."""
 
 from __future__ import annotations
 
@@ -17,6 +18,9 @@ import summary_tables as st  # noqa: E402
 from summary_tables import readers  # noqa: E402
 
 R11, R12 = "paper/data/run11-simulated-readers/", "paper/data/run12-simulated-readers-api/"
+R9 = "paper/data/run9-visible-exposure/"
+RULE_ON_DECISIVE = "the earliest-arm rule, share matched on decisive contrasts"          # the one row that reads the main run
+RULE_KEY = "tables.aggregate[cell=headline_only,rung=always_reference].direction_accuracy_decisive"
 NUMBER = re.compile(r"-?\d[\d,]*\.?\d*")
 
 
@@ -44,6 +48,7 @@ def _value(key):
 def test_the_folders_are_fixed_whatever_run_the_build_is_given():
     assert readers.RUN11 == PAPER / "data" / "run11-simulated-readers"
     assert readers.RUN12 == PAPER / "data" / "run12-simulated-readers-api"
+    assert readers.RUN9 == PAPER / "data" / "run9-visible-exposure"
     assert [m for m, _ in readers.MODELS] == ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]
     assert readers.PRIMARY == "claude-opus-5-5"
 
@@ -60,7 +65,7 @@ def test_the_words_of_each_reading_follow_the_adjusted_interval():
     assert readers.KEY_OF_WORD == {"above": 0, "contains_zero": 1, "below": 2}
 
 
-def test_every_table_of_the_group_reads_only_the_two_folders_and_every_first_number_is_its_first_key():
+def test_every_table_of_the_group_reads_only_its_fixed_folders_and_every_first_number_is_its_first_key():
     reports = st.Reports(RUN)
     names = []
     for fn in readers.TABLES:
@@ -72,7 +77,8 @@ def test_every_table_of_the_group_reads_only_the_two_folders_and_every_first_num
         for row in _rows(table):
             for cell in row[1:]:
                 keys = getattr(cell, "keys", ())
-                assert all(k.startswith((R11, R12)) for k in keys), (table.name, row[0])
+                allowed = (R11, R12, R9) if str(row[0]) == RULE_ON_DECISIVE else (R11, R12)
+                assert all(k.startswith(allowed) for k in keys), (table.name, row[0])
                 if keys and NUMBER.match(str(cell)):
                     printed = NUMBER.match(str(cell)).group().replace(",", "")
                     places = len(printed.split(".")[1]) if "." in printed else 0
@@ -126,6 +132,37 @@ def test_the_methods_tables_hold_the_plain_panel_and_seven_methods_for_each_mode
     assert [label for _, label in readers.METHODS] == [
         "1. direction map", "2. reader weights", "3. audience matching", "4. error correction", "5. text classifier with the panel",
         "6. earlier results in the prompt", "7. audience brief"]
+
+
+def test_the_remaining_measures_set_the_earliest_arm_rule_beside_the_plain_panel_on_decisive_contrasts():
+    seen = []
+    for fn, folder in ((readers.more, R11), (readers.more_api, R12)):
+        table = fn(st.Reports(RUN))
+        labels = [str(row[0]) for row in _rows(table)]
+        at = labels.index(RULE_ON_DECISIVE)
+        assert labels.count(RULE_ON_DECISIVE) == 1 and labels[at - 1] == "plain panel, share matched on decisive contrasts"
+        row, panel = _rows(table)[at], _rows(table)[at - 1]
+        assert len(row) == 4 and len({str(cell) for cell in row[1:]}) == 1          # one rule, the same under each model
+        for cell in row[1:]:
+            assert len(cell.keys) == 1 and cell.keys[0].startswith(R9 + "backtest-upworthy-")
+            assert _leaves(cell) == [RULE_KEY]
+            assert float(str(cell)) == pytest.approx(round(_value(cell.keys[0]), 4), abs=1e-9)
+        # the rule and the panel are scored on the same decisive contrasts
+        counts = _row(table, "decisive contrasts")
+        assert _leaves(counts[1]) == ["plain.decisive.n"]
+        assert _value(row[1].keys[0].replace(".direction_accuracy_decisive", ".n_decisive")) == _value(counts[1].keys[0])
+        assert all(_leaves(cell) == ["plain.decisive.accuracy"] and cell.keys[0].startswith(folder) for cell in panel[1:])
+        # no other row of the table reads the main run
+        others = [k for other in _rows(table) if str(other[0]) != RULE_ON_DECISIVE for cell in other[1:] for k in getattr(cell, "keys", ())]
+        assert others and all(k.startswith(folder) for k in others)
+        seen.append(str(row[1]))
+    assert seen[0] == seen[1]          # the same reference in both runs
+
+
+def test_a_main_run_on_other_contrasts_stops_the_build():
+    rep = st.Report("x.json", {"counts": {"contrasts": 1}, "plain": {"decisive": {"n": 1}}, "baselines": {"always_reference": {"accuracy": 0.5}}})
+    with pytest.raises(ValueError, match="not on the contrasts"):
+        readers.reference_on_decisive(rep)
 
 
 def test_the_transport_table_reads_the_comparison_reports_of_run_12():

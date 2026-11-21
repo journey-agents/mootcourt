@@ -25,7 +25,7 @@ SETUP := uv sync --extra dev --extra docs
 endif
 MOOT := $(PY) -m mootcourt.cli
 
-.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check quick-check selfcheck paper-figures tables paper arxiv arxiv-check
+.PHONY: storage setup data fit backtest challenger challengers ablations learning-curve replay card serve test lint power audit docs docs-serve build docker-check release-check quick-check selfcheck paper-figures tables paper arxiv arxiv-check supplement
 
 setup:
 	$(SETUP)
