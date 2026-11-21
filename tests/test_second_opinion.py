@@ -86,7 +86,8 @@ def test_no_llm_or_network_client_imports_in_src():
     # http.py is the loopback-only HTTP simulator adapter (T-029); onboarding.py has the doctor's configured-URL health check (T-035)
     # The one LLM client in src: the second transport of the simulated readers, an opt-in module behind the optional extra
     # readers-api. Only this file may name the package, and only inside a function, so that importing the module calls nothing.
-    lazy_only = {"simulators/readers/api.py": {"anthropic"}}
+    # The transport for a local model server sends with the standard library, also only inside a function.
+    lazy_only = {"simulators/readers/api.py": {"anthropic"}, "simulators/readers/local.py": {"urllib"}}
     offenders = []
     for path in SRC.rglob("*.py"):
         if path.name in allowed:

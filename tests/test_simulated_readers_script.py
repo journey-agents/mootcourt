@@ -259,3 +259,56 @@ def test_a_commit_that_is_not_a_hash_is_refused(tmp_path, planned, value):
                    "--out", tmp_path / "o")):
         r = run_script(*stage, "--commit", value)
         assert r.returncode == 2 and "commit" in r.stderr and not (tmp_path / "o").exists()
+
+
+# ------------------------------------------------------------------------------------- readings added after the two runs
+EXTRAS = ROOT / "scripts" / "readers_extras.py"
+_extras_spec = importlib.util.spec_from_file_location("readers_extras", EXTRAS)
+readers_extras = importlib.util.module_from_spec(_extras_spec)
+_extras_spec.loader.exec_module(readers_extras)
+
+
+def test_the_quarter_reading_is_written_for_each_model_from_stored_replies(planted_run, planned, archive, tmp_path):
+    code = readers_extras.main(["quarters", "--plan", str(planned), "--transcripts", str(planted_run[0] / "t"), "--ledger", str(archive[0]),
+                                "--out", str(tmp_path), "--commit", "ddddddd", "--label", "extra"])
+    assert code == 0
+    report = json.loads(next(tmp_path.glob(f"simulated-readers-quarters-{MODELS[0]}-extra-*.json")).read_text())
+    assert set(report["readings"]) == {"plain_minus_always_reference", "weights_minus_plain", "text_with_panel_minus_text"}
+    reading = report["readings"]["plain_minus_always_reference"]
+    assert reading["quarters"]["family_size"] == 3 and reading["quarters"]["origins"] == len(reading["quarters"]["by_origin"])
+    assert reading["blocks"]["estimate"] == pytest.approx(planted_run[2][MODELS[0]]["readings"]["plain_minus_always_reference"]["estimate"])
+    assert "verdict" not in reading["blocks"] and "minus_half" in report["familiarity"]
+    assert len(list(tmp_path.glob("*.json"))) == len(MODELS)
+
+
+def test_the_direct_judgment_and_the_embedding_classifier_end_to_end_with_a_stand_in_endpoint(planted_run, planned, archive, tmp_path,
+                                                                                               monkeypatch):
+    from mootcourt.simulators.readers import local
+
+    def post(path, body, cap):
+        if path == "/embeddings":
+            return {"data": [{"index": i, "embedding": [float(len(t) % 7), float("amazing" in t), 1.0]} for i, t in enumerate(body["input"])]}
+        pairs = body["messages"][1]["content"].count("A: ")
+        picks = ["A" if "amazing" in line else "B" for line in body["messages"][1]["content"].splitlines() if "A: " in line]
+        assert len(picks) == pairs
+        return {"model": body["model"], "choices": [{"message": {"content": json.dumps({"winners": picks})}}],
+                "usage": {"prompt_tokens": 1, "completion_tokens": 1}}
+
+    monkeypatch.setattr(local, "_post", post)
+    model, transcripts = MODELS[0], str(planted_run[0] / "t")
+    assert readers_extras.main(["direct", "--model", model, "--plan", str(planned), "--transcripts", transcripts]) == 2          # no flag
+    assert readers_extras.main(["direct", "--model", model, "--plan", str(planned), "--transcripts", transcripts, "--allow-model-calls"]) == 0
+    vectors = tmp_path / "vectors.npz"
+    assert readers_extras.main(["embed", "--model", "embedder", "--plan", str(planned), "--ledger", str(archive[0]), "--out", str(vectors),
+                                "--allow-model-calls"]) == 0
+    monkeypatch.setattr(local, "_post", lambda *a: pytest.fail("the report must call no model"))
+    code = readers_extras.main(["open-model", "--model", model, "--plan", str(planned), "--transcripts", transcripts, "--ledger",
+                                str(archive[0]), "--out", str(tmp_path), "--commit", "eeeeeee", "--vectors", str(vectors),
+                                "--panel", f"first={transcripts}:{model}"])
+    assert code == 0
+    report = json.loads(next(tmp_path.glob("simulated-readers-open-model-*.json")).read_text())
+    assert report["direct"]["accuracy"] > 0.7          # the stand-in picks the planted word, which marks most winners
+    assert report["direct"]["counts"]["calls_not_usable"] == 0
+    assert set(report["direct"]["minus_plain"]) == {"blocks", "quarters"}
+    assert report["embedding"]["model"] == "embedder" and set(report["embedding"]["with_panel"]) == {"first"}
+    assert len(report["embedding"]["vectors_sha256"]) == 64

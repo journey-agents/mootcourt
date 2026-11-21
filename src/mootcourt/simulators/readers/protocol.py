@@ -5,7 +5,7 @@ import numpy as np
 
 SEED = 20261118
 STREAMS = {"blocks": 1, "arms": 2, "positions": 3, "probe_set": 4, "examples": 5, "brief_draw": 6, "bootstrap": 7,
-           "probe_items": 8}
+           "probe_items": 8, "direct_items": 9}
 
 MODELS = ("claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5")
 PRIMARY_MODEL = MODELS[0]

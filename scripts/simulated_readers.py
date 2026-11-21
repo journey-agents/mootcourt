@@ -18,6 +18,8 @@ A panel of ten model-played readers scores headline cards in matched feeds. The 
   ``--label NAME`` names the run in each report and in its file name.
 * ``run`` and ``canary`` take ``--transport api`` to reach the model through the vendor's API in place of the command line
   tool. The request is the same; the key is read from the environment variable ``ANTHROPIC_API_KEY`` and never stored.
+  ``--transport local`` reaches any model behind an endpoint in the common chat format, such as a local model server;
+  ``score --models NAME`` then scores that model.
 * ``compare --plan DIR --tool DIR --api DIR --reports DIR --label NAME --out DIR --commit HASH`` writes, for each model, how
   the plain panels of the two transports compare. It never calls a model.
 
@@ -34,7 +36,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from mootcourt.simulators.readers import api, pipeline
+from mootcourt.simulators.readers import api, local, pipeline
 from mootcourt.simulators.readers.command import TransportError, same_model, start_record
 from mootcourt.simulators.readers.prompts import ReplyError, clicks_schema, parse_clicks, reader_prompt
 from mootcourt.simulators.readers.protocol import KINDS, MODELS, PROFILES, SYSTEM_PROMPT
@@ -86,7 +88,7 @@ def cmd_plan(args) -> int:
 
 
 def _model_allowed(args) -> bool:
-    if args.model in MODELS or args.program != "claude":
+    if args.model in MODELS or args.program != "claude" or args.transport == "local":
         return True
     log(f"{args.model} is not one of {', '.join(MODELS)}")
     return False
@@ -105,6 +107,13 @@ def cmd_run(args) -> int:
                               kinds=tuple(args.kinds or KINDS), allow_model_calls=True, log=log, transport=args.transport)
 
 
+def _local_canary(model: str, prompt: str) -> dict:
+    """One call through the local endpoint: the request as sent and what came back. Such an endpoint has no tool to list."""
+    reply = local.call(model, SYSTEM_PROMPT, prompt)
+    return {"request": local.request_body(model, SYSTEM_PROMPT, prompt), "tools": [], "servers": [], "reply_text": reply.text,
+            "reported_model": reply.reported_model, "tool_version": reply.tool_version, "usage": reply.usage, "transport": "local"}
+
+
 def cmd_canary(args) -> int:
     if not args.allow_model_calls:
         log("model calls are not allowed: pass --allow-model-calls to make them")
@@ -114,6 +123,7 @@ def cmd_canary(args) -> int:
     prompt = reader_prompt(PROFILES[0], list(CANARY_HEADLINES))
     try:
         record = (api.canary(args.model, SYSTEM_PROMPT, prompt) if args.transport == "api"
+                  else _local_canary(args.model, prompt) if args.transport == "local"
                   else start_record(args.model, SYSTEM_PROMPT, prompt, clicks_schema(len(CANARY_HEADLINES)), program=args.program))
     except TransportError as exc:
         log(f"the canary call failed: {exc}")
@@ -145,7 +155,7 @@ def cmd_score(args) -> int:
     refuse_names(args.ledger)
     plan = pipeline.Plan.load(args.plan)
     return pipeline.score(plan, Transcripts(args.transcripts), pd.read_parquet(args.ledger), args.out, args.commit, log=log,
-                          label=args.label)
+                          label=args.label, models=tuple(args.models or MODELS))
 
 
 def cmd_compare(args) -> int:
@@ -170,7 +180,8 @@ def main(argv=None) -> int:
         p.add_argument("--allow-model-calls", action="store_true")
         p.add_argument("--program", default="claude")
         p.add_argument("--transport", choices=TRANSPORTS, default="tool",
-                       help="tool: the command line tool; api: the vendor's API, with the key in ANTHROPIC_API_KEY")
+                       help="tool: the command line tool; api: the vendor's API, with the key in ANTHROPIC_API_KEY; "
+                            "local: an endpoint in the common chat format, with its address in MOOTCOURT_READERS_ENDPOINT")
         if name == "run":
             p.add_argument("--plan", required=True)
             p.add_argument("--kinds", nargs="*", choices=KINDS)
@@ -185,6 +196,7 @@ def main(argv=None) -> int:
     p.add_argument("--out", required=True)
     p.add_argument("--commit", required=True, type=commit_hash)
     p.add_argument("--label", help="a name for this run, written into each report and its file name")
+    p.add_argument("--models", nargs="+", help="the models to score; the three hosted models when not given")
     p.set_defaults(run=cmd_score)
     p = sub.add_parser("compare", help="compare the run through the tool with the run through the API; no model")
     p.add_argument("--plan", required=True)

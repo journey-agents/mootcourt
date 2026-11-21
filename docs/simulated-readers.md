@@ -103,3 +103,20 @@ classifier alone. Only the primary model's readings carry a verdict word.
 
 The design, with every decision and its reason, is in `docs/superpowers/specs/2026-11-18-llm-simulated-readers-design.md`
 in the repository, and the exact values are in `docs/superpowers/plans/2026-11-18-simulated-readers.md`.
+
+## Readings added after the first two runs
+
+`scripts/readers_extras.py` holds readings that were planned after the results of the first two runs were known. Their
+plan is `docs/superpowers/plans/2026-11-21-readers-quarters-and-open-model.md`. They write new report files and change
+no report of an earlier run.
+
+- `quarters` reads stored replies and writes, for each model, the three readings with the seven quarters as the units
+  (a Student-t interval on the seven quarterly means) beside the reading with blocks resampled, and a block interval
+  for the familiarity probe. It calls no model.
+- `--transport local` on `run` and `canary` reaches any model behind an endpoint in the common chat format, such as a
+  model server on a machine of your own. Its address is read from `MOOTCOURT_READERS_ENDPOINT`. No sampling setting is
+  sent. `score --models NAME` scores that model.
+- `direct` asks the model which of two headlines more people would click, ten contrasts per call, with no reader, no
+  publisher and no date named. `embed` stores an embedding of every headline. `open-model` then writes one report with
+  the direct judgment against the plain panel and against the earliest-arm rule, and a classifier fitted on the
+  embeddings with and without a stored panel. Nothing in that report carries a verdict word.

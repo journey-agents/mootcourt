@@ -14,11 +14,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from mootcourt.simulators.cache import SimulationCache
-from mootcourt.simulators.readers import api
+from mootcourt.simulators.readers import api, local
 from mootcourt.simulators.readers.command import TransportError, call, same_model
 from mootcourt.simulators.readers.prompts import ReplyError, is_refusal
 
-TRANSPORTS = ("tool", "api")
+TRANSPORTS = ("tool", "api", "local")
 ATTEMPTS = 3          # the first call and two retries with the same input
 
 
@@ -90,7 +90,8 @@ def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: st
     through and no record is stored; a reply that reports another model than the one
     asked for is such an error. With ``hold_bad`` a record that is not ``"ok"`` is returned and not stored, so the caller can
     decide whether it was a real reply or the sign of a failing transport. ``transport`` is ``"tool"`` for the command line
-    tool or ``"api"`` for the vendor's API; the request and its hash are the same for both.
+    tool, ``"api"`` for the vendor's API or ``"local"`` for an endpoint in the common chat format; the request and its hash
+    are the same for all three.
     """
     if transport not in TRANSPORTS:
         raise ValueError(f"unknown transport {transport!r}")
@@ -107,6 +108,7 @@ def ask(transcripts: Transcripts, model: str, kind: str, system: str, prompt: st
     while attempts < ATTEMPTS:
         try:
             reply = (api.call(model, system, prompt, schema, time_cap_s=time_cap_s) if transport == "api"
+                     else local.call(model, system, prompt, schema, time_cap_s=time_cap_s) if transport == "local"
                      else call(model, system, prompt, schema, program=program, time_cap_s=time_cap_s))
             if not same_model(model, reply.reported_model):
                 raise TransportError(f"asked {model} and the tool reports another model, {reply.reported_model}")
