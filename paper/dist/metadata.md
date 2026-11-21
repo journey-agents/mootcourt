@@ -21,7 +21,7 @@ Findings.
 - A simple text classifier orders tests better than a random order with the same arm counts; no model we ran is shown to beat counting arms.
 - Weighting similar past tests does not beat the prior, in a replay that recovers under a tenth of a planted signal.
 - LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; a gain from weighting them is not established.
-- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests of the same quarters the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules had little power by design.
+- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests of the same quarters the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules stay limited to seven quarters.
 Use: past tests say what to expect and little about which test to run.
 Release. Protocol and Moot Court (MIT); it rebuilds every table.
 
