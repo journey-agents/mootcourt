@@ -10,6 +10,11 @@ One row reads a third explicit folder, ``RUN9`` (the main run whose scored rows 
 matched on the decisive contrasts, which no report of the readers holds. It was added after the results were seen, at a reviewer's
 request, so that the plain panel's share on those contrasts stands beside its reference. The build stops unless that report is on the
 same contrasts as the readers' reports.
+
+Two things were added on 21 November 2026, after the results of both runs, from the stored replies
+(docs/superpowers/plans/2026-11-21-readers-quarters-and-open-model.md): the three readings with the seven quarters as the units, in a table
+of their own, and an interval for the familiarity probe, as one more row of the probe table. Each comes from a report of its own in the
+run's folder, and the build stops unless that report repeats the run's own estimates.
 """
 from pathlib import Path
 
@@ -20,6 +25,11 @@ DATA = Path(__file__).resolve().parents[1] / "data"
 RUN11, RUN11_NAME = DATA / "run11-simulated-readers", "paper/data/run11-simulated-readers"
 RUN12, RUN12_NAME = DATA / "run12-simulated-readers-api", "paper/data/run12-simulated-readers-api"
 RUN9, RUN9_NAME = DATA / "run9-visible-exposure", "paper/data/run9-visible-exposure"
+RUN13, RUN13_NAME = DATA / "run13-readers-open-model", "paper/data/run13-readers-open-model"
+OPEN_MODEL, OPEN_LABEL = "qwen3.8-27b", "run13-open"
+RUN13_COMMIT = "f234784612b8ea8e832b5ff88a4b24ebdc275e08"
+PANELS = (("opus-run11", "the primary model's panel of run 11"), ("opus-run12", "the primary model's panel of run 12"),
+          ("open-run13", "the open model's panel"))
 RUN9_BACKTEST = "backtest-upworthy-*.json"
 RUN9_RULE = "tables.aggregate[cell=headline_only,rung=always_reference]"          # the earliest-arm rule on the rows the readers were given
 COMMITS = {RUN11_NAME: "942b8e85f565f5ac2387b9e32ff88d217bcdcc7f", RUN12_NAME: "87163a63ec24ae5e7699ddb4697aea8eb1a0e52a"}
@@ -69,6 +79,10 @@ def run12():
     return _folder(RUN12, RUN12_NAME)
 
 
+def run13():
+    return _folder(RUN13, RUN13_NAME)
+
+
 def run9():
     return _folder(RUN9, RUN9_NAME)
 
@@ -89,6 +103,24 @@ def _runs():
 
 def model_report(get, model):
     return get(f"simulated-readers-{model}-*.json")
+
+
+def quarters_report(get, model):
+    """The report added after results: the readings with the quarters as the units and the familiarity interval."""
+    return get(f"simulated-readers-quarters-{model}-*.json")
+
+
+def _check_quarters(get, model):
+    """The added report must be on the same replies as the run's own report: the same estimates with blocks resampled."""
+    rep, own = quarters_report(get, model), model_report(get, model)
+    for name, _ in READINGS:
+        if abs(rep.get(f"readings.{name}.blocks.estimate") - own.get(f"readings.{name}.estimate")) > 1e-12:
+            raise ValueError(f"{rep.name}: reading {name} is not on the replies of {own.name}")
+        if rep.get(f"readings.{name}.quarters.origins") != 7 or rep.get(f"readings.{name}.quarters.family_size") != 3:
+            raise ValueError(f"{rep.name}: the caption says seven quarters and a family of three")
+    if abs(rep.get("familiarity.share") - own.get("probes.familiarity.direction_accuracy")) > 1e-12:
+        raise ValueError(f"{rep.name}: the familiarity share is not that of {own.name}")
+    return rep
 
 
 def transport_report(model):
@@ -233,11 +265,78 @@ def probes(r):
              *each(lambda rep: join("{} ({})", v(rep, "probes.completion.f1_difference", 3), v(rep, "probes.completion.f1_difference_se", 3)))],
             ["familiarity: contrasts scored", *each(lambda rep: n(rep, "probes.familiarity.n"))],
             ["familiarity: the headline rated more familiar won, share", *each(lambda rep: v(rep, "probes.familiarity.direction_accuracy", 3))],
+            ["familiarity: that share minus one half (90 percent interval)",
+             *each(lambda rep, get=get: _interval(_check_quarters(get, rep.get("model")), "familiarity.minus_half"))],
             ["familiarity: same direction as the plain panel, share", *each(lambda rep: v(rep, "probes.familiarity.agreement_with_panel", 3))],
             ["named publisher: which headline of a pair won, share right", *each(lambda rep: v(rep, "probes.pairs.direction_accuracy", 3))],
         ]
     return Table("fmt-readers-probes", r"p{7.6cm}rrr", ["probe and measure & " + " & ".join(short for _, short in MODELS)], rows,
                  source=f"the report keys named above each row (readers); it reads {RUN11_NAME} and {RUN12_NAME}")
+
+
+def quarters(r):
+    """The three readings with the seven quarters as the units, for the three models in both runs. Added after results."""
+    runs = _check()
+    both = [runs[RUN11_NAME], runs[RUN12_NAME]]
+    rows = []
+    for at, (name, label) in enumerate(READINGS):
+        rows += ([Raw(r"\midrule")] if at else []) + [_heading(label, 5)]
+        for model, short in MODELS:
+            cells = []
+            for get in both:
+                rep = _check_quarters(get, model)
+                cells += [_interval(rep, f"readings.{name}.quarters", "adjusted_lo", "adjusted_hi"), n(rep, f"readings.{name}.quarters.origins_above_zero")]
+            rows.append([rf"\quad {short}", *cells])
+    return Table("fmt-readers-quarters", r"p{2.2cm}rrrr", ["reading and model & run 11 & above & run 12 & above"], rows,
+                 source=f"the report keys named above each row (readers); it reads {RUN11_NAME} and {RUN12_NAME}")
+
+
+def _two(rep, at):
+    """One comparison read twice: with blocks resampled, and with the seven quarters as the units."""
+    return [_interval(rep, f"{at}.blocks"), _interval(rep, f"{at}.quarters")]
+
+
+def open_model(r):
+    """Run 13: the open model's plain panel, its direct judgment and the embedding classifier. Added after results; no verdict word."""
+    get = run13()
+    own, extra = model_report(get, OPEN_MODEL), get(f"simulated-readers-open-model-{OPEN_MODEL}-*.json")
+    quarters_of = get(f"simulated-readers-quarters-{OPEN_MODEL}-*.json")
+    first = model_report(run11(), PRIMARY)
+    for rep in (own, extra, quarters_of):
+        if rep.get("commit") != RUN13_COMMIT or rep.get("model") != OPEN_MODEL or rep.get("snapshot") != first.get("snapshot"):
+            raise ValueError(f"{rep.name} is not a report of run 13, its model and the snapshot of the other runs")
+        if rep.doc.get("run_label") != OPEN_LABEL:
+            raise ValueError(f"{rep.name} carries the wrong run label")
+    if own.get("counts.contrasts") != first.get("counts.contrasts") or own.get("counts.blocks") != 63 or own.get("primary"):
+        raise ValueError(f"{own.name}: the caption says the same contrasts in 63 blocks and a model that is not the primary one")
+    if abs(own.get("baselines.always_reference.accuracy") - first.get("baselines.always_reference.accuracy")) > 1e-12:
+        raise ValueError(f"{own.name}: the earliest-arm rule differs from that of run 11")
+    if abs(extra.get("direct.plain_minus_always_reference.blocks.estimate") - own.get("readings.plain_minus_always_reference.estimate")) > 1e-12:
+        raise ValueError(f"{extra.name} is not on the replies of {own.name}")
+    if set(extra.get("embedding.with_panel")) != {name for name, _ in PANELS}:
+        raise ValueError(f"{extra.name}: the caption names three panels")
+    rows = [_heading("Share of contrasts whose direction is matched", 3),
+            [r"\quad the earliest-arm rule", v(own, "baselines.always_reference.accuracy", 4), ""],
+            [r"\quad the text classifier of the main run", v(own, "baselines.text_lr.accuracy", 4), ""],
+            [r"\quad the embedding classifier", v(extra, "embedding.accuracy", 4), ""],
+            [r"\quad the open model's plain panel", v(own, "plain.accuracy", 4), ""],
+            [r"\quad the open model's direct judgment", v(extra, "direct.accuracy", 4), ""],
+            Raw(r"\midrule"), _heading("The open model: difference, with blocks resampled and with the quarters as the units", 3),
+            [r"\quad direct judgment minus its plain panel", *_two(extra, "direct.minus_plain")],
+            [r"\quad direct judgment minus the earliest-arm rule", *_two(extra, "direct.minus_always_reference")],
+            [r"\quad plain panel minus the earliest-arm rule", *_two(extra, "direct.plain_minus_always_reference")],
+            [r"\quad reader weights minus the plain panel", *_two(quarters_of, "readings.weights_minus_plain")],
+            [r"\quad text classifier with its panel minus without", *_two(quarters_of, "readings.text_with_panel_minus_text")],
+            Raw(r"\midrule"), _heading("The embedding classifier: difference, read the same two ways", 3),
+            [r"\quad minus the earliest-arm rule", *_two(extra, "embedding.minus_always_reference")],
+            [r"\quad minus the text classifier of the main run", *_two(extra, "embedding.minus_text")]]
+    for name, label in PANELS:
+        rows.append([rf"\quad with {label}, minus without", *_two(extra, f'embedding.with_panel["{name}"].minus_without')])
+    rows += [Raw(r"\midrule"), _heading("Calls of the open model", 3),
+             [r"\quad planned calls of the panel and probes, and usable replies", n(own, "counts.calls_planned"), n(own, "counts.calls_ok")],
+             [r"\quad calls of the direct judgment, and usable replies", n(extra, "direct.counts.calls_planned"), n(extra, "direct.counts.calls_ok")]]
+    return Table("fmt-readers-open-model", r"p{6.6cm}rr", ["measure & blocks resampled & quarters as units"], rows,
+                 source=f"the report keys named above each row (readers); it reads {RUN13_NAME}")
 
 
 def _pair_key(a, b):
@@ -293,4 +392,4 @@ def more_api(r):
     return _more(RUN12_NAME, _check()[RUN12_NAME], "fmt-readers-more-api")
 
 
-TABLES = [readings, methods, transport, probes, methods_api, more, more_api]
+TABLES = [readings, methods, transport, probes, methods_api, more, more_api, quarters, open_model]

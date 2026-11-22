@@ -27,7 +27,6 @@ HAND_TYPED = {
     "tab:fmt-archives": "the source archives' own counts, from DATA.md",
     "tab:fmt-protocol": "configuration constants",
     "tab:fmt-prior-work": "figures quoted from cited papers",
-    "tab:landscape": "a survey of tools",
     "tab:schema": "field names of the exchange format",
     "tab:commands": "command lines",
     "tab:checksums": "file sizes and digests from data/CHECKSUMS.json",

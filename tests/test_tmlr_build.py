@@ -86,6 +86,14 @@ def test_a_marked_block_moves_to_the_start_of_the_appendix_and_leaves_its_stub(p
     assert "tmlr:" not in text
 
 
+def test_a_reference_to_a_section_written_in_the_appendix_is_called_an_appendix(paper):
+    (paper / "sections" / "appendix.tex").write_text(APPENDIX + "\\section{Read back}\n\\label{sec:read-back}\nText.\n")
+    main = paper / "main.tex"
+    main.write_text(main.read_text().replace("Body text.", "Body text, see Section~\\ref{sec:read-back} and Section~\\ref{sec:results}."))
+    text = tb.assemble(paper)
+    assert "see Appendix~\\ref{sec:read-back} and Section~\\ref{sec:results}." in text
+
+
 def test_comment_lines_are_dropped_and_the_bibliography_style_is_swapped(paper):
     text = tb.assemble(paper)
     assert "% src" not in text and "repository" not in text

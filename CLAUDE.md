@@ -7,7 +7,7 @@ Active work: paper version 2 on branch `paper-v2`. Read `.claude/fleet/HANDOVER.
 ## Where things are
 
 - `src/mootcourt/`: the package. `tests/`: suite. `scripts/`: run driver, extras, audits. `docs/`: manual; `docs/method.md` records numbered design decisions; `docs/superpowers/plans/` holds plans written before results.
-- `paper/main.tex`, `paper/sections/`: the paper. `paper/summary_tables/` and `paper/build_tables.py` write `paper/tables/` (generated; never edit). `paper/data/<run>/`: each run's reports. Run 9 is the current main run and older ones are history; run 10 (confirmatory), run 11 (simulated readers) and run 12 (simulated readers through the vendor's API) are side runs, each with a README that says so.
+- `paper/main.tex`, `paper/sections/`: the paper. `paper/summary_tables/` and `paper/build_tables.py` write `paper/tables/` (generated; never edit). `paper/data/<run>/`: each run's reports. Run 9 is the current main run and older ones are history; run 10 (confirmatory), run 11 (simulated readers), run 12 (simulated readers through the vendor's API) and run 13 (simulated readers with an open model, a direct judgment and an embedding classifier) are side runs, each with a README that says so.
 - `paper/reviews/`: claims register, rubric, earlier review rounds. `paper/dist/`: arXiv metadata.
 - Local and untracked: `.claude/fleet/` (working notes; `archive-v1/` holds release 1.0.0's), `.claude/skills/`, `.claude/hooks/`, `.claude/tools/status.py`, `.claude/settings.json`.
 

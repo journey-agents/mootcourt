@@ -1,0 +1,21 @@
+{
+ "calls": 20,
+ "headlines": [
+  "A town of nine hundred people voted on what to do with its only traffic light",
+  "What a retired bus driver keeps in the glove box, and why her neighbours ask to see it",
+  "Three students built a boat from milk cartons and it crossed the lake",
+  "The reason this bakery closes at noon on Tuesdays is not what you would guess",
+  "He counted every bird in his garden for a year and wrote down what changed"
+ ],
+ "input_tokens_mean": 354.2,
+ "model": "qwen3.8-27b",
+ "output_tokens_max": 1840,
+ "output_tokens_mean": 718.5,
+ "output_tokens_per_second_at_this_concurrency": 365.07823327071884,
+ "readable": 20,
+ "reported_models": [
+  "qwen3.8-27b"
+ ],
+ "setting": "chat-completions endpoint; no setting sent",
+ "wall_seconds": 39.4
+}

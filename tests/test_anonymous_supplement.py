@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+import lzma
 import zipfile
 from pathlib import Path
 
@@ -96,3 +97,18 @@ def test_a_name_the_rewriting_does_not_know_stops_the_build_and_leaves_no_archiv
     with pytest.raises(SystemExit, match="docs/a.md"):
         supplement.build(repo, tmp_path / "out.zip", files=["docs/a.md"], commits=COMMITS)
     assert not (tmp_path / "out.zip").exists()
+
+
+def test_archives_of_stored_replies_are_packed_as_they_are_and_checked_unpacked(tmp_path):
+    repo = _tree(tmp_path, {"docs/a.md": "a page\n"})
+    folder = repo / "paper" / "dist" / "stored-replies"
+    folder.mkdir(parents=True)
+    data = lzma.compress(b"a request and its reply")
+    (folder / "run11-stored-replies.tar.xz").write_bytes(data)
+    out = supplement.build(repo, tmp_path / "out.zip", files=["docs/a.md"], commits=COMMITS)
+    with zipfile.ZipFile(out) as z:
+        assert z.read("supplement/stored-replies/run11-stored-replies.tar.xz") == data
+    (folder / "run12-stored-replies.tar.xz").write_bytes(lzma.compress(("a reply that names " + PACKAGE).encode()))
+    with pytest.raises(SystemExit, match="run12-stored-replies"):
+        supplement.build(repo, tmp_path / "out2.zip", files=["docs/a.md"], commits=COMMITS)
+    assert not (tmp_path / "out2.zip").exists()

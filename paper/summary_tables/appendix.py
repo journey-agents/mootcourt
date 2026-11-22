@@ -266,4 +266,5 @@ def ablations_upworthy_p1(r):
     return Table("ablations-upworthy-p1", "lrr", ["setting & P1 log score & scored rows"], rows)
 
 
-TABLES = [app_asos, app_syn_truth, app_pc_point, app_pc_sizes, app_snapshots, gates_dependence, ablations_upworthy_p1]
+# app_asos (fmt-app-asos) left the paper on 21 November 2026 with the retailer's archive in detail (docs/paper-supplement.md); the function stays for the manual
+TABLES = [app_syn_truth, app_pc_point, app_pc_sizes, app_snapshots, gates_dependence, ablations_upworthy_p1]

@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import functools
 import importlib.util
+import lzma
 import re
 import subprocess
 import sys
@@ -46,6 +47,7 @@ EXCLUDED = ("docs/release.md", "scripts/anonymous_supplement.py", "tests/test_an
             "tests/test_tmlr_build.py",
             "scripts/arxiv_package.py", "tests/test_arxiv_package.py")
 TOP = "supplement"
+REPLIES = "paper/dist/stored-replies"          # one archive of stored model replies per run; kept out of git, which holds text only
 FIXED_TIME = (1980, 1, 1, 0, 0, 0)          # the archive records no time of the build
 
 _LINK = re.compile(r"(?:https?://|git@)?[A-Za-z0-9.-]*(?:github\.com|githubusercontent\.com|github\.io|zenodo\.org|doi\.org/10\.5281|osf\.io/(?:"
@@ -72,8 +74,11 @@ This archive holds the code, the reports and the plans behind the submission, ma
 What was changed for review. The package's name is replaced by a neutral one, in file names too. Links to the
 repository, to the archive of releases and to the registry are withheld, and so are electronic addresses and the
 identifiers of commits. Files that say who made the project are left out, and so are the paper's own sources. Nothing
-else differs from the code the paper's numbers came from. The replies of the hosted models are not in the archive; each
-run folder of the simulated readers says where they are kept and gives their checksums.
+else differs from the code the paper's numbers came from.
+
+- `stored-replies/`: the stored replies of the language models, one archive per run of the simulated readers, when the
+  build found them. Each holds one file per request with the request and the reply, and the run folder's README gives
+  its checksum. Unpack one and pass its `transcripts` folder to the scoring stages to rebuild that run's reports.
 
 To install and test: `uv sync --all-extras`, then `uv run pytest -p no:cacheprovider`. A test that checks a link, a
 commit or the package's name against the public project can fail in this archive for that reason alone.
@@ -168,6 +173,11 @@ def build(root, out, files=None, commits=None) -> Path:
             pass          # a binary file is packed as it is and still checked below
         packed[f"{TOP}/{anonymous_path(path)}"] = (data, 0o755 if path.endswith(".sh") else 0o644)
     hits = [hit for name, (data, _) in packed.items() for hit in identity_hits(name, data)]
+    replies = sorted((root / REPLIES).glob("*.tar.xz")) if (root / REPLIES).is_dir() else []
+    for source in replies:          # compressed, so the check reads the unpacked bytes
+        data = source.read_bytes()
+        hits += identity_hits(f"{TOP}/stored-replies/{source.name}", lzma.decompress(data))
+        packed[f"{TOP}/stored-replies/{source.name}"] = (data, 0o644)
     if hits:
         raise SystemExit("not written: these files still name the project\n  " + "\n  ".join(hits[:60])
                          + (f"\n  and {len(hits) - 60} more" if len(hits) > 60 else ""))

@@ -1,0 +1,15 @@
+Cost projection for run 13, made on 21 November 2026 before any archive headline was sent to the open model.
+
+Measured on an invented feed of 25 lines (five invented headlines with five invented endings), sixteen reader calls at once,
+one H100 pod at 4.39 US dollars an hour:
+  default setting (nothing sent): mean 3,316 output tokens a call, largest 7,777, longest call 163 seconds, 326 tokens a second
+  reasoning_effort medium:        mean 1,596 output tokens a call, largest 2,180, longest call 48 seconds, 533 tokens a second
+Calls planned: 9,007 of the plan and about 620 of the direct judgment, 9,627 in all.
+  default: about 32 million output tokens; at 326 to 600 tokens a second that is 15 to 27 hours, 65 to 118 dollars.
+           The longest default call was also within 20 seconds of the fixed time cap of 180 seconds.
+  medium:  about 15 million output tokens; at 533 to 1,000 tokens a second that is 4 to 8 hours, 18 to 35 dollars.
+The plan's rule: above 40 dollars at the default, every request runs at reasoning_effort medium. The default is above it.
+Decision: medium. It is set on the server for every request (--default-chat-template-kwargs), because this server reads
+the setting from the chat template's arguments. The requests themselves carry no setting.
+The twenty-call canaries on five invented headlines are in effort-canary-default.json and effort-canary-medium.json; the
+second of them sent the setting as a request field, which this server does not read, so its tokens are not those of medium.

@@ -54,3 +54,5 @@ paper/dist/*.zip
 paper/tmlr/tmlr.sty
 paper/tmlr/tmlr.bst
 paper/tmlr-references.bib
+# archives of the stored model replies: deposited with a release and packed into the supplement, never committed
+paper/dist/stored-replies/

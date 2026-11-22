@@ -14,7 +14,8 @@ main file, ``paper/tmlr-submission.tex``, from the same text, so the two version
    sentence left in the body where the block was; with a line ``%% tmlr:stubs-here`` in the sources the stub sentences are gathered
    there as one paragraph, in the order of the blocks. ``%% tmlr:note ID TEXT`` is a pointer that always stays in place, and
    ``%% tmlr:title ID TITLE`` gives an appendix heading to a block that has none of its own (a run of paragraphs). A reference
-   ``Section~\\ref{sec:X}`` to a label inside a moved block becomes ``Appendix~\\ref{sec:X}``.
+   ``Section~\\ref{sec:X}`` to a label after ``\\appendix``, in a moved block or in the appendix as written, becomes
+   ``Appendix~\\ref{sec:X}``.
 4. Bibliography style. ``ACM-Reference-Format`` becomes ``tmlr`` when ``paper/tmlr/tmlr.bst`` exists and ``plainnat`` otherwise.
 5. Layout and name. Floats are placed where they are cited and tables keep their natural size up to the text width
    (``single_column_layout``). The package's name is replaced by a neutral one (``withhold_name``), since the name leads to the repository.
@@ -117,15 +118,24 @@ def move_blocks(lines: list[str]) -> list[str]:
         at_stub = body.index(STUBS_HERE)
         body[at_stub:at_stub + 1] = ["", "\\subsection{Results reported in the appendix}", " ".join(stubs), ""] if stubs else []
     if not moved:
-        return body
+        return appendix_words(body)
     at = [i for i, line in enumerate(body) if line.strip() == "\\appendix"]
     if len(at) != 1:
         raise ValueError("the sources must hold exactly one \\appendix line")
     flat = [line for blk in moved for line in ["", *blk]]
-    out = body[: at[0] + 1] + flat + body[at[0] + 1:]
-    labels = {m for line in flat for m in re.findall(r"\\label\{(sec:[^}]+)\}", line)}
-    word = re.compile(r"Section~\\ref\{(" + "|".join(sorted(re.escape(x) for x in labels)) + r")\}") if labels else None
-    return pair_references([word.sub(lambda m: "Appendix~\\ref{" + m.group(1) + "}", line) for line in out], labels) if word else out
+    return appendix_words(body[: at[0] + 1] + flat + body[at[0] + 1:])
+
+
+def appendix_words(lines: list[str]) -> list[str]:
+    """``Section~\\ref{sec:X}`` becomes ``Appendix~\\ref{sec:X}`` for every label ``sec:X`` after ``\\appendix``, moved or written there."""
+    at = [i for i, line in enumerate(lines) if line.strip() == "\\appendix"]
+    if not at:
+        return lines
+    labels = {m for line in lines[at[0] + 1:] for m in re.findall(r"\\label\{(sec:[^}]+)\}", line)}
+    if not labels:
+        return lines
+    word = re.compile(r"Section~\\ref\{(" + "|".join(sorted(re.escape(x) for x in labels)) + r")\}")
+    return pair_references([word.sub(lambda m: "Appendix~\\ref{" + m.group(1) + "}", line) for line in lines], labels)
 
 
 _PAIR = re.compile(r"Sections~\\ref\{([^}]+)\} and~\\ref\{([^}]+)\}")

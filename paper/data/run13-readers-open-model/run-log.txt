@@ -1,0 +1,7 @@
+2026-11-21T17:56:04Z pod started (one H100 card of 80 GB)
+2026-11-21T18:45:00Z calls started on the pod
+2026-11-21T18:45:13Z canary exit 0
+2026-11-21T22:48:47Z run attempt 1 exit 3 (4 calls of the audience brief without a stored reply)
+2026-11-21T22:50:41Z run attempt 2 exit 0 (the 4 calls made; 0 outstanding)
+2026-11-21T22:58:27Z direct attempt 1 exit 0
+2026-11-21T22:59:37Z pod terminated

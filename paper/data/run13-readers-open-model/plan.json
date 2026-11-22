@@ -1,0 +1,94 @@
+{
+ "calls": {
+  "all_models": 27021,
+  "by_kind": {
+   "brief": 2860,
+   "brief_note": 6,
+   "examples": 2860,
+   "plain": 3080,
+   "probe_completion": 60,
+   "probe_familiarity": 42,
+   "probe_pairs": 99
+  },
+  "per_model": 9007
+ },
+ "counts": {
+  "blocks": 63,
+  "by_origin": {
+   "2013-04-01": {
+    "blocks": 6,
+    "contrasts": 399,
+    "earlier_contrasts_visible": 0,
+    "earlier_units_visible": 0,
+    "feeds": 22,
+    "units": 163
+   },
+   "2014-01-01": {
+    "blocks": 8,
+    "contrasts": 687,
+    "earlier_contrasts_visible": 399,
+    "earlier_units_visible": 163,
+    "feeds": 43,
+    "units": 214
+   },
+   "2014-04-01": {
+    "blocks": 10,
+    "contrasts": 1026,
+    "earlier_contrasts_visible": 1025,
+    "earlier_units_visible": 357,
+    "feeds": 48,
+    "units": 299
+   },
+   "2014-07-01": {
+    "blocks": 15,
+    "contrasts": 1550,
+    "earlier_contrasts_visible": 2011,
+    "earlier_units_visible": 645,
+    "feeds": 73,
+    "units": 439
+   },
+   "2014-10-01": {
+    "blocks": 15,
+    "contrasts": 1544,
+    "earlier_contrasts_visible": 3506,
+    "earlier_units_visible": 1074,
+    "feeds": 77,
+    "units": 422
+   },
+   "2015-01-01": {
+    "blocks": 7,
+    "contrasts": 604,
+    "earlier_contrasts_visible": 5176,
+    "earlier_units_visible": 1527,
+    "feeds": 34,
+    "units": 182
+   },
+   "2015-04-01": {
+    "blocks": 2,
+    "contrasts": 156,
+    "earlier_contrasts_visible": 5785,
+    "earlier_units_visible": 1709,
+    "feeds": 11,
+    "units": 52
+   }
+  },
+  "contrasts": 5966,
+  "feeds": 308,
+  "tests": 1770,
+  "units": 1771
+ },
+ "feeds_checksum": "bb13fef188791e1dd7a463ae6685460d5d5e70a260a8a3c005373c397d4975c5",
+ "models": [
+  "claude-opus-5-5",
+  "claude-sonnet-5-5",
+  "claude-haiku-5-5"
+ ],
+ "seed": 20261118,
+ "sha256": {
+  "arms.parquet": "f53638624aba77cf0852a5aac3711197aa556b4c4f0a23f562c1e76793acce13",
+  "contrasts.parquet": "6b879448ebbcbc596378cbad8bcb4e79f4cadbec242eb7535f7495c46a2f8720",
+  "feeds.parquet": "c7f74a97e4af92098a7440ad563448ccd0f82ab1971e36970c3c58daae61f371",
+  "probes.json": "4845bd02b331a37eaa7d0ccf1769898addb2f1dab8d3e73c7b72f367fe2261b3"
+ },
+ "snapshot": "20261106-2dc461f52ea4"
+}

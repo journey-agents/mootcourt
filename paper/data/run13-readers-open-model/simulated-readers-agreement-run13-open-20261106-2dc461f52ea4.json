@@ -1,0 +1,10 @@
+{
+ "commit": "f234784612b8ea8e832b5ff88a4b24ebdc275e08",
+ "models": [
+  "qwen3.8-27b"
+ ],
+ "pairs": {},
+ "run_label": "run13-open",
+ "seed": 20261118,
+ "snapshot": "20261106-2dc461f52ea4"
+}

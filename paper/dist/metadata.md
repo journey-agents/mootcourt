@@ -12,18 +12,18 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before launch, a team wants to know what a test will show. Industry screeners are scored privately; public work scores winner predictors. We found no public evaluation scoring a forecast distribution and a probability of significance against concluded tests under a fixed rule for what a forecast may see.
+Problem. Before launch, a team wants to know what a test will show. We found no public evaluation scoring a forecast distribution and a probability of significance against concluded tests under a fixed rule for what a forecast may see.
 Method. We replay one public archive: 2,949 headline and image tests, scored over seven quarters by models fitted on earlier tests. The archive records realized, not planned, traffic, so a forecast gets the median traffic of earlier tests of its kind. All findings but the last are exploratory.
 Findings.
-- Given the same traffic, a heavy-tailed base rate forecasts the next result nearly as well as a fitted prior. The prior leads by 0.007 nats, not told apart from zero with the seven quarters as units.
+- Given the same traffic, a heavy-tailed base rate forecasts the next result nearly as well as a fitted prior. The prior leads by 0.007 nats, not told apart from zero with quarters as units.
 - The prior's skill on which test will be significant is small and fragile: a better level, not a ranking.
 - In the main run its probabilities fail a calibration test.
-- A simple text classifier orders tests better than a random order with the same arm counts; no model we ran is shown to beat counting arms.
+- A text classifier orders tests better than a random order with the same arm counts; no model we ran is shown to beat counting arms.
 - Weighting similar past tests does not beat the prior, in a replay that recovers under a tenth of a planted signal.
-- LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; a gain from weighting them is not established.
-- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests of the same quarters the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules stay limited to seven quarters.
+- LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; a gain from weighting them is not established. An open model asked directly is not shown to beat that rule; an embedding classifier beats it with blocks of tests, not quarters, as units.
+- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 further tests the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules stay limited to seven quarters.
 Use: past tests say what to expect and little about which test to run.
-Release. Protocol and Moot Court (MIT); it rebuilds every table.
+Release. Moot Court (MIT) rebuilds every table.
 
 ## Categories
 
