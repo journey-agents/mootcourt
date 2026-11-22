@@ -1,4 +1,4 @@
-"""The tables of the simulated readers: each reads run 11 and run 12 from their own folders, each number names its key,
+"""The tables of the simulated readers: each reads runs 11, 12 and 13 from their own folders, each number names its key,
 and the words of the three readings are chosen by code from the adjusted interval of the primary model in run 11.
 One row of the two tables of remaining measures reads the main run, run 9, also from its own folder."""
 
@@ -18,6 +18,7 @@ import summary_tables as st  # noqa: E402
 from summary_tables import readers  # noqa: E402
 
 R11, R12 = "paper/data/run11-simulated-readers/", "paper/data/run12-simulated-readers-api/"
+R13 = "paper/data/run13-readers-open-model/"
 R9 = "paper/data/run9-visible-exposure/"
 RULE_ON_DECISIVE = "the earliest-arm rule, share matched on decisive contrasts"          # the one row that reads the main run
 RULE_KEY = "tables.aggregate[cell=headline_only,rung=always_reference].direction_accuracy_decisive"
@@ -48,6 +49,7 @@ def _value(key):
 def test_the_folders_are_fixed_whatever_run_the_build_is_given():
     assert readers.RUN11 == PAPER / "data" / "run11-simulated-readers"
     assert readers.RUN12 == PAPER / "data" / "run12-simulated-readers-api"
+    assert readers.RUN13 == PAPER / "data" / "run13-readers-open-model"
     assert readers.RUN9 == PAPER / "data" / "run9-visible-exposure"
     assert [m for m, _ in readers.MODELS] == ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"]
     assert readers.PRIMARY == "claude-opus-5-5"
@@ -73,18 +75,19 @@ def test_every_table_of_the_group_reads_only_its_fixed_folders_and_every_first_n
         names.append(table.name)
         text = table.render()
         assert "$RUN6/" not in text, table.name
-        assert "% src: " + R11 in text or "% src: " + R12 in text, table.name
+        assert any("% src: " + folder in text for folder in (R11, R12, R13)), table.name
         for row in _rows(table):
             for cell in row[1:]:
                 keys = getattr(cell, "keys", ())
-                allowed = (R11, R12, R9) if str(row[0]) == RULE_ON_DECISIVE else (R11, R12)
+                allowed = (R11, R12, R13, R9) if str(row[0]) == RULE_ON_DECISIVE else (R11, R12, R13)
                 assert all(k.startswith(allowed) for k in keys), (table.name, row[0])
                 if keys and NUMBER.match(str(cell)):
                     printed = NUMBER.match(str(cell)).group().replace(",", "")
                     places = len(printed.split(".")[1]) if "." in printed else 0
                     assert float(printed) == pytest.approx(round(_value(keys[0]), places), abs=1e-9), (table.name, row[0], str(cell))
     assert names == ["fmt-readers-readings", "fmt-readers-methods", "fmt-readers-transport", "fmt-readers-probes",
-                     "fmt-readers-methods-api", "fmt-readers-more", "fmt-readers-more-api"]
+                     "fmt-readers-methods-api", "fmt-readers-more", "fmt-readers-more-api", "fmt-readers-quarters",
+                     "fmt-readers-open-model"]
 
 
 def test_the_readings_table_sets_the_two_runs_side_by_side_and_words_only_the_primary_model_of_run_11():
