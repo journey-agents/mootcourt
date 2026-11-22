@@ -20,8 +20,8 @@ Findings.
 - In the main run its probabilities fail a calibration test.
 - A text classifier orders tests better than a random order with the same arm counts; no model we ran is shown to beat counting arms.
 - Weighting similar past tests does not beat the prior, in a replay that recovers under a tenth of a planted signal.
-- LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; a gain from weighting them is not established. An open model asked directly is not shown to beat that rule; an embedding classifier beats it with blocks of tests, not quarters, as units.
-- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 further tests the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules stay limited to seven quarters.
+- LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; a gain from weighting them is not established. An open model asked directly is not shown to differ from that rule; an embedding classifier is above it with blocks of tests, not quarters, as units.
+- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules stay limited to seven quarters.
 Use: past tests say what to expect and little about which test to run.
 Release. Moot Court (MIT) rebuilds every table.
 
