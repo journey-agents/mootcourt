@@ -25,7 +25,7 @@ The SHA-256 of the transcript archive, computed as in run 11 over the 9,623 stor
 
 Tokens and cost. The stored records hold 11,704,059 input tokens and 23,975,325 output tokens, the thinking included. That is about 2,490 output tokens a call, above the 1,596 of the measurement on invented headlines. The machine cost 4.39 dollars an hour and ran for about five hours, so the run cost about 22 dollars, the downloads and the embeddings included. The vendor's invoice was not read.
 
-The embeddings. Each of the 8,769 distinct headlines of the source's admitted rows was embedded once by `Qwen/Qwen3-Embedding-8B` at revision 1d8ad4ca9b3dd8059ad90a75d4983776a23d44af, with no instruction text, at the full dimension of 4,096, and normalized to unit length, on the same machine before the calls began. The file of vectors is on the data root and not in the repository; its SHA-256 is `f79b7879e7293e1c97edca67c9e016f58e4d3cc019cb87c107f91e48d21d9c96`, and the report holds the same value.
+The embeddings. Each of the 8,769 distinct headlines of the source's admitted rows was embedded once by `Qwen/Qwen3-Embedding-8B` at revision 1d8ad4ca9b3dd8059ad90a75d4983776a23d44af, with no instruction text, at the full dimension of 4,096, and normalized to unit length, on the same machine before the calls began. The file of vectors is not in the repository. It is released beside the stored replies, in the data release tagged `paper-data-2026-11-21`, as `run13-headline-embeddings.npz`; its SHA-256 is `f79b7879e7293e1c97edca67c9e016f58e4d3cc019cb87c107f91e48d21d9c96`, and the report holds the same value.
 
 The reports.
 
