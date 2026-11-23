@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract below is the abstract of `paper/main.tex` since 22 November 2026: it is organized around one question, whether a test can be predicted from its history and what that buys compared with running the test. The anonymous abstract in `paper/sections/abstract-tmlr.tex` is the same text as one paragraph of at most 300 words; keep the three in agreement on every number and verdict. arXiv's field holds 1,920 characters and counts each line break as two. arXiv joins the lines of the abstract into one paragraph unless a line starts with a space, so paste every line after the first with one leading space, which keeps the breaks and stays inside the limit.
+Everything is as it should be pasted. The abstract below is the abstract of `paper/main.tex` shortened to fit arXiv's field: it asks whether a test can be predicted from its history and what the forecast can be used for, then lists what history gives and what we could not show. It leaves out the sentence on traffic, the yardstick and several second sentences of the findings, which the PDF's abstract keeps. The anonymous abstract in `paper/sections/abstract-tmlr.tex` is one paragraph with the same content; keep the three in agreement on every number and verdict. arXiv's field holds 1,920 characters and counts each line break as two. arXiv joins the lines of the abstract into one paragraph unless a line starts with a space, so paste every line after the first with one leading space, which keeps the breaks and stays inside the limit.
 
 ## Title
 
@@ -12,16 +12,14 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Can a team predict an A/B test from its history before running it, and what does that buy compared with running the test? We replay a public archive: 2,949 headline and image tests, each forecast over seven quarters by models fitted only on earlier tests. No plan is recorded, so a forecast gets the median traffic of earlier tests like it.
-What the predictor gives:
-- A realistic expectation of the result. A heavy-tailed base rate forecasts it nearly as well as a fitted prior, whose lead of 0.007 nats is not told apart from zero with quarters as units.
-- A yardstick. A new method should first beat the base rate and a trivial rule: rank tests by their number of variants.
-What it did not give:
-- Which test will be significant. The prior's skill is small and fragile, and its probabilities fail a calibration test.
-- Which tests to run. A text classifier orders tests better than chance, but no model we ran is shown to beat the variant-count rule.
-- Which headline wins. Language models playing readers (they may have seen the archive) are not shown to beat always picking the earliest; nor is an open model asked directly. An embedding classifier beats the earliest pick, but not once variation between quarters is counted.
-- A gain from weighting similar past tests, in a replay that recovers under a tenth of a planted signal.
-So the predictor says what to expect from a test like this one, not whether to ship it, and it does not replace the test. The evidence is one publisher's archive and simple models, so a better predictor is not ruled out; this protocol can test one. Findings are exploratory, except that on a confirmatory split of 13,822 tests, opened once under rules fixed before in our dated record (no registry then), three verdicts recur: by quarter the prior's lead and its skill against a smoothed base rate are not shown, nor is a ranking better than the variant-count rule.
+Can a team predict an A/B test from its history before running it, and what can it use that forecast for? We replay a public archive: 2,949 headline and image tests in seven quarters, each forecast once by models fitted only on earlier tests.
+What history gives: a forecast of how the next result will be distributed, better than one reading no history. A heavy-tailed base rate forecasts it nearly as well as a fitted prior, whose pooled lead of 0.007 nats is not shown once quarters, not tests, are units.
+What we could not show:
+- Which test will be significant. The prior gives all tests of one kind and quarter one probability, so its small, fragile skill is a better level, not a ranking; its probabilities fail a calibration test.
+- Which tests to run. A text classifier orders tests better than a random order matched on arm count, but no model we ran is shown to beat the arm-count rule: rank tests by number of variants.
+- Which headline drew more clicks. Language models playing readers are not shown to beat always picking the earliest headline; nor is an open model asked directly. An embedding classifier is above that rule with tests resampled, not with quarters as units. All may have seen the archive.
+- A gain from weighting similar past tests, a method that recovers under a tenth of a planted gain on synthetic data.
+History says what to expect from a test of its kind and little about which test will succeed. We do not compare a forecast with a live test; the test still decides what a change did. The evidence is one publisher's archive and untuned models, so a better predictor is not ruled out. Findings are exploratory, except three verdicts that recur on a confirmatory split of 13,822 tests, opened once under rules fixed beforehand in our dated record (no registry then): by quarter the prior's lead and its skill are not shown, nor is the classifier above the arm-count rule.
 
 ## Categories
 
