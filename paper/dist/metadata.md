@@ -1,6 +1,6 @@
 # arXiv metadata, ready to paste
 
-Everything is as it should be pasted. The abstract below is condensed from the one in `paper/main.tex` to fit arXiv's field of 1,920 characters: the six exploratory findings and the registered confirmatory one are kept, each shortened, and the secondary reading of the confirmatory split is left to the PDF; Tools is left to the PDF; and Problem, Method and Release are shorter. The anonymous abstract in `paper/sections/abstract-tmlr.tex` is the same text as one paragraph of at most 300 words; keep the two in agreement.
+Everything is as it should be pasted. The abstract below is the abstract of `paper/main.tex` since 22 November 2026: it is organized around one question, whether a test can be predicted from its history and what that buys compared with running the test. The anonymous abstract in `paper/sections/abstract-tmlr.tex` is the same text as one paragraph of at most 300 words; keep the three in agreement on every number and verdict. arXiv's field holds 1,920 characters and counts each line break as two. arXiv joins the lines of the abstract into one paragraph unless a line starts with a space, so paste every line after the first with one leading space, which keeps the breaks and stays inside the limit.
 
 ## Title
 
@@ -12,18 +12,16 @@ Yingjie Li (Independent researcher)
 
 ## Abstract
 
-Problem. Before launch, a team wants to know what a test will show. We found no public evaluation scoring a forecast distribution and a probability of significance against concluded tests under a fixed rule for what a forecast may see.
-Method. We replay one public archive: 2,949 headline and image tests, scored over seven quarters by models fitted on earlier tests. The archive records realized, not planned, traffic, so a forecast gets the median traffic of earlier tests of its kind. All findings but the last are exploratory.
-Findings.
-- Given the same traffic, a heavy-tailed base rate forecasts the next result nearly as well as a fitted prior. The prior leads by 0.007 nats, not told apart from zero with quarters as units.
-- The prior's skill on which test will be significant is small and fragile: a better level, not a ranking.
-- In the main run its probabilities fail a calibration test.
-- A text classifier orders tests better than a random order with the same arm counts; no model we ran is shown to beat counting arms.
-- Weighting similar past tests does not beat the prior, in a replay that recovers under a tenth of a planted signal.
-- LLM-played readers (contamination not excluded) are not shown to name the better headline more often than always picking the earliest; a gain from weighting them is not established. An open model asked directly is not shown to differ from that rule; an embedding classifier is above it with blocks of tests, not quarters, as units.
-- Confirmatory split, opened once under rules fixed before in our own dated record (no registry then): on 13,822 tests the three verdicts recur. By quarter the prior's lead and its skill against a smoothed base rate are not shown; nor is ranking above arm count. Two of three rules stay limited to seven quarters.
-Use: past tests say what to expect and little about which test to run.
-Release. Moot Court (MIT) rebuilds every table.
+Can a team predict an A/B test from its history before running it, and what does that buy compared with running the test? We replay a public archive: 2,949 headline and image tests, each forecast over seven quarters by models fitted only on earlier tests. No plan is recorded, so a forecast gets the median traffic of earlier tests like it.
+What the predictor gives:
+- A realistic expectation of the result. A heavy-tailed base rate forecasts it nearly as well as a fitted prior, whose lead of 0.007 nats is not told apart from zero with quarters as units.
+- A yardstick: a new method should first beat the base rate and counting a test's arms.
+What it did not give:
+- Which test will be significant. The prior's skill is small and fragile, and its probabilities fail a calibration test.
+- Which tests to run. A text classifier beats a random order matched on arm count; no model we ran is shown to beat counting arms.
+- Which headline wins. Language models playing readers (they may have seen the archive) are not shown to beat always picking the earliest; nor is an open model asked directly. An embedding classifier beats that rule, but not once variation between quarters is counted.
+- A gain from weighting similar past tests, in a replay that recovers under a tenth of a planted signal.
+So the predictor says what to expect from a test like this one, not whether to ship it, and it does not replace the test. The evidence is one publisher's archive and simple models, so a better predictor is not ruled out; the protocol and baselines here are the way to test one. Findings are exploratory, except that on a confirmatory split of 13,822 tests, opened once under rules fixed before in our dated record (no registry then), three verdicts recur: by quarter the prior's lead and its skill against a smoothed base rate are not shown, nor is ranking above arm count.
 
 ## Categories
 
@@ -40,9 +38,11 @@ Release. Moot Court (MIT) rebuilds every table.
 
 ## Comments line
 
-81 pages including the appendix, 6 figures, 106 tables. Code, the data pipeline and the run folders behind every table:
+78 pages including the appendix, 6 figures. Code, the data pipeline and the run folders behind every table:
 https://github.com/journey-agents/mootcourt (MIT). The plan with the six hypotheses, written after two earlier runs on the same split:
-https://github.com/journey-agents/mootcourt-plan. (Recount the pages from the final `make arxiv-check` before pasting.)
+https://github.com/journey-agents/mootcourt-plan
+
+(The page count is the one arXiv's own compile reported on 22 November 2026; the local build has 79. Recount after any new upload.)
 
 ## License
 
