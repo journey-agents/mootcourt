@@ -15,13 +15,13 @@ Yingjie Li (Independent researcher)
 Can a team predict an A/B test from its history before running it, and what does that buy compared with running the test? We replay a public archive: 2,949 headline and image tests, each forecast over seven quarters by models fitted only on earlier tests. No plan is recorded, so a forecast gets the median traffic of earlier tests like it.
 What the predictor gives:
 - A realistic expectation of the result. A heavy-tailed base rate forecasts it nearly as well as a fitted prior, whose lead of 0.007 nats is not told apart from zero with quarters as units.
-- A yardstick: a new method should first beat the base rate and counting a test's arms.
+- A yardstick. A new method should first beat the base rate and a trivial rule: rank tests by their number of variants.
 What it did not give:
 - Which test will be significant. The prior's skill is small and fragile, and its probabilities fail a calibration test.
-- Which tests to run. A text classifier beats a random order matched on arm count; no model we ran is shown to beat counting arms.
-- Which headline wins. Language models playing readers (they may have seen the archive) are not shown to beat always picking the earliest; nor is an open model asked directly. An embedding classifier beats that rule, but not once variation between quarters is counted.
+- Which tests to run. A text classifier orders tests better than chance, but no model we ran is shown to beat the variant-count rule.
+- Which headline wins. Language models playing readers (they may have seen the archive) are not shown to beat always picking the earliest; nor is an open model asked directly. An embedding classifier beats the earliest pick, but not once variation between quarters is counted.
 - A gain from weighting similar past tests, in a replay that recovers under a tenth of a planted signal.
-So the predictor says what to expect from a test like this one, not whether to ship it, and it does not replace the test. The evidence is one publisher's archive and simple models, so a better predictor is not ruled out; the protocol and baselines here are the way to test one. Findings are exploratory, except that on a confirmatory split of 13,822 tests, opened once under rules fixed before in our dated record (no registry then), three verdicts recur: by quarter the prior's lead and its skill against a smoothed base rate are not shown, nor is ranking above arm count.
+So the predictor says what to expect from a test like this one, not whether to ship it, and it does not replace the test. The evidence is one publisher's archive and simple models, so a better predictor is not ruled out; this protocol can test one. Findings are exploratory, except that on a confirmatory split of 13,822 tests, opened once under rules fixed before in our dated record (no registry then), three verdicts recur: by quarter the prior's lead and its skill against a smoothed base rate are not shown, nor is a ranking better than the variant-count rule.
 
 ## Categories
 
